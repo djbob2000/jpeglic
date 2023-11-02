@@ -1,0 +1,7 @@
+private_files/
+build
+dist
+.vscode
+__pycache__
+tmp.py
+env
