@@ -15,7 +15,7 @@ install(){
     # Install
     echo "Installing..."
     sudo cp -r xl-converter /opt/           # Copy program files
-    sudo chmod -R +x /opt/xl-converter      # Add executable permissions
+    sudo chmod -R +rx /opt/xl-converter     # Add permissions
     
     echo "Installation complete"
 }
