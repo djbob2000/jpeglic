@@ -25,7 +25,7 @@ from data.constants import (
 )
 
 from core.proxy import Proxy
-from core.pathing import getUniqueFilePath, getPathGIF, getExtension, getOutputDir
+from core.pathing import getUniqueFilePath, getPathGIF, getExtension, getOutputDir, isANSICompatible
 from core.convert import convert, getDecoder, getDecoderArgs, getExtensionJxl, optimize
 from core.downscale import downscale, decodeAndDownscale
 import core.metadata as metadata
@@ -401,7 +401,7 @@ class Worker(QRunnable):
         if os.path.isfile(self.org_item_abs_path) == False:
             raise FileException("C0", "File not found")
 
-        # Check for UTF-8 characters
+        # Check for non-ANSI characters
         if (
             os.name == "nt" and
             not self.settings["disable_jxl_utf8_check"] and
@@ -411,13 +411,15 @@ class Worker(QRunnable):
                 (
                     self.params["format"] == "Smallest Lossless" and
                     self.params["smallest_format_pool"]["jxl"]
+                ) or
+                (
+                    self.params["format"] == "JPG" and
+                    self.params["jpg_encoder"] == "JPEGLI from JPEG XL"
                 )
             )
         ):
-            try:
-                self.org_item_abs_path.encode("cp1252")
-            except UnicodeEncodeError:
-                raise GenericException("C1", "JPEG XL does not support paths with non-ANSI characters on Windows.")
+            if not isANSICompatible(self.org_item_abs_path):
+                raise GenericException("C1", "libjxl tools do not support paths with non-ANSI characters on Windows.")
 
         # Check for conflicts - GIFs and APNGs
         checkForConflicts(

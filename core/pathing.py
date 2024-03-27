@@ -5,7 +5,15 @@ from pathlib import Path
 import logging
 
 def getUniqueFilePath(dir, file_name: str, ext: str, add_rnd = False):
-    """Get a unique file name within a directory."""
+    """
+    Get a unique file name within a directory.
+    
+    Params:
+        - dir - output dir path
+        - file_name - name of an item
+        - ext - extension (without dot)
+        - add_rnd - add random characters to the file name
+    """
 
     rnd_str = "_" + "".join(random.choice("0123456789abcdef") for _ in range(3)) if add_rnd else ""     # hex
     path = os.path.join(dir,f"{file_name}{rnd_str}.{ext}")
@@ -80,3 +88,10 @@ def getOutputDir(
                 return os.path.join(item_dir_path, custom_dir_path)
     else:
         return item_dir_path
+
+def isANSICompatible(path: str) -> bool:
+    try:
+        path.encode("cp1252")
+        return True
+    except UnicodeEncodeError:
+        return False
