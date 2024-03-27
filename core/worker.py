@@ -127,6 +127,112 @@ class Worker(QRunnable):
 
         self.signals.completed.emit(self.n)
     
+    def runChecks(self):
+        # Input was moved / deleted
+        if os.path.isfile(self.org_item_abs_path) == False:
+            raise FileException("C0", "File not found")
+
+        # Check for non-ANSI characters
+        if (
+            os.name == "nt" and
+            not self.settings["disable_jxl_utf8_check"] and
+            (
+                self.params["format"] == "JPEG XL" or
+                self.item_ext == "jxl" or
+                (
+                    self.params["format"] == "Smallest Lossless" and
+                    self.params["smallest_format_pool"]["jxl"]
+                ) or
+                (
+                    self.params["format"] == "JPG" and
+                    self.params["jpg_encoder"] == "JPEGLI from JPEG XL"
+                )
+            )
+        ):
+            if not isANSICompatible(self.org_item_abs_path):
+                raise GenericException("C1", "libjxl tools do not support paths with non-ANSI characters on Windows.")
+
+        # Check for conflicts - GIFs and APNGs
+        checkForConflicts(
+            self.item_ext,
+            self.params["format"],
+            self.params["downscaling"]["enabled"],
+        )
+
+    def setupConversion(self):
+        # Choose Output Dir
+        self.output_dir = getOutputDir(
+            self.item_dir,
+            self.anchor_path,
+            self.params["custom_output_dir"],
+            self.params["custom_output_dir_path"],
+            self.params["keep_dir_struct"]
+        )
+
+        try:
+            os.makedirs(self.output_dir, exist_ok=True)
+        except OSError as err:
+            raise FileException("S0", f"Failed to create output directory. {err}")
+
+        # Assign output paths
+        self.output_ext = getExtension(self.params["format"])
+        if self.params["format"] == "PNG" and self.item_ext == "jxl" and self.params["reconstruct_jpg"]:
+            self.output_ext = getExtensionJxl(self.item_abs_path)  # Reverse JPG reconstruction
+        
+        self.output = None
+        with QMutexLocker(self.mutex):
+            self.output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, True)        # Initial self.output
+        self.final_output = os.path.join(self.output_dir, f"{self.item_name}.{self.output_ext}")           # After conversion: self.output -> self.final_output 
+
+        # If file exists - for decoding GIF only
+        if self.item_ext == "gif" and self.params["format"] == "PNG":
+            if self.params["if_file_exists"] == "Skip":
+                self.skip = True
+                return
+
+            self.output = getPathGIF(self.output_dir, self.item_name, self.params["if_file_exists"])
+            self.final_output = self.output
+
+        # Skip If needed
+        if self.params["if_file_exists"] == "Skip":
+            if os.path.isfile(self.final_output) and self.params["format"] not in ("Smallest Lossless"):
+                self.skip = True
+                return
+
+        # Create Proxy
+        if self.proxy.isProxyNeeded(
+            self.params["format"],
+            self.item_ext,
+            self.params["jpg_encoder"] == "JPEGLI from JPEG XL",
+            self.params["downscaling"]["enabled"]
+        ):
+            if not self.proxy.generate(self.item_abs_path, self.item_ext, self.output_dir, self.item_name, self.n, self.mutex):
+                raise FileException("S1", f"Proxy could not be generated to {self.proxy.getPath()}")
+            
+            self.item_abs_path = self.proxy.getPath()     # Redirect the source
+
+        # Setup downscaling params
+        if self.params["downscaling"]["enabled"]:
+            self.scl_params = {    # "None" values are assigned later on
+                "mode": self.params["downscaling"]["mode"],
+                "enc": None,
+                "format": self.params["format"],    # To recognize intelligent effort
+                "jxl_int_e": None,   # An exception to handle intelligent effort
+                "src": self.item_abs_path,
+                "dst": self.output,
+                "dst_dir": self.output_dir,
+                "name": self.item_name,
+                "args": None,
+                "max_size": self.params["downscaling"]["file_size"],
+                "percent": self.params["downscaling"]["percent"],
+                "width": self.params["downscaling"]["width"],
+                "height": self.params["downscaling"]["height"],
+                "shortest_side": self.params["downscaling"]["shortest_side"],
+                "longest_side": self.params["downscaling"]["longest_side"],
+                "resample": self.params["downscaling"]["resample"],
+                "n": self.n,
+            }
+
     def convert(self):
         args = []
         encoder = None
@@ -265,80 +371,6 @@ class Worker(QRunnable):
             except OSError as err:
                 raise FileException("C3", err)
 
-    def setupConversion(self):
-        # Choose Output Dir
-        self.output_dir = getOutputDir(
-            self.item_dir,
-            self.anchor_path,
-            self.params["custom_output_dir"],
-            self.params["custom_output_dir_path"],
-            self.params["keep_dir_struct"]
-        )
-
-        try:
-            os.makedirs(self.output_dir, exist_ok=True)
-        except OSError as err:
-            raise FileException("S0", f"Failed to create output directory. {err}")
-
-        # Assign output paths
-        self.output_ext = getExtension(self.params["format"])
-        if self.params["format"] == "PNG" and self.item_ext == "jxl" and self.params["reconstruct_jpg"]:
-            self.output_ext = getExtensionJxl(self.item_abs_path)  # Reverse JPG reconstruction
-        
-        self.output = None
-        with QMutexLocker(self.mutex):
-            self.output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, True)        # Initial self.output
-        self.final_output = os.path.join(self.output_dir, f"{self.item_name}.{self.output_ext}")           # After conversion: self.output -> self.final_output 
-
-        # If file exists - for decoding GIF only
-        if self.item_ext == "gif" and self.params["format"] == "PNG":
-            if self.params["if_file_exists"] == "Skip":
-                self.skip = True
-                return
-
-            self.output = getPathGIF(self.output_dir, self.item_name, self.params["if_file_exists"])
-            self.final_output = self.output
-
-        # Skip If needed
-        if self.params["if_file_exists"] == "Skip":
-            if os.path.isfile(self.final_output) and self.params["format"] not in ("Smallest Lossless"):
-                self.skip = True
-                return
-
-        # Create Proxy
-        if self.proxy.isProxyNeeded(
-            self.params["format"],
-            self.item_ext,
-            self.params["jpg_encoder"] == "JPEGLI from JPEG XL",
-            self.params["downscaling"]["enabled"]
-        ):
-            if not self.proxy.generate(self.item_abs_path, self.item_ext, self.output_dir, self.item_name, self.n, self.mutex):
-                raise FileException("S1", f"Proxy could not be generated to {self.proxy.getPath()}")
-            
-            self.item_abs_path = self.proxy.getPath()     # Redirect the source
-
-        # Setup downscaling params
-        if self.params["downscaling"]["enabled"]:
-            self.scl_params = {    # "None" values are assigned later on
-                "mode": self.params["downscaling"]["mode"],
-                "enc": None,
-                "format": self.params["format"],    # To recognize intelligent effort
-                "jxl_int_e": None,   # An exception to handle intelligent effort
-                "src": self.item_abs_path,
-                "dst": self.output,
-                "dst_dir": self.output_dir,
-                "name": self.item_name,
-                "args": None,
-                "max_size": self.params["downscaling"]["file_size"],
-                "percent": self.params["downscaling"]["percent"],
-                "width": self.params["downscaling"]["width"],
-                "height": self.params["downscaling"]["height"],
-                "shortest_side": self.params["downscaling"]["shortest_side"],
-                "longest_side": self.params["downscaling"]["longest_side"],
-                "resample": self.params["downscaling"]["resample"],
-                "n": self.n,
-            }
-
     def finishConversion(self):
         if self.proxy.proxyExists():
             try:
@@ -396,38 +428,6 @@ class Worker(QRunnable):
         elif self.item_ext != "gif":        # If conversion failed (GIF naming is handled differently)
             raise FileException("P2", "Conversion failed, output not found.")
 
-    def runChecks(self):
-        # Input was moved / deleted
-        if os.path.isfile(self.org_item_abs_path) == False:
-            raise FileException("C0", "File not found")
-
-        # Check for non-ANSI characters
-        if (
-            os.name == "nt" and
-            not self.settings["disable_jxl_utf8_check"] and
-            (
-                self.params["format"] == "JPEG XL" or
-                self.item_ext == "jxl" or
-                (
-                    self.params["format"] == "Smallest Lossless" and
-                    self.params["smallest_format_pool"]["jxl"]
-                ) or
-                (
-                    self.params["format"] == "JPG" and
-                    self.params["jpg_encoder"] == "JPEGLI from JPEG XL"
-                )
-            )
-        ):
-            if not isANSICompatible(self.org_item_abs_path):
-                raise GenericException("C1", "libjxl tools do not support paths with non-ANSI characters on Windows.")
-
-        # Check for conflicts - GIFs and APNGs
-        checkForConflicts(
-            self.item_ext,
-            self.params["format"],
-            self.params["downscaling"]["enabled"],
-        )
-        
     def smallestLossless(self):
         # Populate path pool
         path_pool = {}
