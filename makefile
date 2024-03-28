@@ -18,15 +18,14 @@ build-appimage:
 build-7z:
 	python3 build.py -p
 
-src-full: clean
+src: clean
 	mkdir -p dist/src
-	rsync -a --exclude-from=.gitignore ./ dist/src/
+	
+	cp .gitignore .rsync-exclude
+	sed -i '/^\/bin\//d; /^\/misc\//d' .rsync-exclude
+	rsync -a --exclude-from=.rsync-exclude --exclude=.git --exclude=screenshots ./ dist/src/
+	rm .rsync-exclude
 
-src-min: clean
-	mkdir -p dist/src
-	rsync -a --include=misc/* --exclude-from=.gitignore --exclude=.git --exclude=screenshots --exclude=.github --exclude=.pytest_cache ./ dist/src/
-
-src: src-min
 	cd dist && 7z a src_`date +%Y%m%d_%H%M%S`.zip src/
 
 test:
