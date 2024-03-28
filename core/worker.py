@@ -278,6 +278,8 @@ class Worker(QRunnable):
             case "JPG":
                 if self.params["jpg_encoder"] == "JPEGLI from JPEG XL":
                     args = [f"-q {self.params['quality']}"]
+                    if self.settings["disable_progressive_jpegli"]:
+                        args.append("-p 0")
                     encoder = CJPEGLI_PATH
                 else:
                     args = [f"-quality {self.params['quality']}"]
