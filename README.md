@@ -75,6 +75,8 @@ git clone -b stable --depth 1 https://github.com/JacobDev1/xl-converter.git
 cd xl-converter
 ```
 
+[Provide tool binaries](#providing-tool-binaries).
+
 Setup `venv`.
 
 ```cmd
@@ -115,6 +117,8 @@ chmod -R +x xl-converter
 cd xl-converter
 ```
 
+[Provide tool binaries](#providing-tool-binaries).
+
 Create and activate a virtual environment.
 
 ```bash
@@ -143,6 +147,35 @@ make build
 Extra building modes:
 - `make build-7z` - package to a 7z file (with an installer) (requires `p7zip-full`)
 - `make build-appimage` - package as an AppImage (requires `fuse`)
+
+### Providing Tool Binaries
+
+To build XL Converter, you need to provide various binaries. This can be quite challenging.
+
+Binaries needed:
+- [libjxl](https://github.com/libjxl/libjxl) 0.10.2
+    - cjxl
+    - djxl
+    - jxlinfo
+    - cjpegli
+- [libavif](https://github.com/AOMediaCodec/libavif) 1.0.3 (**AVIF_CODEC_AOM**)
+    - avifenc
+    - avifdec
+- [imagemagick](https://imagemagick.org/) 7.1.1-15 Q16-HDRI
+    - magick - AppImage for Linux
+    - magick.exe - Windows
+- [exiftool](https://exiftool.org/) 12.77
+    - exiftool.exe - Windows
+    - exiftool - standalone Perl build
+- [oxipng](https://github.com/shssoichiro/oxipng) 0.8.0
+
+Place them in the following directories:
+- `xl-converter\bin\win` for Windows (x86_64) 
+- `xl-converter/bin/linux` for Linux (x86_64) 
+
+All binaries are built statically. The version numbers should match. Binaries on Windows have an `.exe` extension.
+
+See the official [XL Converter builds](https://github.com/JacobDev1/xl-converter/releases) for examples.
 
 ### Troubleshooting Build Issues
 
@@ -189,4 +222,6 @@ git clone -b unstable --depth 1 https://github.com/JacobDev1/xl-converter.git
 
 Pull requests are ignored to avoid potential legal complications when reusing the code.
 
-Forward your code and feature suggestions to my email at contact@codepoems.eu
+Forward your suggestions to my email at contact@codepoems.eu
+
+Feel free to make [bug reports](#bug-reports) as contributions.
