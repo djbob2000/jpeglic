@@ -61,7 +61,7 @@ class SettingsTab(QWidget):
         gen_grp_lt.addWidget(self.no_sorting_cb)
 
         # Advanced group - widgets
-        self.enable_jxl_effort_10 = self.wm.addWidget("enable_jxl_effort_10", QCheckBox("JPEG XL - Enable Effort 10 (slow)"))
+        self.enable_jxl_effort_10 = self.wm.addWidget("enable_jxl_effort_10", QCheckBox("JPEG XL - Enable Effort 10"))
         self.enable_jxl_effort_10.clicked.connect(self.signals.enable_jxl_effort_10)
 
         self.disable_jxl_utf8_check_cb = self.wm.addWidget("disable_jxl_utf8_check_cb", QCheckBox("JPEG XL - Disable UTF-8 Check"))
