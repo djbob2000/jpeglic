@@ -320,8 +320,8 @@ class Worker(QRunnable):
         else:   # No downscaling
             if format == "JPEG XL" and self.params["intelligent_effort"]:
                 with QMutexLocker(self.mutex):
-                    path_e7 = getUniqueFilePath(self.output_dir,self.item_name, "jxl", True)
-                    path_e9 = getUniqueFilePath(self.output_dir,self.item_name, "jxl", True)
+                    path_e7 = getUniqueFilePath(self.output_dir, self.item_name, "jxl", True)
+                    path_e9 = getUniqueFilePath(self.output_dir, self.item_name, "jxl", True)
                 
                 args[1] = "-e 7"
                 convert(encoder, self.item_abs_path, path_e7, args, self.n)
@@ -360,7 +360,7 @@ class Worker(QRunnable):
                         args[1] = "-e 9"
             
             with QMutexLocker(self.mutex):
-                lossless_path = getUniqueFilePath(self.item_dir, self.item_name, self.output_ext, True)
+                lossless_path = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, True)
             
             convert(encoder, self.item_abs_path, lossless_path, args, self.n)
 
