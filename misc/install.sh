@@ -10,7 +10,7 @@ install(){
 
     # Desktop entries
     cp xl-converter.desktop ~/Desktop/
-    cp xl-converter.desktop ~/.local/share/applications/
+    sudo cp xl-converter.desktop /usr/share/applications/
 
     # Install
     echo "Installing..."
@@ -36,7 +36,7 @@ check_root_permissions(){
 post_install(){
     # Refresh start menu entries
     if command -v update-desktop-database &> /dev/null; then
-        update-desktop-database ~/.local/share/applications/
+        sudo update-desktop-database /usr/share/applications/ &> /dev/null
     fi
 
     # Check if fuse is installed
