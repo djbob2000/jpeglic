@@ -365,7 +365,7 @@ class OutputTab(QWidget):
         self.loadFormatState()
         
     def onQualitySlChanged(self):
-        self.quality_sb.setValue(abs(self.quality_sl.value()))
+        self.quality_sb.setValue(self.quality_sl.value())
 
     def onQualitySbChanged(self):
         self.quality_sl.setValue(self.quality_sb.value())
