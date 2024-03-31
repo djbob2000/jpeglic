@@ -219,7 +219,9 @@ class OutputTab(QWidget):
         output_page_lt.addWidget(conv_grp,1,0)
         output_page_lt.addWidget(after_conv_grp,1,1)
         
+        # Size policy
         output_page_lt.setAlignment(Qt.AlignTop)
+        output_page_lt.setRowMinimumHeight(0, 150)
 
         format_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         conv_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -313,54 +315,38 @@ class OutputTab(QWidget):
         
         cur_format = self.format_cmb.currentText()
         self.prev_format = cur_format
-        
-        self.wm.setCheckedByTag("lossless", False)  # Widgets re-enable themselves when you use setChecked() on a disabled widget, so this needs to stay in the beginning
 
-        # Lossless
-        self.wm.setEnabledByTag("lossless", cur_format in ("JPEG XL", "WEBP"))
-        self.wm.setVisibleByTag("lossless", cur_format not in ("PNG", "JPG", "Smallest Lossless"))
+        # Visible
+        self.wm.setVisibleByTag("quality_all", not cur_format in ("PNG", "Smallest Lossless"))
+        self.int_effort_cb.setVisible(cur_format == "JPEG XL")
+        self.effort_sb.setVisible(cur_format in ("JPEG XL", "AVIF"))
+        self.effort_l.setVisible(cur_format in ("JPEG XL", "AVIF"))
+        self.wm.setVisibleByTag("jxl_mode", cur_format == "JPEG XL")
+        self.wm.setVisibleByTag("lossless", cur_format in ("JPEG XL", "WEBP"))
+        self.wm.setVisibleByTag("jpg_encoder", cur_format == "JPG")
+        self.reconstruct_jpg_cb.setVisible(cur_format == "PNG")
+        self.wm.setVisibleByTag("format_pool", cur_format == "Smallest Lossless")
+        self.max_compression_cb.setVisible(cur_format == "Smallest Lossless")
 
-        # Effort
-        self.int_effort_cb.setEnabled(cur_format == "JPEG XL")
-        self.effort_sb.setEnabled(cur_format in ("JPEG XL", "AVIF"))
-        self.effort_l.setEnabled(cur_format in ("JPEG XL", "AVIF"))
-
+        # Params
         if cur_format == "AVIF":
             self.effort_sb.setRange(0, 10)
             self.effort_l.setText("Speed")
-        else:
+        elif cur_format == "JPEG XL":
             self.effort_sb.setRange(1, 10 if self.enable_jxl_effort_10 else 9)
             self.effort_l.setText("Effort")
-        
-        # Int. Effort
-        if cur_format == "JPEG XL":
-            self.onEffortToggled()  # It's very important to update int_effort_cb to avoid issues when changing formats while it's enabled
 
-        # JPEG XL Lossy Modes
-        self.wm.setVisibleByTag("jxl_mode", cur_format == "JPEG XL")
-
-        # Quality slider
-        self.wm.setEnabledByTag("quality_all", not cur_format in ("PNG", "Smallest Lossless"))
         if cur_format in ("JPEG XL", "AVIF"):
             self.setQualityRange(0, 99)
         else:
             self.setQualityRange(1, 100)
         
-        # Smallest Lossless mode
-        is_sm_l = cur_format == "Smallest Lossless"
-        self.wm.setVisibleByTag("effort", not is_sm_l)
-        self.wm.setVisibleByTag("format_pool", is_sm_l)
-        self.max_compression_cb.setVisible(is_sm_l)
+        # Update states
+        self.wm.setCheckedByTag("lossless", False)
+        self.effort_sb.setEnabled(cur_format in ("JPEG XL", "AVIF"))
         
-        # JPG
-        self.wm.setVisibleByTag("jpg_encoder", cur_format == "JPG")
-
-        # PNG
-        if cur_format == "PNG":
-            self.reconstruct_jpg_cb.setVisible(True)
-            self.wm.setVisibleByTag("lossless", False)
-        else:
-            self.reconstruct_jpg_cb.setVisible(False)
+        if cur_format == "JPEG XL":
+            self.onEffortToggled()  # It's very important to update int_effort_cb to avoid issues when changing formats while it's enabled
 
         self.loadFormatState()
         
