@@ -519,6 +519,3 @@ class Worker(QRunnable):
         self.output = path_pool[sm_f_key]
         self.final_output = os.path.join(self.output_dir, f"{self.item_name}.{sm_f_key}")
         self.output_ext = sm_f_key
-    
-    def log(self, msg):
-        print(f"[Worker #{self.n}] {msg} ({self.item_name}.{self.item_ext})")
