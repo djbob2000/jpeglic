@@ -4,7 +4,6 @@ import shutil
 import hashlib
 from pathlib import Path
 
-import requests
 from PySide6.QtGui import (
     QDropEvent,
 )

@@ -218,6 +218,45 @@ The dev branch can be accessed with
 git clone -b unstable --depth 1 https://github.com/JacobDev1/xl-converter.git
 ```
 
+## Unit Testing
+
+Unit tests are currently being reworked.
+
+### Running
+
+[Setup repo](#building-from-source).
+
+Create a test environment.
+
+```bash
+python3 -m venv env_test
+source env/bin/activate
+pip install -r requirements.txt
+pip install -r requirements_test.txt
+```
+
+Run tests (Linux)
+
+```bash
+make test
+```
+
+Run tests (Windows)
+
+```cmd
+python test.py
+```
+
+### Deprecated
+
+`tests_old.py` is a deprecated, but still accessible test suite.
+
+To run them, put any image with a varying aspect ratio inside a `sample_img` folder in the project's directory.
+
+```bash
+python tests_old.py
+```
+
 ## Contributions
 
 Pull requests are ignored to avoid potential legal complications when reusing the code.

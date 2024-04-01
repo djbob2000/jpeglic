@@ -29,8 +29,7 @@ src: clean
 	cd dist && 7z a src_`date +%Y%m%d_%H%M%S`.zip src/
 
 test:
-ifdef n
-	python3 -m unittest tests.TestMainWindow.$(n)
-else
-	python3 tests.py
-endif
+	python3 test.py
+
+test-old:
+	python tests_old.py

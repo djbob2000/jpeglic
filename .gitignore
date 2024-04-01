@@ -3,8 +3,10 @@
 /dist/
 .vscode
 __pycache__
+.pytest_cache
 tmp.py
 /env/
+/env_test/
 /sample_img/
 /unit_tests_tmp/
 /misc/appimagetool
