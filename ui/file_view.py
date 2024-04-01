@@ -120,7 +120,11 @@ class FileView(QTreeWidget):
             if url.isLocalFile():
                 path = str(url.toLocalFile())
                 if os.path.isdir(path):     # Directory
-                    files = scanDir(path)
+                    try:
+                        files = scanDir(path)
+                    except FileNotFoundError as e:
+                        logging.error(f"[FileView - scanDir()] Directory not found. {e}")
+                        continue
 
                     for file in files:
                         file_path = Path(file)

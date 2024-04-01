@@ -125,8 +125,13 @@ class InputTab(QWidget):
 
         if dlg.exec():
             selected_dir = dlg.selectedFiles()[0]
-            file_paths = scanDir(selected_dir)
             
+            try:
+                file_paths = scanDir(selected_dir)
+            except FileNotFoundError:
+                self.notify.notify("Error", "The directory was not found.")
+                return
+
             # Add items
             tmp = []
             for i in file_paths:

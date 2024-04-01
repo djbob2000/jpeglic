@@ -17,7 +17,7 @@ from PySide6.QtCore import(
     Qt,
 )
 
-from core.utils import setTheme
+from ui.theme import setTheme
 from .widget_manager import WidgetManager
 
 class Signals(QObject):
