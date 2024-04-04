@@ -38,7 +38,7 @@ def runExifTool(src, dst, mode):
         case "ExifTool - Unsafe Wipe":
             deleteMetadataUnsafe(dst)
 
-def getArgs(encoder, mode, jpg_to_jxl_lossless = False) -> []:
+def getArgs(encoder, mode, jpg_to_jxl_lossless=False) -> list:
     """Return metadata arguments for the specified encoder.
 
     Example Usage:
