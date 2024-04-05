@@ -203,7 +203,7 @@ def _downscaleManualModes(params):
         case "Percent":
             args.append(f"-resize {params['percent']}%")
         case "Resolution":
-            args.append(f"-resize {params['width']}x{params['height']}")
+            args.append(f"-resize {params['width']}x{params['height']}>")
         case "Shortest Side":
             args.append(f"-resize {params['shortest_side']}x{params['shortest_side']}^>")
         case "Longest Side":
