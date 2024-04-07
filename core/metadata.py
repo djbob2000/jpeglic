@@ -9,13 +9,6 @@ from data.constants import (
 )
 from core.process import runProcess
 
-def _runExifTool(*args):
-    """For internal use only."""
-    if platform.system() == "Windows":
-        runProcess(EXIFTOOL_PATH, *args)
-    elif platform.system() == "Linux":  # Relative path needed for Brotli dependency to work on Linux
-        runProcess("./" + EXIFTOOL_BIN_NAME, *args, cwd=EXIFTOOL_FOLDER_PATH)
-
 def copyMetadata(src, dst):
     """Copy all metadata from one file onto another."""
     _runExifTool('-tagsfromfile', src, '-overwrite_original', dst)
@@ -37,6 +30,13 @@ def runExifTool(src, dst, mode):
             copyMetadata(src, dst)
         case "ExifTool - Unsafe Wipe":
             deleteMetadataUnsafe(dst)
+
+def _runExifTool(*args):
+    """For internal use only."""
+    if platform.system() == "Windows":
+        runProcess(EXIFTOOL_PATH, *args)
+    elif platform.system() == "Linux":  # Relative path needed for Brotli dependency to work on Linux
+        runProcess("./" + EXIFTOOL_BIN_NAME, *args, cwd=EXIFTOOL_FOLDER_PATH)
 
 def getArgs(encoder, mode, jpg_to_jxl_lossless=False) -> list:
     """Return metadata arguments for the specified encoder.

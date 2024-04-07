@@ -62,6 +62,7 @@ def getExtension(_format):
             return None
         case _:
             logging.error(f"[Pathing - getExtension()] No extension declared for {_format}")
+            return None
 
 def getOutputDir(
         item_dir_path: str,
