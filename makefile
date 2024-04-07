@@ -1,4 +1,4 @@
-.PHONY: run clean build build-appimage build-7z src-full src-min test
+.PHONY: run clean build build-appimage build-7z src-full src-min test test-old coverage
 
 clean:
 	rm -rf dist
@@ -33,3 +33,8 @@ test:
 
 test-old:
 	python tests_old.py
+
+coverage:
+	export PYTHONPATH=$PYTHONPATH:.
+	pytest --cov=core --cov=ui --cov=main --cov=data --cov=build --cov-report term-missing tests/
+	coverage html

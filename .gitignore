@@ -12,3 +12,5 @@ tmp.py
 /misc/appimagetool
 /misc/VC_redist.x64.exe
 /bin/
+/.coverage
+/htmlcov/
