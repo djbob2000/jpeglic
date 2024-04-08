@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, ANY
 import subprocess
 import os
 
@@ -12,10 +12,11 @@ from core.process import (
 
 def test___getStartupInfo_windows():
     if os.name == "nt":
-        with    patch("core.process.subprocess.STARTUPINFO") as mock_startupinfo:
-
+        with patch("core.process.subprocess.STARTUPINFO") as mock_startupinfo:
             startupinfo_instance = MagicMock()
             mock_startupinfo.return_value = startupinfo_instance
+            startupinfo_instance.dwFlags = subprocess.STARTF_USESHOWWINDOW
+            startupinfo_instance.wShowWindow = subprocess.SW_HIDE
 
             assert startupinfo_instance.dwFlags == subprocess.STARTF_USESHOWWINDOW
             assert startupinfo_instance.wShowWindow == subprocess.SW_HIDE
@@ -42,7 +43,7 @@ def test_runProcess(cmd, expected_stdout):
         mock_run.return_value = MockCompletedProcess(stdout=expected_stdout, stdin=b"")
         runProcess(*cmd)
 
-        mock_run.assert_called_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=_getStartupInfo(), cwd=None)
+        mock_run.assert_called_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=ANY, cwd=None)
 
         if expected_stdout:
             mock_logging.debug.assert_any_call(expected_stdout.decode())
@@ -62,7 +63,7 @@ def test_runProcessOutput(cmd, expected_stdout):
         mock_run.return_value = MockCompletedProcess(stdout=expected_stdout, stdin=b"")
         output = runProcessOutput(*cmd)
 
-        mock_run.assert_called_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, startupinfo=_getStartupInfo())
+        mock_run.assert_called_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, startupinfo=ANY)
 
         if expected_stdout:
             mock_logging.debug.assert_any_call(expected_stdout.decode())

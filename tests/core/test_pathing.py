@@ -23,17 +23,17 @@ def test_getExtension_unknown():
 @pytest.mark.parametrize(
     "item_dir_path,item_anchor_path,custom_dir,custom_dir_path,keep_dir_struct,expected",
     [
-        ("/home/user/Pictures", Path("/home/user"), False, "/home/user/Files", False, "/home/user/Pictures"),    # src
-        ("/home/user/Pictures", Path("/home/user"), True, "Images", False, "/home/user/Pictures/Images"),        # rel.
-        ("/home/user/Pictures", Path("/home/user"), True, "/home/user/Files", False, "/home/user/Files"),        # abs.
-        ("/home/user/Pictures", Path("/home/user/Pictures"), False, "", False, "/home/user/Pictures"),  # rel.
-        ("/home/user/Pictures", Path("/home/user"), True, "/home/user/Files", True, "/home/user/Files/Pictures"),        # keep_dir_struct parent
-        ("/home/user/Pictures/screenshots", Path("/home/user/Pictures"), True, "/home/user/Files", True, "/home/user/Files/screenshots"),        # keep_dir_struct subfolder
+        (Path("/home/user/Pictures"), Path("/home/user"), False, Path("/home/user/Files"), False, Path("/home/user/Pictures")),    # src
+        (Path("/home/user/Pictures"), Path("/home/user"), True, "Images", False, Path("/home/user/Pictures/Images")),        # rel.
+        (Path("/home/user/Pictures"), Path("/home/user"), True, Path("/home/user/Files"), False, Path("/home/user/Files")),        # abs.
+        (Path("/home/user/Pictures"), Path("/home/user/Pictures"), False, "", False, Path("/home/user/Pictures")),  # rel.
+        (Path("/home/user/Pictures"), Path("/home/user"), True, Path("/home/user/Files"), True, Path("/home/user/Files/Pictures")),        # keep_dir_struct parent
+        (Path("/home/user/Pictures/screenshots"), Path("/home/user/Pictures"), True, Path("/home/user/Files"), True, Path("/home/user/Files/screenshots")),        # keep_dir_struct subfolder
     ]
 )
 
 def test_getOutputDir(item_dir_path, item_anchor_path, custom_dir, custom_dir_path, keep_dir_struct, expected):
-    assert getOutputDir(item_dir_path, item_anchor_path, custom_dir, custom_dir_path, keep_dir_struct) == expected
+    assert getOutputDir(str(item_dir_path), item_anchor_path, custom_dir, str(custom_dir_path), keep_dir_struct) == str(expected)
 
 @pytest.mark.parametrize(
     "item_dir_path,item_anchor_path,custom_dir,custom_dir_path,keep_dir_struct", [
