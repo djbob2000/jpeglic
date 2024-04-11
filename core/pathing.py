@@ -4,19 +4,19 @@ import os
 from pathlib import Path
 import logging
 
-def getUniqueFilePath(dir, file_name: str, ext: str, add_rnd = False):
+def getUniqueFilePath(output_dir: str, file_name: str, file_ext: str, add_rnd = False):
     """
     Get a unique file name within a directory.
     
     Params:
-        - dir - output dir path
-        - file_name - name of an item
-        - ext - extension (without dot)
+        - output_dir - the directory where the file needs to be unique
+        - file_name - the original name of the file
+        - file_ext - the file extension (without dot)
         - add_rnd - add random characters to the file name
     """
 
     rnd_str = "_" + "".join(random.choice("0123456789abcdef") for _ in range(3)) if add_rnd else ""     # hex
-    path = os.path.join(dir,f"{file_name}{rnd_str}.{ext}")
+    path = os.path.join(output_dir,f"{file_name}{rnd_str}.{file_ext}")
 
     prev = re.search(r"\([0-9]{1,}\)$", file_name)  	# Detect a previously renamed file
     n = int(prev.group(0)[1:-1]) if prev else 1			# Parse previously assigned number
@@ -26,18 +26,18 @@ def getUniqueFilePath(dir, file_name: str, ext: str, add_rnd = False):
     new_file_name = file_name[:-len(prev.group(0))] if strip_p else file_name	# Strip parenthesis
 
     while os.path.isfile(path):
-        path = os.path.join(dir,f"{new_file_name}{spacing}({n}){rnd_str}.{ext}")
+        path = os.path.join(output_dir,f"{new_file_name}{spacing}({n}){rnd_str}.{file_ext}")
         n += 1
 
     return path
 
-def getPathGIF(output_dir, item_name, mode):
+def getPathGIF(output_dir: str, item_name: str, duplicates: str):
     """Single-purpose method for decoding GIF to PNG with ImageMagick."""
     new_path = os.path.join(output_dir, f"{item_name}.png")
-    match mode:
+    match duplicates:
         case "Rename":
             if os.path.isfile(os.path.join(output_dir, f"{item_name}-0.png")):
-                n = 0
+                n = 1
                 while os.path.isfile(os.path.join(output_dir, f"{item_name} ({n})-0.png")):
                     n += 1
                 new_path = os.path.join(output_dir, f"{item_name} ({n}).png")
