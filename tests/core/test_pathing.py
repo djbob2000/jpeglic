@@ -9,16 +9,17 @@ from core.pathing import (
     isANSICompatible,
 )
 
-def test_getExtension():
-    assert getExtension("JPEG XL") == "jxl"
-    assert getExtension("PNG") == "png"
-    assert getExtension("AVIF") == "avif"
-    assert getExtension("WEBP") == "webp"
-    assert getExtension("JPG") == "jpg"
-
-def test_getExtension_unknown():
-    assert getExtension("Smallest Lossless") == None
-    assert getExtension("FLIF") == None
+@pytest.mark.parametrize("file_format, extension", [
+    ("JPEG XL", "jxl"),
+    ("AVIF", "avif"),
+    ("WEBP", "webp"),
+    ("JPG", "jpg"),
+    ("PNG", "png"),
+    ("Smallest Lossless", None),
+    ("FLIF", None),
+])
+def test_getExtension(file_format, extension):
+    assert getExtension(file_format) == extension
 
 @pytest.mark.parametrize(
     "item_dir_path,item_anchor_path,custom_dir,custom_dir_path,keep_dir_struct,expected",
