@@ -177,40 +177,17 @@ All binaries are built statically. The version numbers should match. Binaries on
 
 See the official [XL Converter builds](https://github.com/JacobDev1/xl-converter/releases) for examples.
 
-### Troubleshooting Build Issues
+## Info
 
-#### Building on Linux
+### Python Version
 
-The build may not be generated successfully, because `PyInstaller` sometimes clashes with virtual environments on Linux.
+The project runs on Python `3.11.6`. It should also work on a slightly older version. `3.12` and newer are not supported.
 
-If the executable doesn't launch do the following.
-
-Deactivate the virtual environment.
-
-```bash
-deactivate
-```
-
-Install packages globally.
-```bash
-pip install -r requirements.txt
-```
-
-Try again.
-
-```bash
-make build
-```
-
-#### Python Version on Linux
-
-The project runs on Python `3.11.6`. The one in your repo should work, but If it doesn't use `pyenv` to get this one specifically. 
-
-#### Large Files
+### Large Files
 
 Don't forget `--depth 1` when running `git clone`. This repo contains large files.
 
-## Development Branch
+### Development Branch
 
 The dev branch can be accessed with
 
