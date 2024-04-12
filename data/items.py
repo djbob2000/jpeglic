@@ -1,6 +1,5 @@
 from statistics import mean
 from pathlib import Path
-import os
 import logging
 
 from data.constants import ALLOWED_INPUT
@@ -23,11 +22,11 @@ class Items():
             ext = abs_path.suffix[1:]
     
             if ext.lower() not in ALLOWED_INPUT:
-                logging.info(f"[Items] File not allowed for current format. {ext}")
+                logging.error(f"[Items] Extension not allowed ({ext})")
                 continue
 
             if not isinstance(anchor_path, Path):
-                logging.info(f"[Items] anchor_path is not Path object. {ext}")
+                logging.error(f"[Items] anchor_path is not a Path object ({type(anchor_path)})")
                 continue
 
             self.items.append(
@@ -44,16 +43,6 @@ class Items():
 
     def getItemCount(self) -> int:
         return self.item_count
-    
-    def getCommonPath(self) -> Path:
-        """Computation heavy, use with caution. Returns None when there is no common path."""
-        items_str = [str(path) for path in self.items]
-        try:
-            commonpath = Path(os.path.commonpath(items_str))
-        except Exception as e:
-            return None
-
-        return commonpath
 
     def getCompletedItemCount(self) -> int:
         return len(self.completed_items)
