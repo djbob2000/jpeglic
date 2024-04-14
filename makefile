@@ -1,4 +1,4 @@
-.PHONY: run clean build build-appimage build-7z src-full src-min test test-old coverage
+.PHONY: run clean build build-appimage build-7z src-full src-min test test-old coverage test-slowest test-no-cache
 
 clean:
 	rm -rf dist
@@ -33,7 +33,11 @@ test:
 
 test-slowest:
 	export PYTHONPATH=$PYTHONPATH:.
-	pytest --durations=10 --durations-min=0.02
+	pytest --durations=10 --durations-min=0.02 tests/
+
+test-no-cache:
+	export PYTHONPATH=$PYTHONPATH:.
+	pytest --cache-clear tests/
 
 test-old:
 	python tests_old.py
