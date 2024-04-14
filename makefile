@@ -31,6 +31,10 @@ src: clean
 test:
 	python3 test.py
 
+test-slowest:
+	export PYTHONPATH=$PYTHONPATH:.
+	pytest --durations=10 --durations-min=0.02
+
 test-old:
 	python tests_old.py
 
