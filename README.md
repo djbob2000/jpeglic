@@ -60,6 +60,12 @@ You can submit a bug report in 2 ways
 - \[public\] Submit a new [GitHub Issue](https://github.com/JacobDev1/xl-converter/issues)
 - \[private\] Email me at contact@codepoems.eu
 
+## Contributions
+
+Pull requests are ignored to avoid licensing issues when reusing the code.
+
+Feel free to make bug reports as contributions.
+
 ## Building from Source
 
 ### Windows 10
@@ -233,11 +239,3 @@ To run them, put any image with a varying aspect ratio inside a `sample_img` fol
 ```bash
 python tests_old.py
 ```
-
-## Contributions
-
-Pull requests are ignored to avoid potential legal complications when reusing the code.
-
-Forward your suggestions to my email at contact@codepoems.eu
-
-Feel free to make [bug reports](#bug-reports) as contributions.
