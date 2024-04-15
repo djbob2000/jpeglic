@@ -32,17 +32,14 @@ test:
 	python3 test.py
 
 test-slowest:
-	export PYTHONPATH=$PYTHONPATH:.
-	pytest --durations=10 --durations-min=0.02 tests/
+	export PYTHONPATH=$$PYTHONPATH:. && pytest --durations=10 --durations-min=0.02 tests/
 
 test-no-cache:
-	export PYTHONPATH=$PYTHONPATH:.
-	pytest --cache-clear tests/
+	export PYTHONPATH=$$PYTHONPATH:. && pytest --cache-clear tests/
 
 test-old:
 	python tests_old.py
 
 coverage:
-	export PYTHONPATH=$PYTHONPATH:.
-	pytest --cov=core --cov=ui --cov=main --cov=data --cov=build --cov-report term-missing tests/
+	export PYTHONPATH=$$PYTHONPATH:. && pytest --cov=core --cov=ui --cov=main --cov=data --cov=build --cov-report term-missing tests/
 	coverage html
