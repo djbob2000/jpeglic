@@ -234,8 +234,6 @@ python test.py
 
 `tests_old.py` is a deprecated, but still accessible test suite.
 
-To run them, put any image with a varying aspect ratio inside a `sample_img` folder in the project's directory.
-
 ```bash
-python tests_old.py
+python test_old.py
 ```
