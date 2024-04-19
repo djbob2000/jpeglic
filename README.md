@@ -173,7 +173,7 @@ Binaries needed:
 - [exiftool](https://exiftool.org/) 12.77
     - exiftool.exe - Windows
     - exiftool - standalone Perl build
-- [oxipng](https://github.com/shssoichiro/oxipng) 0.8.0
+- [oxipng](https://github.com/shssoichiro/oxipng) 0.9.0
 
 Place them in the following directories:
 - `xl-converter\bin\win` for Windows (x86_64) 
