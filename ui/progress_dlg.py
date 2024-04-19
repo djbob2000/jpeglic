@@ -38,6 +38,7 @@ class ProgressDialog(QObject):
         self.dlg.canceled.connect(self.canceled.emit)
 
         self.dlg.setMinimumWidth(350)
+        self.dlg.setMinimumHeight(115)
         self.dlg.show()
 
     def finished(self):
