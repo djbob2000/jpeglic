@@ -34,7 +34,7 @@ def test_initial_state(app):
     assert settings["effort"] == 7
     assert settings["intelligent_effort"] == False
     assert settings["reconstruct_jpg"] == True
-    assert settings["jxl_mode"] == "Default"
+    assert settings["jxl_modular"] == False
     assert settings["jpg_encoder"] == "JPEGLI from JPEG XL"
     assert settings["delete_original"] == False
     assert not app.smIsFormatPoolEmpty()
@@ -112,7 +112,7 @@ def test_onFormatChange_lossless_toggled(app):
     assert not app.quality_sl.isEnabled()
     assert not app.quality_sb.isEnabled()
 
-@pytest.mark.parametrize("file_format, int_effort, effort, effort_label, quality, lossless, jxl_mode, jpg_encoder, reconstruct_jpg, smallest_lossless", [
+@pytest.mark.parametrize("file_format, int_effort, effort, effort_label, quality, lossless, jxl_modular, jpg_encoder, reconstruct_jpg, smallest_lossless", [
     ("JPEG XL", True, True, "Effort", True, True, True, False, False, False),
     ("AVIF", False, True, "Speed", True, False, False, False, False, False),
     ("WEBP", False, False, ANY, True, True, False, False, False, False),
@@ -120,7 +120,7 @@ def test_onFormatChange_lossless_toggled(app):
     ("PNG", False, False, ANY, False, False, False, False, True, False),
     ("Smallest Lossless", False, False, ANY, False, False, False, False, False, True),
 ])
-def test_onFormatChange_visibility(app, file_format, int_effort, effort, effort_label, quality, lossless, jxl_mode, jpg_encoder, reconstruct_jpg, smallest_lossless):
+def test_onFormatChange_visibility(app, file_format, int_effort, effort, effort_label, quality, lossless, jxl_modular, jpg_encoder, reconstruct_jpg, smallest_lossless):
     app.format_cmb.setCurrentIndex(app.format_cmb.findText(file_format))
     assert app.format_cmb.currentText() == file_format
     
@@ -140,8 +140,8 @@ def test_onFormatChange_visibility(app, file_format, int_effort, effort, effort_
     assert app.lossless_if_cb.isVisibleTo(app) == lossless
     
     # Misc.
-    assert app.jxl_mode_l.isVisibleTo(app) == jxl_mode
-    assert app.jxl_mode_cmb.isVisibleTo(app) == jxl_mode
+    assert app.jxl_modular_cb.isVisibleTo(app) == jxl_modular
+    assert app.jxl_modular_l.isVisibleTo(app) == jxl_modular
     assert app.jpg_encoder_l.isVisibleTo(app) == jpg_encoder
     assert app.jpg_encoder_cmb.isVisibleTo(app) == jpg_encoder
     assert app.reconstruct_jpg_cb.isVisibleTo(app) == reconstruct_jpg

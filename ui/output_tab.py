@@ -134,19 +134,14 @@ class OutputTab(QWidget):
         self.quality_sb.valueChanged.connect(self.onQualitySbChanged)
 
         self.lossless_cb = self.wm.addWidget("lossless_cb", QCheckBox("Lossless"), "lossless")
-        self.lossless_if_cb = self.wm.addWidget("lossless_if_cb", QCheckBox("Lossless (only if smaller)"), "lossless")
+        self.lossless_if_cb = self.wm.addWidget("lossless_if_cb", QCheckBox("Lossless (if smaller)"), "lossless")
         self.lossless_if_cb.toggled.connect(self.onLosslessToggled)
         self.lossless_cb.toggled.connect(self.onLosslessToggled)
 
         self.max_compression_cb = self.wm.addWidget("max_compression_cb", QCheckBox("Max Compression"))
         
-        self.jxl_mode_l = self.wm.addWidget("jxl_mode_l", QLabel("Lossy Mode"), "jxl_mode")
-        self.jxl_mode_cmb = self.wm.addWidget("jxl_mode_cmb", QComboBox(), "jxl_mode")
-        self.jxl_mode_cmb.addItems((
-            "Default",
-            "VarDCT",
-            "Modular",
-        ))
+        self.jxl_modular_l = self.wm.addWidget("jxl_modular_l", QLabel("Lossy Mode"), "jxl_advanced")
+        self.jxl_modular_cb = self.wm.addWidget("jxl_modular_cb", QCheckBox("Modular"), "jxl_advanced")
 
         self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("Encoder"), "jpg_encoder")
         self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", QComboBox(), "jpg_encoder")
@@ -179,9 +174,9 @@ class OutputTab(QWidget):
         quality_hb.addWidget(self.quality_sl)
         quality_hb.addWidget(self.quality_sb)
 
-        self.jxl_mode_hb = QHBoxLayout()                    # JPEG XL Mode
-        self.jxl_mode_hb.addWidget(self.jxl_mode_l)
-        self.jxl_mode_hb.addWidget(self.jxl_mode_cmb)
+        jxl_advanced_hb = QHBoxLayout()                     # JPEG XL Mode
+        jxl_advanced_hb.addWidget(self.jxl_modular_l)
+        jxl_advanced_hb.addWidget(self.jxl_modular_cb)
 
         self.jpg_encoder_hb = QHBoxLayout()                 # JPG Encoder
         self.jpg_encoder_hb.addWidget(self.jpg_encoder_l)
@@ -197,7 +192,7 @@ class OutputTab(QWidget):
         format_grp_lt.addLayout(format_cmb_hb)
         format_grp_lt.addLayout(effort_hb)
         format_grp_lt.addLayout(quality_hb)
-        format_grp_lt.addLayout(self.jxl_mode_hb)
+        format_grp_lt.addLayout(jxl_advanced_hb)
         format_grp_lt.addLayout(lossless_hb)
         format_grp_lt.addLayout(self.jpg_encoder_hb)
         format_grp_lt.addLayout(format_sm_l_hb)
@@ -257,7 +252,7 @@ class OutputTab(QWidget):
             "effort": self.effort_sb.value(),
             "intelligent_effort": self.int_effort_cb.isChecked(),
             "reconstruct_jpg": self.reconstruct_jpg_cb.isChecked(),
-            "jxl_mode": self.jxl_mode_cmb.currentText(),
+            "jxl_modular": self.jxl_modular_cb.isChecked(),
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
             "if_file_exists": self.duplicates_cmb.currentText(),
             "custom_output_dir": self.choose_output_ct_rb.isChecked(),
@@ -321,7 +316,7 @@ class OutputTab(QWidget):
         self.int_effort_cb.setVisible(cur_format == "JPEG XL")
         self.effort_sb.setVisible(cur_format in ("JPEG XL", "AVIF"))
         self.effort_l.setVisible(cur_format in ("JPEG XL", "AVIF"))
-        self.wm.setVisibleByTag("jxl_mode", cur_format == "JPEG XL")
+        self.wm.setVisibleByTag("jxl_advanced", cur_format == "JPEG XL")
         self.wm.setVisibleByTag("lossless", cur_format in ("JPEG XL", "WEBP"))
         self.wm.setVisibleByTag("jpg_encoder", cur_format == "JPG")
         self.reconstruct_jpg_cb.setVisible(cur_format == "PNG")
@@ -370,7 +365,7 @@ class OutputTab(QWidget):
         self.lossless_cb.setEnabled(not lossless_if_checked)
         self.lossless_if_cb.setEnabled(not lossless_checked)
         
-        self.wm.setEnabledByTag("jxl_mode", not (lossless_checked or lossless_if_checked))        
+        self.wm.setEnabledByTag("jxl_advanced", not (lossless_checked or lossless_if_checked))        
 
     def setJxlEffort10Enabled(self, enabled):
         self.enable_jxl_effort_10 = enabled
@@ -394,7 +389,7 @@ class OutputTab(QWidget):
                 self.quality_sl.setValue(90)
         
         self.int_effort_cb.setChecked(False)
-        self.jxl_mode_cmb.setCurrentIndex(0)
+        self.jxl_modular_cb.setChecked(False)
 
         self.choose_output_src_rb.setChecked(True)
         self.keep_dir_struct_cb.setChecked(False)
