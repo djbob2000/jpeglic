@@ -164,7 +164,7 @@ Binaries needed:
     - djxl
     - jxlinfo
     - cjpegli
-- [libavif](https://github.com/AOMediaCodec/libavif) 1.0.3 (**AVIF_CODEC_AOM**)
+- [libavif](https://github.com/AOMediaCodec/libavif) 1.0.4 (AOM `3.8.2`)
     - avifenc
     - avifdec
 - [imagemagick](https://imagemagick.org/) 7.1.1-15 Q16-HDRI
