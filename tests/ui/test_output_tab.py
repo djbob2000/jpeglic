@@ -109,8 +109,8 @@ def test_onFormatChange_lossless_toggled(app):
     
     assert not app.lossless_cb.isEnabled()
     assert app.lossless_if_cb.isEnabled()
-    assert not app.quality_sl.isEnabled()
-    assert not app.quality_sb.isEnabled()
+    assert app.quality_sl.isEnabled()
+    assert app.quality_sb.isEnabled()
 
 @pytest.mark.parametrize("file_format, int_effort, effort, effort_label, quality, lossless, jxl_modular, jpg_encoder, reconstruct_jpg, smallest_lossless", [
     ("JPEG XL", True, True, "Effort", True, True, True, False, False, False),

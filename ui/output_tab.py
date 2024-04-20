@@ -135,7 +135,7 @@ class OutputTab(QWidget):
 
         self.lossless_cb = self.wm.addWidget("lossless_cb", QCheckBox("Lossless"), "lossless")
         self.lossless_if_cb = self.wm.addWidget("lossless_if_cb", QCheckBox("Lossless (if smaller)"), "lossless")
-        self.lossless_if_cb.toggled.connect(self.onLosslessToggled)
+        self.lossless_if_cb.toggled.connect(self.onLosslessIfToggled)
         self.lossless_cb.toggled.connect(self.onLosslessToggled)
 
         self.max_compression_cb = self.wm.addWidget("max_compression_cb", QCheckBox("Max Compression"))
@@ -361,11 +361,14 @@ class OutputTab(QWidget):
         lossless_checked = self.lossless_cb.isChecked()
         lossless_if_checked = self.lossless_if_cb.isChecked()
 
-        self.wm.setEnabledByTag("quality_all", not (lossless_checked or lossless_if_checked))
+        self.wm.setEnabledByTag("quality_all", not lossless_checked)
+        self.wm.setEnabledByTag("jxl_advanced", not lossless_checked)        
+
         self.lossless_cb.setEnabled(not lossless_if_checked)
-        self.lossless_if_cb.setEnabled(not lossless_checked)
-        
-        self.wm.setEnabledByTag("jxl_advanced", not (lossless_checked or lossless_if_checked))        
+        self.lossless_if_cb.setEnabled(not self.lossless_cb.isChecked())
+    
+    def onLosslessIfToggled(self):
+        self.lossless_cb.setEnabled(not self.lossless_if_cb.isChecked())
 
     def setJxlEffort10Enabled(self, enabled):
         self.enable_jxl_effort_10 = enabled
