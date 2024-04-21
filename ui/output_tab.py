@@ -149,13 +149,22 @@ class OutputTab(QWidget):
             "JPEGLI from JPEG XL",
             "ImageMagick",
         ))
+        self.jpg_encoder_cmb.currentIndexChanged.connect(self.onJPGEncoderChanged)
         
         self.smallest_lossless_png_cb = self.wm.addWidget("smallest_lossless_png_cb", QCheckBox("PNG"), "format_pool")
         self.smallest_lossless_webp_cb = self.wm.addWidget("smallest_lossless_webp_cb", QCheckBox("WEBP"), "format_pool")
         self.smallest_lossless_jxl_cb = self.wm.addWidget("smallest_lossless_jxl_cb", QCheckBox("JPEG XL"), "format_pool")
         
         self.reconstruct_jpg_cb = self.wm.addWidget("reconstruct_jpg_cb", QCheckBox("Reconstruct JPG from JPEG XL"))
-        
+
+        self.chroma_subsampling_l = self.wm.addWidget("chroma_subsampling_l", QLabel("Chroma Subsampling", self), "chroma_subsampling")
+        self.chroma_subsampling_jpegli_cmb = self.wm.addWidget("chroma_subsampling_jpegli_cmb", QComboBox(self), "chroma_subsampling")
+        self.chroma_subsampling_jpegli_cmb.addItems(("Default", "4:4:4", "4:4:0", "4:2:2", "4:2:0",))
+        self.chroma_subsampling_avif_cmb = self.wm.addWidget("chroma_subsampling_avif_cmb", QComboBox(self), "chroma_subsampling")
+        self.chroma_subsampling_avif_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0", "4:0:0",))
+        self.chroma_subsampling_jpg_cmb = self.wm.addWidget("chroma_subsampling_jpg_cmb", QComboBox(self), "chroma_subsampling")
+        self.chroma_subsampling_jpg_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
+
         # Format - layout
         format_cmb_hb = QHBoxLayout()                       # Format ComboBox
         format_cmb_hb.addWidget(QLabel("Format"))
@@ -186,6 +195,12 @@ class OutputTab(QWidget):
         for i in self.wm.getWidgetsByTag("format_pool"):
             format_sm_l_hb.addWidget(i)
 
+        self.chroma_subsampling_hb = QHBoxLayout()      # Chroma subsampling
+        self.chroma_subsampling_hb.addWidget(self.chroma_subsampling_l)
+        self.chroma_subsampling_hb.addWidget(self.chroma_subsampling_jpegli_cmb)
+        self.chroma_subsampling_hb.addWidget(self.chroma_subsampling_avif_cmb)
+        self.chroma_subsampling_hb.addWidget(self.chroma_subsampling_jpg_cmb)
+
         format_grp = QGroupBox("Format")                    # Layout
         format_grp_lt = QVBoxLayout()
         format_grp.setLayout(format_grp_lt)
@@ -198,6 +213,7 @@ class OutputTab(QWidget):
         format_grp_lt.addLayout(format_sm_l_hb)
         format_grp_lt.addWidget(self.max_compression_cb)
         format_grp_lt.addWidget(self.reconstruct_jpg_cb)
+        format_grp_lt.addLayout(self.chroma_subsampling_hb)
 
         # Buttons
         reset_to_default_btn = QPushButton("Reset to Default")
@@ -254,6 +270,9 @@ class OutputTab(QWidget):
             "reconstruct_jpg": self.reconstruct_jpg_cb.isChecked(),
             "jxl_modular": self.jxl_modular_cb.isChecked(),
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
+            "avif_chroma_subsampling": self.chroma_subsampling_avif_cmb.currentText(),
+            "jpegli_chroma_subsampling": self.chroma_subsampling_jpegli_cmb.currentText(),
+            "jpg_chroma_subsampling": self.chroma_subsampling_jpg_cmb.currentText(),
             "if_file_exists": self.duplicates_cmb.currentText(),
             "custom_output_dir": self.choose_output_ct_rb.isChecked(),
             "custom_output_dir_path": self.choose_output_ct_le.text(),
@@ -309,6 +328,7 @@ class OutputTab(QWidget):
         self.saveFormatState()
         
         cur_format = self.format_cmb.currentText()
+        jpg_encoder = self.jpg_encoder_cmb.currentText()
         self.prev_format = cur_format
 
         # Visible
@@ -322,6 +342,10 @@ class OutputTab(QWidget):
         self.reconstruct_jpg_cb.setVisible(cur_format == "PNG")
         self.wm.setVisibleByTag("format_pool", cur_format == "Smallest Lossless")
         self.max_compression_cb.setVisible(cur_format == "Smallest Lossless")
+        self.chroma_subsampling_l.setVisible(cur_format in ("JPG", "AVIF"))
+        self.chroma_subsampling_jpg_cmb.setVisible(cur_format == "JPG" and jpg_encoder == "ImageMagick")
+        self.chroma_subsampling_jpegli_cmb.setVisible(cur_format == "JPG" and jpg_encoder == "JPEGLI from JPEG XL")
+        self.chroma_subsampling_avif_cmb.setVisible(cur_format == "AVIF")
 
         # Params
         if cur_format == "AVIF":
@@ -370,6 +394,11 @@ class OutputTab(QWidget):
     def onLosslessIfToggled(self):
         self.lossless_cb.setEnabled(not self.lossless_if_cb.isChecked())
 
+    def onJPGEncoderChanged(self):
+        encoder = self.jpg_encoder_cmb.currentText()
+        self.chroma_subsampling_jpg_cmb.setVisible(encoder == "ImageMagick")
+        self.chroma_subsampling_jpegli_cmb.setVisible(encoder == "JPEGLI from JPEG XL")
+
     def setJxlEffort10Enabled(self, enabled):
         self.enable_jxl_effort_10 = enabled
         if self.format_cmb.currentText() == "JPEG XL":
@@ -403,7 +432,11 @@ class OutputTab(QWidget):
         
         self.threads_sl.setValue(self.MAX_THREAD_COUNT - 1 if self.MAX_THREAD_COUNT > 0 else 1)  # -1 because the OS needs some CPU time as well
         self.duplicates_cmb.setCurrentIndex(0)
+        
         self.jpg_encoder_cmb.setCurrentIndex(0)
+        self.chroma_subsampling_jpegli_cmb.setCurrentIndex(0)
+        self.chroma_subsampling_avif_cmb.setCurrentIndex(0)
+        self.chroma_subsampling_jpg_cmb.setCurrentIndex(0)
 
         # Lossless
         self.wm.setCheckedByTag("lossless", False)

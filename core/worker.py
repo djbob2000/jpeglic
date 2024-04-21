@@ -270,6 +270,8 @@ class Worker(QRunnable):
                     f"-s {self.params['effort']}",
                     f"-j {self.available_threads}"
                 ]
+                if self.params["avif_chroma_subsampling"] != "Default":
+                    args.append(f"-y {self.params['avif_chroma_subsampling'].replace(':', '')}")
 
                 encoder = AVIFENC_PATH
             case "JPG":
@@ -277,9 +279,15 @@ class Worker(QRunnable):
                     args = [f"-q {self.params['quality']}"]
                     if self.settings["disable_progressive_jpegli"]:
                         args.append("-p 0")
+                    if self.params["jpegli_chroma_subsampling"] != "Default":
+                        args.append(f"--chroma_subsampling={self.params['jpegli_chroma_subsampling'].replace(':', '')}")
+
                     encoder = CJPEGLI_PATH
                 else:
                     args = [f"-quality {self.params['quality']}"]
+                    if self.params["jpg_chroma_subsampling"] != "Default":
+                        args.append(f"-sampling-factor {self.params['jpg_chroma_subsampling']}")
+                    
                     encoder = IMAGE_MAGICK_PATH
             case "WEBP":
                 args = []
