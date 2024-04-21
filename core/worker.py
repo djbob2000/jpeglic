@@ -312,6 +312,20 @@ class Worker(QRunnable):
         # Prepare metadata
         args.extend(metadata.getArgs(encoder, self.params["misc"]["keep_metadata"], self.jpg_to_jxl_lossless))
 
+        # Custom arguments
+        if encoder == AVIFENC_PATH:
+            if self.settings["avifenc_args"]:
+                args.append(self.settings["avifenc_args"])
+        elif encoder == CJXL_PATH:
+            if self.settings["cjxl_args"]:
+                args.append(self.settings["cjxl_args"])
+        elif encoder == CJPEGLI_PATH:
+            if self.settings["cjpegli_args"]:
+                args.append(self.settings["cjpegli_args"])
+        elif encoder == IMAGE_MAGICK_PATH:
+            if self.settings["im_args"]:
+                args.append(self.settings["im_args"])
+
         # Convert & downscale
         if self.params["downscaling"]["enabled"]:
             self.scl_params["enc"] = encoder
