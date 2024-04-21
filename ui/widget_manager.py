@@ -127,6 +127,8 @@ class WidgetManager():
                     widget_states[key] = self.widgets[key].isChecked()
                 case "QLineEdit":
                     widget_states[key] = self.widgets[key].text()
+                case "QTextEdit":
+                    widget_states[key] = self.widgets[key].toPlainText()
 
         if not widget_states:   # If empty
             return
@@ -195,7 +197,7 @@ class WidgetManager():
 
         # Verify value type
         val_mismatch = False
-        if widget_class in ("QLineEdit", "QComboBox"):
+        if widget_class in ("QLineEdit", "QComboBox", "QTextEdit"):
             if not isinstance(val, str):
                 val_mismatch = True
         elif widget_class in ("QCheckBox", "QRadioButton"):
@@ -226,6 +228,8 @@ class WidgetManager():
                 widget.setChecked(val)
             case "QLineEdit":
                 widget.setText(val)
+            case "QTextEdit":
+                widget.setPlainText(val)
             case _:
                 self.error(f"Unrecognized widget type ({widget})")
     
