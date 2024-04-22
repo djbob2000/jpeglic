@@ -71,6 +71,7 @@ class SettingsTab(QWidget):
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
 
+        self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Custom Encoder Arguments"))
         self.avifenc_args_l = QLabel("avifenc args")
         self.avifenc_args_te = self.wm.addWidget("avifenc_args_te", QTextEdit())
         self.cjpegli_args_l = QLabel("cjpegli args")
@@ -86,6 +87,7 @@ class SettingsTab(QWidget):
         self.no_sorting_cb.toggled.connect(self.signals.disable_sorting)
         self.enable_jxl_effort_10.clicked.connect(self.signals.enable_jxl_effort_10)
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling.emit)
+        self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
 
         # Settings - layout
         self.settings_lt.addRow(self.dark_theme_cb)
@@ -97,6 +99,7 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.disable_jxl_utf8_check_cb)
         self.settings_lt.addRow(self.custom_resampling_cb)
         self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
+        self.settings_lt.addRow(self.custom_args_cb)
         self.settings_lt.addRow(self.cjxl_args_l, self.cjxl_args_te)
         self.settings_lt.addRow(self.avifenc_args_l, self.avifenc_args_te)
         self.settings_lt.addRow(self.cjpegli_args_l, self.cjpegli_args_te)
@@ -146,6 +149,9 @@ class SettingsTab(QWidget):
         self.resetToDefault()
         self.wm.loadState()
 
+        # Refresh state
+        self.onCustomArgsToggled()
+
         # Apply Settings
         self.setDarkModeEnabled(self.dark_theme_cb.isChecked())
 
@@ -172,6 +178,8 @@ class SettingsTab(QWidget):
         self.enable_jxl_effort_10.setVisible(advanced)
         self.custom_resampling_cb.setVisible(advanced)
         self.disable_jxl_utf8_check_cb.setVisible(advanced if os.name == "nt" else False)
+
+        self.custom_args_cb.setVisible(advanced)
         self.avifenc_args_l.setVisible(advanced)
         self.avifenc_args_te.setVisible(advanced)
         self.cjxl_args_l.setVisible(advanced)
@@ -180,6 +188,18 @@ class SettingsTab(QWidget):
         self.cjpegli_args_te.setVisible(advanced)
         self.im_args_l.setVisible(advanced)
         self.im_args_te.setVisible(advanced)
+
+    def onCustomArgsToggled(self):
+        enabled = self.custom_args_cb.isChecked()
+
+        self.cjxl_args_l.setEnabled(enabled)
+        self.cjxl_args_te.setEnabled(enabled)
+        self.avifenc_args_l.setEnabled(enabled)
+        self.avifenc_args_te.setEnabled(enabled)
+        self.cjpegli_args_l.setEnabled(enabled)
+        self.cjpegli_args_te.setEnabled(enabled)
+        self.im_args_l.setEnabled(enabled)
+        self.im_args_te.setEnabled(enabled)
 
     def setDarkModeEnabled(self, enabled):
         if enabled:
@@ -202,6 +222,7 @@ class SettingsTab(QWidget):
             "disable_jxl_utf8_check": self.disable_jxl_utf8_check_cb.isChecked(),
             "enable_jxl_effort_10": self.enable_jxl_effort_10.isChecked(),
             "disable_progressive_jpegli": self.disable_progressive_jpegli_cb.isChecked(),
+            "enable_custom_args": self.custom_args_cb.isChecked(),
             "cjxl_args": self.cjxl_args_te.toPlainText(),
             "avifenc_args": self.avifenc_args_te.toPlainText(),
             "cjpegli_args": self.cjpegli_args_te.toPlainText(),
@@ -220,6 +241,7 @@ class SettingsTab(QWidget):
         self.disable_jxl_utf8_check_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)
 
+        self.custom_args_cb.setChecked(False)
         self.cjxl_args_te.clear()
         self.cjpegli_args_te.clear()
         self.im_args_te.clear()
