@@ -16,6 +16,7 @@ from PySide6.QtWidgets import(
     QLineEdit,
     QTextEdit,
     QPlainTextEdit,
+    QSpinBox,
 )
 from PySide6.QtCore import(
     Signal,
@@ -71,6 +72,9 @@ class SettingsTab(QWidget):
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
         self.webp_disable_sharp_yuv_cb = self.wm.addWidget("webp_disable_sharp_yuv_cb", QCheckBox("WEBP - Disable Sharp YUV"))
+        self.webp_method_l = QLabel("WEBP - Method")
+        self.webp_method_sb = self.wm.addWidget("webp_method_sb", QSpinBox())
+        self.webp_method_sb.setRange(0, 6)
 
         self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Custom Encoder Arguments"))
         self.avifenc_args_l = QLabel("avifenc args")
@@ -99,6 +103,7 @@ class SettingsTab(QWidget):
 
         self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
         self.settings_lt.addRow(self.webp_disable_sharp_yuv_cb)
+        self.settings_lt.addRow(self.webp_method_l, self.webp_method_sb)
 
         self.settings_lt.addRow(self.enable_jxl_effort_10)
         self.settings_lt.addRow(self.disable_jxl_utf8_check_cb)
@@ -118,6 +123,8 @@ class SettingsTab(QWidget):
         self.cjpegli_args_te.setAcceptRichText(False)
         self.cjxl_args_te.setAcceptRichText(False)
         self.im_args_te.setAcceptRichText(False)
+
+        self.webp_method_sb.setMaximumWidth(80)
 
         # Categories - widgets
         self.general_btn = QPushButton("General", self)
@@ -179,6 +186,8 @@ class SettingsTab(QWidget):
         
         self.webp_disable_sharp_yuv_cb.setVisible(conversion)
         self.disable_progressive_jpegli_cb.setVisible(conversion)
+        self.webp_method_l.setVisible(conversion)
+        self.webp_method_sb.setVisible(conversion)
 
         self.enable_jxl_effort_10.setVisible(advanced)
         self.custom_resampling_cb.setVisible(advanced)
@@ -229,6 +238,7 @@ class SettingsTab(QWidget):
             "disable_progressive_jpegli": self.disable_progressive_jpegli_cb.isChecked(),
             "enable_custom_args": self.custom_args_cb.isChecked(),
             "disable_webp_sharp_yuv": self.webp_disable_sharp_yuv_cb.isChecked(),
+            "webp_method": self.webp_method_sb.value(),
             "cjxl_args": self.cjxl_args_te.toPlainText(),
             "avifenc_args": self.avifenc_args_te.toPlainText(),
             "cjpegli_args": self.cjpegli_args_te.toPlainText(),
@@ -247,6 +257,7 @@ class SettingsTab(QWidget):
         self.disable_jxl_utf8_check_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)
         self.webp_disable_sharp_yuv_cb.setChecked(False)
+        self.webp_method_sb.setValue(6)
 
         self.custom_args_cb.setChecked(False)
         self.cjxl_args_te.clear()

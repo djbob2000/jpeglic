@@ -299,7 +299,7 @@ class Worker(QRunnable):
                 
                 args.extend([
                     f"-define webp:thread-level={1 if self.available_threads > 1 else 0}",
-                    "-define webp:method=6"
+                    f"-define webp:method={self.settings['webp_method']}"
                 ])
 
                 if not self.settings["disable_webp_sharp_yuv"] and not self.params["lossless"]:
