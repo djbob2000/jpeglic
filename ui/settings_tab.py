@@ -63,8 +63,9 @@ class SettingsTab(QWidget):
 
         # Settings - widgets
         self.dark_theme_cb = self.wm.addWidget("dark_theme_cb", QCheckBox("Dark Theme", self))
-        self.disable_downscaling_startup_cb = self.wm.addWidget("disable_downscaling_startup_cb", QCheckBox("Disable Downscaling on Startup", self))
-        self.disable_delete_startup_cb = self.wm.addWidget("disable_delete_startup_cb", QCheckBox("Disable Delete Original on Startup", self))
+        self.disable_on_startup_l = QLabel("Disable on Startup")
+        self.disable_downscaling_startup_cb = self.wm.addWidget("disable_downscaling_startup_cb", QCheckBox("Downscaling", self))
+        self.disable_delete_startup_cb = self.wm.addWidget("disable_delete_startup_cb", QCheckBox("Delete Original", self))
         self.no_exceptions_cb = self.wm.addWidget("no_exceptions_cb", QCheckBox("Disable Exception Popups", self))
         self.no_sorting_cb = self.wm.addWidget("no_sorting_cb", QCheckBox("Input - Disable Sorting", self))
         self.enable_jxl_effort_10 = self.wm.addWidget("enable_jxl_effort_10", QCheckBox("JPEG XL - Enable Effort 10", self))
@@ -95,9 +96,12 @@ class SettingsTab(QWidget):
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
 
         # Settings - layout
+        disable_on_startup_hb = QHBoxLayout()
+        disable_on_startup_hb.addWidget(self.disable_on_startup_l)
+        disable_on_startup_hb.addWidget(self.disable_delete_startup_cb)
+        disable_on_startup_hb.addWidget(self.disable_downscaling_startup_cb)
+        self.settings_lt.addRow(disable_on_startup_hb)
         self.settings_lt.addRow(self.dark_theme_cb)
-        self.settings_lt.addRow(self.disable_downscaling_startup_cb)
-        self.settings_lt.addRow(self.disable_delete_startup_cb)
         self.settings_lt.addRow(self.no_exceptions_cb)
         self.settings_lt.addRow(self.no_sorting_cb)
 
@@ -179,6 +183,7 @@ class SettingsTab(QWidget):
 
         # Set visible
         self.dark_theme_cb.setVisible(general)
+        self.disable_on_startup_l.setVisible(general)
         self.disable_downscaling_startup_cb.setVisible(general)
         self.disable_delete_startup_cb.setVisible(general)
         self.no_exceptions_cb.setVisible(general)
