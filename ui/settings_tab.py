@@ -107,6 +107,11 @@ class SettingsTab(QWidget):
         self.cjxl_args_te.setMaximumHeight(50)
         self.im_args_te.setMaximumHeight(50)
 
+        self.avifenc_args_te.setAcceptRichText(False)
+        self.cjpegli_args_te.setAcceptRichText(False)
+        self.cjxl_args_te.setAcceptRichText(False)
+        self.im_args_te.setAcceptRichText(False)
+
         # Categories - widgets
         self.general_btn = QPushButton("General", self)
         self.conversion_btn = QPushButton("Conversion", self)
