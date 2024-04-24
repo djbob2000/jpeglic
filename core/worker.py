@@ -302,7 +302,7 @@ class Worker(QRunnable):
                     f"-define webp:method={self.settings['webp_method']}"
                 ])
 
-                if not self.settings["disable_webp_sharp_yuv"] and not self.params["lossless"]:
+                if self.settings["enable_webp_sharp_yuv"] and not self.params["lossless"]:
                     args.append("-define webp:use-sharp-yuv=1")
                 
                 encoder = IMAGE_MAGICK_PATH
@@ -377,7 +377,7 @@ class Worker(QRunnable):
             match format:
                 case "WEBP":
                     args[0] = "-define webp:lossless=true"
-                    if len(args) >= 4 and args[3] == "-define webp:use-sharp-yuv=1":
+                    if self.settings["enable_webp_sharp_yuv"] and len(args) >= 4 and args[3] == "-define webp:use-sharp-yuv=1":
                         args.pop(3)
                 case "JPEG XL":
                     args[0] = "-q 100"
