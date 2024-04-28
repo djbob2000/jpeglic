@@ -10,7 +10,7 @@ from data.constants import ICON_SVG
 class ProgressDialog(QObject):
     canceled = Signal()
 
-    def __init__(self, parent=None, title = "XL Converter", minimum = 0, maximum = 100, default_text = "Default text label", cancelable = True):
+    def __init__(self, parent=None, title="XL Converter", minimum=0, maximum=100, default_text="Default text label", cancelable=True):
         QObject.__init__(self)
         self.dlg = None
         self.title = title
