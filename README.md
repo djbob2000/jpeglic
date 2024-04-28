@@ -1,6 +1,5 @@
-<p align="center">
+<div align="center">
     <img src="icons/logo.svg" width="20%">
-</p>
 <h3 align="center">XL Converter</h3>
 
 Powerful image converter for the latest formats with support for multithreading, drag 'n drop, and downscaling.
@@ -9,7 +8,8 @@ Available for Windows and Linux.
 
 ![](misc/screenshots/screenshot_0.png)
 
-The [documentation](https://xl-docs.codepoems.eu)
+Read the [Manual](https://xl-docs.codepoems.eu)
+</div>
 
 ## Supported Formats
 
@@ -20,13 +20,13 @@ Encode to **JPEG XL, AVIF, WEBP, and JPG**. Convert from **HEIF** and [more](htt
 
 Just drop your images and convert. XL Converter works out of the box with no setup or steep learning curve. It prioritizes user experience while granting access to cutting-edge technology.
 
+#### Parallel Encoding
+
+Encode images in parallel to speed up the process. Control how much CPU to use during encoding.
+
 #### JPG Reconstruction
 
 Losslessly transcode JPG to JPEG XL, reverse the process when needed.
-
-#### Multithreading
-
-Use as many CPU cores as you want.
 
 #### Image Proxy
 
@@ -52,7 +52,7 @@ Easily copy and wipe metadata using encoder parameters or ExifTool.
 
 #### JPEGLI
 
-Encode to regular JPG using the highest quality encoder available.
+Generate the highest quality (regular old) JPGs with JPEGLI. 
 
 ## Bug Reports
 
@@ -159,21 +159,21 @@ Extra building modes:
 To build XL Converter, you need to provide various binaries. This can be quite challenging.
 
 Binaries needed:
-- [libjxl](https://github.com/libjxl/libjxl) 0.10.2 ([with this patch on Windows](https://github.com/JacobDev1/libjxl-utf8))
+- [libjxl](https://github.com/libjxl/libjxl) `0.10.2` ([with this patch on Windows](https://github.com/JacobDev1/libjxl-utf8))
     - cjxl
     - djxl
     - jxlinfo
     - cjpegli
-- [libavif](https://github.com/AOMediaCodec/libavif) 1.0.4 (AOM `3.8.2`)
+- [libavif](https://github.com/AOMediaCodec/libavif) `1.0.4` (AOM `3.8.2`)
     - avifenc
     - avifdec
-- [imagemagick](https://imagemagick.org/) 7.1.1-15 Q16-HDRI
+- [imagemagick](https://imagemagick.org/) `7.1.1-15 Q16-HDRI`
     - magick - AppImage for Linux
     - magick.exe - Windows
-- [exiftool](https://exiftool.org/) 12.77
+- [exiftool](https://exiftool.org/) `12.77`
     - exiftool.exe - Windows
     - exiftool - standalone Perl build
-- [oxipng](https://github.com/shssoichiro/oxipng) 0.9.0
+- [oxipng](https://github.com/shssoichiro/oxipng) `0.9.0`
 
 Place them in the following directories:
 - `xl-converter\bin\win` for Windows (x86_64) 
