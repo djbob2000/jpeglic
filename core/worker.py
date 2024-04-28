@@ -132,26 +132,6 @@ class Worker(QRunnable):
         if os.path.isfile(self.org_item_abs_path) == False:
             raise FileException("C0", "File not found")
 
-        # Check for non-ANSI characters
-        if (
-            os.name == "nt" and
-            not self.settings["disable_jxl_utf8_check"] and
-            (
-                self.params["format"] == "JPEG XL" or
-                self.item_ext == "jxl" or
-                (
-                    self.params["format"] == "Smallest Lossless" and
-                    self.params["smallest_format_pool"]["jxl"]
-                ) or
-                (
-                    self.params["format"] == "JPG" and
-                    self.params["jpg_encoder"] == "JPEGLI from JPEG XL"
-                )
-            )
-        ):
-            if not isANSICompatible(self.org_item_abs_path):
-                raise GenericException("C1", "libjxl tools do not support paths with non-ANSI characters on Windows.")
-
         # Check for conflicts - GIFs and APNGs
         checkForConflicts(
             self.item_ext,

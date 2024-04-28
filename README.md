@@ -159,7 +159,7 @@ Extra building modes:
 To build XL Converter, you need to provide various binaries. This can be quite challenging.
 
 Binaries needed:
-- [libjxl](https://github.com/libjxl/libjxl) 0.10.2
+- [libjxl](https://github.com/libjxl/libjxl) 0.10.2 ([with this patch on Windows](https://github.com/JacobDev1/libjxl-utf8))
     - cjxl
     - djxl
     - jxlinfo

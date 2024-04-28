@@ -69,7 +69,6 @@ class SettingsTab(QWidget):
         self.no_exceptions_cb = self.wm.addWidget("no_exceptions_cb", QCheckBox("Disable Exception Popups", self))
         self.no_sorting_cb = self.wm.addWidget("no_sorting_cb", QCheckBox("Input - Disable Sorting", self))
         self.enable_jxl_effort_10 = self.wm.addWidget("enable_jxl_effort_10", QCheckBox("JPEG XL - Enable Effort 10", self))
-        self.disable_jxl_utf8_check_cb = self.wm.addWidget("disable_jxl_utf8_check_cb", QCheckBox("libjxl - Disable UTF-8 Check", self))
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
         self.webp_method_l = QLabel("WEBP - Method")
@@ -108,7 +107,6 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.webp_method_l, self.webp_method_sb)
 
         self.settings_lt.addRow(self.enable_jxl_effort_10)
-        self.settings_lt.addRow(self.disable_jxl_utf8_check_cb)
         self.settings_lt.addRow(self.custom_resampling_cb)
         self.settings_lt.addRow(self.custom_args_cb)
         self.settings_lt.addRow(self.cjxl_args_l, self.cjxl_args_te)
@@ -193,7 +191,6 @@ class SettingsTab(QWidget):
 
         self.enable_jxl_effort_10.setVisible(advanced)
         self.custom_resampling_cb.setVisible(advanced)
-        self.disable_jxl_utf8_check_cb.setVisible(advanced if os.name == "nt" else False)
 
         self.custom_args_cb.setVisible(advanced)
         self.avifenc_args_l.setVisible(advanced)
@@ -235,7 +232,6 @@ class SettingsTab(QWidget):
             "disable_downscaling_startup": self.disable_downscaling_startup_cb.isChecked(),
             "disable_delete_startup": self.disable_delete_startup_cb.isChecked(),
             "no_exceptions": self.no_exceptions_cb.isChecked(),
-            "disable_jxl_utf8_check": self.disable_jxl_utf8_check_cb.isChecked(),
             "enable_jxl_effort_10": self.enable_jxl_effort_10.isChecked(),
             "disable_progressive_jpegli": self.disable_progressive_jpegli_cb.isChecked(),
             "enable_custom_args": self.custom_args_cb.isChecked(),
@@ -255,7 +251,6 @@ class SettingsTab(QWidget):
         
         self.enable_jxl_effort_10.setChecked(False)
         self.custom_resampling_cb.setChecked(False)
-        self.disable_jxl_utf8_check_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)
         self.webp_method_sb.setValue(6)
 
