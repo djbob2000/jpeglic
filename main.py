@@ -196,6 +196,7 @@ class MainWindow(QMainWindow):
         self.items.parseData(*self.input_tab.getItems())
         if self.items.getItemCount() == 0:
             return
+        self.items.startConversion()
 
         # Set progress dialog
         self.progress_dialog.setRange(0, self.items.getItemCount())
