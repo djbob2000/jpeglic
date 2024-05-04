@@ -1,31 +1,25 @@
-import os
-
 from PySide6.QtWidgets import(
     QWidget,
     QGridLayout,
     QVBoxLayout,
     QHBoxLayout,
     QCheckBox,
-    QGroupBox,
     QPushButton,
     QLabel,
     QSizePolicy,
-    QScrollArea,
     QFormLayout,
     QSpacerItem,
-    QLineEdit,
     QTextEdit,
-    QPlainTextEdit,
     QSpinBox,
 )
 from PySide6.QtCore import(
     Signal,
     QObject,
-    Qt,
 )
 
 from ui.theme import setTheme
-from .widget_manager import WidgetManager
+from ui.widget_manager import WidgetManager
+from ui.scroll_area import ScrollArea
 
 class Signals(QObject):
     custom_resampling = Signal(bool)
@@ -44,22 +38,20 @@ class SettingsTab(QWidget):
         self.signals = Signals()
 
         # Categories
-        self.categories_sa = QScrollArea(self)
+        self.categories_sa = ScrollArea(self)
         self.categories_w = QWidget()
-        self.categories_lt = QVBoxLayout(self.categories_w)
+        self.categories_lt = QVBoxLayout()
 
         self.categories_w.setLayout(self.categories_lt)
         self.categories_sa.setWidget(self.categories_w)
-        self.categories_sa.setWidgetResizable(True)
 
         # Settings
-        self.settings_sa = QScrollArea(self)
+        self.settings_sa = ScrollArea(self)
         self.settings_w = QWidget()
-        self.settings_lt = QFormLayout(self.settings_w)
+        self.settings_lt = QFormLayout()
 
         self.settings_w.setLayout(self.settings_lt)
         self.settings_sa.setWidget(self.settings_w)
-        self.settings_sa.setWidgetResizable(True)
 
         # Settings - widgets
         self.dark_theme_cb = self.wm.addWidget("dark_theme_cb", QCheckBox("Dark Theme", self))
@@ -84,6 +76,7 @@ class SettingsTab(QWidget):
         self.cjxl_args_te = self.wm.addWidget("cjxl_args_te", QTextEdit())
         self.im_args_l = QLabel("ImageMagick args")
         self.im_args_te = self.wm.addWidget("im_args_te", QTextEdit())
+        self.empty_l = QLabel("")       # Workaround for a bug in QScrollArea. The scroll bar stops responding when rendered inside a height limited QTabWidget with the last item being QTextEdit. 
 
         # Settings - signals
         self.dark_theme_cb.toggled.connect(self.setDarkModeEnabled)
@@ -113,6 +106,7 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.avifenc_args_l, self.avifenc_args_te)
         self.settings_lt.addRow(self.cjpegli_args_l, self.cjpegli_args_te)
         self.settings_lt.addRow(self.im_args_l, self.im_args_te)
+        self.settings_lt.addRow(self.empty_l)
         
         self.avifenc_args_te.setMaximumHeight(50)
         self.cjpegli_args_te.setMaximumHeight(50)
@@ -201,6 +195,7 @@ class SettingsTab(QWidget):
         self.cjpegli_args_te.setVisible(advanced)
         self.im_args_l.setVisible(advanced)
         self.im_args_te.setVisible(advanced)
+        self.empty_l.setVisible(advanced)
 
     def onCustomArgsToggled(self):
         enabled = self.custom_args_cb.isChecked()
