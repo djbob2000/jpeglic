@@ -71,7 +71,7 @@ Feel free to make bug reports as contributions.
 ### Windows 10
 
 Prerequisites:
-- Python `3.11.6` (with `pip`)
+- Python `3.11.9` (with `pip`)
 - `git`
 
 Clone the repo.
@@ -187,7 +187,7 @@ See the official [XL Converter builds](https://github.com/JacobDev1/xl-converter
 
 ### Python Version
 
-The project runs on Python `3.11.6`. It should also work on a slightly older version. `3.12` and newer are not supported.
+This project runs on Python `3.11.9`. It should also work on a slightly older version. `3.12` and newer are not supported.
 
 ### Large Files
 
