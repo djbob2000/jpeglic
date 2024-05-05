@@ -68,9 +68,12 @@ Feel free to make bug reports as contributions.
 
 ## Building from Source
 
+> [!NOTE]
+> The recommended way to use XL Converter is by using the [official binary releases](https://codepoems.eu/xl-converter). The building process is time-consuming.
+
 ### Windows 10
 
-Prerequisites:
+Install:
 - Python `3.11.9` (with `pip`)
 - `git`
 
@@ -111,8 +114,28 @@ Install packages.
 
 ```bash
 sudo apt update
-sudo apt install python3 python3-pip python3-venv git
-sudo apt install '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+sudo apt install git make
+```
+
+Install [xcb QPA](https://doc.qt.io/qt-6/linux-requirements.html) dependencies.
+
+```bash
+sudo apt install '^libxcb.*-dev' libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+```
+
+Install [pyenv](https://github.com/pyenv/pyenv) via [Automatic installer](https://github.com/pyenv/pyenv?tab=readme-ov-file#automatic-installer) then [add it to shell](https://github.com/pyenv/pyenv?tab=readme-ov-file#set-up-your-shell-environment-for-pyenv)
+
+Install Python build packages.
+
+```bash
+sudo apt install wget build-essential libreadline-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev liblzma-dev
+```
+
+Build and setup Python `3.11.9`.
+
+```bash
+pyenv install 3.11.9
+pyenv local 3.11.9
 ```
 
 Clone and set up the repo.
@@ -181,7 +204,8 @@ Place them in the following directories:
 
 All binaries are built statically. The version numbers should match. Binaries on Windows have an `.exe` extension.
 
-See the official [XL Converter builds](https://github.com/JacobDev1/xl-converter/releases) for examples.
+> [!TIP]
+> See the official [XL Converter builds](https://github.com/JacobDev1/xl-converter/releases) for examples.
 
 ## Info
 
@@ -192,14 +216,6 @@ This project runs on Python `3.11.9`. It should also work on a slightly older ve
 ### Large Files
 
 Don't forget `--depth 1` when running `git clone`. This repo contains large files.
-
-### Development Branch
-
-The dev branch can be accessed with
-
-```bash
-git clone -b unstable --depth 1 https://github.com/JacobDev1/xl-converter.git
-```
 
 ## Unit Testing
 
@@ -232,7 +248,7 @@ python test.py
 
 ### Deprecated
 
-`tests_old.py` is a deprecated, but still accessible test suite.
+`test_old.py` is a deprecated, but still accessible test suite.
 
 ```bash
 python test_old.py
