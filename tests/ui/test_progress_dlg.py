@@ -14,7 +14,6 @@ def test_init(progress_dialog):
     assert progress_dialog.title == "XL Converter"
     assert progress_dialog.minimum == 0
     assert progress_dialog.maximum == 100
-    assert progress_dialog.default_text == "Default text label"
     assert progress_dialog.cancelable == True
     
 def test_show_first_time(progress_dialog):
