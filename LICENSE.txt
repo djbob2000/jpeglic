@@ -2,7 +2,7 @@ XL Converter is licensed under GNU General Public License v3.
 
 Copyright (c) 2023 - 2024 Code Poems <contact@codepoems.eu>
 
------------------------------------------------------------------------------------
+-------------------------- BEGIN LICENSE --------------------------
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
@@ -680,12 +680,12 @@ the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
 
---------------------------------------------------------------------------------------
+--------------------------- END LICENSE ---------------------------
 
-ADDITIONAL TERMS PER GNU GENERAL PUBLIC LICENSE SECTION 7
+----------------------- BEGIN PRIVACY POLICY ----------------------
 
 WEB LINK FEATURE: This Software includes a feature that opens a link to our webpage or GitHub repository. By using this feature, you consent to the Software initiating an external connection to these sites. Be aware that these sites have their own terms of service and privacy policies, which you should review.
 
 UPDATE FEATURE: The Software includes a feature to check for updates, which requires the transmission of the user's Internet Protocol (IP) address to a server in order to obtain a text file for the update process. By using this feature, you acknowledge and consent to the transmission of your IP address for this purpose. The IP address is used solely for fetching the necessary update information and will not be used for any other purposes. While the IP address may be stored for a period of up to 12 months.
 
-These additional terms are conditional upon the inclusion of the respective features in the software. Should these features be modified or removed in any derivative works, the corresponding additional terms may also be omitted or modified accordingly.
+----------------------- END PRIVACY POLICY ------------------------
