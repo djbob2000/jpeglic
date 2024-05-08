@@ -142,7 +142,7 @@ def test_drop_event_files(mock_isfile, mock_isdir, app):
     app.dropEvent(mock_event)
 
     assert app.topLevelItemCount() == 2
-    assert app.topLevelItem(0).text(2) == sample_imgs[0].path()
+    assert app.topLevelItem(0).text(2) == normalizePath(sample_imgs[0].path())
 
 @patch("ui.file_view.os.path.isdir", return_value=True)
 @patch("ui.file_view.os.path.isfile", return_value=False)
