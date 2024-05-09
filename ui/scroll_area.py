@@ -28,7 +28,7 @@ class ScrollArea(QScrollArea):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.is_dragging = True
-            self.last_position = event.pos()
+            self.last_position = event.position().toPoint()
             self.setCursor(Qt.ClosedHandCursor)
             event.accept()
     
@@ -43,7 +43,7 @@ class ScrollArea(QScrollArea):
             return
 
         if self.is_dragging:
-            delta = event.pos() - self.last_position
+            delta = event.position().toPoint() - self.last_position
             requested_horizontal = self.horizontalScrollBar().value() - delta.x()
             requested_vertical = self.verticalScrollBar().value() - delta.y()
 
@@ -53,6 +53,6 @@ class ScrollArea(QScrollArea):
             if not requested_vertical <= 0 and not requested_vertical > self.verticalScrollBar().maximum() and self.enable_vertical:
                 self.verticalScrollBar().setValue(requested_vertical)
             
-            self.last_position = event.pos()
+            self.last_position = event.position().toPoint()
             self.last_updated = time.time() * 1000
             event.accept()
