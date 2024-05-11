@@ -491,13 +491,13 @@ class OutputTab(QWidget):
                 self.wm.applyVar("jpg_quality", "quality_sl", 90)
 
     def saveState(self):
-        self.wm.disableAutoSaving([
+        self.wm.disableAutoSaving(
             "quality_sb",
             "quality_sl",
             "effort_sb",
             "lossless_cb",
             "lossless_if_cb",
-        ])
+        )
 
         self.saveFormatState()
         self.wm.saveState()
