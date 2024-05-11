@@ -103,7 +103,7 @@ class TimeLeft(QObject):
         if d:   output += f"{d} d "
         if h:   output += f"{h} h "
         if m:   output += f"{m} m "
-        if s:   output += f"{s} s"
+        if s:   output += f"{s} s "
 
-        output += " left"
+        output += "left"
         return output
