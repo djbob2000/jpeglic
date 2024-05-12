@@ -38,12 +38,7 @@ class SettingsTab(QWidget):
         self.signals = Signals()
 
         # Categories
-        self.categories_sa = ScrollArea(self)
-        self.categories_w = QWidget()
         self.categories_lt = QVBoxLayout()
-
-        self.categories_w.setLayout(self.categories_lt)
-        self.categories_sa.setWidget(self.categories_w)
 
         # Settings
         self.settings_sa = ScrollArea(self)
@@ -143,11 +138,14 @@ class SettingsTab(QWidget):
         self.advanced_btn.setCheckable(True)
 
         # Main layout
-        self.main_lt.addWidget(self.categories_sa, 0, 0)
+        self.main_lt.addLayout(self.categories_lt, 0, 0)
         self.main_lt.addWidget(self.settings_sa, 0, 1)
 
         self.main_lt.setColumnStretch(0, 3)
         self.main_lt.setColumnStretch(1, 7)
+
+        # Size Policy
+        self.categories_lt.setContentsMargins(0, 1, 0, 1)
 
         # Misc.
         self.changeCategory("General")
