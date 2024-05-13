@@ -3,7 +3,7 @@
 
 #define MyAppName "XL Converter"
 #define MyAppVersion "0.9"
-#define MyAppPublisher "code poems"
+#define MyAppPublisher "Code Poems"
 #define MyAppURL "https://codepoems.eu"
 #define MyAppExeName "xl-converter.exe"
 
@@ -21,14 +21,14 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile="..\LICENSE.txt"
-; Uncomment the following line to run in non administrative install mode (install for current user only.)
-;PrivilegesRequired=lowest
+PrivilegesRequired=admin
 OutputBaseFilename=xl-converter
 SetupIconFile="..\icons\logo.ico"
 Compression=lzma2
 ;Compression=none
 SolidCompression=yes
 WizardStyle=modern
+DisableReadyPage=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -38,6 +38,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "xl-converter\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "..\misc\VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -45,5 +46,5 @@ Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\redist\VC_redist.x64.exe"; Parameters: "/install /passive /norestart"; Description: "Install Required Redistributable"; Flags: postinstall
+Filename: "{tmp}\VC_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Microsoft Redistributable..."
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
