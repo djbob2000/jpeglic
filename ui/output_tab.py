@@ -134,8 +134,7 @@ class OutputTab(QWidget):
         self.quality_sb.valueChanged.connect(self.onQualitySbChanged)
 
         self.lossless_cb = self.wm.addWidget("lossless_cb", QCheckBox("Lossless"), "lossless")
-        self.lossless_if_cb = self.wm.addWidget("lossless_if_cb", QCheckBox("Lossless (if smaller)"), "lossless")
-        self.lossless_if_cb.toggled.connect(self.onLosslessIfToggled)
+        self.lossless_spacer_l = self.wm.addWidget("lossless_spacer_l", QLabel(""), "lossless")
         self.lossless_cb.toggled.connect(self.onLosslessToggled)
 
         self.max_compression_cb = self.wm.addWidget("max_compression_cb", QCheckBox("Max Compression"))
@@ -175,8 +174,8 @@ class OutputTab(QWidget):
             effort_hb.addWidget(i)
 
         lossless_hb = QHBoxLayout()                         # Lossless
+        lossless_hb.addWidget(self.lossless_spacer_l)
         lossless_hb.addWidget(self.lossless_cb)
-        lossless_hb.addWidget(self.lossless_if_cb)
 
         quality_hb = QHBoxLayout()                          # Quality
         quality_hb.addWidget(self.quality_l)
@@ -263,7 +262,6 @@ class OutputTab(QWidget):
             "format": self.format_cmb.currentText(),
             "quality": self.quality_sb.value(),
             "lossless": self.lossless_cb.isChecked(),
-            "lossless_if_smaller": self.lossless_if_cb.isChecked(),
             "max_compression": self.max_compression_cb.isChecked(),
             "effort": self.effort_sb.value(),
             "intelligent_effort": self.int_effort_cb.isChecked(),
@@ -383,16 +381,9 @@ class OutputTab(QWidget):
 
     def onLosslessToggled(self):
         lossless_checked = self.lossless_cb.isChecked()
-        lossless_if_checked = self.lossless_if_cb.isChecked()
 
         self.wm.setEnabledByTag("quality_all", not lossless_checked)
         self.wm.setEnabledByTag("jxl_advanced", not lossless_checked)        
-
-        self.lossless_cb.setEnabled(not lossless_if_checked)
-        self.lossless_if_cb.setEnabled(not self.lossless_cb.isChecked())
-    
-    def onLosslessIfToggled(self):
-        self.lossless_cb.setEnabled(not self.lossless_if_cb.isChecked())
 
     def onJPGEncoderChanged(self):
         encoder = self.jpg_encoder_cmb.currentText()
@@ -462,14 +453,12 @@ class OutputTab(QWidget):
                 self.wm.setVar("jxl_effort", self.effort_sb.value())
                 self.wm.setVar("jxl_int_effort", self.int_effort_cb.isChecked())
                 self.wm.setVar("jxl_lossless", self.lossless_cb.isChecked())
-                self.wm.setVar("jxl_lossless_if", self.lossless_if_cb.isChecked())
             case "AVIF":
                 self.wm.setVar("avif_quality", self.quality_sl.value())
                 self.wm.setVar("avif_speed", self.effort_sb.value())
             case "WEBP":
                 self.wm.setVar("webp_quality", self.quality_sl.value())
                 self.wm.setVar("webp_lossless", self.lossless_cb.isChecked())
-                self.wm.setVar("webp_lossless_if", self.lossless_if_cb.isChecked())
             case "JPG":
                 self.wm.setVar("jpg_quality", self.quality_sl.value())
 
@@ -479,14 +468,12 @@ class OutputTab(QWidget):
                 self.wm.applyVar("jxl_quality", "quality_sl", 80)
                 self.wm.applyVar("jxl_effort", "effort_sb", 7)
                 self.wm.applyVar("jxl_lossless", "lossless_cb", False)
-                self.wm.applyVar("jxl_lossless_if", "lossless_if_cb", False)
             case "AVIF":
                 self.wm.applyVar("avif_quality", "quality_sl", 70)
                 self.wm.applyVar("avif_speed", "effort_sb", 6)
             case "WEBP":
                 self.wm.applyVar("webp_quality", "quality_sl", 90)
                 self.wm.applyVar("webp_lossless", "lossless_cb", False)
-                self.wm.applyVar("webp_lossless_if", "lossless_if_cb", False)
             case "JPG":
                 self.wm.applyVar("jpg_quality", "quality_sl", 90)
 
@@ -496,7 +483,6 @@ class OutputTab(QWidget):
             "quality_sl",
             "effort_sb",
             "lossless_cb",
-            "lossless_if_cb",
         )
 
         self.saveFormatState()

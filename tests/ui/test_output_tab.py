@@ -29,7 +29,6 @@ def test_initial_state(app):
     assert settings["format"] == "JPEG XL"
     assert settings["quality"] == 80
     assert settings["lossless"] == False
-    assert settings["lossless_if_smaller"] == False
     assert settings["max_compression"] == False
     assert settings["effort"] == 7
     assert settings["intelligent_effort"] == False
@@ -94,21 +93,12 @@ def test_onFormatChange_lossless_toggled(app):
     app.lossless_cb.setChecked(True)
     
     assert app.lossless_cb.isEnabled()
-    assert not app.lossless_if_cb.isEnabled()
     assert not app.quality_sl.isEnabled()
     assert not app.quality_sb.isEnabled()
     
     app.lossless_cb.setChecked(False)
     
     assert app.lossless_cb.isEnabled()
-    assert app.lossless_if_cb.isEnabled()
-    assert app.quality_sl.isEnabled()
-    assert app.quality_sb.isEnabled()
-    
-    app.lossless_if_cb.setChecked(True)
-    
-    assert not app.lossless_cb.isEnabled()
-    assert app.lossless_if_cb.isEnabled()
     assert app.quality_sl.isEnabled()
     assert app.quality_sb.isEnabled()
 
@@ -137,7 +127,6 @@ def test_onFormatChange_visibility(app, file_format, int_effort, effort, effort_
     
     # Lossless
     assert app.lossless_cb.isVisibleTo(app) == lossless
-    assert app.lossless_if_cb.isVisibleTo(app) == lossless
     
     # Misc.
     assert app.jxl_modular_cb.isVisibleTo(app) == jxl_modular
@@ -163,10 +152,8 @@ def test_onFormatChange_lossless_glitch(app):
 
     app.format_cmb.setCurrentIndex(app.format_cmb.findText("WEBP"))
     assert app.quality_sl.isEnabled()
-    assert app.lossless_if_cb.isEnabled()
 
     app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))
-    assert not app.lossless_if_cb.isEnabled()
     
 def test_onFormatChange_int_e_glitch(app):
     app.int_effort_cb.setChecked(True)

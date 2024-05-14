@@ -349,30 +349,6 @@ class Worker(QRunnable):
             else:   # Regular conversion
                 convert(encoder, self.item_abs_path, self.output, args, self.n)
         
-        # Lossless If smaller
-        if self.params["lossless_if_smaller"] and format in ("JPEG XL", "WEBP"):
-            match format:
-                case "WEBP":
-                    args[0] = "-define webp:lossless=true"
-                case "JPEG XL":
-                    args[0] = "-q 100"
-                    if self.params["intelligent_effort"]:
-                        args[1] = "-e 9"
-            
-            with QMutexLocker(self.mutex):
-                lossless_path = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, True)
-            
-            convert(encoder, self.item_abs_path, lossless_path, args, self.n)
-
-            try:
-                if os.path.getsize(lossless_path) < os.path.getsize(self.output):
-                    os.remove(self.output)
-                    os.rename(lossless_path, self.output)
-                else:
-                    os.remove(lossless_path)
-            except OSError as err:
-                raise FileException("C3", err)
-
     def finishConversion(self):
         if self.proxy.proxyExists():
             try:
