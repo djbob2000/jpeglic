@@ -62,14 +62,14 @@ class SettingsTab(QWidget):
         self.webp_method_sb = self.wm.addWidget("webp_method_sb", QSpinBox())
         self.webp_method_sb.setRange(0, 6)
 
-        self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Custom Encoder Arguments"))
-        self.avifenc_args_l = QLabel("avifenc args")
+        self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Custom Encoder Parameters"))
+        self.avifenc_args_l = QLabel("avifenc")
         self.avifenc_args_te = self.wm.addWidget("avifenc_args_te", QTextEdit())
-        self.cjpegli_args_l = QLabel("cjpegli args")
+        self.cjpegli_args_l = QLabel("cjpegli")
         self.cjpegli_args_te = self.wm.addWidget("cjpegli_args_te", QTextEdit())
-        self.cjxl_args_l = QLabel("cjxl args")
+        self.cjxl_args_l = QLabel("cjxl")
         self.cjxl_args_te = self.wm.addWidget("cjxl_args_te", QTextEdit())
-        self.im_args_l = QLabel("ImageMagick args")
+        self.im_args_l = QLabel("ImageMagick")
         self.im_args_te = self.wm.addWidget("im_args_te", QTextEdit())
         self.empty_l = QLabel("")       # Workaround for a bug in QScrollArea. The scroll bar stops responding when rendered inside a height limited QTabWidget with the last item being QTextEdit. 
 
