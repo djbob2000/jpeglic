@@ -26,7 +26,7 @@ Encode images in parallel to speed up the process. Control how much CPU to use d
 
 #### JPG Reconstruction
 
-Losslessly transcode JPG to JPEG XL, reverse the process when needed.
+Losslessly transcode JPG to JPEG XL, and reverse the process when needed.
 
 #### Image Proxy
 
@@ -69,7 +69,7 @@ Feel free to make bug reports as contributions.
 ## Building from Source
 
 > [!NOTE]
-> The recommended way to use XL Converter is by using the [official binary releases](https://codepoems.eu/xl-converter). The building process is time-consuming.
+> The recommended way of using XL Converter is through the [official binary releases](https://codepoems.eu/xl-converter). The building process is time-consuming and tedious.
 
 ### Windows 10
 
@@ -209,17 +209,13 @@ All binaries are built statically. The version numbers should match. Binaries on
 
 ## Info
 
-### Python Version
+> [!IMPORTANT]
+> This project runs on Python `3.11`. Other versions are not supported.
 
-This project runs on Python `3.11.9`. It should also work on a slightly older version. `3.12` and newer are not supported.
-
-### Large Files
-
-Don't forget `--depth 1` when running `git clone`. This repo contains large files.
+> [!NOTE]
+> Don't forget `--depth 1` when running `git clone` to avoid large files.
 
 ## Unit Testing
-
-Unit tests are currently being reworked.
 
 ### Running
 
@@ -234,13 +230,7 @@ pip install -r requirements.txt
 pip install -r requirements_test.txt
 ```
 
-Run tests (Linux)
-
-```bash
-make test
-```
-
-Run tests (Windows)
+Run tests
 
 ```cmd
 python test.py
@@ -248,7 +238,7 @@ python test.py
 
 ### Deprecated
 
-`test_old.py` is a deprecated, but still accessible test suite.
+`test_old.py` is a deprecated, but still accessible test suite focusing on the conversion results.
 
 ```bash
 python test_old.py
