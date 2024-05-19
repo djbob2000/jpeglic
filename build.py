@@ -352,7 +352,7 @@ class Builder():
         move(f"{self.dst_dir}/{self.project_name}", dst)
         move(f"{self.dst_dir}/{os.path.basename(self.installer_path['Linux'])}", dst)
         move(f"{self.dst_dir}/{os.path.basename(self.desktop_entry_path)}", dst)
-        subprocess.run(("7z", "a", f"{dst_direct}.7z", dst_direct), cwd=self.dst_dir)
+        subprocess.run(("7z", "a", "-snl" , f"{dst_direct}.7z", dst_direct), cwd=self.dst_dir)
     
     def _verifyTools(self):
         match platform.system():
