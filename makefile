@@ -38,7 +38,11 @@ test-no-cache:
 	export PYTHONPATH=$$PYTHONPATH:. && pytest --cache-clear tests/
 
 test-old:
-	python test_old.py
+	@if [ -n "$(name)" ]; then \
+		python -m unittest test_old.TestMainWindow.$(name); \
+	else \
+		python test_old.py; \
+	fi
 
 coverage:
 	export PYTHONPATH=$$PYTHONPATH:. && pytest --cov=core --cov=ui --cov=main --cov=data --cov=build --cov-report term-missing tests/

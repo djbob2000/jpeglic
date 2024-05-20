@@ -101,7 +101,6 @@ class Data:
     
     def __init__(self, sample_img_folder, tmp_img_folder):
         self.sample_img_folder = sample_img_folder
-        self.sample_img_folder_content_cached = scan_dir(sample_img_folder)
         self.tmp_img_folder = tmp_img_folder
 
         self.cleanup()
@@ -109,7 +108,7 @@ class Data:
     def cleanup(self):
         rmtree(self.tmp_img_folder)
     
-    # Tmp Directory
+    # Tmp (output) Directory
     def get_tmp_folder_path(self, path = None):
         if path == None:
             return self.tmp_img_folder
@@ -129,27 +128,13 @@ class Data:
 
     # Samples Directory
     def get_sample_img(self):
-        return self.sample_img_folder_content_cached[0]
+        return scan_dir(self.sample_img_folder)[0]
 
     def get_sample_imgs(self):
-        return self.sample_img_folder_content_cached
+        return scan_dir(self.sample_img_folder)
     
     def get_sample_img_folder(self):
         return self.sample_img_folder
-    
-    def is_data_integral(self):
-        is_integral = False
-        if not self.sample_img_folder.is_dir():
-            print(f"[Data] Create a \"{SAMPLE_IMG_FOLDER}\" folder with at least one image (aspect ratio cannot be 1:1)")
-        elif len(self.sample_img_folder_content_cached) == 0:
-            print(f"[Data] Put at least one image (with varying aspect ratio) into \"{SAMPLE_IMG_FOLDER}\"")
-        elif self.sample_img_folder_content_cached[0].suffix[1:] not in ALLOWED_INPUT:
-            print(f"[Data] All images in the sample image folder need to be in allowed formats")
-        else:
-            is_integral = True
-        
-        return is_integral
-
 
 class Interact:
     """Translation layer between unit tests and the application."""
@@ -200,13 +185,15 @@ class Interact:
         self.main_window.settings_tab.resetToDefault()
         self.main_window.output_tab.wm.getWidget("threads_sl").setValue(self.main_window.output_tab.MAX_THREAD_COUNT)   # To speed up testing
 
-    def convert_preset(self, src, dst, format, lossless=False, effort=7):
+    def convert_preset(self, src, dst, format, lossless=False, effort=7, jpg_encoder="JPEGLI from JPEG XL"):
         self.clear_list()
         self.set_format(format)
         self.set_custom_output(dst)
         self.add_item(src)
         self.set_lossless(lossless)
         self.set_effort(effort)
+        if format == "JPG":
+            self.set_jpg_encoder(jpg_encoder)
         self.convert()
 
     def convert(self):
@@ -231,6 +218,9 @@ class Interact:
     def set_preserve_attributes(self, enabled):
         self.main_window.modify_tab.date_time_cb.setChecked(enabled)
     
+    def set_jpg_encoder(self, encoder: str):
+        cmb_set_text(self.main_window.output_tab.jpg_encoder_cmb, encoder)
+
     def drag_and_drop(self, urls):
         mime_data = QMimeData()
         mime_data.setUrls([QUrl.fromLocalFile(url) for url in urls])
@@ -282,6 +272,13 @@ class Interact:
 #                         Unit Tests
 # ---------------------------------------------------------------
 
+def windows_only(test_func):
+    def wrapper(*args, **kwargs):
+        if os.name != 'nt':
+            raise unittest.SkipTest()
+        return test_func(*args, **kwargs)
+    return wrapper
+
 class TestMainWindow(unittest.TestCase):
     def setUp(self):
         self.app = Interact(MainWindow())
@@ -291,9 +288,6 @@ class TestMainWindow(unittest.TestCase):
     
     def tearDown(self):
         self.data.cleanup()
-
-    def test_sample_img_integrity(self):
-        assert self.data.is_data_integral()
 
     def test_dependencies(self):
         FILES = (
@@ -487,6 +481,43 @@ class TestMainWindow(unittest.TestCase):
 
         converted = self.data.get_tmp_folder_content()
         assert converted[0].stat().st_size != converted[1].stat().st_size, "No change detected"
+    
+    # POSIX is fine
+    @windows_only
+    def test_jxl_utf8_support(self):
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("漢字0"), "JPEG XL")
+        converted = self.data.get_tmp_folder_content()
+        assert "jxl" == str(converted[0])[-3:]
+
+        self.app.convert_preset(converted[0], self.data.make_tmp_subfolder("漢字1"), "PNG")
+        assert len(self.data.get_tmp_folder_content()) == 2
+
+    @windows_only
+    def test_avif_utf8_support(self):
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("漢字0"), "AVIF")
+        converted = self.data.get_tmp_folder_content()
+        assert "avif" == str(converted[0])[-4:]
+
+        self.app.convert_preset(converted[0], self.data.make_tmp_subfolder("漢字1"), "PNG")
+        assert len(self.data.get_tmp_folder_content()) == 2
+
+    @windows_only
+    def test_jpegli_utf8_support(self):
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("漢字0"), "JPG", jpg_encoder="JPEGLI from JPEG XL")
+        converted = self.data.get_tmp_folder_content()
+        assert "jpg" == str(converted[0])[-3:]
+
+        self.app.convert_preset(converted[0], self.data.make_tmp_subfolder("漢字1"), "PNG")
+        assert len(self.data.get_tmp_folder_content()) == 2
+
+    @windows_only
+    def test_imagemagick_utf8_support(self):
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("漢字0"), "WEBP")
+        converted = self.data.get_tmp_folder_content()
+        assert "webp" == str(converted[0])[-4:]
+
+        self.app.convert_preset(converted[0], self.data.make_tmp_subfolder("漢字1"), "PNG")
+        assert len(self.data.get_tmp_folder_content()) == 2
 
 if __name__ == "__main__":
     create_sample_img()
