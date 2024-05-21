@@ -26,6 +26,7 @@ class Signals(QObject):
     disable_sorting = Signal(bool)
     no_exceptions = Signal(bool)
     enable_jxl_effort_10 = Signal(bool)
+    enable_quality_prec_snap = Signal(bool)
 
 class SettingsTab(QWidget):
     def __init__(self):
@@ -61,6 +62,7 @@ class SettingsTab(QWidget):
         self.webp_method_l = QLabel("WEBP - Method")
         self.webp_method_sb = self.wm.addWidget("webp_method_sb", QSpinBox())
         self.webp_method_sb.setRange(0, 6)
+        self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
 
         self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Custom Encoder Parameters"))
         self.avifenc_args_l = QLabel("avifenc")
@@ -80,6 +82,7 @@ class SettingsTab(QWidget):
         self.enable_jxl_effort_10.clicked.connect(self.signals.enable_jxl_effort_10)
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling.emit)
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
+        self.quality_prec_snap_cb.toggled.connect(self.signals.enable_quality_prec_snap)
 
         # Settings - layout
         disable_on_startup_hb = QHBoxLayout()
@@ -90,6 +93,7 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.dark_theme_cb)
         self.settings_lt.addRow(self.no_exceptions_cb)
         self.settings_lt.addRow(self.no_sorting_cb)
+        self.settings_lt.addRow(self.quality_prec_snap_cb)
 
         self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
         self.settings_lt.addRow(self.webp_method_l, self.webp_method_sb)
@@ -176,6 +180,7 @@ class SettingsTab(QWidget):
         self.disable_delete_startup_cb.setVisible(general)
         self.no_exceptions_cb.setVisible(general)
         self.no_sorting_cb.setVisible(general)
+        self.quality_prec_snap_cb.setVisible(general)
         
         self.disable_progressive_jpegli_cb.setVisible(conversion)
         self.webp_method_l.setVisible(conversion)
@@ -233,6 +238,7 @@ class SettingsTab(QWidget):
             "avifenc_args": self.avifenc_args_te.toPlainText(),
             "cjpegli_args": self.cjpegli_args_te.toPlainText(),
             "im_args": self.im_args_te.toPlainText(),
+            "enable_quality_precision_snapping": self.quality_prec_snap_cb.isChecked(),
         }
     
     def resetToDefault(self):
@@ -241,6 +247,7 @@ class SettingsTab(QWidget):
         self.disable_downscaling_startup_cb.setChecked(True)
         self.disable_delete_startup_cb.setChecked(True)
         self.no_exceptions_cb.setChecked(False)
+        self.quality_prec_snap_cb.setChecked(False)
         
         self.enable_jxl_effort_10.setChecked(False)
         self.custom_resampling_cb.setChecked(False)

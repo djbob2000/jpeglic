@@ -78,6 +78,7 @@ class MainWindow(QMainWindow):
         self.modify_tab = ModifyTab(settings)
         self.modify_tab.convert.connect(self.convert)
         self.settings_tab.signals.custom_resampling.connect(self.modify_tab.toggleCustomResampling)
+        self.settings_tab.signals.enable_quality_prec_snap.connect(self.output_tab.enableQualityPrecisionSnapping)
 
         self.about_tab = AboutTab()
 

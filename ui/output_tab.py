@@ -22,6 +22,7 @@ from PySide6.QtCore import(
 
 from .widget_manager import WidgetManager
 from core.utils import dictToList
+from ui.slider import Slider
 
 class OutputTab(QWidget):
     convert = Signal()
@@ -39,7 +40,7 @@ class OutputTab(QWidget):
         self.setLayout(output_page_lt)
 
         # Conversion - widgets
-        self.threads_sl = self.wm.addWidget("threads_sl", QSlider(Qt.Horizontal))
+        self.threads_sl = self.wm.addWidget("threads_sl", Slider())
         self.threads_sb = self.wm.addWidget("threads_sb", QSpinBox())
 
         self.threads_sl.setRange(1, self.MAX_THREAD_COUNT)
@@ -128,8 +129,7 @@ class OutputTab(QWidget):
 
         self.quality_l = self.wm.addWidget("quality_l", QLabel("Quality"), "quality_all")
         self.quality_sb = self.wm.addWidget("quality_sb", QSpinBox(), "quality", "quality_all")
-        self.quality_sl = self.wm.addWidget("quality_sl", QSlider(Qt.Horizontal), "quality", "quality_all")
-        self.quality_sl.setTickInterval(5)
+        self.quality_sl = self.wm.addWidget("quality_sl", Slider(), "quality", "quality_all")
         self.quality_sl.valueChanged.connect(self.onQualitySlChanged)
         self.quality_sb.valueChanged.connect(self.onQualitySbChanged)
 
@@ -248,6 +248,8 @@ class OutputTab(QWidget):
         # Apply Settings
         if settings["disable_delete_startup"]:
             self.delete_original_cb.setChecked(False)
+
+        self.enableQualityPrecisionSnapping(settings["enable_quality_precision_snapping"])
 
         # Setup widgets' states
         self.onFormatChange()
@@ -394,6 +396,12 @@ class OutputTab(QWidget):
         self.enable_jxl_effort_10 = enabled
         if self.format_cmb.currentText() == "JPEG XL":
             self.effort_sb.setRange(1, 10 if self.enable_jxl_effort_10 else 9)
+
+    def enableQualityPrecisionSnapping(self, enabled):
+        if enabled:
+            self.quality_sl.setTickInterval(0)
+        else:
+            self.quality_sl.setTickInterval(5)
 
     def resetToDefault(self):
         self.wm.cleanVars()

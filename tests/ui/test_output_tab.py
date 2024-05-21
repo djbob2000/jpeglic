@@ -18,6 +18,7 @@ def app(qtbot):
             {
                 "disable_delete_startup": False,
                 "enable_jxl_effort_10": False,
+                "enable_quality_precision_snapping": False,
             }
         )
         qtbot.addWidget(tab)
