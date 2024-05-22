@@ -4,15 +4,12 @@ from PySide6.QtWidgets import(
     QVBoxLayout,
     QHBoxLayout,
     QGroupBox,
-    QComboBox,
-    QSlider,
     QLabel,
     QCheckBox,
     QLineEdit,
     QRadioButton,
     QPushButton,
     QFileDialog,
-    QSpinBox,
     QSizePolicy,
 )
 from PySide6.QtCore import(
@@ -23,6 +20,8 @@ from PySide6.QtCore import(
 from .widget_manager import WidgetManager
 from core.utils import dictToList
 from ui.slider import Slider
+from ui.combobox import ComboBox
+from ui.spinbox import SpinBox
 
 class OutputTab(QWidget):
     convert = Signal()
@@ -41,7 +40,7 @@ class OutputTab(QWidget):
 
         # Conversion - widgets
         self.threads_sl = self.wm.addWidget("threads_sl", Slider())
-        self.threads_sb = self.wm.addWidget("threads_sb", QSpinBox())
+        self.threads_sb = self.wm.addWidget("threads_sb", SpinBox())
 
         self.threads_sl.setRange(1, self.MAX_THREAD_COUNT)
         self.threads_sb.setRange(1, self.MAX_THREAD_COUNT)
@@ -49,7 +48,7 @@ class OutputTab(QWidget):
         self.threads_sl.valueChanged.connect(self.onThreadSlChange)
         self.threads_sb.valueChanged.connect(self.onThreadSbChange)
         
-        self.duplicates_cmb = self.wm.addWidget("duplicates_cmb", QComboBox())
+        self.duplicates_cmb = self.wm.addWidget("duplicates_cmb", ComboBox())
         self.duplicates_cmb.addItems(("Rename", "Replace", "Skip"))
 
         # Conversion - layout
@@ -72,7 +71,7 @@ class OutputTab(QWidget):
         # After Conversion - widgets
         self.clear_after_conv_cb = self.wm.addWidget("clear_after_conv_cb", QCheckBox("Clear File List"))
         self.delete_original_cb = self.wm.addWidget("delete_original_cb", QCheckBox("Delete Original"))
-        self.delete_original_cmb = self.wm.addWidget("delete_original_cmb", QComboBox())
+        self.delete_original_cmb = self.wm.addWidget("delete_original_cmb", ComboBox())
 
         self.delete_original_cmb.addItems(("To Trash", "Permanently"))
         self.delete_original_cb.stateChanged.connect(self.onDeleteOriginalChanged)
@@ -114,12 +113,12 @@ class OutputTab(QWidget):
         output_grp_lt.addWidget(self.keep_dir_struct_cb)
 
         # Format - widgets
-        self.format_cmb = self.wm.addWidget("format_cmb", QComboBox())
+        self.format_cmb = self.wm.addWidget("format_cmb", ComboBox())
         self.format_cmb.addItems(("JPEG XL","AVIF", "WEBP", "JPG", "PNG", "Smallest Lossless"))
         self.format_cmb.currentIndexChanged.connect(self.onFormatChange)
 
         self.effort_l = self.wm.addWidget("effort_l", QLabel("Effort"))
-        self.effort_sb = self.wm.addWidget("effort_sb", QSpinBox())
+        self.effort_sb = self.wm.addWidget("effort_sb", SpinBox())
         self.int_effort_cb = self.wm.addWidget("int_effort_cb", QCheckBox("Intelligent"))
         self.int_effort_cb.toggled.connect(self.onEffortToggled)
 
@@ -128,7 +127,7 @@ class OutputTab(QWidget):
         self.wm.addTag("effort", "effort_sb")
 
         self.quality_l = self.wm.addWidget("quality_l", QLabel("Quality"), "quality_all")
-        self.quality_sb = self.wm.addWidget("quality_sb", QSpinBox(), "quality", "quality_all")
+        self.quality_sb = self.wm.addWidget("quality_sb", SpinBox(), "quality", "quality_all")
         self.quality_sl = self.wm.addWidget("quality_sl", Slider(), "quality", "quality_all")
         self.quality_sl.valueChanged.connect(self.onQualitySlChanged)
         self.quality_sb.valueChanged.connect(self.onQualitySbChanged)
@@ -143,7 +142,7 @@ class OutputTab(QWidget):
         self.jxl_modular_cb = self.wm.addWidget("jxl_modular_cb", QCheckBox("Modular"), "jxl_advanced")
 
         self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("Encoder"), "jpg_encoder")
-        self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", QComboBox(), "jpg_encoder")
+        self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", ComboBox(), "jpg_encoder")
         self.jpg_encoder_cmb.addItems((
             "JPEGLI from JPEG XL",
             "ImageMagick",
@@ -157,11 +156,11 @@ class OutputTab(QWidget):
         self.reconstruct_jpg_cb = self.wm.addWidget("reconstruct_jpg_cb", QCheckBox("Reconstruct JPG from JPEG XL"))
 
         self.chroma_subsampling_l = self.wm.addWidget("chroma_subsampling_l", QLabel("Chroma Subsampling", self), "chroma_subsampling")
-        self.chroma_subsampling_jpegli_cmb = self.wm.addWidget("chroma_subsampling_jpegli_cmb", QComboBox(self), "chroma_subsampling")
+        self.chroma_subsampling_jpegli_cmb = self.wm.addWidget("chroma_subsampling_jpegli_cmb", ComboBox(self), "chroma_subsampling")
         self.chroma_subsampling_jpegli_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
-        self.chroma_subsampling_avif_cmb = self.wm.addWidget("chroma_subsampling_avif_cmb", QComboBox(self), "chroma_subsampling")
+        self.chroma_subsampling_avif_cmb = self.wm.addWidget("chroma_subsampling_avif_cmb", ComboBox(self), "chroma_subsampling")
         self.chroma_subsampling_avif_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0", "4:0:0",))
-        self.chroma_subsampling_jpg_cmb = self.wm.addWidget("chroma_subsampling_jpg_cmb", QComboBox(self), "chroma_subsampling")
+        self.chroma_subsampling_jpg_cmb = self.wm.addWidget("chroma_subsampling_jpg_cmb", ComboBox(self), "chroma_subsampling")
         self.chroma_subsampling_jpg_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
 
         # Format - layout

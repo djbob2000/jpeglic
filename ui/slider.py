@@ -1,4 +1,4 @@
-from PySide6.QtGui import QKeyEvent, QMouseEvent
+from PySide6.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
 from PySide6.QtWidgets import QSlider
 from PySide6.QtCore import Qt
 
@@ -13,6 +13,9 @@ class Slider(QSlider):
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
         if e.buttons() & Qt.LeftButton:
             self._setValueFromClick(e)
+
+    def wheelEvent(self, e: QWheelEvent) -> None:
+        e.ignore()
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
         if e.key() == Qt.Key_Left:

@@ -10,7 +10,6 @@ from PySide6.QtWidgets import(
     QFormLayout,
     QSpacerItem,
     QTextEdit,
-    QSpinBox,
 )
 from PySide6.QtCore import(
     Signal,
@@ -20,6 +19,7 @@ from PySide6.QtCore import(
 from ui.theme import setTheme
 from ui.widget_manager import WidgetManager
 from ui.scroll_area import ScrollArea
+from ui.spinbox import SpinBox
 
 class Signals(QObject):
     custom_resampling = Signal(bool)
@@ -60,7 +60,7 @@ class SettingsTab(QWidget):
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
         self.webp_method_l = QLabel("WEBP - Method")
-        self.webp_method_sb = self.wm.addWidget("webp_method_sb", QSpinBox())
+        self.webp_method_sb = self.wm.addWidget("webp_method_sb", SpinBox())
         self.webp_method_sb.setRange(0, 6)
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
 
