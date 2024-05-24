@@ -63,6 +63,7 @@ class SettingsTab(QWidget):
         self.webp_method_sb = self.wm.addWidget("webp_method_sb", SpinBox())
         self.webp_method_sb.setRange(0, 6)
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
+        self.jpeg_reconstruction_exiftool_cb = self.wm.addWidget("jpeg_reconstruction_exiftool_cb", QCheckBox("JPEG Reconstruction - Allow ExifTool"))
 
         self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Additional Encoder Parameters"))
         self.avifenc_args_l = QLabel("avifenc\nAVIF")
@@ -97,9 +98,10 @@ class SettingsTab(QWidget):
 
         self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
         self.settings_lt.addRow(self.webp_method_l, self.webp_method_sb)
-
         self.settings_lt.addRow(self.enable_jxl_effort_10)
         self.settings_lt.addRow(self.custom_resampling_cb)
+        self.settings_lt.addRow(self.jpeg_reconstruction_exiftool_cb)
+
         self.settings_lt.addRow(self.custom_args_cb)
         self.settings_lt.addRow(self.cjxl_args_l, self.cjxl_args_te)
         self.settings_lt.addRow(self.avifenc_args_l, self.avifenc_args_te)
@@ -188,6 +190,7 @@ class SettingsTab(QWidget):
 
         self.enable_jxl_effort_10.setVisible(advanced)
         self.custom_resampling_cb.setVisible(advanced)
+        self.jpeg_reconstruction_exiftool_cb.setVisible(advanced)
 
         self.custom_args_cb.setVisible(advanced)
         self.avifenc_args_l.setVisible(advanced)
@@ -239,6 +242,7 @@ class SettingsTab(QWidget):
             "cjpegli_args": self.cjpegli_args_te.toPlainText(),
             "im_args": self.im_args_te.toPlainText(),
             "enable_quality_precision_snapping": self.quality_prec_snap_cb.isChecked(),
+            "allow_exiftool_jpeg_reconstruction": self.jpeg_reconstruction_exiftool_cb.isChecked(),
         }
     
     def resetToDefault(self):

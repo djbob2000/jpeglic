@@ -81,6 +81,7 @@ class Worker(QRunnable):
         self.scl_params = None
         self.skip = False
         self.jpg_to_jxl_lossless = False
+        self.jpeg_rec_data_found = False      # Reconstruction data found
         self.anchor_path = anchor_path        # keep_dir_struct
     
     def logException(self, id, msg):
@@ -158,6 +159,7 @@ class Worker(QRunnable):
         self.output_ext = getExtension(self.params["format"])
         if self.params["format"] == "PNG" and self.item_ext == "jxl" and self.params["reconstruct_jpg"]:
             self.output_ext = getExtensionJxl(self.item_abs_path)  # Reverse JPG reconstruction
+            self.jpeg_rec_data_found = self.output_ext == "jpg"
         
         self.output = None
         with QMutexLocker(self.mutex):
@@ -385,7 +387,8 @@ class Worker(QRunnable):
         if os.path.isfile(self.final_output):    # Checking if renaming was successful
             
             # Apply metadata
-            metadata.runExifTool(self.org_item_abs_path, self.final_output, self.params["misc"]["keep_metadata"])
+            if not self.jpeg_rec_data_found or (self.jpeg_rec_data_found and self.settings["allow_exiftool_jpeg_reconstruction"]):
+                metadata.runExifTool(self.org_item_abs_path, self.final_output, self.params["misc"]["keep_metadata"])
 
             # Apply attributes
             try:
