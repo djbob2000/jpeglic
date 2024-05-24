@@ -185,14 +185,14 @@ class Interact:
         self.main_window.settings_tab.resetToDefault()
         self.main_window.output_tab.wm.getWidget("threads_sl").setValue(self.main_window.output_tab.MAX_THREAD_COUNT)   # To speed up testing
 
-    def convert_preset(self, src, dst, format, lossless=False, effort=7, jpg_encoder="JPEGLI from JPEG XL"):
+    def convert_preset(self, src, dst, format, lossless=False, effort=7, jpg_encoder="JPEGLI"):
         self.clear_list()
         self.set_format(format)
         self.set_custom_output(dst)
         self.add_item(src)
         self.set_lossless(lossless)
         self.set_effort(effort)
-        if format == "JPG":
+        if format == "JPEG":
             self.set_jpg_encoder(jpg_encoder)
         self.convert()
 
@@ -348,7 +348,7 @@ class TestMainWindow(unittest.TestCase):
 
     def test_jpg_reconstruction(self):
         # Source -> JPG
-        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPEG")
 
         # JPG -> JXL
         self.app.convert_preset(self.data.get_tmp_folder_content("jpg")[0], self.data.make_tmp_subfolder("jxl"), "JPEG XL", lossless=True)
@@ -363,11 +363,11 @@ class TestMainWindow(unittest.TestCase):
         assert Path(self.data.get_tmp_folder_content()[0]).suffix == ".avif", "AVIF file not found"
     
     def test_webp(self): 
-        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("webp"), "WEBP")
-        assert Path(self.data.get_tmp_folder_content()[0]).suffix == ".webp", "WEBP file not found"
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("webp"), "WebP")
+        assert Path(self.data.get_tmp_folder_content()[0]).suffix == ".webp", "WebP file not found"
     
     def test_jpg(self):
-        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPEG")
         assert Path(self.data.get_tmp_folder_content()[0]).suffix == ".jpg", "JPG file not found"
 
     def test_jpeg_xl_decode(self):
@@ -381,21 +381,21 @@ class TestMainWindow(unittest.TestCase):
         assert len(self.data.get_tmp_folder_content("avif_decoded")) > 0, "Decoded AVIF file not found"
 
     def test_webp_decode(self):
-        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("webp"), "WEBP")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("webp"), "WebP")
         self.app.convert_preset(self.data.get_tmp_folder_content("webp")[0], self.data.make_tmp_subfolder("webp_decoded"), "PNG")
-        assert len(self.data.get_tmp_folder_content("webp_decoded")) > 0, "Decoded WEBP file not found"
+        assert len(self.data.get_tmp_folder_content("webp_decoded")) > 0, "Decoded WebP file not found"
 
     def test_decode_jpg(self):
-        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPEG")
         self.app.convert_preset(self.data.get_tmp_folder_content("jpg")[0], self.data.make_tmp_subfolder("jpg_decoded"), "PNG")
         assert len(self.data.get_tmp_folder_content("jpg_decoded")) > 0, "Decoded JPG file not found"
     
     def test_proxy(self):
-        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPEG")
         assert Path(self.data.get_tmp_folder_content("jpg")[0]).suffix == ".jpg", "JPG file not found"
 
-        self.app.convert_preset(self.data.get_tmp_folder_content("jpg")[0], self.data.make_tmp_subfolder("webp"), "WEBP")
-        assert Path(self.data.get_tmp_folder_content("webp")[0]).suffix == ".webp", "WEBP file not found"
+        self.app.convert_preset(self.data.get_tmp_folder_content("jpg")[0], self.data.make_tmp_subfolder("webp"), "WebP")
+        assert Path(self.data.get_tmp_folder_content("webp")[0]).suffix == ".webp", "WebP file not found"
 
         self.app.convert_preset(self.data.get_tmp_folder_content("webp")[0], self.data.make_tmp_subfolder("jxl"), "JPEG XL")
         assert Path(self.data.get_tmp_folder_content("jxl")[0]).suffix == ".jxl", "JPEG XL file not found"
@@ -409,20 +409,20 @@ class TestMainWindow(unittest.TestCase):
     
     def test_rename(self):
         self.app.set_duplicate_handling("Rename")
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
         assert len(self.data.get_tmp_folder_content()) == 2, "File amount mismatch"
 
     def test_replace(self):
         self.app.set_duplicate_handling("Replace")
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
         assert len(self.data.get_tmp_folder_content()) == 1, "File amount mismatch"
 
     def test_skip(self):
         self.app.set_duplicate_handling("Skip")
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
         assert len(self.data.get_tmp_folder_content()) == 1, "File amount mismatch"
 
     def test_get_settings(self):
@@ -432,9 +432,9 @@ class TestMainWindow(unittest.TestCase):
 
     def test_preserve_attributes(self):
         self.app.set_preserve_attributes(True)
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
         self.app.set_preserve_attributes(False)
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
 
         # If modification times are more than 15 sec apart
         files = self.data.get_tmp_folder_content()
@@ -442,42 +442,42 @@ class TestMainWindow(unittest.TestCase):
 
     def test_metadata_exiftool(self):
         self.app.set_metadata_mode("ExifTool - Preserve")
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
-        self.app.set_metadata_mode("ExifTool - Safe Wipe")
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
+        self.app.set_metadata_mode("ExifTool - Wipe")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
 
         files = self.data.get_tmp_folder_content()
         assert files[0].stat().st_size != files[1].stat().st_size, "No change detected"
 
     def test_downscaling_resolution(self):
         self.app.set_downscaling_mode("Resolution", width = 100, height = 2000)
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
         self.app.set_downscaling_mode("Resolution", width = 2000, height = 100)
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
 
         converted = self.data.get_tmp_folder_content()
         assert converted[0].stat().st_size != converted[1].stat().st_size, "No change detected"
 
     def test_downscaling_percent(self):
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
         self.app.set_downscaling_mode("Percent", percent=50)
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
 
         converted = self.data.get_tmp_folder_content()
         assert converted[0].stat().st_size != converted[1].stat().st_size, "No change detected"
     
     def test_downscaling_shortest(self):
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
         self.app.set_downscaling_mode("Shortest Side", shortest=1)
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
 
         converted = self.data.get_tmp_folder_content()
         assert converted[0].stat().st_size != converted[1].stat().st_size, "No change detected"
 
     def test_downscaling_longest(self):
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
         self.app.set_downscaling_mode("Longest Side", longest=1)
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPG")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
 
         converted = self.data.get_tmp_folder_content()
         assert converted[0].stat().st_size != converted[1].stat().st_size, "No change detected"
@@ -503,7 +503,7 @@ class TestMainWindow(unittest.TestCase):
 
     @windows_only
     def test_jpegli_utf8_support(self):
-        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("漢字0"), "JPG", jpg_encoder="JPEGLI from JPEG XL")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("漢字0"), "JPEG", jpg_encoder="JPEGLI")
         converted = self.data.get_tmp_folder_content()
         assert "jpg" == str(converted[0])[-3:]
 
@@ -512,7 +512,7 @@ class TestMainWindow(unittest.TestCase):
 
     @windows_only
     def test_imagemagick_utf8_support(self):
-        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("漢字0"), "WEBP")
+        self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("漢字0"), "WebP")
         converted = self.data.get_tmp_folder_content()
         assert "webp" == str(converted[0])[-4:]
 

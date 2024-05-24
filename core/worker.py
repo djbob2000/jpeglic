@@ -183,7 +183,7 @@ class Worker(QRunnable):
         if self.proxy.isProxyNeeded(
             self.params["format"],
             self.item_ext,
-            self.params["jpg_encoder"] == "JPEGLI from JPEG XL",
+            self.params["jpg_encoder"] == "JPEGLI",
             self.params["downscaling"]["enabled"]
         ):
             if not self.proxy.generate(self.item_abs_path, self.item_ext, self.output_dir, self.item_name, self.n, self.mutex):
@@ -254,8 +254,8 @@ class Worker(QRunnable):
                     args.append(f"-y {self.params['avif_chroma_subsampling'].replace(':', '')}")
 
                 encoder = AVIFENC_PATH
-            case "JPG":
-                if self.params["jpg_encoder"] == "JPEGLI from JPEG XL":
+            case "JPEG":
+                if self.params["jpg_encoder"] == "JPEGLI":
                     args = [f"-q {self.params['quality']}"]
                     if self.settings["disable_progressive_jpegli"]:
                         args.append("-p 0")
@@ -269,7 +269,7 @@ class Worker(QRunnable):
                         args.append(f"-sampling-factor {self.params['jpg_chroma_subsampling']}")
                     
                     encoder = IMAGE_MAGICK_PATH
-            case "WEBP":
+            case "WebP":
                 args = []
 
                 if self.params["lossless"]:

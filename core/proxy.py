@@ -39,10 +39,10 @@ class Proxy():
             case "AVIF":
                 if src_ext in ALLOWED_INPUT_AVIFENC:
                     return False
-            case "WEBP":
+            case "WebP":
                 if src_ext in ALLOWED_INPUT_IMAGE_MAGICK:
                     return False
-            case "JPG":
+            case "JPEG":
                 if jpegli:
                     if src_ext in ALLOWED_INPUT_CJPEGLI:
                         return False

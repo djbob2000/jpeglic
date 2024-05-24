@@ -15,7 +15,7 @@ def checkForConflicts(ext: str, file_format: str, downscaling=False) -> bool:
         # Animation
         match ext:
             case "gif":
-                if file_format in ("JPEG XL", "WEBP", "PNG"):
+                if file_format in ("JPEG XL", "WebP", "PNG"):
                     conflict = False
             case "apng":
                 if file_format in ("JPEG XL"):

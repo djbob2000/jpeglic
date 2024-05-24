@@ -54,9 +54,9 @@ def getExtension(_format):
             return "png"
         case "AVIF":
             return "avif"
-        case "WEBP":
+        case "WebP":
             return "webp"
-        case "JPG":
+        case "JPEG":
             return "jpg"
         case "Smallest Lossless":   # Handled in Worker
             return None

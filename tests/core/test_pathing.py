@@ -42,8 +42,8 @@ def test_getPathGIF(output_dir, item_name, duplicates, isfile_side_effect, expec
 @pytest.mark.parametrize("file_format, extension", [
     ("JPEG XL", "jxl"),
     ("AVIF", "avif"),
-    ("WEBP", "webp"),
-    ("JPG", "jpg"),
+    ("WebP", "webp"),
+    ("JPEG", "jpg"),
     ("PNG", "png"),
     ("Smallest Lossless", None),
     ("FLIF", None),

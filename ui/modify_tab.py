@@ -164,7 +164,7 @@ class ModifyTab(QWidget):
         self.metadata_cmb.addItems((
                 "Encoder - Wipe",
                 "Encoder - Preserve",
-                "ExifTool - Safe Wipe",
+                "ExifTool - Wipe",
                 "ExifTool - Preserve",
                 "ExifTool - Unsafe Wipe"
             ))

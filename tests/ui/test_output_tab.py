@@ -35,7 +35,7 @@ def test_initial_state(app):
     assert settings["intelligent_effort"] == False
     assert settings["reconstruct_jpg"] == True
     assert settings["jxl_modular"] == False
-    assert settings["jpg_encoder"] == "JPEGLI from JPEG XL"
+    assert settings["jpg_encoder"] == "JPEGLI"
     assert settings["delete_original"] == False
     assert not app.smIsFormatPoolEmpty()
 
@@ -106,8 +106,8 @@ def test_onFormatChange_lossless_toggled(app):
 @pytest.mark.parametrize("file_format, int_effort, effort, effort_label, quality, lossless, jxl_modular, jpg_encoder, reconstruct_jpg, smallest_lossless, chroma_subsampling", [
     ("JPEG XL", True, True, "Effort", True, True, True, False, False, False, False),
     ("AVIF", False, True, "Speed", True, False, False, False, False, False, True),
-    ("WEBP", False, False, ANY, True, True, False, False, False, False, False),
-    ("JPG", False, False, ANY, True, False, False, True, False, False, True),
+    ("WebP", False, False, ANY, True, True, False, False, False, False, False),
+    ("JPEG", False, False, ANY, True, False, False, True, False, False, True),
     ("PNG", False, False, ANY, False, False, False, False, True, False, False),
     ("Smallest Lossless", False, False, ANY, False, False, False, False, False, True, False),
 ])
@@ -151,7 +151,7 @@ def test_onFormatChange_lossless_glitch(app):
     app.lossless_cb.setChecked(True)
     assert not app.quality_sl.isEnabled()
 
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("WEBP"))
+    app.format_cmb.setCurrentIndex(app.format_cmb.findText("WebP"))
     assert app.quality_sl.isEnabled()
 
     app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))

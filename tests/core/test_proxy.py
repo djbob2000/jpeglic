@@ -17,8 +17,8 @@ def test_isProxyNeeded_png(proxy):
     ("JPEG XL", "avif", True),
     ("AVIF", "png", False),
     ("AVIF", "jxl", True),
-    ("WEBP", "png", False),
-    ("WEBP", "exr", True),
+    ("WebP", "png", False),
+    ("WebP", "exr", True),
     ("Smallest Lossless", "png", True),
 ])
 
@@ -26,7 +26,7 @@ def test_test_isProxyNeeded_base(proxy, file_format, src_ext, expected):
     assert proxy.isProxyNeeded(file_format, src_ext) == expected
 
 def test_test_isProxyNeeded_jpegli(proxy):
-    assert not proxy.isProxyNeeded("JPG", "jpg", jpegli=True)
+    assert not proxy.isProxyNeeded("JPEG", "jpg", jpegli=True)
 
 def test_test_isProxyNeeded_unknown(proxy):
     assert proxy.isProxyNeeded("JPEG XL", "exr")

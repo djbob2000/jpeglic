@@ -13,7 +13,7 @@ Read the [Manual](https://xl-docs.codepoems.eu)
 
 ## Supported Formats
 
-Encode to **JPEG XL, AVIF, WEBP, and JPG**. Convert from **HEIF** and [more](https://xl-docs.codepoems.eu/supported-formats)
+Encode to **JPEG XL, AVIF, WebP, and JPEG**. Convert from **HEIF** and [more](https://xl-docs.codepoems.eu/supported-formats)
 
 ## Features
 #### Out of the Box
@@ -24,9 +24,9 @@ Just drop your images and convert. XL Converter works out of the box with no set
 
 Encode images in parallel to speed up the process. Control how much CPU to use during encoding.
 
-#### JPG Reconstruction
+#### Lossless JPEG Recompression
 
-Losslessly transcode JPG to JPEG XL, and reverse the process when needed.
+Losslessly transcode JPEG to JPEG XL, and reverse the process when needed.
 
 #### Image Proxy
 
@@ -202,7 +202,7 @@ Place them in the following directories:
 - `xl-converter\bin\win` for Windows (x86_64) 
 - `xl-converter/bin/linux` for Linux (x86_64) 
 
-All binaries are built statically. The version numbers should match. Binaries on Windows have an `.exe` extension.
+Build everything statically.
 
 > [!TIP]
 > See the official [XL Converter builds](https://github.com/JacobDev1/xl-converter/releases) for examples.
