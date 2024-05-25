@@ -20,6 +20,7 @@ from ui.theme import setTheme
 from ui.widget_manager import WidgetManager
 from ui.scroll_area import ScrollArea
 from ui.spinbox import SpinBox
+from ui.combobox import ComboBox
 
 class Signals(QObject):
     custom_resampling = Signal(bool)
@@ -27,6 +28,7 @@ class Signals(QObject):
     no_exceptions = Signal(bool)
     enable_jxl_effort_10 = Signal(bool)
     enable_quality_prec_snap = Signal(bool)
+    change_jpg_encoder = Signal(str)
 
 class SettingsTab(QWidget):
     def __init__(self):
@@ -65,6 +67,13 @@ class SettingsTab(QWidget):
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
         self.jpeg_reconstruction_exiftool_cb = self.wm.addWidget("jpeg_reconstruction_exiftool_cb", QCheckBox("JPEG Reconstruction - Allow ExifTool"))
 
+        self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("JPEG Encoder"))
+        self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", ComboBox())
+        self.jpg_encoder_cmb.addItems((
+            "JPEGLI",
+            "libjpeg",
+        ))
+
         self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Additional Encoder Parameters"))
         self.avifenc_args_l = QLabel("avifenc\nAVIF")
         self.avifenc_args_te = self.wm.addWidget("avifenc_args_te", QTextEdit())
@@ -84,6 +93,7 @@ class SettingsTab(QWidget):
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling.emit)
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
         self.quality_prec_snap_cb.toggled.connect(self.signals.enable_quality_prec_snap)
+        self.jpg_encoder_cmb.currentTextChanged.connect(self.signals.change_jpg_encoder)
 
         # Settings - layout
         disable_on_startup_hb = QHBoxLayout()
@@ -91,13 +101,20 @@ class SettingsTab(QWidget):
         disable_on_startup_hb.addWidget(self.disable_delete_startup_cb)
         disable_on_startup_hb.addWidget(self.disable_downscaling_startup_cb)
         self.settings_lt.addRow(disable_on_startup_hb)
+
         self.settings_lt.addRow(self.dark_theme_cb)
         self.settings_lt.addRow(self.no_exceptions_cb)
         self.settings_lt.addRow(self.no_sorting_cb)
         self.settings_lt.addRow(self.quality_prec_snap_cb)
 
-        self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
         self.settings_lt.addRow(self.webp_method_l, self.webp_method_sb)
+        
+        self.jpg_encoder_hb = QHBoxLayout()
+        self.jpg_encoder_hb.addWidget(self.jpg_encoder_l)
+        self.jpg_encoder_hb.addWidget(self.jpg_encoder_cmb)
+        self.settings_lt.addRow(self.jpg_encoder_hb)
+
+        self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
         self.settings_lt.addRow(self.enable_jxl_effort_10)
         self.settings_lt.addRow(self.custom_resampling_cb)
         self.settings_lt.addRow(self.jpeg_reconstruction_exiftool_cb)
@@ -120,6 +137,8 @@ class SettingsTab(QWidget):
         self.im_args_te.setAcceptRichText(False)
 
         self.webp_method_sb.setMaximumWidth(80)
+        self.jpg_encoder_cmb.setMinimumWidth(150)
+        self.jpg_encoder_hb.addStretch()
 
         # Categories - widgets
         self.general_btn = QPushButton("General", self)
@@ -184,6 +203,8 @@ class SettingsTab(QWidget):
         self.no_sorting_cb.setVisible(general)
         self.quality_prec_snap_cb.setVisible(general)
         
+        self.jpg_encoder_l.setVisible(conversion)
+        self.jpg_encoder_cmb.setVisible(conversion)
         self.disable_progressive_jpegli_cb.setVisible(conversion)
         self.webp_method_l.setVisible(conversion)
         self.webp_method_sb.setVisible(conversion)
@@ -243,6 +264,7 @@ class SettingsTab(QWidget):
             "im_args": self.im_args_te.toPlainText(),
             "enable_quality_precision_snapping": self.quality_prec_snap_cb.isChecked(),
             "allow_exiftool_jpeg_reconstruction": self.jpeg_reconstruction_exiftool_cb.isChecked(),
+            "jpg_encoder": self.jpg_encoder_cmb.currentText(),
         }
     
     def resetToDefault(self):
@@ -257,6 +279,7 @@ class SettingsTab(QWidget):
         self.custom_resampling_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)
         self.webp_method_sb.setValue(6)
+        self.jpg_encoder_cmb.setCurrentIndex(0)
 
         self.custom_args_cb.setChecked(False)
         self.cjxl_args_te.clear()
