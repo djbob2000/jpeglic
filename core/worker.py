@@ -1,6 +1,5 @@
 import os
 import shutil
-import platform
 import copy
 from pathlib import Path
 from typing import Dict
@@ -25,13 +24,13 @@ from data.constants import (
 )
 
 from core.proxy import Proxy
-from core.pathing import getUniqueFilePath, getPathGIF, getExtension, getOutputDir, isANSICompatible
+from core.pathing import getUniqueFilePath, getPathGIF, getExtension, getOutputDir
 from core.convert import convert, getDecoder, getDecoderArgs, getExtensionJxl, optimize
 from core.downscale import downscale, decodeAndDownscale
 import core.metadata as metadata
 import data.task_status as task_status
 from core.exceptions import CancellationException, GenericException, FileException
-from core.conflicts import checkForConflicts
+import core.conflicts as conflicts
 
 class Signals(QObject):
     started = Signal(int)
@@ -84,7 +83,7 @@ class Worker(QRunnable):
         self.jpeg_rec_data_found = False      # Reconstruction data found
         self.anchor_path = anchor_path        # keep_dir_struct
     
-    def logException(self, id, msg):
+    def logException(self, id: str, msg: str):
         self.signals.exception.emit(id, msg, str(Path(self.item_abs_path).name))
 
     @Slot()
@@ -133,11 +132,15 @@ class Worker(QRunnable):
         if os.path.isfile(self.org_item_abs_path) == False:
             raise FileException("C0", "File not found")
 
-        # Check for conflicts - GIFs and APNGs
-        checkForConflicts(
+        # Compatibility
+        conflicts.checkForConflicts(
             self.item_ext,
             self.params["format"],
             self.params["downscaling"]["enabled"],
+        )
+        conflicts.checkForMultipage(
+            self.item_ext,
+            self.org_item_abs_path,
         )
 
     def setupConversion(self):
