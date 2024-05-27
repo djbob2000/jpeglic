@@ -19,6 +19,7 @@ def app(qtbot):
                 "disable_delete_startup": False,
                 "enable_jxl_effort_10": False,
                 "enable_quality_precision_snapping": False,
+                "jpg_encoder": "JPEGLI",
             }
         )
         qtbot.addWidget(tab)
@@ -35,7 +36,6 @@ def test_initial_state(app):
     assert settings["intelligent_effort"] == False
     assert settings["reconstruct_jpg"] == True
     assert settings["jxl_modular"] == False
-    assert settings["jpg_encoder"] == "JPEGLI"
     assert settings["delete_original"] == False
     assert not app.smIsFormatPoolEmpty()
 
@@ -132,8 +132,6 @@ def test_onFormatChange_visibility(app, file_format, int_effort, effort, effort_
     # Misc.
     assert app.jxl_modular_cb.isVisibleTo(app) == jxl_modular
     assert app.jxl_modular_l.isVisibleTo(app) == jxl_modular
-    assert app.jpg_encoder_l.isVisibleTo(app) == jpg_encoder
-    assert app.jpg_encoder_cmb.isVisibleTo(app) == jpg_encoder
     assert app.reconstruct_jpg_cb.isVisibleTo(app) == reconstruct_jpg
 
     assert app.chroma_subsampling_l.isVisibleTo(app) == chroma_subsampling
