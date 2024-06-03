@@ -10,7 +10,7 @@ def test_checkForConflicts_gif_unsupported():
     with pytest.raises(GenericException) as excinfo:
         checkForConflicts("gif", "JPEG")
 
-    assert "Animation is not supported for GIF -> JPEG" == excinfo.value.msg
+    assert "GIF -> JPEG conversion is not supported" == excinfo.value.msg
 
 def test_checkForConflicts_gif_supported():
     assert not checkForConflicts("gif", "JPEG XL")
@@ -19,7 +19,7 @@ def test_checkForConflicts_apng_unsupported():
     with pytest.raises(GenericException) as excinfo:
         checkForConflicts("apng", "WebP")
 
-    assert "Animation is not supported for APNG -> WebP" == excinfo.value.msg
+    assert "APNG -> WebP conversion is not supported" == excinfo.value.msg
 
 def test_checkForConflicts_apng_supported():
     assert not checkForConflicts("apng", "JPEG XL")

@@ -6,7 +6,7 @@ from data.constants import (
 from core.process import runProcessOutput
 from core.exceptions import GenericException, FileException
 
-def checkForConflicts(ext: str, file_format: str, downscaling=False) -> bool:
+def checkForConflicts(ext: str, file_format: str, downscaling=False) -> None:
     """
     Checks for conflicts with animated images. Raises exceptions and returns True If any conflicts occur. 
     
@@ -21,23 +21,18 @@ def checkForConflicts(ext: str, file_format: str, downscaling=False) -> bool:
         # Animation
         match ext:
             case "gif":
-                if file_format in ("JPEG XL", "WebP", "PNG"):
+                if file_format in ("JPEG XL", "WebP"):
                     conflict = False
             case "apng":
                 if file_format in ("JPEG XL"):
                     conflict = False
         
         if conflict:
-            raise GenericException("CF0", f"Animation is not supported for {ext.upper()} -> {file_format}")
+            raise GenericException("CF0", f"{ext.upper()} -> {file_format} conversion is not supported")
 
         # Downscaling
         if downscaling:
-            conflict = True
             raise GenericException("CF1", f"Downscaling is not supported for animation")
-    else:
-        conflict = False
-    
-    return conflict
 
 def checkForMultipage(src_ext: str, src_abs_path: str) -> None:
     """Raises an exception if an image is multipage."""

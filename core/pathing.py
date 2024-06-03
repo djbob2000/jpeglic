@@ -31,20 +31,6 @@ def getUniqueFilePath(output_dir: str, file_name: str, file_ext: str, add_rnd = 
 
     return path
 
-def getPathGIF(output_dir: str, item_name: str, duplicates: str):
-    """Single-purpose method for decoding GIF to PNG with ImageMagick."""
-    new_path = os.path.join(output_dir, f"{item_name}.png")
-    match duplicates:
-        case "Rename":
-            if os.path.isfile(os.path.join(output_dir, f"{item_name}-0.png")):
-                n = 1
-                while os.path.isfile(os.path.join(output_dir, f"{item_name} ({n})-0.png")):
-                    n += 1
-                new_path = os.path.join(output_dir, f"{item_name} ({n}).png")
-            return new_path
-        case "Replace":
-            return new_path
-
 def getExtension(_format):
     """Get file extension for the specified format."""
     match _format :
