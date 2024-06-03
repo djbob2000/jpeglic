@@ -31,6 +31,7 @@ import core.metadata as metadata
 import data.task_status as task_status
 from core.exceptions import CancellationException, GenericException, FileException
 import core.conflicts as conflicts
+from core.utils import freeSpaceLeft
 
 class Signals(QObject):
     started = Signal(int)
@@ -157,6 +158,16 @@ class Worker(QRunnable):
             os.makedirs(self.output_dir, exist_ok=True)
         except OSError as err:
             raise FileException("S0", f"Failed to create output directory. {err}")
+
+        # Check available space left
+        try:
+            input_size = os.path.getsize(self.org_item_abs_path)
+        except OSError as e:
+            raise FileException("S2", f"Geting file size failed. {e}")
+
+        free_space_left = freeSpaceLeft(self.output_dir)
+        if free_space_left <= input_size * 2 and free_space_left != -1:
+            raise FileException("S3", "No space left on device.")
 
         # Output extension
         if (
