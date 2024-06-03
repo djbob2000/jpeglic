@@ -219,7 +219,7 @@ class Interact:
         self.main_window.modify_tab.date_time_cb.setChecked(enabled)
     
     def set_jpg_encoder(self, encoder: str):
-        cmb_set_text(self.main_window.output_tab.jpg_encoder_cmb, encoder)
+        cmb_set_text(self.main_window.settings_tab.jpg_encoder_cmb, encoder)
 
     def drag_and_drop(self, urls):
         mime_data = QMimeData()
