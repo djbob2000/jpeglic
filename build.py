@@ -345,6 +345,9 @@ class Builder():
         subprocess.run((self.appimagetool_path, appdir, f"{self.dst_dir}/{self.build_appimage_name}"))
 
     def _build7z(self):
+        if platform.system() != "Linux":
+            return
+
         dst_direct = self.build_7z_name
         dst = f"{self.dst_dir}/{self.build_7z_name}"
         makedirs(dst)
