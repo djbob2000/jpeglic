@@ -165,8 +165,9 @@ class Worker(QRunnable):
         except OSError as e:
             raise FileException("S2", f"Geting file size failed. {e}")
 
+        buffer_space = 10 * 1024 ** 2
         free_space_left = freeSpaceLeft(self.output_dir)
-        if free_space_left <= input_size * 2 and free_space_left != -1:
+        if free_space_left <= input_size * 2 + buffer_space and free_space_left != -1:
             raise FileException("S3", "No space left on device.")
 
         # Output extension
