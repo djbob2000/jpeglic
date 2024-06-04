@@ -71,15 +71,6 @@ class ExceptionView(QDialog):
         self.setWindowIcon(QIcon(ICON_SVG))
         self.resize(650,300)
 
-        self.table.setStyleSheet("""
-            QTableWidget, QHeaderView { background-color: #202124; }
-            QTableWidget::item:focus {
-                border: none;
-                outline: none;
-            }
-        """)
-        self.table.viewport().setStyleSheet("background-color: #202124;")
-
         # Apply settings
         self.dont_show_again_cb.setChecked(settings.get("no_exceptions", False))
 
