@@ -200,10 +200,7 @@ class Worker(QRunnable):
             self.settings["jpg_encoder"] == "JPEGLI",
             self.params["downscaling"]["enabled"]
         ):
-            if not self.proxy.generate(self.item_abs_path, self.item_ext, self.output_dir, self.item_name, self.n, self.mutex):
-                raise FileException("S1", f"Proxy could not be generated to {self.proxy.getPath()}")
-            
-            self.item_abs_path = self.proxy.getPath()     # Redirect the source
+            self.item_abs_path = self.proxy.generate(self.item_abs_path, self.item_ext, self.output_dir, self.item_name, self.n, self.mutex)    # Redirect the source
 
         # Setup downscaling params
         if self.params["downscaling"]["enabled"]:
