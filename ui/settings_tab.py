@@ -65,7 +65,7 @@ class SettingsTab(QWidget):
         self.webp_method_sb = self.wm.addWidget("webp_method_sb", SpinBox())
         self.webp_method_sb.setRange(0, 6)
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
-        self.jpeg_reconstruction_exiftool_cb = self.wm.addWidget("jpeg_reconstruction_exiftool_cb", QCheckBox("JPEG Reconstruction - Allow ExifTool"))
+        self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Recompression"))
 
         self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("JPEG Encoder"))
         self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", ComboBox())
@@ -107,17 +107,15 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.no_sorting_cb)
         self.settings_lt.addRow(self.quality_prec_snap_cb)
 
+        self.settings_lt.addRow(self.jxl_lossless_jpeg_cb)
         self.settings_lt.addRow(self.webp_method_l, self.webp_method_sb)
-        
         self.jpg_encoder_hb = QHBoxLayout()
         self.jpg_encoder_hb.addWidget(self.jpg_encoder_l)
         self.jpg_encoder_hb.addWidget(self.jpg_encoder_cmb)
         self.settings_lt.addRow(self.jpg_encoder_hb)
-
         self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
         self.settings_lt.addRow(self.enable_jxl_effort_10)
         self.settings_lt.addRow(self.custom_resampling_cb)
-        self.settings_lt.addRow(self.jpeg_reconstruction_exiftool_cb)
 
         self.settings_lt.addRow(self.custom_args_cb)
         self.settings_lt.addRow(self.cjxl_args_l, self.cjxl_args_te)
@@ -203,6 +201,7 @@ class SettingsTab(QWidget):
         self.no_sorting_cb.setVisible(general)
         self.quality_prec_snap_cb.setVisible(general)
         
+        self.jxl_lossless_jpeg_cb.setVisible(conversion)
         self.jpg_encoder_l.setVisible(conversion)
         self.jpg_encoder_cmb.setVisible(conversion)
         self.disable_progressive_jpegli_cb.setVisible(conversion)
@@ -211,8 +210,6 @@ class SettingsTab(QWidget):
 
         self.enable_jxl_effort_10.setVisible(advanced)
         self.custom_resampling_cb.setVisible(advanced)
-        self.jpeg_reconstruction_exiftool_cb.setVisible(advanced)
-
         self.custom_args_cb.setVisible(advanced)
         self.avifenc_args_l.setVisible(advanced)
         self.avifenc_args_te.setVisible(advanced)
@@ -263,8 +260,8 @@ class SettingsTab(QWidget):
             "cjpegli_args": self.cjpegli_args_te.toPlainText(),
             "im_args": self.im_args_te.toPlainText(),
             "enable_quality_precision_snapping": self.quality_prec_snap_cb.isChecked(),
-            "allow_exiftool_jpeg_reconstruction": self.jpeg_reconstruction_exiftool_cb.isChecked(),
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
+            "jxl_lossless_jpeg": self.jxl_lossless_jpeg_cb.isChecked(),
         }
     
     def resetToDefault(self):
@@ -274,7 +271,8 @@ class SettingsTab(QWidget):
         self.disable_delete_startup_cb.setChecked(True)
         self.no_exceptions_cb.setChecked(False)
         self.quality_prec_snap_cb.setChecked(False)
-        
+        self.jxl_lossless_jpeg_cb.setChecked(False)
+
         self.enable_jxl_effort_10.setChecked(False)
         self.custom_resampling_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)

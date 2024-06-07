@@ -49,6 +49,10 @@ class Proxy():
                         return False
             case "Smallest Lossless":
                 return True
+            case "Lossless JPEG Recompression":
+                return False
+            case "JPEG Reconstruction":
+                return False
             case _:
                 raise FileException("Proxy0", f"Unrecognized format ({src_ext})")
         
