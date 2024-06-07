@@ -184,12 +184,11 @@ class ModifyTab(QWidget):
 
         # Size Policy
         tab_lt.setAlignment(Qt.AlignTop)
+        metadata_hb.setAlignment(Qt.AlignLeft)
 
         downscale_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         misc_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # Alignment
-        metadata_hb.setAlignment(Qt.AlignLeft)
+        self.metadata_cmb.setMinimumWidth(180)
 
         # WidgetManager Tags
         self.wm.addTags("mode_cmb", "downscale_ui")
