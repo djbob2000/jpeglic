@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 import logging
 
+from core.exceptions import GenericException
+
 def getUniqueFilePath(output_dir: str, file_name: str, file_ext: str, add_rnd = False):
     """
     Get a unique file name within a directory.
@@ -47,8 +49,7 @@ def getExtension(_format):
         case "Smallest Lossless":   # Handled in Worker
             return None
         case _:
-            logging.error(f"[Pathing - getExtension()] No extension declared for {_format}")
-            return None
+            raise GenericException("PG0", f"No extension declared for {_format}")
 
 def getOutputDir(
         item_dir_path: str,
