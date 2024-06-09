@@ -32,7 +32,7 @@ import core.metadata as metadata
 import data.task_status as task_status
 from core.exceptions import CancellationException, GenericException, FileException
 import core.conflicts as conflicts
-from core.utils import freeSpaceLeft
+from core.utils import getFreeSpaceLeft
 
 class Signals(QObject):
     started = Signal(int)
@@ -172,7 +172,7 @@ class Worker(QRunnable):
             raise FileException("S1", f"Geting file size failed. {e}")
 
         buffer_space = 10 * 1024 ** 2
-        free_space_left = freeSpaceLeft(self.output_dir)
+        free_space_left = getFreeSpaceLeft(self.output_dir)
         if free_space_left <= input_size * 2 + buffer_space and free_space_left != -1:
             raise FileException("S2", "No space left on device.")
 
@@ -191,7 +191,6 @@ class Worker(QRunnable):
             self.output_ext = "jxl"
         else:
             self.output_ext = getExtension(self.params["format"])
-
         
         # Assign output path
         with QMutexLocker(self.mutex):

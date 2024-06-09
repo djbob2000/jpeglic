@@ -54,11 +54,11 @@ def clip(val, _min, _max):
     else:
         return val
 
-def freeSpaceLeft(path: str) -> int:
+def getFreeSpaceLeft(path: str) -> int:
     """Returns free space left on the device in bytes, or -1 if it cannot be determined."""
     try:
         total, used, free = shutil.disk_usage(path)
         return free
     except Exception as e:
-        logging.error(f"[freeSpaceLeft] {e}")
+        logging.error(f"[getFreeSpaceLeft] {e}")
         return -1
