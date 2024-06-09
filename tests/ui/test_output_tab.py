@@ -109,7 +109,7 @@ def test_onFormatChange_lossless_toggled(app):
     ("WebP", ["quality", "lossless"]),
     ("JPEG", ["quality", "chroma_subsampling"]),
     ("PNG", []),
-    ("Lossless JPEG Recompression", []),
+    ("Lossless JPEG Recompression", ["effort"]),
     ("JPEG Reconstruction", ["png_fallback"]),
     ("Smallest Lossless", ["smallest_lossless"]),
 ])

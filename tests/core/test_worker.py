@@ -786,13 +786,11 @@ def test_smallestLossless_args(jxl_lossless_jpeg, smallestLossless_patches, work
                     "--metadata_arg"
                 ]
 
-@pytest.mark.parametrize("int_effort, effort, expected_args", [
-    (False, 7, ["--lossless_jpeg=1", "-e 7", "--num_threads=4"]),
-    (True, 7, ["--lossless_jpeg=1", "-e 9", "--num_threads=4"]),
-    (False, 9, ["--lossless_jpeg=1", "-e 9", "--num_threads=4"]),
+@pytest.mark.parametrize("effort, expected_args", [
+    (7, ["--lossless_jpeg=1", "-e 7", "--num_threads=4"]),
+    (9, ["--lossless_jpeg=1", "-e 9", "--num_threads=4"]),
 ])
-def test_losslesslyRecompressJPEG(int_effort, effort, expected_args, worker):
-    worker.params["intelligent_effort"] = int_effort
+def test_losslesslyRecompressJPEG(effort, expected_args, worker):
     worker.params["effort"] = effort
     with (
         patch("core.worker.convert") as mock_convert,
