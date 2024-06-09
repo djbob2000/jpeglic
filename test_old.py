@@ -351,10 +351,10 @@ class TestMainWindow(unittest.TestCase):
         self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPEG")
 
         # JPG -> JXL
-        self.app.convert_preset(self.data.get_tmp_folder_content("jpg")[0], self.data.make_tmp_subfolder("jxl"), "JPEG XL", lossless=True)
+        self.app.convert_preset(self.data.get_tmp_folder_content("jpg")[0], self.data.make_tmp_subfolder("jxl"), "Lossless JPEG Recompression")
 
         # JXL -> JPG
-        self.app.convert_preset(self.data.get_tmp_folder_content("jxl")[0], self.data.make_tmp_subfolder("reconstructed"), "PNG")
+        self.app.convert_preset(self.data.get_tmp_folder_content("jxl")[0], self.data.make_tmp_subfolder("reconstructed"), "JPEG Reconstruction")
 
         assert blake2(self.data.get_tmp_folder_content("jpg")[0]) == blake2(self.data.get_tmp_folder_content("reconstructed")[0]), "Hash mismatch for reconstructed JPG"
 
