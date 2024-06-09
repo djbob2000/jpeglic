@@ -521,7 +521,7 @@ class Worker(QRunnable):
     def losslesslyRecompressJPEG(self):
         args = [
             "--lossless_jpeg=1",
-            "-e 9" if self.params["intelligent_effort"] else f"-e {self.params['effort']}",
+            f"-e {self.params['effort']}",
             f"--num_threads={self.available_threads}",
         ]
         convert(CJXL_PATH, self.item_abs_path, self.output, args, self.n)
