@@ -35,6 +35,7 @@ def worker():
             "jxl_modular": False,
             "avif_chroma_subsampling": "Default",
             "jpegli_chroma_subsampling": "Default",
+            "jxl_png_fallback": False,
             "downscaling": {
                 "enabled": False,
                 "mode": "Percent",
@@ -60,6 +61,7 @@ def worker():
             "cjpegli_args": "",
             "im_args": "",
             "jpg_encoder": "JPEGLI",
+            "jxl_lossless_jpeg": False,
         },
         4,
         mutex,
@@ -75,21 +77,6 @@ def normalizePath(path: str):
 
 def getSuffix(path: str):
     return Path(path).suffix[1:]
-
-def setupConversion_patches(
-    makedirs_side_effect=None,
-    getUniqueFilePath_return_value=normalizePath("/output/dir/image.jpg"),
-    getOutputDir_return_value=normalizePath("/output/dir/"),
-    getExtensionJxl_return_value="jpg",
-    isfile_side_effect=[True, True],
-):
-    stack = ExitStack()
-    stack.enter_context(patch("core.worker.os.makedirs", side_effect=makedirs_side_effect))
-    stack.enter_context(patch("core.worker.getUniqueFilePath", return_value=getUniqueFilePath_return_value))
-    stack.enter_context(patch("core.worker.getOutputDir", return_value=getOutputDir_return_value))
-    stack.enter_context(patch("core.worker.getExtensionJxl", return_value=getExtensionJxl_return_value))
-    stack.enter_context(patch("core.worker.os.path.isfile", side_effect=isfile_side_effect))
-    return stack
 
 def convert_patches(
     getDecoder_return_value = "sample_decoder",
@@ -198,80 +185,156 @@ def test_runChecks(mock_conflicts, mock_isfile, worker):
     mock_conflicts.checkForConflicts.assert_called_once()
     mock_conflicts.checkForMultipage.assert_called_once()
 
-def test_setupConversion_regular(worker):
-    worker.item_name = "image"
-    worker.params["format"] = "JPEG"
-    worker.proxy.isProxyNeeded = MagicMock(return_value=False)
+@pytest.fixture
+def setupConversion_patches():
+    with (
+        patch("core.worker.Proxy.isProxyNeeded", return_value=False) as mock_isProxyNeeded,
+        patch("core.worker.os.makedirs", side_effect=None) as mock_makedirs,
+        patch("core.worker.getUniqueFilePath", return_value=normalizePath("/output/dir/image.jpg")) as mock_getUniqueFilePath,
+        patch("core.worker.getOutputDir", return_value="/output/dir/") as mock_getOutputDir,
+        patch("core.worker.getExtensionJxl", return_value="jpg") as mock_getExtensionJxl,
+        patch("core.worker.os.path.isfile", side_effect=[True, True]) as mock_isfile,
+        patch("core.worker.os.path.getsize", return_value=300_000) as mock_getsize,
+        patch("core.worker.getFreeSpaceLeft", return_value=300_000_000_000) as mock_getFreeSpaceLeft,
+        patch("core.worker.getExtension", return_value="jxl") as mock_getExtension,
+    ):
+        yield (
+            mock_getUniqueFilePath,     # 0
+            mock_getOutputDir,          # 1
+            mock_isProxyNeeded,         # 2
+            mock_makedirs,              # 3
+            mock_getExtensionJxl,       # 4
+            mock_isfile,                # 5
+            mock_getsize,               # 6
+            mock_getFreeSpaceLeft,      # 7
+            mock_getExtension,          # 8
+        )
 
+def test_setupConversion_regular(setupConversion_patches, worker):
     output = normalizePath("/output/dir/image_unique.jpg")
     output_dir = normalizePath("/output/dir/")
     final_output = normalizePath("/output/dir/image.jpg")
+    worker.item_name = "image"
+    worker.params["format"] = "JPEG"
+    mock_getUniqueFilePath = setupConversion_patches[0]
+    mock_getOutputDir = setupConversion_patches[1]
+    mock_getExtension = setupConversion_patches[8]
+    mock_getUniqueFilePath.return_value = output
+    mock_getOutputDir.return_value = output_dir
+    mock_getExtension.return_value = "jpg"
 
-    with setupConversion_patches(
-        getUniqueFilePath_return_value=output,
-        getOutputDir_return_value=output_dir
-    ):
+    worker.setupConversion()
+    
+    assert worker.output == output
+    assert worker.final_output == final_output
+    assert worker.output_dir == output_dir
+    assert worker.output_ext == "jpg"
+
+def test_setupConversion_makedirs_error(setupConversion_patches, worker):
+    mock_makedirs = setupConversion_patches[3]
+    mock_makedirs.side_effect = OSError
+    
+    with pytest.raises(FileException) as exc:
         worker.setupConversion()
-        
-        assert worker.output == output
-        assert worker.final_output == final_output
-        assert worker.output_dir == output_dir
-        assert worker.output_ext == "jpg"
 
-def test_setupConversion_makedirs_error(worker):
-    with setupConversion_patches(makedirs_side_effect=OSError):
-        with pytest.raises(FileException) as exc:
-            with pytest.raises(OSError):
-                worker.setupConversion()
+    assert "Failed to create output directory" in exc.value.msg
 
-        assert "Failed to create output directory" in exc.value.msg
+def test_setupConversion_space_left_pass(setupConversion_patches, worker):
+    worker.setupConversion()
 
-def test_setupConversion_reconstruct_jpg(worker):
-    worker.params["format"] = "PNG"
+def test_setupConversion_space_left_exception(setupConversion_patches, worker):
+    mock_getFreeSpaceLeft = setupConversion_patches[7]
+    mock_getFreeSpaceLeft.return_value = 10_000
+    with pytest.raises(FileException) as exc:
+        worker.setupConversion()
+
+    assert "No space left on device" in exc.value.msg
+
+def test_setupConversion_jpeg_reconstruction_rec_data_found(setupConversion_patches, worker):
+    worker.params["format"] = "JPEG Reconstruction"
     worker.item_ext = "jxl"
-    worker.params["reconstruct_jpg"] = True
-    worker.proxy.isProxyNeeded = MagicMock(return_value=False)
-    with setupConversion_patches():
-        worker.setupConversion()
-        assert worker.jpeg_rec_data_found
 
-def test_setupConversion_skip(worker):
+    worker.setupConversion()
+    assert worker.jpeg_rec_data_found
+    assert worker.output_ext == "jpg"
+
+def test_setupConversion_jpeg_reconstruction_rec_data_not_found(setupConversion_patches, worker):
+    mock_getExtensionJxl = setupConversion_patches[4]
+    mock_getExtensionJxl.return_value = "png"
+    worker.params["format"] = "JPEG Reconstruction"
+    worker.item_ext = "jxl"
+
+    with pytest.raises(FileException) as exc:
+        worker.setupConversion()
+
+    assert "Reconstruction data not found" in exc.value.msg
+    assert not worker.jpeg_rec_data_found
+    assert worker.output_ext == "png"
+
+def test_setupConversion_jpeg_reconstruction_rec_data_not_found_png_fallback(setupConversion_patches, worker):
+    mock_getExtensionJxl = setupConversion_patches[4]
+    mock_getExtensionJxl.return_value = "png"
+    worker.params["format"] = "JPEG Reconstruction"
+    worker.item_ext = "jxl"
+    worker.params["jxl_png_fallback"] = True
+
+    worker.setupConversion()
+
+    assert not worker.jpeg_rec_data_found
+    assert worker.output_ext == "png"
+
+def test_setupConversion_jpeg_reconstruction_bad_input(setupConversion_patches, worker):
+    worker.params["format"] = "JPEG Reconstruction"
+    worker.item_ext = "jpg"
+
+    with pytest.raises(FileException) as exc:
+        worker.setupConversion()
+
+    assert "Only JPEG XL images are allowed" in exc.value.msg
+
+def test_setupConversion_assign_output_path(setupConversion_patches, worker):
+    mock_getUniqueFilePath, mock_getOutputDir = setupConversion_patches[0], setupConversion_patches[1]
+    mock_getUniqueFilePath.return_value = "/tmp/path/image.jxl"
+    mock_getOutputDir.return_value = "/tmp/path/"
+    worker.params["format"] = "JPEG XL"
+    worker.item_name = "image"
+
+    worker.setupConversion()
+
+    assert worker.output == "/tmp/path/image.jxl"
+    assert worker.final_output == normalizePath("/tmp/path/image.jxl")
+
+def test_setupConversion_skip(setupConversion_patches, worker):
     worker.params["if_file_exists"] = "Skip"
-    worker.params["format"] = "PNG"
-    with setupConversion_patches():
-        worker.setupConversion()
-        assert worker.skip
+    worker.setupConversion()
+    assert worker.skip
 
-def test_setupConversion_proxy_failed(worker):
+def test_setupConversion_proxy_needed(setupConversion_patches, worker):
     worker.proxy.isProxyNeeded = MagicMock(return_value=True)
-    worker.proxy.generate = MagicMock(return_value=False)
-    with setupConversion_patches():
-        with pytest.raises(FileException) as exc:
-            worker.setupConversion()
-        assert "Proxy could not be generated" in exc.value.msg
+    mock_isProxyNeeded = setupConversion_patches[2]
+    worker.proxy.generate = MagicMock(return_value="/tmp/path/image.png")
+    mock_isProxyNeeded.return_value = True
 
-def test_setupConversion_proxy_success(worker):
-    worker.proxy.isProxyNeeded = MagicMock(return_value=True)
-    worker.proxy.generate = MagicMock(return_value=True)
-    with setupConversion_patches():
-        worker.setupConversion()
-        assert worker.item_abs_path is worker.proxy.getPath()
+    worker.setupConversion()
 
-def test_setupConversion_downscaling_no_key_error(worker):
-    with setupConversion_patches():
-        worker.params["downscaling"]["enabled"] = True
-        worker.setupConversion()
-        assert worker.scl_params is not None
+    assert worker.item_abs_path == "/tmp/path/image.png"
 
-@pytest.mark.parametrize("quality, effort, lossless, modular, intelligent_effort, item_ext, expected_args, expected_jpg_to_jxl_lossless", [
-    (80, 7, True, False, False, "png", ["-q 100", "-e 7", "--lossless_jpeg=1", "--num_threads=4"], False),
-    (80, 7, False, False, False, "png", ["-q 80", "-e 7", "--lossless_jpeg=0", "--num_threads=4"], False),
-    (80, 7, False, True, False, "png", ["-q 80", "-e 7", "--lossless_jpeg=0", "--num_threads=4", "--modular=1"], False),
-    (80, 7, False, True, True, "png", ["-q 80", "-e 9", "--lossless_jpeg=0", "--num_threads=4", "--modular=1"], False),
-    (80, 7, True, False, True, "png", ["-q 100", "-e 9", "--lossless_jpeg=1", "--num_threads=4"], False),
-    (80, 7, True, False, False, "jpg", ["-q 100", "-e 7", "--lossless_jpeg=1", "--num_threads=4"], True),
+def test_setupConversion_downscaling_no_key_error(setupConversion_patches, worker):
+    worker.params["downscaling"]["enabled"] = True
+    worker.setupConversion()
+    assert worker.scl_params is not None
+
+@pytest.mark.parametrize("quality, effort, lossless, modular, intelligent_effort, jxl_lossless_jpeg, item_ext, expected_args, expected_jpg_to_jxl_lossless", [
+    (80, 7, True, False, False, True, "png", ["-q 100", "-e 7", "--lossless_jpeg=1", "--num_threads=4"], False),
+    (80, 7, False, False, False, False, "png", ["-q 80", "-e 7", "--lossless_jpeg=0", "--num_threads=4"], False),
+    (80, 7, False, True, False, False, "png", ["-q 80", "-e 7", "--lossless_jpeg=0", "--num_threads=4", "--modular=1"], False),
+    (80, 7, False, True, True, False, "png", ["-q 80", "-e 9", "--lossless_jpeg=0", "--num_threads=4", "--modular=1"], False),
+    (80, 7, True, False, True, True, "png", ["-q 100", "-e 9", "--lossless_jpeg=1", "--num_threads=4"], False),
+    (80, 7, True, False, False, True, "jpg", ["-q 100", "-e 7", "--lossless_jpeg=1", "--num_threads=4"], True),
 ])
-def test_convert_args_jpeg_xl(quality, effort, lossless, modular, intelligent_effort, item_ext, expected_args, expected_jpg_to_jxl_lossless, worker):
+def test_convert_args_jpeg_xl(
+    quality, effort, lossless, modular, intelligent_effort, jxl_lossless_jpeg, item_ext, expected_args, expected_jpg_to_jxl_lossless, worker
+):
     with convert_patches() as patches:
         mock_convert = patches.enter_context(patch("core.worker.convert"))
         worker.params["format"] = "JPEG XL"
@@ -280,6 +343,7 @@ def test_convert_args_jpeg_xl(quality, effort, lossless, modular, intelligent_ef
         worker.params["effort"] = effort
         worker.params["jxl_modular"] = modular
         worker.params["intelligent_effort"] = intelligent_effort
+        worker.settings["jxl_lossless_jpeg"] = jxl_lossless_jpeg
         worker.item_ext = item_ext
 
         worker.convert()
@@ -530,26 +594,18 @@ def test_postConversionRoutines_no_output(postConversionRoutines_patches, worker
 
     assert "Output not found" in exc.value.msg
 
-@pytest.mark.parametrize("jpeg_rec_data_found, allow_exiftool_jpeg_reconstruction, expected_run", [
-    (False, False, True),
-    (True, False, False),
-    (True, True, True),
-    (False, True, True),
+@pytest.mark.parametrize("file_format, expected_to_run", [
+    ("JPEG XL", True),
+    ("Lossless JPEG Recompression", False),
+    ("JPEG Reconstruction", False),
 ])
-def test_postConversionRoutines_metadata(
-    jpeg_rec_data_found,
-    allow_exiftool_jpeg_reconstruction,
-    expected_run,
-    postConversionRoutines_patches,
-    worker
+def test_postConversionRoutines_exiftool(
+    file_format, expected_to_run, postConversionRoutines_patches, worker
 ):
     _, mock_runExifTool, *_ = postConversionRoutines_patches
-    worker.jpeg_rec_data_found = jpeg_rec_data_found
-    worker.settings["allow_exiftool_jpeg_reconstruction"] = allow_exiftool_jpeg_reconstruction
-
+    worker.params["format"] = file_format
     worker.postConversionRoutines()
-
-    assert mock_runExifTool.called == expected_run
+    assert mock_runExifTool.called == expected_to_run
 
 @pytest.mark.parametrize("attributes", [True, False])
 def test_postConversionRoutines_attributes(attributes, postConversionRoutines_patches, worker):
@@ -632,7 +688,8 @@ def test_smallestLossless_generate_files(smallestLossless_patches, worker):
     assert mock_optimize.called
     assert mock_convert.call_count == 2
 
-def test_smallestLossless_jpg_to_jxl_lossless(smallestLossless_patches, worker):
+@pytest.mark.parametrize("jxl_lossless_jpeg", [True, False])
+def test_smallestLossless_jpg_to_jxl_lossless(jxl_lossless_jpeg, smallestLossless_patches, worker):
     _, _, _, _, _, mock_convert, *_ = smallestLossless_patches
     worker.item_ext = "jpg"
     worker.item_abs_path = "proxy/image"
@@ -640,11 +697,12 @@ def test_smallestLossless_jpg_to_jxl_lossless(smallestLossless_patches, worker):
     worker.params["smallest_format_pool"]["png"] = False
     worker.params["smallest_format_pool"]["jxl"] = True
     worker.params["smallest_format_pool"]["webp"] = False
+    worker.settings["jxl_lossless_jpeg"] = jxl_lossless_jpeg
 
     worker.smallestLossless()
 
-    assert worker.jpg_to_jxl_lossless
-    assert mock_convert.call_args[0][1] == "original/image"
+    assert worker.jpg_to_jxl_lossless == jxl_lossless_jpeg
+    assert mock_convert.call_args[0][1] == "original/image" if jxl_lossless_jpeg else "proxy/image"
 
 @pytest.mark.parametrize("png_size, webp_size, jxl_size, expected_smallest", [
     (100_000, 150_000, 150_000, "png"),
@@ -701,9 +759,12 @@ def test_smallestLossless_remove_bigger_failed(smallestLossless_patches, worker)
     assert "SL4" in exc.value.id
     assert mock_remove.call_count == 1
 
-def test_smallestLossless_args(smallestLossless_patches, worker):
+@pytest.mark.parametrize("jxl_lossless_jpeg", [True, False])
+def test_smallestLossless_args(jxl_lossless_jpeg, smallestLossless_patches, worker):
     _, _, mock_getArgs, _, mock_optimize, mock_convert, *_ = smallestLossless_patches
     mock_getArgs.return_value = ["--metadata_arg"]
+    worker.settings["jxl_lossless_jpeg"] = jxl_lossless_jpeg
+    worker.item_ext = "jpg"
 
     worker.smallestLossless()
     assert mock_optimize.call_args[0][2] == [ "-o 2", "-t 4", "--metadata_arg" ]
@@ -721,5 +782,45 @@ def test_smallestLossless_args(smallestLossless_patches, worker):
                     "-q 100",
                     "-e 7",
                     "--num_threads=4",
+                    f"--lossless_jpeg={1 if jxl_lossless_jpeg else 0}",
                     "--metadata_arg"
                 ]
+
+@pytest.mark.parametrize("int_effort, effort, expected_args", [
+    (False, 7, ["--lossless_jpeg=1", "-e 7", "--num_threads=4"]),
+    (True, 7, ["--lossless_jpeg=1", "-e 9", "--num_threads=4"]),
+    (False, 9, ["--lossless_jpeg=1", "-e 9", "--num_threads=4"]),
+])
+def test_losslesslyRecompressJPEG(int_effort, effort, expected_args, worker):
+    worker.params["intelligent_effort"] = int_effort
+    worker.params["effort"] = effort
+    with (
+        patch("core.worker.convert") as mock_convert,
+        patch("core.worker.CJXL_PATH", "/path/cjxl"),
+    ):
+        worker.losslesslyRecompressJPEG()
+
+    mock_convert.assert_called_once_with(
+        "/path/cjxl",
+        worker.item_abs_path,
+        worker.output,
+        expected_args,
+        0
+    )
+
+def test_reconstructJPEG(worker):
+    worker.org_item_abs_path = "/original/item/path/image.jxl"
+    worker.output = "/tmp/output/image.jxl"
+    with (
+        patch("core.worker.convert") as mock_convert,
+        patch("core.worker.DJXL_PATH", "/path/djxl"),
+    ):
+        worker.reconstructJPEG()
+    
+    mock_convert.assert_called_once_with(
+        "/path/djxl",
+        "/original/item/path/image.jxl",
+        "/tmp/output/image.jxl",
+        ["--num_threads=4"],
+        0
+    )
