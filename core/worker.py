@@ -303,7 +303,7 @@ class Worker(QRunnable):
                 
                 args.extend([
                     f"-define webp:thread-level={1 if self.available_threads > 1 else 0}",
-                    f"-define webp:method={self.settings['webp_method']}"
+                    f"-define webp:method={self.params['effort']}"
                 ])
 
                 encoder = IMAGE_MAGICK_PATH

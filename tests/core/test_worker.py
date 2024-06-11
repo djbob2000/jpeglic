@@ -401,7 +401,7 @@ def test_convert_args_webp(quality, method, lossless, expected_args, worker):
         worker.params["format"] = "WebP"
         worker.params["quality"] = quality
         worker.params["lossless"] = lossless
-        worker.settings["webp_method"] = method
+        worker.params["effort"] = method
 
         worker.convert()
 

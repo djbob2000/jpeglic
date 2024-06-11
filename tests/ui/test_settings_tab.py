@@ -41,8 +41,6 @@ def test_changeCategory_visibility(category, app, qtbot):
     assert app.no_sorting_cb.isVisibleTo(app) == general
 
     assert app.disable_progressive_jpegli_cb.isVisibleTo(app) == conversion
-    assert app.webp_method_l.isVisibleTo(app) == conversion
-    assert app.webp_method_sb.isVisibleTo(app) == conversion
 
     assert app.enable_jxl_effort_10.isVisibleTo(app) == advanced
     assert app.custom_resampling_cb.isVisibleTo(app) == advanced
@@ -106,7 +104,6 @@ def test_resetToDefault(app):
     assert app.enable_jxl_effort_10.isChecked() == False
     assert app.custom_resampling_cb.isChecked() == False
     assert app.disable_progressive_jpegli_cb.isChecked() == False
-    assert app.webp_method_sb.value() == 6
 
     assert app.custom_args_cb.isChecked() == False
     assert app.cjxl_args_te.toPlainText() == ""

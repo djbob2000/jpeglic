@@ -61,9 +61,6 @@ class SettingsTab(QWidget):
         self.enable_jxl_effort_10 = self.wm.addWidget("enable_jxl_effort_10", QCheckBox("JPEG XL - Enable Effort 10", self))
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
-        self.webp_method_l = QLabel("WebP - Method")
-        self.webp_method_sb = self.wm.addWidget("webp_method_sb", SpinBox())
-        self.webp_method_sb.setRange(0, 6)
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
         self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Recompression"))
 
@@ -108,7 +105,6 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.quality_prec_snap_cb)
 
         self.settings_lt.addRow(self.jxl_lossless_jpeg_cb)
-        self.settings_lt.addRow(self.webp_method_l, self.webp_method_sb)
         self.jpg_encoder_hb = QHBoxLayout()
         self.jpg_encoder_hb.addWidget(self.jpg_encoder_l)
         self.jpg_encoder_hb.addWidget(self.jpg_encoder_cmb)
@@ -134,7 +130,6 @@ class SettingsTab(QWidget):
         self.cjxl_args_te.setAcceptRichText(False)
         self.im_args_te.setAcceptRichText(False)
 
-        self.webp_method_sb.setMaximumWidth(80)
         self.jpg_encoder_cmb.setMinimumWidth(150)
         self.jpg_encoder_hb.addStretch()
 
@@ -205,8 +200,6 @@ class SettingsTab(QWidget):
         self.jpg_encoder_l.setVisible(conversion)
         self.jpg_encoder_cmb.setVisible(conversion)
         self.disable_progressive_jpegli_cb.setVisible(conversion)
-        self.webp_method_l.setVisible(conversion)
-        self.webp_method_sb.setVisible(conversion)
 
         self.enable_jxl_effort_10.setVisible(advanced)
         self.custom_resampling_cb.setVisible(advanced)
@@ -254,7 +247,6 @@ class SettingsTab(QWidget):
             "enable_jxl_effort_10": self.enable_jxl_effort_10.isChecked(),
             "disable_progressive_jpegli": self.disable_progressive_jpegli_cb.isChecked(),
             "enable_custom_args": self.custom_args_cb.isChecked(),
-            "webp_method": self.webp_method_sb.value(),
             "cjxl_args": self.cjxl_args_te.toPlainText(),
             "avifenc_args": self.avifenc_args_te.toPlainText(),
             "cjpegli_args": self.cjpegli_args_te.toPlainText(),
@@ -276,7 +268,6 @@ class SettingsTab(QWidget):
         self.enable_jxl_effort_10.setChecked(False)
         self.custom_resampling_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)
-        self.webp_method_sb.setValue(6)
         self.jpg_encoder_cmb.setCurrentIndex(0)
 
         self.custom_args_cb.setChecked(False)

@@ -106,7 +106,7 @@ def test_onFormatChange_lossless_toggled(app):
 @pytest.mark.parametrize("file_format, visible_widgets", [
     ("JPEG XL", ["quality", "int_effort", "effort", "lossless", "jxl_modular"]),
     ("AVIF", ["quality", "effort", "chroma_subsampling"]),
-    ("WebP", ["quality", "lossless"]),
+    ("WebP", ["quality", "effort", "lossless"]),
     ("JPEG", ["quality", "chroma_subsampling"]),
     ("PNG", []),
     ("Lossless JPEG Recompression", ["effort"]),
