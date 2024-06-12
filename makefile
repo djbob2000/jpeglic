@@ -1,4 +1,4 @@
-.PHONY: run clean build build-appimage build-7z src-full src-min test test-old coverage test-slowest test-no-cache
+.PHONY: run clean src-full src-min test test-old coverage test-slowest test-no-cache
 
 clean:
 	rm -rf dist
@@ -8,15 +8,6 @@ clean-all: clean
 
 run:
 	python3 main.py
-
-build:
-	python3 build.py
-
-build-appimage:
-	python3 build.py -a
-
-build-7z:
-	python3 build.py -p
 
 src: clean
 	mkdir -p dist/src
