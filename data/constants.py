@@ -21,6 +21,7 @@ PROGRAM_FOLDER = sys._MEIPASS if getattr(sys, "frozen", False) else os.path.dirn
 ICON_SVG = os.path.join(PROGRAM_FOLDER, "icons/logo.svg")
 LICENSE_PATH = os.path.join(PROGRAM_FOLDER, "LICENSE.txt")
 LICENSE_3RD_PARTY_PATH = os.path.join(PROGRAM_FOLDER, "LICENSE_3RD_PARTY.txt")
+FONTS_DIR = os.path.join(PROGRAM_FOLDER, "fonts")
 
 CJXL_PATH = "cjxl"
 DJXL_PATH = "djxl"
