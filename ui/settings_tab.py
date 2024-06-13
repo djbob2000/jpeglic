@@ -14,6 +14,7 @@ from PySide6.QtWidgets import(
 from PySide6.QtCore import(
     Signal,
     QObject,
+    Qt,
 )
 
 from ui.theme import setTheme
@@ -63,6 +64,11 @@ class SettingsTab(QWidget):
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
         self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Recompression"))
+        self.play_sound_on_finish_cb = self.wm.addWidget("play_sound_on_finish_cb", QCheckBox("Play Sound When Conversion Finishes"))
+        self.play_sound_on_finish_vol_l = self.wm.addWidget("play_sound_on_finish_vol_l", QLabel("Volume"))
+        self.play_sound_on_finish_vol_sb = self.wm.addWidget("play_sound_on_finish_vol_sb", SpinBox())
+        self.play_sound_on_finish_vol_sb.setRange(0, 100)
+        self.play_sound_on_finish_vol_sb.setSuffix("%")
 
         self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("JPEG Encoder"))
         self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", ComboBox())
@@ -84,15 +90,18 @@ class SettingsTab(QWidget):
 
         # Settings - signals
         self.dark_theme_cb.toggled.connect(self.setDarkModeEnabled)
+        self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
+        self.play_sound_on_finish_cb.toggled.connect(self.onPlaySoundOnFinishVolumeToggled)
+
         self.no_exceptions_cb.toggled.connect(self.signals.no_exceptions)
         self.no_sorting_cb.toggled.connect(self.signals.disable_sorting)
         self.enable_jxl_effort_10.clicked.connect(self.signals.enable_jxl_effort_10)
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling.emit)
-        self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
         self.quality_prec_snap_cb.toggled.connect(self.signals.enable_quality_prec_snap)
         self.jpg_encoder_cmb.currentTextChanged.connect(self.signals.change_jpg_encoder)
 
         # Settings - layout
+        ## General
         disable_on_startup_hb = QHBoxLayout()
         disable_on_startup_hb.addWidget(self.disable_on_startup_l)
         disable_on_startup_hb.addWidget(self.disable_delete_startup_cb)
@@ -103,16 +112,23 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.no_exceptions_cb)
         self.settings_lt.addRow(self.no_sorting_cb)
         self.settings_lt.addRow(self.quality_prec_snap_cb)
+        self.settings_lt.addRow(self.play_sound_on_finish_cb)
+        play_sound_on_finish_vol_hb = QHBoxLayout()
+        play_sound_on_finish_vol_hb.addWidget(self.play_sound_on_finish_vol_l)
+        play_sound_on_finish_vol_hb.addWidget(self.play_sound_on_finish_vol_sb)
+        self.settings_lt.addRow(play_sound_on_finish_vol_hb)
 
+        ## Conversion
         self.settings_lt.addRow(self.jxl_lossless_jpeg_cb)
         self.jpg_encoder_hb = QHBoxLayout()
         self.jpg_encoder_hb.addWidget(self.jpg_encoder_l)
         self.jpg_encoder_hb.addWidget(self.jpg_encoder_cmb)
         self.settings_lt.addRow(self.jpg_encoder_hb)
         self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
+
+        ## Advanced
         self.settings_lt.addRow(self.enable_jxl_effort_10)
         self.settings_lt.addRow(self.custom_resampling_cb)
-
         self.settings_lt.addRow(self.custom_args_cb)
         self.settings_lt.addRow(self.cjxl_args_l, self.cjxl_args_te)
         self.settings_lt.addRow(self.avifenc_args_l, self.avifenc_args_te)
@@ -120,6 +136,10 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.im_args_l, self.im_args_te)
         self.settings_lt.addRow(self.empty_l)
         
+        ## Layout
+        play_sound_on_finish_vol_hb.setAlignment(Qt.AlignLeft)
+        self.play_sound_on_finish_vol_sb.setMinimumWidth(150)
+
         self.avifenc_args_te.setMaximumHeight(50)
         self.cjpegli_args_te.setMaximumHeight(50)
         self.cjxl_args_te.setMaximumHeight(50)
@@ -154,6 +174,7 @@ class SettingsTab(QWidget):
         self.general_btn.setCheckable(True)
         self.conversion_btn.setCheckable(True)
         self.advanced_btn.setCheckable(True)
+        self.categories_lt.setContentsMargins(0, 1, 0, 1)
 
         # Main layout
         self.main_lt.addLayout(self.categories_lt, 0, 0)
@@ -162,9 +183,6 @@ class SettingsTab(QWidget):
         self.main_lt.setColumnStretch(0, 3)
         self.main_lt.setColumnStretch(1, 7)
 
-        # Size Policy
-        self.categories_lt.setContentsMargins(0, 1, 0, 1)
-
         # Misc.
         self.changeCategory("General")
         self.resetToDefault()
@@ -172,6 +190,7 @@ class SettingsTab(QWidget):
 
         # Refresh state
         self.onCustomArgsToggled()
+        self.onPlaySoundOnFinishVolumeToggled()
 
         # Apply Settings
         self.setDarkModeEnabled(self.dark_theme_cb.isChecked())
@@ -195,7 +214,10 @@ class SettingsTab(QWidget):
         self.no_exceptions_cb.setVisible(general)
         self.no_sorting_cb.setVisible(general)
         self.quality_prec_snap_cb.setVisible(general)
-        
+        self.play_sound_on_finish_cb.setVisible(general)
+        self.play_sound_on_finish_vol_l.setVisible(general)
+        self.play_sound_on_finish_vol_sb.setVisible(general)
+
         self.jxl_lossless_jpeg_cb.setVisible(conversion)
         self.jpg_encoder_l.setVisible(conversion)
         self.jpg_encoder_cmb.setVisible(conversion)
@@ -226,11 +248,13 @@ class SettingsTab(QWidget):
         self.im_args_l.setEnabled(enabled)
         self.im_args_te.setEnabled(enabled)
 
+    def onPlaySoundOnFinishVolumeToggled(self):
+        enabled = self.play_sound_on_finish_cb.isChecked()
+        self.play_sound_on_finish_vol_l.setEnabled(enabled)
+        self.play_sound_on_finish_vol_sb.setEnabled(enabled)
+
     def setDarkModeEnabled(self, enabled):
-        if enabled:
-            setTheme("dark")
-        else:
-            setTheme("light")        
+        setTheme("dark" if enabled else "light")
 
     def setExceptionsEnabled(self, enabled):
         self.blockSignals(True)
@@ -254,6 +278,8 @@ class SettingsTab(QWidget):
             "enable_quality_precision_snapping": self.quality_prec_snap_cb.isChecked(),
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
             "jxl_lossless_jpeg": self.jxl_lossless_jpeg_cb.isChecked(),
+            "play_sound_on_finish": self.play_sound_on_finish_cb.isChecked(),
+            "play_sound_on_finish_vol": round(self.play_sound_on_finish_vol_sb.value() / 100, 2),
         }
     
     def resetToDefault(self):
@@ -264,6 +290,8 @@ class SettingsTab(QWidget):
         self.no_exceptions_cb.setChecked(False)
         self.quality_prec_snap_cb.setChecked(False)
         self.jxl_lossless_jpeg_cb.setChecked(False)
+        self.play_sound_on_finish_cb.setChecked(False)
+        self.play_sound_on_finish_vol_sb.setValue(60)
 
         self.enable_jxl_effort_10.setChecked(False)
         self.custom_resampling_cb.setChecked(False)

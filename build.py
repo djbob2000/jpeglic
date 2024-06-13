@@ -53,15 +53,6 @@ def move(src, dst):
     except OSError as err:
         print(f"[Error] Moving failed ({src} -> {dst}) ({err})")
 
-def copyTree(src, dst):
-    src = os.path.normpath(src)
-    dst = os.path.normpath(dst)
-
-    try:
-        shutil.copytree(src, dst, dirs_exist_ok=True)
-    except OSError as err:
-        print(f"[Error] Copying tree failed ({src} -> {dst}) ({err})")
-
 def makedirs(path):
     path = os.path.normpath(path)
 
@@ -169,9 +160,11 @@ class Builder():
             "Linux": "misc/install.sh"
         }
 
-        self.misc_path = (
+        self.assets = (
             "LICENSE.txt",
-            "LICENSE_3RD_PARTY.txt"
+            "LICENSE_3RD_PARTY.txt",
+            "fonts/",
+            "sounds/",
         )
 
         # Assets
@@ -274,7 +267,7 @@ class Builder():
     def _copyDependencies(self):
         print("[Building] Copying dependencies")
         bin_dir = self.bin_dir[platform.system()]
-        copyTree(bin_dir, f"{self.internal_dir}/{bin_dir}")
+        shutil.copytree(Path(bin_dir), Path(self.internal_dir, bin_dir))
     
     def _appendInstaller(self):
         installer_dir = self.installer_path[platform.system()]
@@ -299,11 +292,17 @@ class Builder():
     
     def _copyAssets(self):
         print("[Building] Appending assets")
-        for i in self.misc_path:
-            copy(i, self.internal_dir)
+        
+        # Most assets
+        for i in self.assets:
+            if os.path.isdir(Path(i)):
+                shutil.copytree(Path(i), Path(self.internal_dir, Path(i).name))
+            elif os.path.isdir(Path(i)):
+                copy(i, self.internal_dir)
+        
+        # Icons
         makedirs(f"{self.internal_dir}/icons")
         copy(self.icon_svg_path, f"{self.internal_dir}/icons/{os.path.basename(self.icon_svg_path)}")
-        copyTree(self.fonts_path, f"{self.internal_dir}/fonts")
     
     def _appendUpdateFile(self):
         print("[Building] Appending an update file (to place on a server)")
