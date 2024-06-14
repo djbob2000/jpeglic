@@ -26,7 +26,6 @@ from ui.combobox import ComboBox
 class Signals(QObject):
     custom_resampling = Signal(bool)
     disable_sorting = Signal(bool)
-    no_exceptions = Signal(bool)
     enable_jxl_effort_10 = Signal(bool)
     enable_quality_prec_snap = Signal(bool)
     change_jpg_encoder = Signal(str)
@@ -93,7 +92,6 @@ class SettingsTab(QWidget):
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
         self.play_sound_on_finish_cb.toggled.connect(self.onPlaySoundOnFinishVolumeToggled)
 
-        self.no_exceptions_cb.toggled.connect(self.signals.no_exceptions)
         self.no_sorting_cb.toggled.connect(self.signals.disable_sorting)
         self.enable_jxl_effort_10.clicked.connect(self.signals.enable_jxl_effort_10)
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling.emit)
@@ -109,9 +107,8 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(disable_on_startup_hb)
 
         self.settings_lt.addRow(self.dark_theme_cb)
-        self.settings_lt.addRow(self.no_exceptions_cb)
-        self.settings_lt.addRow(self.no_sorting_cb)
         self.settings_lt.addRow(self.quality_prec_snap_cb)
+        self.settings_lt.addRow(self.no_sorting_cb)
         self.settings_lt.addRow(self.play_sound_on_finish_cb)
         play_sound_on_finish_vol_hb = QHBoxLayout()
         play_sound_on_finish_vol_hb.addWidget(self.play_sound_on_finish_vol_l)
@@ -129,6 +126,7 @@ class SettingsTab(QWidget):
         ## Advanced
         self.settings_lt.addRow(self.enable_jxl_effort_10)
         self.settings_lt.addRow(self.custom_resampling_cb)
+        self.settings_lt.addRow(self.no_exceptions_cb)
         self.settings_lt.addRow(self.custom_args_cb)
         self.settings_lt.addRow(self.cjxl_args_l, self.cjxl_args_te)
         self.settings_lt.addRow(self.avifenc_args_l, self.avifenc_args_te)
@@ -211,7 +209,6 @@ class SettingsTab(QWidget):
         self.disable_on_startup_l.setVisible(general)
         self.disable_downscaling_startup_cb.setVisible(general)
         self.disable_delete_startup_cb.setVisible(general)
-        self.no_exceptions_cb.setVisible(general)
         self.no_sorting_cb.setVisible(general)
         self.quality_prec_snap_cb.setVisible(general)
         self.play_sound_on_finish_cb.setVisible(general)
@@ -223,6 +220,7 @@ class SettingsTab(QWidget):
         self.jpg_encoder_cmb.setVisible(conversion)
         self.disable_progressive_jpegli_cb.setVisible(conversion)
 
+        self.no_exceptions_cb.setVisible(advanced)
         self.enable_jxl_effort_10.setVisible(advanced)
         self.custom_resampling_cb.setVisible(advanced)
         self.custom_args_cb.setVisible(advanced)
@@ -255,11 +253,6 @@ class SettingsTab(QWidget):
 
     def setDarkModeEnabled(self, enabled):
         setTheme("dark" if enabled else "light")
-
-    def setExceptionsEnabled(self, enabled):
-        self.blockSignals(True)
-        self.no_exceptions_cb.setChecked(enabled)
-        self.blockSignals(False)
 
     def getSettings(self):
         return {

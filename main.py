@@ -82,9 +82,6 @@ class MainWindow(QMainWindow):
 
         # Components
         self.exception_view = ExceptionView(settings, parent=self)
-        
-        self.exception_view.dont_show_again.connect(self.settings_tab.setExceptionsEnabled)
-        self.settings_tab.signals.no_exceptions.connect(self.exception_view.setDontShowAgain)
 
         # Size Policy
         self.resize(700, 352)
@@ -135,17 +132,16 @@ class MainWindow(QMainWindow):
 
         logging.debug(f"Active Threads: {self.threadpool.activeThreadCount()}")
 
+        # Finished
         if self.items.getCompletedItemCount() == self.items.getItemCount():
             settings = self.settings_tab.getSettings()
 
-            # Finished
             self.setUIEnabled(True)
             self.progress_dialog.finished()
             self.time_left.stopCounting()
             if settings["play_sound_on_finish"]:
                 finished_sound.play(volume=settings["play_sound_on_finish_vol"])
 
-            # Post conversion routines
             if not self.exception_view.isEmpty() and not settings["no_exceptions"]:
                 self.exception_view.resizeToContent()
                 self.exception_view.show()
