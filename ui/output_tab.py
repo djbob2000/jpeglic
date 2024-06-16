@@ -355,6 +355,8 @@ class OutputTab(QWidget):
 
         if cur_format in ("JPEG XL", "AVIF"):
             self.setQualityRange(0, 99)
+        elif cur_format == "WebP":
+            self.setQualityRange(1, 99)
         else:
             self.setQualityRange(1, 100)
         
