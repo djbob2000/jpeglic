@@ -294,14 +294,14 @@ def test_setupConversion_jpeg_reconstruction_bad_input(setupConversion_patches, 
 
 def test_setupConversion_assign_output_path(setupConversion_patches, worker):
     mock_getUniqueFilePath, mock_getOutputDir = setupConversion_patches[0], setupConversion_patches[1]
-    mock_getUniqueFilePath.return_value = "/tmp/path/image.jxl"
-    mock_getOutputDir.return_value = "/tmp/path/"
+    mock_getUniqueFilePath.return_value = normalizePath("/tmp/path/image.jxl")
+    mock_getOutputDir.return_value = normalizePath("/tmp/path/")
     worker.params["format"] = "JPEG XL"
     worker.item_name = "image"
 
     worker.setupConversion()
 
-    assert worker.output == "/tmp/path/image.jxl"
+    assert worker.output == normalizePath("/tmp/path/image.jxl")
     assert worker.final_output == normalizePath("/tmp/path/image.jxl")
 
 def test_setupConversion_skip(setupConversion_patches, worker):
