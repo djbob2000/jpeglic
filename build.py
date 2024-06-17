@@ -297,7 +297,7 @@ class Builder():
         for i in self.assets:
             if os.path.isdir(Path(i)):
                 shutil.copytree(Path(i), Path(self.internal_dir, Path(i).name))
-            elif os.path.isdir(Path(i)):
+            elif os.path.isfile(Path(i)):
                 copy(i, self.internal_dir)
         
         # Icons
