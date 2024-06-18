@@ -1,4 +1,20 @@
 
+## 1.0.1 - 2024-06-18
+
+- Added dedicated options for lossless JPEG recompression
+- Added snapping to sliders
+- Added an option to play sound when conversion finishes
+- Added a disk space check (#28)
+- Added HEIF page-number check
+- Fixed light theme in exception view (#29)
+- Fixed Linux installer bug (#36)
+- Adjusted naming to match the official specs
+- Adjusted WebP quality range
+- Moved JPEG encoder to the settings
+- Moved WebP method to the output tab
+- Disabled mouse wheel changing widget values
+- Deprecated GIF -> PNG conversion
+
 ## 1.0.0 - 2024-05-16
 
 - Added UTF-8 support to JPEG XL and JPEGLI (#6)
