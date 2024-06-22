@@ -26,6 +26,7 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 DisableReadyPage=yes
+DisableDirPage=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
