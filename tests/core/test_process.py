@@ -50,25 +50,15 @@ def test_runProcess(cmd, expected_stdout):
         
         mock_logging.info.assert_called_with(f"Running command: {cmd}")
 
-@pytest.mark.parametrize(
-    "cmd,expected_stdout", [
-        (("echo", "Hello World"), b"Hello World\n"),
-    ]
-)
 
-def test_runProcessOutput(cmd, expected_stdout):
-    with patch("core.process.subprocess.run") as mock_run, \
-        patch("core.process.logging") as mock_logging:
-    
-        mock_run.return_value = MockCompletedProcess(stdout=expected_stdout, stdin=b"")
-        output = runProcessOutput(*cmd)
+def test_runProcessOutput():
+    with (
+        patch("core.process.subprocess.run") as mock_run,
+        patch("core.process.logging") as mock_logging,
+    ):
+        mock_run.return_value = subprocess.CompletedProcess(args=["echo", "test"], stdout=b"test", stderr=b"err", returncode=0)
 
-        mock_run.assert_called_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, startupinfo=ANY)
+        out, err = runProcessOutput(["echo", "test"])
 
-        if expected_stdout:
-            mock_logging.debug.assert_any_call(expected_stdout.decode())
-            assert output == expected_stdout
-        else:
-            assert output is None
-
-        mock_logging.info.assert_called_with(f"Running command with output: {cmd}")
+        assert out == "test"
+        assert err == "err"

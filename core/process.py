@@ -25,18 +25,24 @@ def runProcess(*cmd, cwd=None):
     except Exception as err:
         logging.error(f"Failed to decode process output. {err}")
 
-def runProcessOutput(*cmd):
-    """Run process then return its output."""
+def runProcessOutput(*cmd) -> (str, str):
+    """Run process then return its output.
+    
+    Output: (stdout, stderr)
+    """
     logging.info(f"Running command with output: {cmd}")
 
-    process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, startupinfo=_getStartupInfo())
+    process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=_getStartupInfo())
 
     try:
-        if process.stdout:
-            logging.debug(process.stdout.decode())
-        if process.stderr:
-            logging.debug(process.stderr.decode())    
+        stdout, stderr = process.stdout, process.stderr
+        if stdout:
+            stdout = process.stdout.decode("utf-8")
+            logging.debug(stdout)
+        if stderr:
+            stderr = process.stderr.decode("utf-8")
+            logging.debug(stderr)
     except Exception as err:
         logging.error(f"Failed to decode process output. {err}")
 
-    return process.stdout
+    return (stdout, stderr)
