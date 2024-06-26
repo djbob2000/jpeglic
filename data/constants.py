@@ -33,8 +33,6 @@ AVIFENC_PATH = "avifenc"
 AVIFDEC_PATH = "avifdec"
 OXIPNG_PATH = "oxipng"
 EXIFTOOL_PATH = "exiftool"
-EXIFTOOL_FOLDER_PATH = ""
-EXIFTOOL_BIN_NAME = "exiftool"
 
 if platform.system() == "Windows":
     BASE_PATH = os.path.join(PROGRAM_FOLDER, "bin", "win")
@@ -47,10 +45,7 @@ if platform.system() == "Windows":
     AVIFENC_PATH = os.path.join(BASE_PATH, "avifenc.exe")
     AVIFDEC_PATH = os.path.join(BASE_PATH, "avifdec.exe")
     OXIPNG_PATH = os.path.join(BASE_PATH, "oxipng.exe")
-
     EXIFTOOL_PATH = os.path.join(BASE_PATH, "exiftool.exe")
-    EXIFTOOL_FOLDER_PATH = BASE_PATH
-    EXIFTOOL_BIN_NAME = "exiftool.exe"
 
     CONFIG_LOCATION = os.path.normpath(os.path.expanduser("~/AppData/Local/xl-converter"))
 elif platform.system() == "Linux":
@@ -64,19 +59,16 @@ elif platform.system() == "Linux":
     AVIFENC_PATH = f"{BASE_PATH}/avifenc"
     AVIFDEC_PATH = f"{BASE_PATH}/avifdec"
     OXIPNG_PATH = f"{BASE_PATH}/oxipng"
-
     EXIFTOOL_PATH = f"{BASE_PATH}/exiftool/exiftool"
-    EXIFTOOL_FOLDER_PATH = f"{BASE_PATH}/exiftool"
-    EXIFTOOL_BIN_NAME = "exiftool"
 
     CONFIG_LOCATION = os.path.expanduser('~/.config/xl-converter')
 
 # Proper usage is "if 'extension'.lower() in ALLOWED_INPUT:"
-JPEG_ALIASES = ["jpg", "jpeg", "jfif", "jif", "jpe"] # Used by CJXL for JPEG reconstruction, before adding more verify support
+JPEG_ALIASES = ["jpg", "jpeg", "jfif", "jif", "jpe"]
 ALLOWED_INPUT_DJXL = ["jxl"]
 ALLOWED_INPUT_CJXL = JPEG_ALIASES + ["png", "apng", "gif", "jxl"]
 ALLOWED_INPUT_CJPEGLI = JPEG_ALIASES + ["png", "jxl"]
-ALLOWED_INPUT_IMAGE_MAGICK = JPEG_ALIASES + ["png", "gif", "heif", "heifs", "heic", "heics", "avci", "avcs", "hif", "webp", "jp2", "bmp", "ico", "tiff", "tif"]     # Before adding more, make sure the included ImageMagick works with it. Some formats (like FLIF) seem not to have been included
+ALLOWED_INPUT_IMAGE_MAGICK = JPEG_ALIASES + ["png", "gif", "heif", "heifs", "heic", "heics", "avci", "avcs", "hif", "webp", "jp2", "bmp", "ico", "tiff", "tif"]
 ALLOWED_INPUT_AVIFENC = JPEG_ALIASES + ["png"]
 ALLOWED_INPUT_AVIFDEC = ["avif"]
 ALLOWED_INPUT_OXIPNG = ["png"]

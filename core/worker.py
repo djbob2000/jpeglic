@@ -3,6 +3,7 @@ import shutil
 import copy
 from pathlib import Path
 from typing import Dict
+import platform
 
 from PySide6.QtCore import (
     QRunnable,
@@ -412,7 +413,10 @@ class Worker(QRunnable):
 
         # Apply metadata
         if self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction"):
-            metadata.runExifTool(self.org_item_abs_path, self.final_output, self.params["misc"]["keep_metadata"])
+            if platform.system() == "Linux" and not metadata.isExifToolAvailable():
+                self.logException("P3", "ExifTool not found. Please install ExifTool on your system and restart the program.")
+            else:
+                metadata.runExifTool(self.org_item_abs_path, self.final_output, self.params["misc"]["keep_metadata"])
 
         # Apply attributes
         try:

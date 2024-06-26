@@ -1,13 +1,16 @@
 import platform
 
 from data.constants import (
-    EXIFTOOL_PATH, EXIFTOOL_FOLDER_PATH, EXIFTOOL_BIN_NAME,
+    EXIFTOOL_PATH,
     IMAGE_MAGICK_PATH,
     CJXL_PATH,
     AVIFENC_PATH,
     OXIPNG_PATH
 )
-from core.process import runProcess
+from core.process import runProcess, runProcessOutput
+
+class Data:
+    exiftool_available = None   # None - unchecked; False - not available; True - available;
 
 def copyMetadata(src, dst):
     """Copy all metadata from one file onto another."""
@@ -31,13 +34,30 @@ def runExifTool(src, dst, mode):
         case "ExifTool - Unsafe Wipe":
             deleteMetadataUnsafe(dst)
 
+def isExifToolAvailable() -> bool | None:
+    """Checks if ExifTool is available. Unix-only."""
+    if Data.exiftool_available is not None:
+        return Data.exiftool_available
+
+    match platform.system():
+        case "Linux":
+            Data.exiftool_available = not "not found" in runProcessOutput("bash", "-c", "type exiftool")[0]
+        case _:
+            Data.exiftool_available = True
+   
+    return Data.exiftool_available
+
 def _runExifTool(*args):
     """For internal use only."""
     if platform.system() == "Windows":
         runProcess(EXIFTOOL_PATH, *args)
-    elif platform.system() == "Linux":  # Relative path needed for Brotli dependency to work on Linux
-        runProcess("./" + EXIFTOOL_BIN_NAME, *args, cwd=EXIFTOOL_FOLDER_PATH)
-
+    elif platform.system() == "Linux":
+        runProcess("exiftool", *args)
+        # ExifTool is no longer included due to a bug in its handling of JPEG XL.
+        # If you try to process JPEG XL from Worker, you get:
+        # (stderr): Warning: Install IO::Uncompress::Brotli to decode Brotli-compressed metadata
+        # To reproduce it, checkout `v1.0.1` tag and copy the binaries over from the official release.
+        
 def getArgs(encoder, mode, jpg_to_jxl_lossless=False) -> list:
     """Return metadata arguments for the specified encoder.
 

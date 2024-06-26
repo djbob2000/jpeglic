@@ -35,11 +35,11 @@ def runProcessOutput(*cmd) -> (str, str):
     process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=_getStartupInfo())
 
     try:
-        stdout, stderr = process.stdout, process.stderr
-        if stdout:
+        stdout, stderr = "", ""
+        if process.stdout:
             stdout = process.stdout.decode("utf-8")
             logging.debug(stdout)
-        if stderr:
+        if process.stderr:
             stderr = process.stderr.decode("utf-8")
             logging.debug(stderr)
     except Exception as err:

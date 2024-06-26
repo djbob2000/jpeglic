@@ -197,7 +197,6 @@ class Builder():
             "cjpegli",
             "avifenc",
             "avifdec",
-            "exiftool",
             "magick",
         ]
         
