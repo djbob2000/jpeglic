@@ -398,8 +398,15 @@ class Worker(QRunnable):
                         os.rename(self.output, self.final_output)
                 else:
                     if mode == "Replace":
-                        if os.path.isfile(self.final_output):
-                            os.remove(self.final_output)
+                        if (
+                            self.settings["keep_if_larger"] and
+                            os.path.getsize(self.org_item_abs_path) < os.path.getsize(self.output) and
+                            self.org_item_abs_path == self.final_output
+                        ):
+                            self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, False)
+                        else:
+                            if os.path.isfile(self.final_output):
+                                os.remove(self.final_output)
                     elif mode == "Rename" or mode == "Skip":
                         self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, False)
                     
@@ -426,14 +433,15 @@ class Worker(QRunnable):
             raise FileException("P0", f"Failed to apply attributes. {err}")
 
         # Delete original
-        try:
-            if self.params["delete_original"]:
-                if self.params["delete_original_mode"] == "To Trash":
-                    send2trash(self.org_item_abs_path)
-                elif self.params["delete_original_mode"] == "Permanently":
-                    os.remove(self.org_item_abs_path)
-        except OSError as err:
-            raise FileException("P1", f"Failed to delete original file. {err}")
+        if not self.settings["keep_if_larger"] or os.path.getsize(self.org_item_abs_path) > os.path.getsize(self.final_output):
+            try:
+                if self.params["delete_original"]:
+                    if self.params["delete_original_mode"] == "To Trash":
+                        send2trash(self.org_item_abs_path)
+                    elif self.params["delete_original_mode"] == "Permanently":
+                        os.remove(self.org_item_abs_path)
+            except OSError as err:
+                raise FileException("P1", f"Failed to delete original file. {err}")
 
     def smallestLossless(self):
         # Populate path pool
