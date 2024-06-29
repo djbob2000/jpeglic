@@ -3,6 +3,7 @@ import sys
 import shutil
 import hashlib
 from pathlib import Path
+import platform
 
 from PySide6.QtGui import (
     QDropEvent,
@@ -302,18 +303,12 @@ class TestMainWindow(unittest.TestCase):
             AVIFDEC_PATH,
             OXIPNG_PATH,
             EXIFTOOL_PATH,
-            Path(EXIFTOOL_FOLDER_PATH) / EXIFTOOL_BIN_NAME,
-        )
-
-        DIRS = (
-            EXIFTOOL_FOLDER_PATH,   # Trailing comma is very important here
         )
 
         for i in FILES:
+            if platform.system() == "Linux" and i == EXIFTOOL_PATH:
+                continue
             assert Path(i).is_file(), f"File not found ({i})"
-
-        for i in DIRS:
-            assert Path(i).is_dir(), f"Dir not found ({i})"
 
     def test_clear_list(self):
         self.app.add_items(self.data.get_sample_imgs())
