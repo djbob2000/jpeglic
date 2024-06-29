@@ -79,11 +79,14 @@ class Worker(QRunnable):
         self.output_ext = None
         self.final_output = None 
 
-        # Misc.
-        self.scl_params = None
+        # Flags
         self.skip = False
         self.jpg_to_jxl_lossless = False
         self.jpeg_rec_data_found = False      # Reconstruction data found
+        self.copy_if_larger_applied = False
+
+        # Misc.
+        self.scl_params = None
         self.anchor_path = anchor_path        # keep_dir_struct
     
     def logException(self, id: str, msg: str):
@@ -383,11 +386,13 @@ class Worker(QRunnable):
             self.item_abs_path = self.org_item_abs_path   # Redirect the source back to original file
         
         try:
+            # Checks
             if not os.path.isfile(self.output):
                 raise FileException("F2", "Conversion failed (output not found).")
             if os.path.getsize(self.output) == 0:
                 raise FileException("F3", "Conversion failed (output is empty).")
             
+            # Rename / remove
             with QMutexLocker(self.mutex):
                 mode = self.params["if_file_exists"]
                 
@@ -399,9 +404,9 @@ class Worker(QRunnable):
                 else:
                     if mode == "Replace":
                         if (
-                            self.settings["keep_if_larger"] and
+                            (self.settings["keep_if_larger"] or self.settings["copy_if_larger"]) and
                             os.path.getsize(self.org_item_abs_path) < os.path.getsize(self.output) and
-                            self.org_item_abs_path == self.final_output
+                            os.path.samefile(self.org_item_abs_path, self.final_output)
                         ):
                             self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, False)
                         else:
@@ -411,6 +416,13 @@ class Worker(QRunnable):
                         self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, False)
                     
                     os.rename(self.output, self.final_output)
+
+                # Copy original
+                if self.settings["copy_if_larger"] and os.path.getsize(self.org_item_abs_path) < os.path.getsize(self.final_output):
+                    self.copy_if_larger_applied = True
+                    os.remove(self.final_output)
+                    self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.item_ext, False)
+                    shutil.copy(self.org_item_abs_path, self.final_output)
         except OSError as err:
             raise FileException("F1", f"Conversion could not finish. {err}")
 
@@ -419,7 +431,7 @@ class Worker(QRunnable):
             raise FileException("P2", "Output not found.")
 
         # Apply metadata
-        if self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction"):
+        if self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction") and not self.copy_if_larger_applied:
             if platform.system() == "Linux" and not metadata.isExifToolAvailable():
                 self.logException("P3", "ExifTool not found. Please install ExifTool on your system and restart the program.")
             else:

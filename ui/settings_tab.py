@@ -75,7 +75,8 @@ class SettingsTab(QWidget):
             "JPEGLI",
             "libjpeg",
         ))
-        self.keep_if_larger_cb = self.wm.addWidget("keep_if_larger_cb", QCheckBox("Keep Original When Output is Larger"))
+        self.keep_if_larger_cb = self.wm.addWidget("keep_if_larger_cb", QCheckBox("Do Not Delete Original When Result is Larger"))
+        self.copy_if_larger_cb = self.wm.addWidget("copy_if_larger_cb", QCheckBox("Copy Original When Result is Larger"))
 
         self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Additional Encoder Parameters"))
         self.avifenc_args_l = QLabel("avifenc\nAVIF")
@@ -124,6 +125,7 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.jpg_encoder_hb)
         self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
         self.settings_lt.addRow(self.keep_if_larger_cb)
+        self.settings_lt.addRow(self.copy_if_larger_cb)
 
         ## Advanced
         self.settings_lt.addRow(self.enable_jxl_effort_10)
@@ -222,6 +224,7 @@ class SettingsTab(QWidget):
         self.jpg_encoder_cmb.setVisible(conversion)
         self.disable_progressive_jpegli_cb.setVisible(conversion)
         self.keep_if_larger_cb.setVisible(conversion)
+        self.copy_if_larger_cb.setVisible(conversion)
 
         self.no_exceptions_cb.setVisible(advanced)
         self.enable_jxl_effort_10.setVisible(advanced)
@@ -277,6 +280,7 @@ class SettingsTab(QWidget):
             "play_sound_on_finish": self.play_sound_on_finish_cb.isChecked(),
             "play_sound_on_finish_vol": round(self.play_sound_on_finish_vol_sb.value() / 100, 2),
             "keep_if_larger": self.keep_if_larger_cb.isChecked(),
+            "copy_if_larger": self.copy_if_larger_cb.isChecked(),
         }
     
     def resetToDefault(self):
@@ -295,6 +299,7 @@ class SettingsTab(QWidget):
         self.disable_progressive_jpegli_cb.setChecked(False)
         self.jpg_encoder_cmb.setCurrentIndex(0)
         self.keep_if_larger_cb.setChecked(False)
+        self.copy_if_larger_cb.setChecked(False)
 
         self.custom_args_cb.setChecked(False)
         self.cjxl_args_te.clear()
