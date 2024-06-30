@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
         # Components
         self.items = Items()
         self.time_left = TimeLeft()
-        self.n = Notifications()
+        self.n = Notifications(self)
         self.threadpool = QThreadPool.globalInstance()
         self.thread_manager = ThreadManager(self.threadpool)
         
