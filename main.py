@@ -42,6 +42,7 @@ import data.task_status as task_status
 from data.thread_manager import ThreadManager
 from data.time_left import TimeLeft
 from data.sounds import finished_sound
+from data.logging_manager import LoggingManager
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -51,6 +52,7 @@ class MainWindow(QMainWindow):
         self.setAcceptDrops(True)
 
         # Components
+        LoggingManager()    # init singleton
         self.items = Items()
         self.time_left = TimeLeft()
         self.n = Notifications(self)

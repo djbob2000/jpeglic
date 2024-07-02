@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtWidgets import(
     QWidget,
     QGridLayout,
@@ -15,6 +17,10 @@ from PySide6.QtCore import(
     Signal,
     QObject,
     Qt,
+    QUrl,
+)
+from PySide6.QtGui import(
+    QDesktopServices,
 )
 
 from ui.theme import setTheme
@@ -22,6 +28,8 @@ from ui.widget_manager import WidgetManager
 from ui.scroll_area import ScrollArea
 from ui.spinbox import SpinBox
 from ui.combobox import ComboBox
+from data.logging_manager import LoggingManager
+from ui.notifications import Notifications
 
 class Signals(QObject):
     custom_resampling = Signal(bool)
@@ -39,6 +47,8 @@ class SettingsTab(QWidget):
 
         self.wm = WidgetManager("SettingsTab")
         self.signals = Signals()
+        self.logging_manager = LoggingManager()
+        self.notifications = Notifications(self)
 
         # Categories
         self.categories_lt = QVBoxLayout()
@@ -89,6 +99,11 @@ class SettingsTab(QWidget):
         self.im_args_te = self.wm.addWidget("im_args_te", QTextEdit())
         self.empty_l = QLabel("")       # Workaround for a bug in QScrollArea. The scroll bar stops responding when rendered inside a height limited QTabWidget with the last item being QTextEdit. 
 
+        self.start_logging_btn = self.wm.addWidget("start_logging_btn", QPushButton("Start Logging"))
+        self.open_log_dir_btn = self.wm.addWidget("open_log_dir_btn", QPushButton("Open Logs Folder"))
+        self.wipe_log_dir_btn = self.wm.addWidget("wipe_log_dir_btn", QPushButton("Wipe Logs Folder"))
+        self.start_logging_btn.setCheckable(True)
+
         # Settings - signals
         self.dark_theme_cb.toggled.connect(self.setDarkModeEnabled)
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
@@ -99,6 +114,10 @@ class SettingsTab(QWidget):
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling.emit)
         self.quality_prec_snap_cb.toggled.connect(self.signals.enable_quality_prec_snap)
         self.jpg_encoder_cmb.currentTextChanged.connect(self.signals.change_jpg_encoder)
+
+        self.start_logging_btn.clicked.connect(self.toggleLogging)
+        self.open_log_dir_btn.clicked.connect(self.openLogsDir)
+        self.wipe_log_dir_btn.clicked.connect(self.wipeLogsDir)
 
         # Settings - layout
         ## General
@@ -137,6 +156,11 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.cjpegli_args_l, self.cjpegli_args_te)
         self.settings_lt.addRow(self.im_args_l, self.im_args_te)
         self.settings_lt.addRow(self.empty_l)
+        logging_hb = QHBoxLayout()
+        logging_hb.addWidget(self.start_logging_btn)
+        logging_hb.addWidget(self.open_log_dir_btn)
+        logging_hb.addWidget(self.wipe_log_dir_btn)
+        self.settings_lt.addRow(logging_hb)
         
         ## Layout
         play_sound_on_finish_vol_hb.setAlignment(Qt.AlignLeft)
@@ -239,6 +263,9 @@ class SettingsTab(QWidget):
         self.im_args_l.setVisible(advanced)
         self.im_args_te.setVisible(advanced)
         self.empty_l.setVisible(advanced)
+        self.start_logging_btn.setVisible(advanced)
+        self.open_log_dir_btn.setVisible(advanced)
+        self.wipe_log_dir_btn.setVisible(advanced)
 
     def onCustomArgsToggled(self):
         enabled = self.custom_args_cb.isChecked()
@@ -259,6 +286,27 @@ class SettingsTab(QWidget):
 
     def setDarkModeEnabled(self, enabled):
         setTheme("dark" if enabled else "light")
+
+    def toggleLogging(self):
+        if self.logging_manager.isLoggingToFile():
+            self.logging_manager.stopLoggingToFile()
+            self.start_logging_btn.setText("Start Logging")
+        else:
+            self.logging_manager.startLoggingToFile("DEBUG")
+            self.start_logging_btn.setText("Stop Logging")
+
+    def openLogsDir(self):
+        logs_dir = self.logging_manager.getLogsDir()
+        if not os.path.isdir(logs_dir):
+            self.notifications.notify("No logs", "No logs have been found.")
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(logs_dir))
+    
+    def wipeLogsDir(self):
+        try:
+            self.logging_manager.wipeLogsDir()
+        except OSError as e:
+            self.notifications.notify("File Error", f"Cannot wipe logs folder.\n{e}")
 
     def getSettings(self):
         return {

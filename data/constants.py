@@ -8,13 +8,6 @@ from core.utils import removeDuplicates
 VERSION = "1.0.1"
 VERSION_FILE_URL = "https://codepoems.eu/downloads/xl-converter/version.json"   # Used by UpdateChecker; example in misc/version.json
 
-logging.basicConfig(
-    level=logging.WARNING,    # DEBUG, INFO, WARNING, ERROR, CRITICAL
-    stream=sys.stderr,
-    encoding="utf-8",
-    format="[%(levelname)s] %(message)s",
-)
-
 # Filled below
 CONFIG_LOCATION = ""
 PROGRAM_FOLDER = sys._MEIPASS if getattr(sys, "frozen", False) else os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -23,6 +16,7 @@ LICENSE_3RD_PARTY_PATH = os.path.join(PROGRAM_FOLDER, "LICENSE_3RD_PARTY.txt")
 ICON_SVG = os.path.join(PROGRAM_FOLDER, "icons/logo.svg")
 FONTS_DIR = os.path.join(PROGRAM_FOLDER, "fonts")
 FINISHED_SOUND_PATH = os.path.join(PROGRAM_FOLDER, "sounds/finished.wav")
+LOGS_DIR = ""
 
 CJXL_PATH = "cjxl"
 DJXL_PATH = "djxl"
@@ -59,9 +53,10 @@ elif platform.system() == "Linux":
     AVIFENC_PATH = f"{BASE_PATH}/avifenc"
     AVIFDEC_PATH = f"{BASE_PATH}/avifdec"
     OXIPNG_PATH = f"{BASE_PATH}/oxipng"
-    EXIFTOOL_PATH = f"{BASE_PATH}/exiftool/exiftool"
 
     CONFIG_LOCATION = os.path.expanduser('~/.config/xl-converter')
+
+LOGS_DIR = os.path.join(CONFIG_LOCATION, "logs")
 
 # Proper usage is "if 'extension'.lower() in ALLOWED_INPUT:"
 JPEG_ALIASES = ["jpg", "jpeg", "jfif", "jif", "jpe"]
