@@ -352,9 +352,11 @@ class SettingsTab(QWidget):
             "play_sound_on_finish_vol": round(self.play_sound_on_finish_vol_sb.value() / 100, 2),
             "keep_if_larger": self.keep_if_larger_cb.isChecked(),
             "copy_if_larger": self.copy_if_larger_cb.isChecked(),
-            "exiftool_wipe": self.exiftool_wipe_te.toPlainText(),
-            "exiftool_preserve": self.exiftool_preserve_te.toPlainText(),
-            "exiftool_custom": self.exiftool_custom_te.toPlainText(),
+            "exiftool_args": {      # Mapped to values from modify_tab.metadata_cmb
+                "ExifTool - Wipe": self.exiftool_wipe_te.toPlainText(),
+                "ExifTool - Preserve": self.exiftool_preserve_te.toPlainText(),
+                "ExifTool - Custom": self.exiftool_custom_te.toPlainText(),
+            },
         }
     
     def resetToDefault(self):

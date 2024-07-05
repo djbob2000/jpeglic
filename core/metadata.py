@@ -13,37 +13,23 @@ from core.exceptions import GenericException
 class Data:
     exiftool_available = None   # None - unchecked; False - not available; True - available;
 
-def runExifTool(src: str, dst: str, metadata_mode: str, dict_w_args: {}) -> None:
+def runExifTool(src: str, dst: str, et_args: list[str]) -> None:
     """Runs ExifTool.
 
     Args:
         src: str - absolute path to source
         dst: str - absolute path to destination
-        metadata_mode: str - chosen ExifTool metadata mode
-        dict_w_args: {} - dictionary with ExifTool arguments
+        et_args: list[str] - ExifTool arguments
 
     Example:
         runExifTool(
             "/path/to/src.jpg",
             "/path/to/dst.jxl",
             ["-all=", "-overwrite_original", "$dst"],
-            "ExifTool - Wipe",
-            {"ExifTool - Wipe": "exiftool_wipe"}
         )
     """
-    # Map
-    exiftool_map = {
-        "ExifTool - Wipe": "exiftool_wipe",
-        "ExifTool - Preserve": "exiftool_preserve",
-        "ExifTool - Custom": "exiftool_custom",
-    }
-    try:
-        _args = dict_w_args[exiftool_map[metadata_mode]]
-    except KeyError as e:
-        raise GenericException("M0", f"Metadata command not mappped. {e}")
-
     # Prepare args
-    cmd = _args.strip().split(" ")
+    cmd = et_args.strip().split(" ")
     for idx, val in enumerate(cmd):
         match val:
             case "$src":

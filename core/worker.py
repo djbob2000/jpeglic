@@ -430,17 +430,25 @@ class Worker(QRunnable):
         if not os.path.isfile(self.final_output):    # Checking if renaming was successful
             raise FileException("P2", "Output not found.")
 
-        # Apply metadata
-        if self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction") and not self.copy_if_larger_applied:
+        # Apply metadata (ExifTool)
+        if (
+            self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction") and
+            not self.copy_if_larger_applied and
+            self.params["misc"]["keep_metadata"].startswith("ExifTool")
+        ):
             if platform.system() == "Linux" and not metadata.isExifToolAvailable():
                 self.logException("P3", "ExifTool not found. Please install ExifTool on your system and restart the program.")
-            elif "ExifTool" in self.params["misc"]["keep_metadata"]:
-                metadata.runExifTool(
-                    self.org_item_abs_path,
-                    self.final_output,
-                    self.params["misc"]["keep_metadata"],
-                    self.settings,
-                )
+            else:
+                cur_mode = self.params["misc"]["keep_metadata"]
+                try:
+                    et_args = self.settings["exiftool_args"][cur_mode]
+                    metadata.runExifTool(
+                        self.org_item_abs_path,
+                        self.final_output,
+                        et_args,
+                    )
+                except KeyError as e:
+                    self.logException("P4", f"ExifTool mode not mapped. {e}")
 
         # Apply attributes
         try:
