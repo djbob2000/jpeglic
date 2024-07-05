@@ -88,7 +88,15 @@ class SettingsTab(QWidget):
         self.keep_if_larger_cb = self.wm.addWidget("keep_if_larger_cb", QCheckBox("Do Not Delete Original When Result is Larger"))
         self.copy_if_larger_cb = self.wm.addWidget("copy_if_larger_cb", QCheckBox("Copy Original When Result is Larger"))
 
-        self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Additional Encoder Parameters"))
+        self.exiftool_l = QLabel("ExifTool Arguments")
+        self.exiftool_wipe_l = QLabel("Wipe")
+        self.exiftool_wipe_te = self.wm.addWidget("exiftool_wipe_te", QTextEdit())
+        self.exiftool_preserve_l = QLabel("Preserve")
+        self.exiftool_preserve_te = self.wm.addWidget("exiftool_preserve_te", QTextEdit())
+        self.exiftool_custom_l = QLabel("Custom")
+        self.exiftool_custom_te = self.wm.addWidget("exiftool_custom_te", QTextEdit())
+
+        self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Additional Encoder Arguments"))
         self.avifenc_args_l = QLabel("avifenc\nAVIF")
         self.avifenc_args_te = self.wm.addWidget("avifenc_args_te", QTextEdit())
         self.cjpegli_args_l = QLabel("cjpegli\nJPEG")
@@ -150,6 +158,10 @@ class SettingsTab(QWidget):
         self.settings_lt.addRow(self.enable_jxl_effort_10)
         self.settings_lt.addRow(self.custom_resampling_cb)
         self.settings_lt.addRow(self.no_exceptions_cb)
+        self.settings_lt.addRow(self.exiftool_l)
+        self.settings_lt.addRow(self.exiftool_wipe_l, self.exiftool_wipe_te)
+        self.settings_lt.addRow(self.exiftool_preserve_l, self.exiftool_preserve_te)
+        self.settings_lt.addRow(self.exiftool_custom_l, self.exiftool_custom_te)
         self.settings_lt.addRow(self.custom_args_cb)
         self.settings_lt.addRow(self.cjxl_args_l, self.cjxl_args_te)
         self.settings_lt.addRow(self.avifenc_args_l, self.avifenc_args_te)
@@ -170,6 +182,10 @@ class SettingsTab(QWidget):
         self.cjpegli_args_te.setMaximumHeight(50)
         self.cjxl_args_te.setMaximumHeight(50)
         self.im_args_te.setMaximumHeight(50)
+
+        self.exiftool_wipe_te.setMaximumHeight(50)
+        self.exiftool_preserve_te.setMaximumHeight(50)
+        self.exiftool_custom_te.setMaximumHeight(50)
 
         self.avifenc_args_te.setAcceptRichText(False)
         self.cjpegli_args_te.setAcceptRichText(False)
@@ -253,6 +269,13 @@ class SettingsTab(QWidget):
         self.no_exceptions_cb.setVisible(advanced)
         self.enable_jxl_effort_10.setVisible(advanced)
         self.custom_resampling_cb.setVisible(advanced)
+        self.exiftool_l.setVisible(advanced)
+        self.exiftool_wipe_l.setVisible(advanced)
+        self.exiftool_wipe_te.setVisible(advanced)
+        self.exiftool_preserve_l.setVisible(advanced)
+        self.exiftool_preserve_te.setVisible(advanced)
+        self.exiftool_custom_l.setVisible(advanced)
+        self.exiftool_custom_te.setVisible(advanced)
         self.custom_args_cb.setVisible(advanced)
         self.avifenc_args_l.setVisible(advanced)
         self.avifenc_args_te.setVisible(advanced)
@@ -329,6 +352,9 @@ class SettingsTab(QWidget):
             "play_sound_on_finish_vol": round(self.play_sound_on_finish_vol_sb.value() / 100, 2),
             "keep_if_larger": self.keep_if_larger_cb.isChecked(),
             "copy_if_larger": self.copy_if_larger_cb.isChecked(),
+            "exiftool_wipe": self.exiftool_wipe_te.toPlainText(),
+            "exiftool_preserve": self.exiftool_preserve_te.toPlainText(),
+            "exiftool_custom": self.exiftool_custom_te.toPlainText(),
         }
     
     def resetToDefault(self):
@@ -354,3 +380,8 @@ class SettingsTab(QWidget):
         self.cjpegli_args_te.clear()
         self.im_args_te.clear()
         self.avifenc_args_te.clear()
+
+        self.exiftool_wipe_te.setText("-all= -tagsFromFile @ -icc_profile:all -ColorSpace:all $dst -overwrite_original")
+        self.exiftool_preserve_te.setText("-tagsFromFile $src $dst -overwrite_original")
+        self.exiftool_custom_te.setText("-all= $dst -overwrite_original")
+        

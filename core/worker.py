@@ -434,8 +434,13 @@ class Worker(QRunnable):
         if self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction") and not self.copy_if_larger_applied:
             if platform.system() == "Linux" and not metadata.isExifToolAvailable():
                 self.logException("P3", "ExifTool not found. Please install ExifTool on your system and restart the program.")
-            else:
-                metadata.runExifTool(self.org_item_abs_path, self.final_output, self.params["misc"]["keep_metadata"])
+            elif "ExifTool" in self.params["misc"]["keep_metadata"]:
+                metadata.runExifTool(
+                    self.org_item_abs_path,
+                    self.final_output,
+                    self.params["misc"]["keep_metadata"],
+                    self.settings,
+                )
 
         # Apply attributes
         try:

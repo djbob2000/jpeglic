@@ -8,31 +8,51 @@ from data.constants import (
     OXIPNG_PATH
 )
 from core.process import runProcess, runProcessOutput
+from core.exceptions import GenericException
 
 class Data:
     exiftool_available = None   # None - unchecked; False - not available; True - available;
 
-def copyMetadata(src, dst):
-    """Copy all metadata from one file onto another."""
-    _runExifTool('-tagsfromfile', src, '-overwrite_original', dst)
+def runExifTool(src: str, dst: str, metadata_mode: str, dict_w_args: {}) -> None:
+    """Runs ExifTool.
 
-def deleteMetadata(dst):
-    """Delete all metadata except color profile from a file."""
-    _runExifTool("-all=", "-tagsFromFile", "@", "--icc_profile:all", "--ColorSpace:all", "-overwrite_original", dst)
+    Args:
+        src: str - absolute path to source
+        dst: str - absolute path to destination
+        metadata_mode: str - chosen ExifTool metadata mode
+        dict_w_args: {} - dictionary with ExifTool arguments
 
-def deleteMetadataUnsafe(dst):
-    """Delete every last bit of metadata, even color profile. May mess up an image. Potentially destructive."""
-    _runExifTool("-all=", "-overwrite_original", dst)
+    Example:
+        runExifTool(
+            "/path/to/src.jpg",
+            "/path/to/dst.jxl",
+            ["-all=", "-overwrite_original", "$dst"],
+            "ExifTool - Wipe",
+            {"ExifTool - Wipe": "exiftool_wipe"}
+        )
+    """
+    # Map
+    exiftool_map = {
+        "ExifTool - Wipe": "exiftool_wipe",
+        "ExifTool - Preserve": "exiftool_preserve",
+        "ExifTool - Custom": "exiftool_custom",
+    }
+    try:
+        _args = dict_w_args[exiftool_map[metadata_mode]]
+    except KeyError as e:
+        raise GenericException("M0", f"Metadata command not mappped. {e}")
 
-def runExifTool(src, dst, mode):
-    """ExifTool wrapper."""
-    match mode:
-        case "ExifTool - Wipe":
-            deleteMetadata(dst)
-        case "ExifTool - Preserve":
-            copyMetadata(src, dst)
-        case "ExifTool - Unsafe Wipe":
-            deleteMetadataUnsafe(dst)
+    # Prepare args
+    cmd = _args.strip().split(" ")
+    for idx, val in enumerate(cmd):
+        match val:
+            case "$src":
+                cmd[idx] = src
+            case "$dst":
+                cmd[idx] = dst
+    
+    # Run
+    _runExifTool(*cmd)
 
 def isExifToolAvailable() -> bool | None:
     """Checks if ExifTool is available. Unix-only."""
@@ -53,8 +73,8 @@ def _runExifTool(*args):
         runProcess(EXIFTOOL_PATH, *args)
     elif platform.system() == "Linux":
         runProcess("exiftool", *args)
-        # ExifTool is no longer included due to a bug in its handling of JPEG XL.
-        # If you try to process JPEG XL from Worker, you get:
+        # ExifTool is no longer included due to a bug in its handling of JPEG XL on Linux.
+        # If you try to process JPEG XL from Worker using the standalone ExifTool build, you get:
         # (stderr): Warning: Install IO::Uncompress::Brotli to decode Brotli-compressed metadata
         # To reproduce it, checkout `v1.0.1` tag and copy the binaries over from the official release.
         
