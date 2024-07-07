@@ -1,4 +1,5 @@
 import os
+import logging
 
 from PySide6.QtWidgets import(
     QWidget,
@@ -42,26 +43,48 @@ class SettingsTab(QWidget):
     def __init__(self):
         super(SettingsTab, self).__init__()
 
-        self.main_lt = QGridLayout()
-        self.setLayout(self.main_lt)
-
         self.wm = WidgetManager("SettingsTab")
         self.signals = Signals()
         self.logging_manager = LoggingManager()
         self.notifications = Notifications(self)
 
-        # Categories
+        # Init UI
+        self.setupUI()
+        self.setupWidgets()
+        self.setupLayouts()
+        self.setupSignals()
+        self.setSizes()
+
+        # Init states
+        self.changeCategory("General")
+        self.resetToDefault()
+        self.wm.loadState()
+
+        # Refresh states
+        self.onCustomArgsToggled()
+        self.onPlaySoundOnFinishVolumeToggled()
+
+        # Apply Settings
+        self.setDarkModeEnabled(self.dark_theme_cb.isChecked())
+
+    def setupUI(self):
+        self.main_lt = QGridLayout()
+        self.setLayout(self.main_lt)
+
         self.categories_lt = QVBoxLayout()
-
-        # Settings
-        self.settings_sa = ScrollArea(self)
         self.settings_w = QWidget()
-        self.settings_lt = QFormLayout()
-
+        self.settings_sa = ScrollArea(self)
+        self.settings_lt = QVBoxLayout()
         self.settings_w.setLayout(self.settings_lt)
         self.settings_sa.setWidget(self.settings_w)
+        self.categories_lt.setContentsMargins(0, 1, 0, 1)
 
-        # Settings - widgets
+        self.main_lt.addLayout(self.categories_lt, 0, 0)
+        self.main_lt.addWidget(self.settings_sa, 0, 1)
+        self.main_lt.setColumnStretch(0, 3)
+        self.main_lt.setColumnStretch(1, 7)
+
+    def setupWidgets(self):
         self.dark_theme_cb = self.wm.addWidget("dark_theme_cb", QCheckBox("Dark Theme", self))
         self.disable_on_startup_l = QLabel("Disable on Startup")
         self.disable_downscaling_startup_cb = self.wm.addWidget("disable_downscaling_startup_cb", QCheckBox("Downscaling", self))
@@ -105,14 +128,92 @@ class SettingsTab(QWidget):
         self.cjxl_args_te = self.wm.addWidget("cjxl_args_te", QTextEdit())
         self.im_args_l = QLabel("ImageMagick\nWebP\nJPEG (libjpeg)")
         self.im_args_te = self.wm.addWidget("im_args_te", QTextEdit())
-        self.empty_l = QLabel("")       # Workaround for a bug in QScrollArea. The scroll bar stops responding when rendered inside a height limited QTabWidget with the last item being QTextEdit. 
+        self.avifenc_args_te.setAcceptRichText(False)
+        self.cjpegli_args_te.setAcceptRichText(False)
+        self.cjxl_args_te.setAcceptRichText(False)
+        self.im_args_te.setAcceptRichText(False)
 
         self.start_logging_btn = self.wm.addWidget("start_logging_btn", QPushButton("Start Logging"))
         self.open_log_dir_btn = self.wm.addWidget("open_log_dir_btn", QPushButton("Open Logs Folder"))
         self.wipe_log_dir_btn = self.wm.addWidget("wipe_log_dir_btn", QPushButton("Wipe Logs Folder"))
         self.start_logging_btn.setCheckable(True)
 
-        # Settings - signals
+        self.general_btn = QPushButton("General", self)
+        self.conversion_btn = QPushButton("Conversion", self)
+        self.advanced_btn = QPushButton("Advanced", self)
+        self.general_btn.setCheckable(True)
+        self.conversion_btn.setCheckable(True)
+        self.advanced_btn.setCheckable(True)
+
+        self.restore_defaults_btn = QPushButton("Reset to Default", self)
+
+    def setupLayouts(self):
+        ## Categories
+        self.categories_lt.addWidget(self.general_btn)
+        self.categories_lt.addWidget(self.conversion_btn)
+        self.categories_lt.addWidget(self.advanced_btn)
+        self.categories_lt.addItem(QSpacerItem(10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        self.categories_lt.addWidget(self.restore_defaults_btn)
+
+        ## General
+        self.settings_lt.addLayout(self.createQHboxLayout(self.disable_on_startup_l, self.disable_delete_startup_cb, self.disable_downscaling_startup_cb))
+        self.settings_lt.addWidget(self.dark_theme_cb)
+        self.settings_lt.addWidget(self.quality_prec_snap_cb)
+        self.settings_lt.addWidget(self.no_sorting_cb)
+        self.settings_lt.addWidget(self.play_sound_on_finish_cb)
+        self.play_sound_on_finish_vol_hb = self.createQHboxLayout(self.play_sound_on_finish_vol_l, self.play_sound_on_finish_vol_sb)
+        self.settings_lt.addLayout(self.play_sound_on_finish_vol_hb)
+
+        ## Conversion
+        self.settings_lt.addWidget(self.jxl_lossless_jpeg_cb)
+        self.jpg_encoder_hb = self.createQHboxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
+        self.settings_lt.addLayout(self.jpg_encoder_hb)
+        self.jpg_encoder_hb.addStretch()
+        self.settings_lt.addWidget(self.disable_progressive_jpegli_cb)
+        self.settings_lt.addWidget(self.keep_if_larger_cb)
+        self.settings_lt.addWidget(self.copy_if_larger_cb)
+
+        ## Advanced
+        self.settings_lt.addWidget(self.enable_jxl_effort_10)
+        self.settings_lt.addWidget(self.custom_resampling_cb)
+        self.settings_lt.addWidget(self.no_exceptions_cb)
+        self.settings_lt.addWidget(self.exiftool_l)
+        self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_wipe_l, self.exiftool_wipe_te))
+        self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_preserve_l, self.exiftool_preserve_te))
+        self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_custom_l, self.exiftool_custom_te))
+        self.settings_lt.addWidget(self.custom_args_cb)
+        self.settings_lt.addLayout(self.createQHboxLayout(self.cjxl_args_l, self.cjxl_args_te))
+        self.settings_lt.addLayout(self.createQHboxLayout(self.avifenc_args_l, self.avifenc_args_te))
+        self.settings_lt.addLayout(self.createQHboxLayout(self.cjpegli_args_l, self.cjpegli_args_te))
+        self.settings_lt.addLayout(self.createQHboxLayout(self.im_args_l, self.im_args_te))
+        self.settings_lt.addLayout(self.createQHboxLayout(self.start_logging_btn, self.open_log_dir_btn, self.wipe_log_dir_btn))
+
+        ## All
+        self.settings_lt.addStretch()
+
+    def setSizes(self):
+        self.play_sound_on_finish_vol_hb.setAlignment(Qt.AlignLeft)
+        self.play_sound_on_finish_vol_sb.setMinimumWidth(150)
+
+        self.avifenc_args_l.setMinimumWidth(90)
+        self.cjpegli_args_l.setMinimumWidth(90)
+        self.cjxl_args_l.setMinimumWidth(90)
+        self.im_args_l.setMinimumWidth(90)
+        self.avifenc_args_te.setMaximumHeight(50)
+        self.cjpegli_args_te.setMaximumHeight(50)
+        self.cjxl_args_te.setMaximumHeight(50)
+        self.im_args_te.setMaximumHeight(50)
+
+        self.exiftool_wipe_l.setMinimumWidth(90)
+        self.exiftool_preserve_l.setMinimumWidth(90)
+        self.exiftool_custom_l.setMinimumWidth(90)
+        self.exiftool_wipe_te.setMaximumHeight(50)
+        self.exiftool_preserve_te.setMaximumHeight(50)
+        self.exiftool_custom_te.setMaximumHeight(50)
+
+        self.jpg_encoder_cmb.setMinimumWidth(150)
+
+    def setupSignals(self):
         self.dark_theme_cb.toggled.connect(self.setDarkModeEnabled)
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
         self.play_sound_on_finish_cb.toggled.connect(self.onPlaySoundOnFinishVolumeToggled)
@@ -127,168 +228,58 @@ class SettingsTab(QWidget):
         self.open_log_dir_btn.clicked.connect(self.openLogsDir)
         self.wipe_log_dir_btn.clicked.connect(self.wipeLogsDir)
 
-        # Settings - layout
-        ## General
-        disable_on_startup_hb = QHBoxLayout()
-        disable_on_startup_hb.addWidget(self.disable_on_startup_l)
-        disable_on_startup_hb.addWidget(self.disable_delete_startup_cb)
-        disable_on_startup_hb.addWidget(self.disable_downscaling_startup_cb)
-        self.settings_lt.addRow(disable_on_startup_hb)
-
-        self.settings_lt.addRow(self.dark_theme_cb)
-        self.settings_lt.addRow(self.quality_prec_snap_cb)
-        self.settings_lt.addRow(self.no_sorting_cb)
-        self.settings_lt.addRow(self.play_sound_on_finish_cb)
-        play_sound_on_finish_vol_hb = QHBoxLayout()
-        play_sound_on_finish_vol_hb.addWidget(self.play_sound_on_finish_vol_l)
-        play_sound_on_finish_vol_hb.addWidget(self.play_sound_on_finish_vol_sb)
-        self.settings_lt.addRow(play_sound_on_finish_vol_hb)
-
-        ## Conversion
-        self.settings_lt.addRow(self.jxl_lossless_jpeg_cb)
-        self.jpg_encoder_hb = QHBoxLayout()
-        self.jpg_encoder_hb.addWidget(self.jpg_encoder_l)
-        self.jpg_encoder_hb.addWidget(self.jpg_encoder_cmb)
-        self.settings_lt.addRow(self.jpg_encoder_hb)
-        self.settings_lt.addRow(self.disable_progressive_jpegli_cb)
-        self.settings_lt.addRow(self.keep_if_larger_cb)
-        self.settings_lt.addRow(self.copy_if_larger_cb)
-
-        ## Advanced
-        self.settings_lt.addRow(self.enable_jxl_effort_10)
-        self.settings_lt.addRow(self.custom_resampling_cb)
-        self.settings_lt.addRow(self.no_exceptions_cb)
-        self.settings_lt.addRow(self.exiftool_l)
-        self.settings_lt.addRow(self.exiftool_wipe_l, self.exiftool_wipe_te)
-        self.settings_lt.addRow(self.exiftool_preserve_l, self.exiftool_preserve_te)
-        self.settings_lt.addRow(self.exiftool_custom_l, self.exiftool_custom_te)
-        self.settings_lt.addRow(self.custom_args_cb)
-        self.settings_lt.addRow(self.cjxl_args_l, self.cjxl_args_te)
-        self.settings_lt.addRow(self.avifenc_args_l, self.avifenc_args_te)
-        self.settings_lt.addRow(self.cjpegli_args_l, self.cjpegli_args_te)
-        self.settings_lt.addRow(self.im_args_l, self.im_args_te)
-        self.settings_lt.addRow(self.empty_l)
-        logging_hb = QHBoxLayout()
-        logging_hb.addWidget(self.start_logging_btn)
-        logging_hb.addWidget(self.open_log_dir_btn)
-        logging_hb.addWidget(self.wipe_log_dir_btn)
-        self.settings_lt.addRow(logging_hb)
-        
-        ## Layout
-        play_sound_on_finish_vol_hb.setAlignment(Qt.AlignLeft)
-        self.play_sound_on_finish_vol_sb.setMinimumWidth(150)
-
-        self.avifenc_args_te.setMaximumHeight(50)
-        self.cjpegli_args_te.setMaximumHeight(50)
-        self.cjxl_args_te.setMaximumHeight(50)
-        self.im_args_te.setMaximumHeight(50)
-
-        self.exiftool_wipe_te.setMaximumHeight(50)
-        self.exiftool_preserve_te.setMaximumHeight(50)
-        self.exiftool_custom_te.setMaximumHeight(50)
-
-        self.avifenc_args_te.setAcceptRichText(False)
-        self.cjpegli_args_te.setAcceptRichText(False)
-        self.cjxl_args_te.setAcceptRichText(False)
-        self.im_args_te.setAcceptRichText(False)
-
-        self.jpg_encoder_cmb.setMinimumWidth(150)
-        self.jpg_encoder_hb.addStretch()
-
-        # Categories - widgets
-        self.general_btn = QPushButton("General", self)
-        self.conversion_btn = QPushButton("Conversion", self)
-        self.advanced_btn  = QPushButton("Advanced", self)
-        self.restore_defaults_btn = QPushButton("Reset to Default", self)
-
         self.general_btn.clicked.connect(lambda: self.changeCategory("General"))
         self.conversion_btn.clicked.connect(lambda: self.changeCategory("Conversion"))
         self.advanced_btn.clicked.connect(lambda: self.changeCategory("Advanced"))
         self.restore_defaults_btn.clicked.connect(self.resetToDefault)
 
-        # Categories - layout
-        self.categories_lt.addWidget(self.general_btn)
-        self.categories_lt.addWidget(self.conversion_btn)
-        self.categories_lt.addWidget(self.advanced_btn)
-        self.categories_lt.addItem(QSpacerItem(10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        self.categories_lt.addWidget(self.restore_defaults_btn)
-
-        self.general_btn.setCheckable(True)
-        self.conversion_btn.setCheckable(True)
-        self.advanced_btn.setCheckable(True)
-        self.categories_lt.setContentsMargins(0, 1, 0, 1)
-
-        # Main layout
-        self.main_lt.addLayout(self.categories_lt, 0, 0)
-        self.main_lt.addWidget(self.settings_sa, 0, 1)
-
-        self.main_lt.setColumnStretch(0, 3)
-        self.main_lt.setColumnStretch(1, 7)
-
-        # Misc.
-        self.changeCategory("General")
-        self.resetToDefault()
-        self.wm.loadState()
-
-        # Refresh state
-        self.onCustomArgsToggled()
-        self.onPlaySoundOnFinishVolumeToggled()
-
-        # Apply Settings
-        self.setDarkModeEnabled(self.dark_theme_cb.isChecked())
 
     def changeCategory(self, category):
-        # Set vars
-        general = category == "General"
-        conversion = category == "Conversion"
-        advanced = category == "Advanced"
+        # Category buttons
+        self.general_btn.setChecked(category == "General")
+        self.conversion_btn.setChecked(category == "Conversion")
+        self.advanced_btn.setChecked(category == "Advanced")
 
-        # Set checked
-        self.general_btn.setChecked(general)
-        self.conversion_btn.setChecked(conversion)
-        self.advanced_btn.setChecked(advanced)
+        # Settings
+        visibility = {
+            "General": [
+                "dark_theme_cb",
+                "disable_on_startup_l", "disable_downscaling_startup_cb", "disable_delete_startup_cb",
+                "no_sorting_cb",
+                "quality_prec_snap_cb",
+                "play_sound_on_finish_cb", "play_sound_on_finish_vol_l", "play_sound_on_finish_vol_sb",
+            ],
+            "Conversion": [
+                "jxl_lossless_jpeg_cb",
+                "jpg_encoder_l", "jpg_encoder_cmb",
+                "disable_progressive_jpegli_cb",
+                "keep_if_larger_cb",
+                "copy_if_larger_cb",
+            ],
+            "Advanced": [
+                "no_exceptions_cb",
+                "enable_jxl_effort_10",
+                "custom_resampling_cb",
+                "exiftool_l",
+                "exiftool_wipe_l", "exiftool_wipe_te",
+                "exiftool_preserve_l", "exiftool_preserve_te",
+                "exiftool_custom_l", "exiftool_custom_te",
+                "custom_args_cb",
+                "avifenc_args_l", "avifenc_args_te",
+                "cjxl_args_l", "cjxl_args_te",
+                "cjpegli_args_l", "cjpegli_args_te",
+                "im_args_l", "im_args_te",
+                "start_logging_btn", "open_log_dir_btn", "wipe_log_dir_btn",
+            ],
+        }
 
-        # Set visible
-        self.dark_theme_cb.setVisible(general)
-        self.disable_on_startup_l.setVisible(general)
-        self.disable_downscaling_startup_cb.setVisible(general)
-        self.disable_delete_startup_cb.setVisible(general)
-        self.no_sorting_cb.setVisible(general)
-        self.quality_prec_snap_cb.setVisible(general)
-        self.play_sound_on_finish_cb.setVisible(general)
-        self.play_sound_on_finish_vol_l.setVisible(general)
-        self.play_sound_on_finish_vol_sb.setVisible(general)
-
-        self.jxl_lossless_jpeg_cb.setVisible(conversion)
-        self.jpg_encoder_l.setVisible(conversion)
-        self.jpg_encoder_cmb.setVisible(conversion)
-        self.disable_progressive_jpegli_cb.setVisible(conversion)
-        self.keep_if_larger_cb.setVisible(conversion)
-        self.copy_if_larger_cb.setVisible(conversion)
-
-        self.no_exceptions_cb.setVisible(advanced)
-        self.enable_jxl_effort_10.setVisible(advanced)
-        self.custom_resampling_cb.setVisible(advanced)
-        self.exiftool_l.setVisible(advanced)
-        self.exiftool_wipe_l.setVisible(advanced)
-        self.exiftool_wipe_te.setVisible(advanced)
-        self.exiftool_preserve_l.setVisible(advanced)
-        self.exiftool_preserve_te.setVisible(advanced)
-        self.exiftool_custom_l.setVisible(advanced)
-        self.exiftool_custom_te.setVisible(advanced)
-        self.custom_args_cb.setVisible(advanced)
-        self.avifenc_args_l.setVisible(advanced)
-        self.avifenc_args_te.setVisible(advanced)
-        self.cjxl_args_l.setVisible(advanced)
-        self.cjxl_args_te.setVisible(advanced)
-        self.cjpegli_args_l.setVisible(advanced)
-        self.cjpegli_args_te.setVisible(advanced)
-        self.im_args_l.setVisible(advanced)
-        self.im_args_te.setVisible(advanced)
-        self.empty_l.setVisible(advanced)
-        self.start_logging_btn.setVisible(advanced)
-        self.open_log_dir_btn.setVisible(advanced)
-        self.wipe_log_dir_btn.setVisible(advanced)
+        for ct in visibility:
+            visible = category == ct
+            for widget_str in visibility[ct]:
+                try:
+                    getattr(self, widget_str).setVisible(visible)
+                except AttributeError as e:
+                    logging.error(f"[SettingsTab - changeCategory] {e}")
 
     def onCustomArgsToggled(self):
         enabled = self.custom_args_cb.isChecked()
@@ -330,6 +321,13 @@ class SettingsTab(QWidget):
             self.logging_manager.wipeLogsDir()
         except OSError as e:
             self.notifications.notify("File Error", f"Cannot wipe logs folder.\n{e}")
+
+    def createQHboxLayout(self, *widgets) -> QHBoxLayout:
+        """Creates and returns a QHBoxLayout containing the specified widgets."""
+        layout = QHBoxLayout()
+        for w in widgets:
+            layout.addWidget(w)
+        return layout
 
     def getSettings(self):
         return {

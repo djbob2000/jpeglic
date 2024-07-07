@@ -92,7 +92,6 @@ class MainWindow(QMainWindow):
         MAX_HEIGHT = 320
         self.output_tab.setMaximumSize(MAX_WIDTH, MAX_HEIGHT)
         self.modify_tab.setMaximumSize(MAX_WIDTH, MAX_HEIGHT)
-        self.settings_tab.setMaximumSize(MAX_WIDTH, MAX_HEIGHT)
         self.about_tab.setMaximumSize(MAX_WIDTH, MAX_HEIGHT)
 
         # Layout
