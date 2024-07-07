@@ -166,6 +166,7 @@ class ModifyTab(QWidget):
                 "Encoder - Preserve",
                 "ExifTool - Wipe",
                 "ExifTool - Preserve",
+                "ExifTool - Unsafe Wipe",
                 "ExifTool - Custom"
             ))
 

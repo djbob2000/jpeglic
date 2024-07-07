@@ -116,8 +116,11 @@ class SettingsTab(QWidget):
         self.exiftool_wipe_te = self.wm.addWidget("exiftool_wipe_te", QTextEdit())
         self.exiftool_preserve_l = QLabel("Preserve")
         self.exiftool_preserve_te = self.wm.addWidget("exiftool_preserve_te", QTextEdit())
+        self.exiftool_unsafe_wipe_l = QLabel("Unsafe Wipe")
+        self.exiftool_unsafe_wipe_te = self.wm.addWidget("exiftool_unsafe_wipe_te", QTextEdit())
         self.exiftool_custom_l = QLabel("Custom")
         self.exiftool_custom_te = self.wm.addWidget("exiftool_custom_te", QTextEdit())
+        self.exiftool_reset_btn = QPushButton("Reset")
 
         self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Additional Encoder Arguments"))
         self.avifenc_args_l = QLabel("avifenc\nAVIF")
@@ -180,7 +183,9 @@ class SettingsTab(QWidget):
         self.settings_lt.addWidget(self.exiftool_l)
         self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_wipe_l, self.exiftool_wipe_te))
         self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_preserve_l, self.exiftool_preserve_te))
+        self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_unsafe_wipe_l, self.exiftool_unsafe_wipe_te))
         self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_custom_l, self.exiftool_custom_te))
+        self.settings_lt.addWidget(self.exiftool_reset_btn)
         self.settings_lt.addWidget(self.custom_args_cb)
         self.settings_lt.addLayout(self.createQHboxLayout(self.cjxl_args_l, self.cjxl_args_te))
         self.settings_lt.addLayout(self.createQHboxLayout(self.avifenc_args_l, self.avifenc_args_te))
@@ -192,24 +197,29 @@ class SettingsTab(QWidget):
         self.settings_lt.addStretch()
 
     def setSizes(self):
+        label_width = 90
+        text_edit_height = 50
+
         self.play_sound_on_finish_vol_hb.setAlignment(Qt.AlignLeft)
         self.play_sound_on_finish_vol_sb.setMinimumWidth(150)
 
-        self.avifenc_args_l.setMinimumWidth(90)
-        self.cjpegli_args_l.setMinimumWidth(90)
-        self.cjxl_args_l.setMinimumWidth(90)
-        self.im_args_l.setMinimumWidth(90)
-        self.avifenc_args_te.setMaximumHeight(50)
-        self.cjpegli_args_te.setMaximumHeight(50)
-        self.cjxl_args_te.setMaximumHeight(50)
-        self.im_args_te.setMaximumHeight(50)
+        self.avifenc_args_l.setMinimumWidth(label_width)
+        self.cjpegli_args_l.setMinimumWidth(label_width)
+        self.cjxl_args_l.setMinimumWidth(label_width)
+        self.im_args_l.setMinimumWidth(label_width)
+        self.avifenc_args_te.setMaximumHeight(text_edit_height)
+        self.cjpegli_args_te.setMaximumHeight(text_edit_height)
+        self.cjxl_args_te.setMaximumHeight(text_edit_height)
+        self.im_args_te.setMaximumHeight(text_edit_height)
 
-        self.exiftool_wipe_l.setMinimumWidth(90)
-        self.exiftool_preserve_l.setMinimumWidth(90)
-        self.exiftool_custom_l.setMinimumWidth(90)
-        self.exiftool_wipe_te.setMaximumHeight(50)
-        self.exiftool_preserve_te.setMaximumHeight(50)
-        self.exiftool_custom_te.setMaximumHeight(50)
+        self.exiftool_wipe_l.setMinimumWidth(label_width)
+        self.exiftool_preserve_l.setMinimumWidth(label_width)
+        self.exiftool_unsafe_wipe_l.setMinimumWidth(label_width)
+        self.exiftool_custom_l.setMinimumWidth(label_width)
+        self.exiftool_wipe_te.setMaximumHeight(text_edit_height)
+        self.exiftool_preserve_te.setMaximumHeight(text_edit_height)
+        self.exiftool_unsafe_wipe_te.setMaximumHeight(text_edit_height)
+        self.exiftool_custom_te.setMaximumHeight(text_edit_height)
 
         self.jpg_encoder_cmb.setMinimumWidth(150)
 
@@ -223,6 +233,8 @@ class SettingsTab(QWidget):
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling.emit)
         self.quality_prec_snap_cb.toggled.connect(self.signals.enable_quality_prec_snap)
         self.jpg_encoder_cmb.currentTextChanged.connect(self.signals.change_jpg_encoder)
+
+        self.exiftool_reset_btn.clicked.connect(self.resetExifTool)
 
         self.start_logging_btn.clicked.connect(self.toggleLogging)
         self.open_log_dir_btn.clicked.connect(self.openLogsDir)
@@ -261,8 +273,10 @@ class SettingsTab(QWidget):
                 "enable_jxl_effort_10",
                 "custom_resampling_cb",
                 "exiftool_l",
+                "exiftool_reset_btn",
                 "exiftool_wipe_l", "exiftool_wipe_te",
                 "exiftool_preserve_l", "exiftool_preserve_te",
+                "exiftool_unsafe_wipe_l", "exiftool_unsafe_wipe_te",
                 "exiftool_custom_l", "exiftool_custom_te",
                 "custom_args_cb",
                 "avifenc_args_l", "avifenc_args_te",
@@ -353,10 +367,17 @@ class SettingsTab(QWidget):
             "exiftool_args": {      # Mapped to values from modify_tab.metadata_cmb
                 "ExifTool - Wipe": self.exiftool_wipe_te.toPlainText(),
                 "ExifTool - Preserve": self.exiftool_preserve_te.toPlainText(),
+                "ExifTool - Unsafe Wipe": self.exiftool_unsafe_wipe_te.toPlainText(),
                 "ExifTool - Custom": self.exiftool_custom_te.toPlainText(),
             },
         }
     
+    def resetExifTool(self):
+        self.exiftool_wipe_te.setText("-all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original")
+        self.exiftool_preserve_te.setText("-tagsFromFile $src $dst -overwrite_original")
+        self.exiftool_unsafe_wipe_te.setText("-all= $dst -overwrite_original")
+        self.exiftool_custom_te.setText("")
+
     def resetToDefault(self):
         self.dark_theme_cb.setChecked(True)
         self.no_sorting_cb.setChecked(False)
@@ -375,13 +396,10 @@ class SettingsTab(QWidget):
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
 
+        self.resetExifTool()
+
         self.custom_args_cb.setChecked(False)
         self.cjxl_args_te.clear()
         self.cjpegli_args_te.clear()
         self.im_args_te.clear()
         self.avifenc_args_te.clear()
-
-        self.exiftool_wipe_te.setText("-all= -tagsFromFile @ -icc_profile:all -ColorSpace:all $dst -overwrite_original")
-        self.exiftool_preserve_te.setText("-tagsFromFile $src $dst -overwrite_original")
-        self.exiftool_custom_te.setText("-all= $dst -overwrite_original")
-        

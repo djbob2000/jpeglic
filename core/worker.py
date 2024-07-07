@@ -441,12 +441,15 @@ class Worker(QRunnable):
             else:
                 cur_mode = self.params["misc"]["keep_metadata"]
                 try:
-                    et_args = self.settings["exiftool_args"][cur_mode]
-                    metadata.runExifTool(
-                        self.org_item_abs_path,
-                        self.final_output,
-                        et_args,
-                    )
+                    et_args = self.settings["exiftool_args"][cur_mode].strip().split(" ")
+                    if len(et_args) == 1 and et_args[0] == "":
+                        self.logException("P5", f"Argument list for \"{cur_mode}\" is empty.\nPlease add arguments in Settings -> Advanced -> ExifTool Arguments")
+                    else:
+                        metadata.runExifTool(
+                            self.org_item_abs_path,
+                            self.final_output,
+                            et_args,
+                        )
                 except KeyError as e:
                     self.logException("P4", f"ExifTool mode not mapped. {e}")
 

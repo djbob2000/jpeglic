@@ -29,7 +29,7 @@ def runExifTool(src: str, dst: str, et_args: list[str]) -> None:
         )
     """
     # Prepare args
-    cmd = et_args.strip().split(" ")
+    cmd = et_args
     for idx, val in enumerate(cmd):
         match val:
             case "$src":
