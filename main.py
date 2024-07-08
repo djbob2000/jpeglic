@@ -179,8 +179,11 @@ class MainWindow(QMainWindow):
             return False
 
         # Check If Downscaling Allowed
-        if params["downscaling"]["enabled"] and params["format"] == "Smallest Lossless":
-            self.n.notify("Downscaling Disabled", "Downscaling was set to disabled,\nbecause it's not available for Smallest Lossless")
+        if (
+            params["downscaling"]["enabled"] and
+            params["format"] in ("Smallest Lossless", "Lossless JPEG Recompression", "JPEG Reconstruction")
+        ):
+            self.n.notify("Downscaling Disabled", f"Downscaling was set to disabled,\nbecause it's not available for {params['format']}.")
             params["downscaling"]["enabled"] = False
             self.modify_tab.disableDownscaling()
         
