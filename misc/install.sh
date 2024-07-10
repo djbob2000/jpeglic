@@ -33,16 +33,19 @@ check_root_permissions(){
     fi
 }
 
+pre_install(){
+    # Check if fuse is installed
+    if ! command -v fusermount &> /dev/null; then
+        echo -e "\033[31mAppImage support is missing! Please install fuse and try again.\033[0m"
+        echo "fuse is required by one of the dependencies."
+        exit 1
+    fi
+}
+
 post_install(){
     # Refresh start menu entries
     if command -v update-desktop-database &> /dev/null; then
         sudo update-desktop-database /usr/share/applications/ &> /dev/null
-    fi
-
-    # Check if fuse is installed
-    if ! command -v fusermount &> /dev/null; then
-        echo -e "\033[31mAppImage support is missing! Please install fuse.\033[0m"
-        echo -e "    fuse is required by one of the dependencies."
     fi
     
     echo "You will find shortcuts in the start menu and on the desktop"
@@ -62,6 +65,7 @@ main(){
     read -p "Choice: " choice
 
     if [ "$choice" == "1" ]; then
+        pre_install
         check_root_permissions
         install
         post_install
