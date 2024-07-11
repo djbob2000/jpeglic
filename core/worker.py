@@ -83,7 +83,6 @@ class Worker(QRunnable):
         self.skip = False
         self.jpg_to_jxl_lossless = False
         self.jpeg_rec_data_found = False      # Reconstruction data found
-        self.copy_if_larger_applied = False
 
         # Misc.
         self.scl_params = None
@@ -376,7 +375,30 @@ class Worker(QRunnable):
                     raise FileException("C2", err)
             else:   # Regular conversion
                 convert(encoder, self.item_abs_path, self.output, args, self.n)
-        
+    
+    def runExifTool(self):
+        # Apply metadata (ExifTool)
+        if (
+            self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction") and
+            self.params["misc"]["keep_metadata"].startswith("ExifTool")
+        ):
+            if platform.system() == "Linux" and not metadata.isExifToolAvailable():
+                self.logException("E0", "ExifTool not found. Please install ExifTool on your system and restart the program.")
+            else:
+                cur_mode = self.params["misc"]["keep_metadata"]
+                try:
+                    et_args = self.settings["exiftool_args"][cur_mode].strip().split(" ")
+                    if len(et_args) == 1 and et_args[0] == "":
+                        self.logException("E1", f"Argument list for \"{cur_mode}\" is empty.\nPlease add arguments in Settings -> Advanced -> ExifTool Arguments")
+                    else:
+                        metadata.runExifTool(
+                            self.org_item_abs_path,
+                            self.output,
+                            et_args,
+                        )
+                except KeyError as e:
+                    self.logException("E2", f"ExifTool mode not mapped. {e}")
+
     def finishConversion(self):
         if self.proxy.proxyExists():
             try:
@@ -392,6 +414,9 @@ class Worker(QRunnable):
             if os.path.getsize(self.output) == 0:
                 raise FileException("F3", "Conversion failed (output is empty).")
             
+            # Apply metadata
+            self.runExifTool()  # before getsize()
+
             # Rename / remove
             with QMutexLocker(self.mutex):
                 mode = self.params["if_file_exists"]
@@ -419,7 +444,6 @@ class Worker(QRunnable):
 
                 # Copy original
                 if self.settings["copy_if_larger"] and os.path.getsize(self.org_item_abs_path) < os.path.getsize(self.final_output):
-                    self.copy_if_larger_applied = True
                     os.remove(self.final_output)
                     self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.item_ext, False)
                     shutil.copy(self.org_item_abs_path, self.final_output)
@@ -429,29 +453,6 @@ class Worker(QRunnable):
     def postConversionRoutines(self):
         if not os.path.isfile(self.final_output):    # Checking if renaming was successful
             raise FileException("P2", "Output not found.")
-
-        # Apply metadata (ExifTool)
-        if (
-            self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction") and
-            not self.copy_if_larger_applied and
-            self.params["misc"]["keep_metadata"].startswith("ExifTool")
-        ):
-            if platform.system() == "Linux" and not metadata.isExifToolAvailable():
-                self.logException("P3", "ExifTool not found. Please install ExifTool on your system and restart the program.")
-            else:
-                cur_mode = self.params["misc"]["keep_metadata"]
-                try:
-                    et_args = self.settings["exiftool_args"][cur_mode].strip().split(" ")
-                    if len(et_args) == 1 and et_args[0] == "":
-                        self.logException("P5", f"Argument list for \"{cur_mode}\" is empty.\nPlease add arguments in Settings -> Advanced -> ExifTool Arguments")
-                    else:
-                        metadata.runExifTool(
-                            self.org_item_abs_path,
-                            self.final_output,
-                            et_args,
-                        )
-                except KeyError as e:
-                    self.logException("P4", f"ExifTool mode not mapped. {e}")
 
         # Apply attributes
         try:
