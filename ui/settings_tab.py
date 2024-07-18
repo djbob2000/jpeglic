@@ -121,6 +121,10 @@ class SettingsTab(QWidget):
         self.exiftool_custom_l = QLabel("Custom")
         self.exiftool_custom_te = self.wm.addWidget("exiftool_custom_te", QTextEdit())
         self.exiftool_reset_btn = QPushButton("Reset")
+        self.exiftool_wipe_te.setAcceptRichText(False)
+        self.exiftool_preserve_te.setAcceptRichText(False)
+        self.exiftool_unsafe_wipe_te.setAcceptRichText(False)
+        self.exiftool_custom_te.setAcceptRichText(False)
 
         self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Additional Encoder Arguments"))
         self.avifenc_args_l = QLabel("avifenc\nAVIF")
