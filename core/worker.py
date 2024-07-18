@@ -382,8 +382,9 @@ class Worker(QRunnable):
             self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction") and
             self.params["misc"]["keep_metadata"].startswith("ExifTool")
         ):
-            if platform.system() == "Linux" and not metadata.isExifToolAvailable():
-                self.logException("E0", "ExifTool not found. Please install ExifTool on your system and restart the program.")
+            exiftool_available = metadata.isExifToolAvailable()
+            if exiftool_available[0] == False:
+                self.logException("E0", exiftool_available[1])
             else:
                 cur_mode = self.params["misc"]["keep_metadata"]
                 try:

@@ -14,6 +14,7 @@ from core.exceptions import GenericException, FileException
 
 class Data:
     exiftool_available = None   # None - unchecked; False - not available; True - available;
+    exiftool_err_msg = ""
 
 def runExifTool(src: str, dst: str, et_args: list[str]) -> None:
     """Runs ExifTool.
@@ -69,18 +70,30 @@ def _runExifTool(*args):
         # (stderr): Warning: Install IO::Uncompress::Brotli to decode Brotli-compressed metadata
         # To reproduce it, checkout `v1.0.1` tag and copy the binaries over from the official release.
 
-def isExifToolAvailable() -> bool | None:
-    """Checks if ExifTool is available. Unix-only."""
+def isExifToolAvailable() -> (bool, str):
+    """Checks if ExifTool is available.
+
+        Returns: (is_available, error_msg)
+    """
     if Data.exiftool_available is not None:
-        return Data.exiftool_available
+        return (Data.exiftool_available, Data.exiftool_err_msg)
 
     match platform.system():
         case "Linux":
             Data.exiftool_available = not "not found" in runProcessOutput("bash", "-c", "type exiftool")[0]
+            if Data.exiftool_available == False:
+                Data.exiftool_err_msg = "ExifTool not found. Please install ExifTool on your system and restart the program."
+        case "Windows":
+            proc_output = runProcessOutput(EXIFTOOL_PATH, "-ver")
+            if proc_output[0].strip() == "" or "assertion failed" in proc_output[1]:
+                Data.exiftool_available = False
+                Data.exiftool_err_msg = "Please reinstall this program in a location without special characters to use ExifTool."
+            else:
+                Data.exiftool_available = True
         case _:
             Data.exiftool_available = True
    
-    return Data.exiftool_available
+    return (Data.exiftool_available, Data.exiftool_err_msg)
         
 def getArgs(encoder, mode, jpg_to_jxl_lossless=False) -> list:
     """Return metadata arguments for the specified encoder.
