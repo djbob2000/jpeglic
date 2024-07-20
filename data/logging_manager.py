@@ -59,6 +59,7 @@ class LoggingManager:   # Singleton
     
     def stopLoggingToFile(self):
         if self.file_handler in self.root_logger.handlers:
+            self.file_handler.close()
             self.root_logger.removeHandler(self.file_handler)
         self.root_logger.setLevel(DEFAULT_LEVEL)
 

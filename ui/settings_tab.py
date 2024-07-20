@@ -335,10 +335,17 @@ class SettingsTab(QWidget):
         QDesktopServices.openUrl(QUrl.fromLocalFile(logs_dir))
     
     def wipeLogsDir(self):
+        logging_to_file = self.logging_manager.isLoggingToFile()
+        if logging_to_file:
+            self.logging_manager.stopLoggingToFile()
+
         try:
             self.logging_manager.wipeLogsDir()
         except OSError as e:
             self.notifications.notify("File Error", f"Cannot wipe logs folder.\n{e}")
+
+        if logging_to_file:
+            self.logging_manager.startLoggingToFile()
 
     def createQHboxLayout(self, *widgets) -> QHBoxLayout:
         """Creates and returns a QHBoxLayout containing the specified widgets."""
