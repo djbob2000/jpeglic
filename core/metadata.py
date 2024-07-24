@@ -1,6 +1,7 @@
 import platform
 import tempfile
 import os
+import logging
 
 from data.constants import (
     EXIFTOOL_PATH,
@@ -61,7 +62,7 @@ def _runExifTool(*args):
         try:
             os.unlink(tmp_file_path)
         except Exception as e:
-            raise FileException("M1", f"Failed to clean up an argfile.")
+            raise FileException("M1", f"Failed to clean up an argfile. {e}")
         # ExifTool does not support UTF-8 paths on Windows, unless you put them in an argfile.
     elif platform.system() == "Linux":
         runProcess("exiftool", *args)
@@ -69,6 +70,8 @@ def _runExifTool(*args):
         # If you try to process JPEG XL from Worker using the standalone ExifTool build, you get:
         # (stderr): Warning: Install IO::Uncompress::Brotli to decode Brotli-compressed metadata
         # To reproduce it, checkout `v1.0.1` tag and copy the binaries over from the official release.
+    else:
+        logging.error("[metadata - _runExifTool] Not implemented")
 
 def isExifToolAvailable() -> (bool, str):
     """Checks if ExifTool is available.
