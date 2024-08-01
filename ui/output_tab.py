@@ -388,8 +388,9 @@ class OutputTab(QWidget):
         self.wm.setEnabledByTag("jxl_advanced", not lossless_checked)        
 
     def onJPGEncoderChanged(self, encoder):
-        self.chroma_subsampling_jpg_cmb.setVisible(encoder == "libjpeg")
-        self.chroma_subsampling_jpegli_cmb.setVisible(encoder == "JPEGLI")
+        if self.format_cmb.currentText() == "JPEG":
+            self.chroma_subsampling_jpg_cmb.setVisible(encoder == "libjpeg")
+            self.chroma_subsampling_jpegli_cmb.setVisible(encoder == "JPEGLI")
 
     def setJxlEffort10Enabled(self, enabled):
         self.enable_jxl_effort_10 = enabled
