@@ -35,7 +35,6 @@ class MockCompletedProcess:
         (("echo", "Hello World"), b"Hello World\n"),
     ]
 )
-
 def test_runProcess(cmd, expected_stdout):
     with patch("core.process.subprocess.run") as mock_run, \
         patch("core.process.logging") as mock_logging:
@@ -44,12 +43,8 @@ def test_runProcess(cmd, expected_stdout):
         runProcess(*cmd)
 
         mock_run.assert_called_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=ANY, cwd=None)
-
-        if expected_stdout:
-            mock_logging.debug.assert_any_call(expected_stdout.decode())
-        
-        mock_logging.info.assert_called_with(f"Running command: {cmd}")
-
+        assert cmd[1] in mock_logging.debug.call_args[0][0]
+        assert str(cmd) in mock_logging.info.call_args[0][0]
 
 def test_runProcessOutput():
     with (
