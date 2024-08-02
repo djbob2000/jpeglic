@@ -31,6 +31,8 @@ from ui.spinbox import SpinBox
 from ui.combobox import ComboBox
 from data.logging_manager import LoggingManager
 from ui.notifications import Notifications
+from ui.utils import setToolTip
+from data.tooltips import TOOLTIPS
 
 class Signals(QObject):
     custom_resampling = Signal(bool)
@@ -59,6 +61,7 @@ class SettingsTab(QWidget):
         self.changeCategory("General")
         self.resetToDefault()
         self.wm.loadState()
+        self.setToolTips()
 
         # Refresh states
         self.onCustomArgsToggled()
@@ -249,6 +252,23 @@ class SettingsTab(QWidget):
         self.advanced_btn.clicked.connect(lambda: self.changeCategory("Advanced"))
         self.restore_defaults_btn.clicked.connect(self.resetToDefault)
 
+    def setToolTips(self):
+        setToolTip(TOOLTIPS["disable_delete_startup"], self.disable_delete_startup_cb)
+        setToolTip(TOOLTIPS["disable_downscaling_startup"], self.disable_downscaling_startup_cb)
+        setToolTip(TOOLTIPS["dark_theme"], self.dark_theme_cb)
+        setToolTip(TOOLTIPS["quality_prec_snap"], self.quality_prec_snap_cb)
+        setToolTip(TOOLTIPS["sorting"], self.no_sorting_cb)
+        setToolTip(TOOLTIPS["play_sound_on_finish"], self.play_sound_on_finish_cb)
+        setToolTip(TOOLTIPS["jxl_lossless_jpeg"], self.jxl_lossless_jpeg_cb)
+        setToolTip(TOOLTIPS["jpeg_encoder"], self.jpg_encoder_cmb)
+        setToolTip(TOOLTIPS["progressive_jpegli"], self.disable_progressive_jpegli_cb)
+        setToolTip(TOOLTIPS["copy_if_larger"], self.copy_if_larger_cb)
+        setToolTip(TOOLTIPS["keep_if_larger"], self.keep_if_larger_cb)
+        setToolTip(TOOLTIPS["enable_jxl_effort_10"], self.enable_jxl_effort_10)
+        setToolTip(TOOLTIPS["resample"], self.custom_resampling_cb)
+        setToolTip(TOOLTIPS["no_exceptions"], self.no_exceptions_cb)
+        setToolTip(TOOLTIPS["exiftool_args"], self.exiftool_wipe_te, self.exiftool_custom_te, self.exiftool_preserve_te, self.exiftool_unsafe_wipe_te)
+        setToolTip(TOOLTIPS["encoder_args"], self.avifenc_args_te, self.cjpegli_args_te, self.cjxl_args_te, self.im_args_te)
 
     def changeCategory(self, category):
         # Category buttons
