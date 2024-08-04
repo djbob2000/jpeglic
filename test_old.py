@@ -442,7 +442,7 @@ class TestMainWindow(unittest.TestCase):
         self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
 
         files = self.data.get_tmp_folder_content()
-        assert files[0].stat().st_size != files[1].stat().st_size, "No change detected"
+        assert files[0].stat().st_size != files[1].stat().st_size, "No change detected" # This is expected to fail if your Windows username contains Unicode specific characters. See core/metadata.py for more info.
 
     def test_downscaling_resolution(self):
         self.app.set_downscaling_mode("Resolution", width = 100, height = 2000)

@@ -39,7 +39,7 @@ if platform.system() == "Windows":
     AVIFENC_PATH = os.path.join(BASE_PATH, "avifenc.exe")
     AVIFDEC_PATH = os.path.join(BASE_PATH, "avifdec.exe")
     OXIPNG_PATH = os.path.join(BASE_PATH, "oxipng.exe")
-    EXIFTOOL_PATH = os.path.join(BASE_PATH, "exiftool.exe")
+    EXIFTOOL_PATH = os.path.join(BASE_PATH, "exiftool", "exiftool.exe")
 
     CONFIG_LOCATION = os.path.normpath(os.path.expanduser("~/AppData/Local/xl-converter"))
 elif platform.system() == "Linux":

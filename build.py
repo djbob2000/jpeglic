@@ -194,7 +194,7 @@ class Builder():
             "cjpegli.exe",
             "avifenc.exe",
             "avifdec.exe",
-            "exiftool.exe",
+            "exiftool",
             "magick.exe",
         ]
         self.tools_linux = [
