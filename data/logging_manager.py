@@ -69,10 +69,16 @@ class LoggingManager:   # Singleton
         else:
             return True
 
-    def wipeLogsDir(self):
-        """Wipes logs directory. Can raise OSError."""
-        if os.path.exists(LOGS_DIR):
+    def wipeLogsDir(self) -> str:
+        """Wipes logs directory, returns a message."""
+        if not os.path.exists(LOGS_DIR):
+            return "No logs have been found."
+
+        try:
             shutil.rmtree(LOGS_DIR)
-    
+            return "Successfully deleted logs folder."
+        except OSError as e:
+            return f"Cannot wipe logs folder.\n{e}"
+
     def getLogsDir(self):
         return LOGS_DIR

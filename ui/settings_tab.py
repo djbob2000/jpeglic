@@ -359,10 +359,7 @@ class SettingsTab(QWidget):
         if logging_to_file:
             self.logging_manager.stopLoggingToFile()
 
-        try:
-            self.logging_manager.wipeLogsDir()
-        except OSError as e:
-            self.notifications.notify("File Error", f"Cannot wipe logs folder.\n{e}")
+        self.notifications.notify("File Message", self.logging_manager.wipeLogsDir())
 
         if logging_to_file:
             self.logging_manager.startLoggingToFile()
