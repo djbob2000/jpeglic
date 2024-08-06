@@ -13,6 +13,7 @@ from PySide6.QtWidgets import(
     QFormLayout,
     QSpacerItem,
     QTextEdit,
+    QComboBox,
 )
 from PySide6.QtCore import(
     Signal,
@@ -113,6 +114,9 @@ class SettingsTab(QWidget):
         ))
         self.keep_if_larger_cb = self.wm.addWidget("keep_if_larger_cb", QCheckBox("Do Not Delete Original When Result is Larger"))
         self.copy_if_larger_cb = self.wm.addWidget("copy_if_larger_cb", QCheckBox("Copy Original When Result is Larger"))
+        self.multithreading_cmb = self.wm.addWidget("multithreading_cmb", QComboBox())
+        self.multithreading_l = QLabel("Multithreading")
+        self.multithreading_cmb.addItems(("Performance", "Low RAM"))
 
         self.exiftool_l = QLabel("ExifTool Arguments")
         self.exiftool_wipe_l = QLabel("Wipe")
@@ -182,6 +186,8 @@ class SettingsTab(QWidget):
         self.settings_lt.addWidget(self.disable_progressive_jpegli_cb)
         self.settings_lt.addWidget(self.keep_if_larger_cb)
         self.settings_lt.addWidget(self.copy_if_larger_cb)
+        self.multithreading_hb = self.createQHboxLayout(self.multithreading_l, self.multithreading_cmb)
+        self.settings_lt.addLayout(self.multithreading_hb)
 
         ## Advanced
         self.settings_lt.addWidget(self.enable_jxl_effort_10)
@@ -208,6 +214,7 @@ class SettingsTab(QWidget):
         text_edit_height = 50
 
         self.play_sound_on_finish_vol_hb.setAlignment(Qt.AlignLeft)
+        self.multithreading_hb.setAlignment(Qt.AlignLeft)
         self.play_sound_on_finish_vol_sb.setMinimumWidth(150)
 
         self.avifenc_args_l.setMinimumWidth(label_width)
@@ -229,6 +236,7 @@ class SettingsTab(QWidget):
         self.exiftool_custom_te.setMaximumHeight(text_edit_height)
 
         self.jpg_encoder_cmb.setMinimumWidth(150)
+        self.multithreading_cmb.setMinimumWidth(150)
 
     def setupSignals(self):
         self.dark_theme_cb.toggled.connect(self.setDarkModeEnabled)
@@ -269,6 +277,7 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["no_exceptions"], self.no_exceptions_cb)
         setToolTip(TOOLTIPS["exiftool_args"], self.exiftool_wipe_te, self.exiftool_custom_te, self.exiftool_preserve_te, self.exiftool_unsafe_wipe_te)
         setToolTip(TOOLTIPS["encoder_args"], self.avifenc_args_te, self.cjpegli_args_te, self.cjxl_args_te, self.im_args_te)
+        setToolTip(TOOLTIPS["multithreading"], self.multithreading_cmb)
 
     def changeCategory(self, category):
         # Category buttons
@@ -291,6 +300,7 @@ class SettingsTab(QWidget):
                 "disable_progressive_jpegli_cb",
                 "keep_if_larger_cb",
                 "copy_if_larger_cb",
+                "multithreading_l", "multithreading_cmb",
             ],
             "Advanced": [
                 "no_exceptions_cb",
@@ -392,6 +402,7 @@ class SettingsTab(QWidget):
             "play_sound_on_finish_vol": round(self.play_sound_on_finish_vol_sb.value() / 100, 2),
             "keep_if_larger": self.keep_if_larger_cb.isChecked(),
             "copy_if_larger": self.copy_if_larger_cb.isChecked(),
+            "multithreading_mode": self.multithreading_cmb.currentText(),
             "exiftool_args": {      # Mapped to values from modify_tab.metadata_cmb
                 "ExifTool - Wipe": self.exiftool_wipe_te.toPlainText(),
                 "ExifTool - Preserve": self.exiftool_preserve_te.toPlainText(),
@@ -423,6 +434,7 @@ class SettingsTab(QWidget):
         self.jpg_encoder_cmb.setCurrentIndex(0)
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
+        self.multithreading_cmb.setCurrentIndex(0)
 
         self.resetExifTool()
 

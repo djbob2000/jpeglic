@@ -221,7 +221,8 @@ class MainWindow(QMainWindow):
         self.thread_manager.configure(
             params["format"],
             self.items.getItemCount(),
-            self.output_tab.getUsedThreadCount()
+            self.output_tab.getUsedThreadCount(),
+            settings["multithreading_mode"],
         )
 
         # Start workers

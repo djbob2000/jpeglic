@@ -35,6 +35,7 @@ def test_changeCategory_visibility(category, app, qtbot):
             "disable_progressive_jpegli_cb",
             "keep_if_larger_cb",
             "copy_if_larger_cb",
+            "multithreading_l", "multithreading_cmb",
         ],
         "advanced": [
             "no_exceptions_cb",

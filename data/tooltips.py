@@ -53,4 +53,5 @@ TOOLTIPS = {
     "no_exceptions": "The pop-up displaying exceptions encountered during conversion will no longer appear.",
     "exiftool_args": "Arguments used for handling metadata, correspond to the options is the modify tab.\n\nSupported variables:\n\n$src - source image path.\n\n$dst - destination image path.\n\nRemember to add \"-overwrite_original\" to avoid leftover files.",
     "encoder_args": "Additional arguments for the encoders.\n\nMake sure all arguments you add are valid; otherwise, the encoder will stop working.",
+    "multithreading": "Controls how encoders are run.\n\nPerformance - maximizes speed but requires a lot of RAM. Runs encoders in parallel.\n\nLow RAM - slower but uses less RAM. Useful for large images and devices with low RAM. Runs encoders sequentially.",
 }
