@@ -95,8 +95,8 @@ def reset_data():
     metadata.Data.exiftool_err_msg = ""
 
 @pytest.mark.parametrize("system, output, expected", [
-    ("Linux", ("exiftool is /usr/bin/exiftool", ""), (True, "")),
-    ("Linux", ("bash: type: exiftool: not found", ""), (False, "ExifTool not found.")),
+    ("Linux", ("", "exiftool is /usr/bin/exiftool"), (True, "")),
+    ("Linux", ("", "bash: type: exiftool: not found"), (False, "ExifTool not found.")),
     ("Windows", ("12.40",""), (True, "")),
     ("Windows", ("",""), (False, "Please reinstall this program")),
     ("Windows", ("","assertion failed"), (False, "Please reinstall this program")),

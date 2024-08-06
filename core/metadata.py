@@ -83,7 +83,7 @@ def isExifToolAvailable() -> (bool, str):
 
     match platform.system():
         case "Linux":
-            Data.exiftool_available = not "not found" in runProcessOutput("bash", "-c", "type exiftool")[0]
+            Data.exiftool_available = not "not found" in runProcessOutput("bash", "-c", "type exiftool")[1]
             if Data.exiftool_available == False:
                 Data.exiftool_err_msg = "ExifTool not found. Please install ExifTool on your system and restart the program."
         case "Windows":
