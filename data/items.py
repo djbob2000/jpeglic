@@ -1,5 +1,6 @@
 from pathlib import Path
 import logging
+import random
 
 from data.constants import ALLOWED_INPUT
 
@@ -31,6 +32,7 @@ class Items():
             )
         
         self.item_count = len(self.items)
+        random.shuffle(self.items)      # Improves time left accuracy
 
     def getItem(self, n) -> Path:
         return self.items[n]
