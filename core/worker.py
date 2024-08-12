@@ -382,7 +382,7 @@ class Worker(QRunnable):
             self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction") and
             self.params["misc"]["keep_metadata"].startswith("ExifTool")
         ):
-            exiftool_available = metadata.isExifToolAvailable()
+            exiftool_available = metadata.isExifToolAvailable(self.mutex)
             if exiftool_available[0] == False:
                 self.logException("E0", exiftool_available[1])
             else:

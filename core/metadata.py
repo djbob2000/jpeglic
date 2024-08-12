@@ -3,6 +3,11 @@ import tempfile
 import os
 import logging
 
+from PySide6.QtCore import (
+    QMutexLocker,
+    QMutex,
+)
+
 from data.constants import (
     EXIFTOOL_PATH,
     IMAGE_MAGICK_PATH,
@@ -73,28 +78,35 @@ def _runExifTool(*args):
     else:
         logging.error("[metadata - _runExifTool] Not implemented")
 
-def isExifToolAvailable() -> (bool, str):
+def isExifToolAvailable(mutex: QMutex) -> (bool, str):
     """Checks if ExifTool is available.
 
         Returns: (is_available, error_msg)
     """
+    # Return cached data
     if Data.exiftool_available is not None:
         return (Data.exiftool_available, Data.exiftool_err_msg)
+    
+    with QMutexLocker(mutex):
+        # Return cached data for blocked thread
+        if Data.exiftool_available is not None:
+            return (Data.exiftool_available, Data.exiftool_err_msg)
 
-    match platform.system():
-        case "Linux":
-            Data.exiftool_available = not "not found" in runProcessOutput("bash", "-c", "type exiftool")[1]
-            if Data.exiftool_available == False:
-                Data.exiftool_err_msg = "ExifTool not found. Please install ExifTool on your system and restart the program."
-        case "Windows":
-            proc_output = runProcessOutput(EXIFTOOL_PATH, "-ver")
-            if proc_output[0].strip() == "" or "assertion failed" in proc_output[1]:
-                Data.exiftool_available = False
-                Data.exiftool_err_msg = "Please reinstall this program in a location without special characters to use ExifTool."
-            else:
+        # Perform check
+        match platform.system():
+            case "Linux":
+                Data.exiftool_available = not "not found" in runProcessOutput("bash", "-c", "type exiftool")[1]
+                if Data.exiftool_available == False:
+                    Data.exiftool_err_msg = "ExifTool not found. Please install ExifTool on your system and restart the program."
+            case "Windows":
+                proc_output = runProcessOutput(EXIFTOOL_PATH, "-ver")
+                if proc_output[0].strip() == "" or "assertion failed" in proc_output[1]:
+                    Data.exiftool_available = False
+                    Data.exiftool_err_msg = "Please reinstall this program in a location without special characters to use ExifTool."
+                else:
+                    Data.exiftool_available = True
+            case _:
                 Data.exiftool_available = True
-        case _:
-            Data.exiftool_available = True
    
     return (Data.exiftool_available, Data.exiftool_err_msg)
         

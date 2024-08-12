@@ -1,6 +1,10 @@
 from unittest.mock import patch, MagicMock
 
 import pytest
+from PySide6.QtCore import (
+    QMutexLocker,
+    QMutex,
+)
 
 import core.metadata as metadata
 import data.constants as constants
@@ -107,7 +111,7 @@ def test_isExifToolAvailable(reset_data, system, output, expected):
         patch("platform.system", return_value=system),
         patch("core.metadata.runProcessOutput", return_value=output)
     ):
-        is_available, err_msg = metadata.isExifToolAvailable()
+        is_available, err_msg = metadata.isExifToolAvailable(QMutex())
         assert is_available == expected[0]
         assert type(expected[1]) is str
         assert expected[1] in err_msg
@@ -115,11 +119,11 @@ def test_isExifToolAvailable(reset_data, system, output, expected):
 def test_cached_data(reset_data):
     metadata.Data.exiftool_available = False
     metadata.Data.exiftool_err_msg = "Cached error"
-    assert metadata.isExifToolAvailable() == (False, "Cached error")
+    assert metadata.isExifToolAvailable(QMutex()) == (False, "Cached error")
     
     metadata.Data.exiftool_available = True
     metadata.Data.exiftool_err_msg = "No error"
-    assert metadata.isExifToolAvailable() == (True, "No error")
+    assert metadata.isExifToolAvailable(QMutex()) == (True, "No error")
 
 @pytest.mark.parametrize("encoder, mode, jpg_to_jxl_lossless, expected", [
     ("any", "any", False, []),
