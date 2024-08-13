@@ -368,11 +368,10 @@ class SettingsTab(QWidget):
         logging_to_file = self.logging_manager.isLoggingToFile()
         if logging_to_file:
             self.logging_manager.stopLoggingToFile()
+            self.start_logging_btn.setText("Start Logging")
+            self.start_logging_btn.setChecked(False)
 
         self.notifications.notify("File Message", self.logging_manager.wipeLogsDir())
-
-        if logging_to_file:
-            self.logging_manager.startLoggingToFile()
 
     def createQHboxLayout(self, *widgets) -> QHBoxLayout:
         """Creates and returns a QHBoxLayout containing the specified widgets."""
