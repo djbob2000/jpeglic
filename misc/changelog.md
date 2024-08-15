@@ -6,7 +6,7 @@
 - Added logging to file
 - Added custom ExifTool arguments
 - Added low RAM mode (#49)
-- Fixed UTF-8 support in ExifTool (Windows) (#46)
+- Fixed UTF-8 support in ExifTool (Windows) (#47)
 - Fixed ExifTool handling of JPEG XL (Linux)
 - Fixed menu entry disappearing after an update (Linux)
 - Fixed UI bug with multiple chroma subsampling options appearing 

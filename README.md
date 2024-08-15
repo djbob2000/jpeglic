@@ -152,7 +152,7 @@ To build XL Converter, you need to provide various binaries. This can be quite c
 
 Libraries:
 - [libjxl](https://github.com/libjxl/libjxl) `v0.10.2`
-- [libavif](https://github.com/AOMediaCodec/libavif) `v1.0.4` (AOM `3.9.1`)
+- [libavif](https://github.com/AOMediaCodec/libavif) `v1.1.1` (AOM `3.9.1`)
 - [imagemagick](https://imagemagick.org/) `7.* Q16-HDRI`
 - [exiftool](https://exiftool.org/) `12.92`
 - [oxipng](https://github.com/shssoichiro/oxipng) `v0.9.2`
