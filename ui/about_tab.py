@@ -10,12 +10,10 @@ from PySide6.QtCore import(
     Qt,
     QUrl,
 )
-from PySide6.QtGui import(
-    QDesktopServices,
-)
 
 from data.constants import VERSION, LICENSE_PATH, LICENSE_3RD_PARTY_PATH
 from ui.update_checker import UpdateChecker
+from ui.utils import openRemoteUrl, openUrl
 from data import fonts
 
 class AboutTab(QWidget):
@@ -36,9 +34,10 @@ class AboutTab(QWidget):
             <a href=\"{QUrl.fromLocalFile(LICENSE_3RD_PARTY_PATH).toString()}\">3rd party</a>
             </div>
         """)
+        credits_l.linkActivated.connect(lambda qurl: openUrl(qurl))
 
         title_l.setOpenExternalLinks(True)
-        credits_l.setOpenExternalLinks(True)
+        credits_l.setOpenExternalLinks(False)
 
         ## Label - styles
         title_l.setFont(fonts.ABOUT_TITLE)
@@ -63,10 +62,10 @@ class AboutTab(QWidget):
 
         self.update_btn = QPushButton("Check for Updates", clicked=self.checkForUpdate)
         self.update_checker.finished.connect(lambda: self.update_btn.setEnabled(True))
-        self.manual_btn = QPushButton("Manual", clicked=lambda: QDesktopServices.openUrl(QUrl("https://xl-docs.codepoems.eu/")))
-        self.report_bug_btn = QPushButton("Report Bug", clicked=lambda: QDesktopServices.openUrl(QUrl("https://github.com/JacobDev1/xl-converter/issues")))
-        self.website_btn = QPushButton("Website", clicked=lambda: QDesktopServices.openUrl(QUrl("https://codepoems.eu/xl-converter")))
-        self.donate_btn = QPushButton("Donate", clicked=lambda: QDesktopServices.openUrl(QUrl("https://codepoems.eu/donate")))
+        self.manual_btn = QPushButton("Manual", clicked=lambda: openRemoteUrl("https://xl-docs.codepoems.eu/"))
+        self.report_bug_btn = QPushButton("Report Bug", clicked=lambda: openRemoteUrl("https://github.com/JacobDev1/xl-converter/issues"))
+        self.website_btn = QPushButton("Website", clicked=lambda: openRemoteUrl("https://codepoems.eu/xl-converter"))
+        self.donate_btn = QPushButton("Donate", clicked=lambda: openRemoteUrl("https://codepoems.eu/donate"))
 
         buttons_vb.addWidget(self.update_btn)
         buttons_vb.addWidget(self.manual_btn)
@@ -76,7 +75,6 @@ class AboutTab(QWidget):
         tab_lt.addLayout(buttons_vb)
 
         # Layout
-
         text_vb.setAlignment(Qt.AlignVCenter)
         buttons_vb.setAlignment(Qt.AlignVCenter)
 

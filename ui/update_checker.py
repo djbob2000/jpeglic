@@ -13,13 +13,13 @@ from PySide6.QtCore import(
     Signal,
 )
 from PySide6.QtGui import(
-    QDesktopServices,
     QGuiApplication,
     QIcon,
 )
 
 from data.constants import VERSION, ICON_SVG
 from core.update_checker import Runner
+from ui.utils import openRemoteUrl
 
 class Dialog(QDialog):
     closed = Signal()
@@ -64,7 +64,7 @@ class Dialog(QDialog):
         self.move(qr.topLeft())
 
     def openUrl(self, url):
-        QDesktopServices.openUrl(QUrl(url))
+        openRemoteUrl(url)
         self.close()
 
     def show(self, message, url = None, url_text = None, resize_to_content = False):

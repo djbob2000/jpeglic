@@ -21,9 +21,6 @@ from PySide6.QtCore import(
     Qt,
     QUrl,
 )
-from PySide6.QtGui import(
-    QDesktopServices,
-)
 
 from ui.theme import setTheme
 from ui.widget_manager import WidgetManager
@@ -32,7 +29,7 @@ from ui.spinbox import SpinBox
 from ui.combobox import ComboBox
 from data.logging_manager import LoggingManager
 from ui.notifications import Notifications
-from ui.utils import setToolTip
+from ui.utils import setToolTip, openLocalUrl
 from data.tooltips import TOOLTIPS
 
 class Signals(QObject):
@@ -362,7 +359,7 @@ class SettingsTab(QWidget):
         if not os.path.isdir(logs_dir):
             self.notifications.notify("No logs", "No logs have been found.")
             return
-        QDesktopServices.openUrl(QUrl.fromLocalFile(logs_dir))
+        openLocalUrl(logs_dir)
     
     def wipeLogsDir(self):
         logging_to_file = self.logging_manager.isLoggingToFile()
