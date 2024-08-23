@@ -28,7 +28,7 @@ Achieve exceptional quality at a modest size with JPEG XL and AVIF.
 
 Encode images in parallel to speed up the process. Control how many threads to use for encoding.
 
-#### Lossless JPEG Recompression
+#### Lossless JPEG Transcoding
 
 Losslessly transcode JPEG to JPEG XL, and reverse the process when needed.
 

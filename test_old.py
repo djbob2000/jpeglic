@@ -346,7 +346,7 @@ class TestMainWindow(unittest.TestCase):
         self.app.convert_preset(self.data.get_sample_img(), self.data.make_tmp_subfolder("jpg"), "JPEG")
 
         # JPG -> JXL
-        self.app.convert_preset(self.data.get_tmp_folder_content("jpg")[0], self.data.make_tmp_subfolder("jxl"), "Lossless JPEG Recompression")
+        self.app.convert_preset(self.data.get_tmp_folder_content("jpg")[0], self.data.make_tmp_subfolder("jxl"), "Lossless JPEG Transcoding")
 
         # JXL -> JPG
         self.app.convert_preset(self.data.get_tmp_folder_content("jxl")[0], self.data.make_tmp_subfolder("reconstructed"), "JPEG Reconstruction")

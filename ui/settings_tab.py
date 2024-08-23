@@ -96,7 +96,7 @@ class SettingsTab(QWidget):
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
-        self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Recompression"))
+        self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Transcoding"))
         self.play_sound_on_finish_cb = self.wm.addWidget("play_sound_on_finish_cb", QCheckBox("Play Sound When Conversion Finishes"))
         self.play_sound_on_finish_vol_l = self.wm.addWidget("play_sound_on_finish_vol_l", QLabel("Volume"))
         self.play_sound_on_finish_vol_sb = self.wm.addWidget("play_sound_on_finish_vol_sb", SpinBox())

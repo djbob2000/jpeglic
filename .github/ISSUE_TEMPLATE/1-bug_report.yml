@@ -75,7 +75,7 @@ body:
     attributes:
       label: Output Format
       description: What image format are you converting to? It's the value from the format selector.
-      placeholder: JPEG XL or Lossless JPEG Recompression 
+      placeholder: JPEG XL or Lossless JPEG Transcoding 
     validations:
       required: true
     

@@ -643,7 +643,7 @@ def test_runExifTool_happy_path(mock_exiftool_env):
 def test_runExifTool_dont_run(mock_exiftool_env):
     worker, mocks = mock_exiftool_env
 
-    worker.params["format"] = "Lossless JPEG Recompression"
+    worker.params["format"] = "Lossless JPEG Transcoding"
     worker.runExifTool()
     mocks["runExifTool"].assert_not_called()
 

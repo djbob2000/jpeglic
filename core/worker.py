@@ -108,7 +108,7 @@ class Worker(QRunnable):
                 return
             
             match self.params["format"]:
-                case "Lossless JPEG Recompression":
+                case "Lossless JPEG Transcoding":
                     self.losslesslyRecompressJPEG()
                 case "JPEG Reconstruction":
                     self.reconstructJPEG()
@@ -188,7 +188,7 @@ class Worker(QRunnable):
             self.jpeg_rec_data_found = self.output_ext == "jpg"
             if not self.jpeg_rec_data_found and not self.params["jxl_png_fallback"]:
                 raise FileException("S4", "Reconstruction data not found.")
-        elif self.params["format"] == "Lossless JPEG Recompression":
+        elif self.params["format"] == "Lossless JPEG Transcoding":
             if self.item_ext not in JPEG_ALIASES:
                 raise FileException("S5", "Only JPEG images are allowed.")
             self.output_ext = "jxl"
@@ -379,7 +379,7 @@ class Worker(QRunnable):
     def runExifTool(self):
         # Apply metadata (ExifTool)
         if (
-            self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction") and
+            self.params["format"] not in ("Lossless JPEG Transcoding", "JPEG Reconstruction") and
             self.params["misc"]["keep_metadata"].startswith("ExifTool")
         ):
             exiftool_available = metadata.isExifToolAvailable(self.mutex)
@@ -447,7 +447,7 @@ class Worker(QRunnable):
                 if (
                     self.settings["copy_if_larger"] and
                     os.path.getsize(self.org_item_abs_path) < os.path.getsize(self.final_output) and
-                    self.params["format"] not in ("Lossless JPEG Recompression", "JPEG Reconstruction")
+                    self.params["format"] not in ("Lossless JPEG Transcoding", "JPEG Reconstruction")
                 ):
                     os.remove(self.final_output)
                     self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.item_ext, False)

@@ -122,7 +122,7 @@ class OutputTab(QWidget):
             "WebP",
             "JPEG",
             "PNG",
-            "Lossless JPEG Recompression",
+            "Lossless JPEG Transcoding",
             "JPEG Reconstruction",
             "Smallest Lossless",
         ))
@@ -293,7 +293,7 @@ class OutputTab(QWidget):
                 setToolTip(TOOLTIPS["lossless"], self.lossless_cb)
             case "JPEG":
                 setToolTip(TOOLTIPS["quality_jpeg"], self.quality_sl, self.quality_sb)
-            case "Lossless JPEG Recompression":
+            case "Lossless JPEG Transcoding":
                 setToolTip(TOOLTIPS["effort_jpeg_recomp"], self.effort_sb)
 
     def isClearAfterConvChecked(self):
@@ -372,8 +372,8 @@ class OutputTab(QWidget):
         # Visible
         self.wm.setVisibleByTag("quality_all", cur_format in ("JPEG XL", "AVIF", "WebP", "JPEG"))
         self.int_effort_cb.setVisible(cur_format == "JPEG XL")
-        self.effort_sb.setVisible(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Recompression"))
-        self.effort_l.setVisible(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Recompression"))
+        self.effort_sb.setVisible(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
+        self.effort_l.setVisible(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
         self.wm.setVisibleByTag("jxl_advanced", cur_format == "JPEG XL")
         self.wm.setVisibleByTag("lossless", cur_format in ("JPEG XL", "WebP"))
         self.wm.setVisibleByTag("format_pool", cur_format == "Smallest Lossless")
@@ -388,7 +388,7 @@ class OutputTab(QWidget):
         if cur_format == "AVIF":
             self.effort_sb.setRange(0, 10)
             self.effort_l.setText("Speed")
-        elif cur_format in ("JPEG XL", "Lossless JPEG Recompression"):
+        elif cur_format in ("JPEG XL", "Lossless JPEG Transcoding"):
             self.effort_sb.setRange(1, 10 if self.enable_jxl_effort_10 else 9)
             self.effort_l.setText("Effort")
         elif cur_format == "WebP":
@@ -404,7 +404,7 @@ class OutputTab(QWidget):
         
         # Update states
         self.wm.setCheckedByTag("lossless", False)
-        self.effort_sb.setEnabled(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Recompression"))
+        self.effort_sb.setEnabled(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
         
         if cur_format == "JPEG XL":
             self.onEffortToggled()  # It's very important to update int_effort_cb to avoid issues when changing formats while it's enabled
@@ -462,7 +462,7 @@ class OutputTab(QWidget):
             case "WebP":
                 self.quality_sl.setValue(90)
                 self.effort_sb.setValue(6)
-            case "Lossless JPEG Recompression":
+            case "Lossless JPEG Transcoding":
                 self.effort_sb.setValue(9)
         
         self.int_effort_cb.setChecked(False)
@@ -515,7 +515,7 @@ class OutputTab(QWidget):
                 self.wm.setVar("webp_lossless", self.lossless_cb.isChecked())
             case "JPEG":
                 self.wm.setVar("jpg_quality", self.quality_sl.value())
-            case "Lossless JPEG Recompression":
+            case "Lossless JPEG Transcoding":
                 self.wm.setVar("jxl_lossless_jpeg_effort", self.effort_sb.value())
 
     def loadFormatState(self):
@@ -533,7 +533,7 @@ class OutputTab(QWidget):
                 self.wm.applyVar("webp_lossless", "lossless_cb", False)
             case "JPEG":
                 self.wm.applyVar("jpg_quality", "quality_sl", 90)
-            case "Lossless JPEG Recompression":
+            case "Lossless JPEG Transcoding":
                 self.wm.applyVar("jxl_lossless_jpeg_effort", "effort_sb", 9)
 
     def saveState(self):

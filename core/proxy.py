@@ -49,7 +49,7 @@ class Proxy():
                         return False
             case "Smallest Lossless":
                 return True
-            case "Lossless JPEG Recompression":
+            case "Lossless JPEG Transcoding":
                 return False
             case "JPEG Reconstruction":
                 return False
