@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QProgressDialog
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Signal, QObject
+from PySide6.QtCore import Signal, QObject, QPoint
 
 from data.constants import ICON_SVG
 
@@ -22,6 +22,8 @@ class ProgressDialog(QObject):
         self.label_line_1_cached = None
         self.label_line_2_cached = None
 
+        self.is_processing = False
+
     def show(self):
         """Creates a new progress dialog and shows it. Call before setting any values."""
         if self.dlg is not None:
@@ -33,15 +35,21 @@ class ProgressDialog(QObject):
             "Cancel" if self.cancelable else None,
             self.minimum,
             self.maximum,
-            self.parent
+            parent=self.parent
         )
         self.dlg.setWindowTitle(self.title)
         self.dlg.setWindowIcon(QIcon(ICON_SVG))
-        self.dlg.canceled.connect(self.canceled.emit)
+        self.dlg.canceled.connect(self._canceled)
 
         self.dlg.setMinimumWidth(350)
         self.dlg.setMinimumHeight(115)
         self.dlg.show()
+        self.is_processing = True
+        self.updatePosition()
+
+    def _canceled(self):
+        self.canceled.emit()
+        self.is_processing = False
 
     def finished(self):
         """Clean up progress dialog."""
@@ -96,3 +104,18 @@ class ProgressDialog(QObject):
             return False
         
         return self.dlg.wasCanceled()
+
+    def updatePosition(self):
+        """Follow the parent's position. Requires parent to be specified in the constructor."""
+        if (
+            self.is_processing and
+            self.parent and
+            self.dlg is not None
+        ):
+            parent_geometry = self.parent.frameGeometry()
+            dlg_geometry = self.dlg.frameGeometry()
+
+            x = parent_geometry.x() + (parent_geometry.width() - dlg_geometry.width()) // 2
+            y = parent_geometry.y() + (parent_geometry.height() - dlg_geometry.height()) // 2
+
+            self.dlg.move(QPoint(x, y))

@@ -14,7 +14,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import (
     QThreadPool,
     QMutex,
-    QUrl
+    QUrl,
+    Signal
 )
 from PySide6.QtGui import (
     QIcon,
@@ -45,6 +46,8 @@ from data.sounds import finished_sound
 from data.logging_manager import LoggingManager
 
 class MainWindow(QMainWindow):
+    moved = Signal()
+
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setWindowTitle("XL Converter")
@@ -62,6 +65,7 @@ class MainWindow(QMainWindow):
         self.progress_dialog = ProgressDialog(parent=self, title="Converting...", cancelable=True)
         self.progress_dialog.canceled.connect(task_status.cancel)
         self.time_left.update_time_left.connect(self.progress_dialog.setLabelTextLine2)
+        self.moved.connect(self.progress_dialog.updatePosition)
 
         # Tabs
         self.tabs = QTabWidget(self)
@@ -268,6 +272,10 @@ class MainWindow(QMainWindow):
     def dropEvent(self, e):
         self.tabs.setCurrentIndex(0)
         self.input_tab.file_view.dropEvent(e)
+    
+    def moveEvent(self, e):
+        super().moveEvent(e)
+        self.moved.emit()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
