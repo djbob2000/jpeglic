@@ -264,7 +264,10 @@ class MainWindow(QMainWindow):
             return -1
     
     def dragEnterEvent(self, e):
-        if e.mimeData().hasUrls():
+        if (
+            self.tabs.isEnabled() and
+            e.mimeData().hasUrls()
+        ):
             e.accept()
         else:
             e.ignore()
