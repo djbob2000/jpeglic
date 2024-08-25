@@ -21,9 +21,6 @@ class FileView(QTreeWidget):
     def __init__(self, parent):
         super(FileView, self).__init__(parent)
 
-        self.setting_sorting_disabled = False
-        self.shift_start = None
-
         self.setColumnCount(3)
         self.setHeaderLabels(("File Name", "Ext.", "Location"))
 
@@ -36,6 +33,10 @@ class FileView(QTreeWidget):
                 outline: none;
             }""")   # Disables the dark outline after deselecting an item
         self.sortByColumn(1, Qt.SortOrder.DescendingOrder)
+        
+        # Flags
+        self.setting_sorting_disabled = False
+        self.shift_start = None
 
     # Adding items
     def addItems(self, items):
@@ -107,11 +108,11 @@ class FileView(QTreeWidget):
             event.ignore()
 
     def dropEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.accept()
-        else:
+        if not event.mimeData().hasUrls():
             event.ignore()
             return
+
+        event.accept()
 
         items = []
         preserve_parent = len(event.mimeData().urls()) > 1

@@ -15,7 +15,7 @@ from PySide6.QtCore import (
     QThreadPool,
     QMutex,
     QUrl,
-    Signal
+    Signal,
 )
 from PySide6.QtGui import (
     QIcon,
@@ -254,6 +254,10 @@ class MainWindow(QMainWindow):
     def setUIEnabled(self, n):
         self.tabs.setEnabled(n)
     
+    def isUIEnabled(self):
+        return self.tabs.isEnabled()
+    
+    # Events
     def closeEvent(self, e):
         self.settings_tab.wm.saveState()
         self.output_tab.saveState()
@@ -264,17 +268,18 @@ class MainWindow(QMainWindow):
             return -1
     
     def dragEnterEvent(self, e):
-        if (
-            self.tabs.isEnabled() and
-            e.mimeData().hasUrls()
-        ):
+        if self.isUIEnabled() and e.mimeData().hasUrls():
             e.accept()
         else:
             e.ignore()
-    
+
     def dropEvent(self, e):
-        self.tabs.setCurrentIndex(0)
-        self.input_tab.file_view.dropEvent(e)
+        if e.mimeData().hasUrls():
+            e.accept()
+            self.tabs.setCurrentIndex(0)
+            self.input_tab.file_view.dropEvent(e)
+        else:
+            e.ignore()
     
     def moveEvent(self, e):
         super().moveEvent(e)
