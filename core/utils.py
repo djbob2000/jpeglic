@@ -15,25 +15,6 @@ def scanDir(path: str) -> list:
             files.append(os.path.abspath(i))    # Convert POSIX path to str
     return files
 
-def removeDuplicates(data: List[Any]):
-    new_data = []
-    [new_data.append(n) for n in data if n not in new_data]
-    return new_data
-
-def listToFilter(title: str, ext: List[str]):
-    """Convert a list of extensions into a name filter for file dialogs."""
-    if len(ext) == 0:
-        return f"All Files (*)"
-    
-    last_idx = len(ext) - 1
-
-    output = f"{title} ("
-    for i in range(last_idx):
-        output += f"*.{ext[i]} "
-
-    output += f"*.{ext[last_idx]})" # Last one (no space at the end)
-    return output
-
 def dictToList(data: dict):
     """Convert a dictionary into a list of tuples."""
     result = []

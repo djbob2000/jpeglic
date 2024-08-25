@@ -3,7 +3,7 @@ import platform
 import sys
 import logging
 
-from core.utils import removeDuplicates
+from data.utils import removeDuplicatesHashable, listToFilter
 
 VERSION = "1.0.2"
 VERSION_FILE_URL = "https://codepoems.eu/downloads/xl-converter/version.json"   # Used by UpdateChecker; example in misc/version.json
@@ -67,5 +67,20 @@ ALLOWED_INPUT_IMAGE_MAGICK = JPEG_ALIASES + ["png", "gif", "heif", "heifs", "hei
 ALLOWED_INPUT_AVIFENC = JPEG_ALIASES + ["png"]
 ALLOWED_INPUT_AVIFDEC = ["avif"]
 ALLOWED_INPUT_OXIPNG = ["png"]
-ALLOWED_INPUT = removeDuplicates(ALLOWED_INPUT_DJXL + ALLOWED_INPUT_CJXL + ALLOWED_INPUT_IMAGE_MAGICK + ALLOWED_INPUT_AVIFENC + ALLOWED_INPUT_AVIFDEC + ALLOWED_INPUT_OXIPNG)
+ALLOWED_INPUT = removeDuplicatesHashable(ALLOWED_INPUT_DJXL + ALLOWED_INPUT_CJXL + ALLOWED_INPUT_IMAGE_MAGICK + ALLOWED_INPUT_AVIFENC + ALLOWED_INPUT_AVIFDEC + ALLOWED_INPUT_OXIPNG)
 ALLOWED_RESAMPLING = ("Lanczos", "Point", "Box", "Cubic", "Hermite", "Gaussian", "Catrom", "Triangle", "Quadratic", "Mitchell", "CubicSpline", "Hamming", "Parzen", "Blackman", "Kaiser", "Welsh", "Hanning", "Bartlett", "Bohman")
+
+ALLOWED_INPUT_FILTERS = [
+    listToFilter("Supported Images", ALLOWED_INPUT),
+    listToFilter("AVIF", ["avif"]),
+    listToFilter("BMP", ["bmp"]),
+    listToFilter("GIF / APNG", ["gif", "apng"]),
+    listToFilter("HEIF / HEIC", ["heif", "heifs", "heic", "heics", "avci", "avcs", "hif"]),
+    listToFilter("ICO", ["ico"]),
+    listToFilter("JPEG", JPEG_ALIASES),
+    listToFilter("JPEG XL", ["jxl"]),
+    listToFilter("JPEG2000", ["jp2"]),
+    listToFilter("PNG", ["png"]),
+    listToFilter("TIFF", ["tiff", "tif"]),
+    listToFilter("WebP", ["webp"]),
+]

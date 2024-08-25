@@ -18,8 +18,8 @@ from PySide6.QtGui import(
 )
 
 from .file_view import FileView
-from data.constants import ALLOWED_INPUT
-from core.utils import scanDir, listToFilter
+from data.constants import ALLOWED_INPUT, ALLOWED_INPUT_FILTERS
+from core.utils import scanDir
 from .notifications import Notifications
 
 class InputTab(QWidget):
@@ -104,7 +104,7 @@ class InputTab(QWidget):
         dlg = QFileDialog()
         dlg.setWindowTitle("Add Images")
         dlg.setFileMode(QFileDialog.ExistingFiles)
-        dlg.setNameFilter(listToFilter("Images", ALLOWED_INPUT))
+        dlg.setNameFilters(ALLOWED_INPUT_FILTERS)
 
         if dlg.exec():
             # Add items

@@ -5,8 +5,6 @@ import pytest
 
 from core.utils import (
     scanDir,
-    removeDuplicates,
-    listToFilter,
     dictToList,
     clip,
 )
@@ -34,45 +32,6 @@ def test_scanDir_files(tmp_dir):
 def test_scanDir_non_existent():
     with pytest.raises(FileNotFoundError):
         scanDir("non_existent_dir")
-
-def test_removeDuplicates_empty():
-    assert removeDuplicates([]) == []
-
-def test_removeDuplicates_no_duplicates():
-    assert removeDuplicates([1, 2, 3]) == [1, 2, 3]
-
-def test_removeDuplicates_with_duplicates():
-    assert removeDuplicates([1, 1, 2]) == [1, 2]
-
-def test_removeDuplicates_all_duplicates():
-    assert removeDuplicates([1, 1, 1]) == [1]
-
-def test_removeDuplicates_mixed_types():
-    assert removeDuplicates([1, "a", 2, "a", 1]) == [1, "a", 2]
-
-def test_removeDuplicates_nested():
-    assert removeDuplicates([[1, 2], [1, 2], [3]]) == [[1, 2], [3]]
-
-def test_removeDuplicates_strings():
-    assert removeDuplicates(["a", "a", "b"]) == ["a", "b"]
-
-def test_listToFilter_empty():
-    assert listToFilter(
-        "Images",
-        []
-    ) == "All Files (*)"
-
-def test_listToFilter_single_ext():
-    assert listToFilter(
-        "Image",
-        ["jpg"]
-    ) == "Image (*.jpg)"
-
-def test_listToFilter_multiple_ext():
-    assert listToFilter(
-        "Images",
-        ["jpg", "png", "webp", "jxl", "avif"]
-    ) == "Images (*.jpg *.png *.webp *.jxl *.avif)"
 
 def test_dictToList_empty():
     assert dictToList({}) == []
