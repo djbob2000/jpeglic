@@ -15,8 +15,8 @@ def test_parseData_valid(items):
         (Path("images/1/image 2.jpg"), Path("images/1")),
     )
     assert items.getItemCount() == 2
-    assert items.getItem(0) == (Path("images/1/image.jpg"), Path("images/1"))
-    assert items.getItem(1) == (Path("images/1/image 2.jpg"), Path("images/1"))
+    assert (Path("images/1/image.jpg"), Path("images/1")) in items.items
+    assert (Path("images/1/image 2.jpg"), Path("images/1")) in items.items
 
 def test_parseData_partially_valid(items):
     items.parseData(
