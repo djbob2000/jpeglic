@@ -222,11 +222,20 @@ class MainWindow(QMainWindow):
         self.time_left.startCounting(self.items.getItemCount())
 
         # Configure Multithreading
+        enable_parallel = self.thread_manager.isParallelRecommended(
+            params["format"],
+            settings['jxl_disable_parallel'],
+            params['effort'],
+            params['jxl_modular'],
+            params['lossless'],
+            params['intelligent_effort'],
+        )
+
         self.thread_manager.configure(
             params["format"],
             self.items.getItemCount(),
             self.output_tab.getUsedThreadCount(),
-            settings["multithreading_mode"],
+            enable_parallel,
         )
 
         # Start workers

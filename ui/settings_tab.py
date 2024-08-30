@@ -96,13 +96,14 @@ class SettingsTab(QWidget):
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
+
         self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Transcoding"))
+        self.jxl_disable_parallel_cb = self.wm.addWidget("jxl_disable_parallel_cb", QCheckBox("JPEG XL - Disable Parallel Encoding for High Effort"))
         self.play_sound_on_finish_cb = self.wm.addWidget("play_sound_on_finish_cb", QCheckBox("Play Sound When Conversion Finishes"))
         self.play_sound_on_finish_vol_l = self.wm.addWidget("play_sound_on_finish_vol_l", QLabel("Volume"))
         self.play_sound_on_finish_vol_sb = self.wm.addWidget("play_sound_on_finish_vol_sb", SpinBox())
         self.play_sound_on_finish_vol_sb.setRange(0, 100)
         self.play_sound_on_finish_vol_sb.setSuffix("%")
-
         self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("JPEG Encoder"))
         self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", ComboBox())
         self.jpg_encoder_cmb.addItems((
@@ -111,9 +112,6 @@ class SettingsTab(QWidget):
         ))
         self.keep_if_larger_cb = self.wm.addWidget("keep_if_larger_cb", QCheckBox("Do Not Delete Original When Result is Larger"))
         self.copy_if_larger_cb = self.wm.addWidget("copy_if_larger_cb", QCheckBox("Copy Original When Result is Larger"))
-        self.multithreading_cmb = self.wm.addWidget("multithreading_cmb", QComboBox())
-        self.multithreading_l = QLabel("Multithreading")
-        self.multithreading_cmb.addItems(("Performance", "Low RAM"))
 
         self.exiftool_l = QLabel("ExifTool Arguments")
         self.exiftool_wipe_l = QLabel("Wipe")
@@ -177,14 +175,13 @@ class SettingsTab(QWidget):
 
         ## Conversion
         self.settings_lt.addWidget(self.jxl_lossless_jpeg_cb)
+        self.settings_lt.addWidget(self.jxl_disable_parallel_cb)
         self.jpg_encoder_hb = self.createQHboxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
         self.settings_lt.addLayout(self.jpg_encoder_hb)
         self.jpg_encoder_hb.addStretch()
         self.settings_lt.addWidget(self.disable_progressive_jpegli_cb)
         self.settings_lt.addWidget(self.keep_if_larger_cb)
         self.settings_lt.addWidget(self.copy_if_larger_cb)
-        self.multithreading_hb = self.createQHboxLayout(self.multithreading_l, self.multithreading_cmb)
-        self.settings_lt.addLayout(self.multithreading_hb)
 
         ## Advanced
         self.settings_lt.addWidget(self.enable_jxl_effort_10)
@@ -211,7 +208,6 @@ class SettingsTab(QWidget):
         text_edit_height = 50
 
         self.play_sound_on_finish_vol_hb.setAlignment(Qt.AlignLeft)
-        self.multithreading_hb.setAlignment(Qt.AlignLeft)
         self.play_sound_on_finish_vol_sb.setMinimumWidth(150)
 
         self.avifenc_args_l.setMinimumWidth(label_width)
@@ -233,7 +229,6 @@ class SettingsTab(QWidget):
         self.exiftool_custom_te.setMaximumHeight(text_edit_height)
 
         self.jpg_encoder_cmb.setMinimumWidth(150)
-        self.multithreading_cmb.setMinimumWidth(150)
 
     def setupSignals(self):
         self.dark_theme_cb.toggled.connect(self.setDarkModeEnabled)
@@ -274,7 +269,7 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["no_exceptions"], self.no_exceptions_cb)
         setToolTip(TOOLTIPS["exiftool_args"], self.exiftool_wipe_te, self.exiftool_custom_te, self.exiftool_preserve_te, self.exiftool_unsafe_wipe_te)
         setToolTip(TOOLTIPS["encoder_args"], self.avifenc_args_te, self.cjpegli_args_te, self.cjxl_args_te, self.im_args_te)
-        setToolTip(TOOLTIPS["multithreading"], self.multithreading_cmb)
+        setToolTip(TOOLTIPS["jxl_disable_parallel"], self.jxl_disable_parallel_cb)
 
     def changeCategory(self, category):
         # Category buttons
@@ -293,11 +288,11 @@ class SettingsTab(QWidget):
             ],
             "Conversion": [
                 "jxl_lossless_jpeg_cb",
+                "jxl_disable_parallel_cb",
                 "jpg_encoder_l", "jpg_encoder_cmb",
                 "disable_progressive_jpegli_cb",
                 "keep_if_larger_cb",
                 "copy_if_larger_cb",
-                "multithreading_l", "multithreading_cmb",
             ],
             "Advanced": [
                 "no_exceptions_cb",
@@ -318,9 +313,9 @@ class SettingsTab(QWidget):
             ],
         }
 
-        for ct in visibility:
-            visible = category == ct
-            for widget_str in visibility[ct]:
+        for v_category in visibility:
+            visible = category == v_category
+            for widget_str in visibility[v_category]:
                 try:
                     getattr(self, widget_str).setVisible(visible)
                 except AttributeError as e:
@@ -394,11 +389,11 @@ class SettingsTab(QWidget):
             "enable_quality_precision_snapping": self.quality_prec_snap_cb.isChecked(),
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
             "jxl_lossless_jpeg": self.jxl_lossless_jpeg_cb.isChecked(),
+            "jxl_disable_parallel": self.jxl_disable_parallel_cb.isChecked(),
             "play_sound_on_finish": self.play_sound_on_finish_cb.isChecked(),
             "play_sound_on_finish_vol": round(self.play_sound_on_finish_vol_sb.value() / 100, 2),
             "keep_if_larger": self.keep_if_larger_cb.isChecked(),
             "copy_if_larger": self.copy_if_larger_cb.isChecked(),
-            "multithreading_mode": self.multithreading_cmb.currentText(),
             "exiftool_args": {      # Mapped to values from modify_tab.metadata_cmb
                 "ExifTool - Wipe": self.exiftool_wipe_te.toPlainText(),
                 "ExifTool - Preserve": self.exiftool_preserve_te.toPlainText(),
@@ -425,12 +420,12 @@ class SettingsTab(QWidget):
         self.play_sound_on_finish_vol_sb.setValue(60)
 
         self.enable_jxl_effort_10.setChecked(False)
+        self.jxl_disable_parallel_cb.setChecked(True)
         self.custom_resampling_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)
         self.jpg_encoder_cmb.setCurrentIndex(0)
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
-        self.multithreading_cmb.setCurrentIndex(0)
 
         self.resetExifTool()
 

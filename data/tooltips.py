@@ -44,6 +44,7 @@ TOOLTIPS = {
     "sorting": "Disables file list sorting (input tab), has no impact on performance.",
     "play_sound_on_finish": "Plays a sound when conversion finishes.",
     "jxl_lossless_jpeg": "Enabled - the program will use \"Lossless JPEG Transcoding\" instead of regular lossless compression when converting JPEG to JPEG XL.\n\nThis saves a lot of space but prevents metadata from being stripped. It affects the following formats:\n\n  - JPEG XL with \"Lossless\" enabled.\n\n  - Smallest Lossless (JPEG XL).\n\nDisabled - JPEG will be transcoded the same as any other file. That means a huge file size, but metadata can be stripped.",
+    "jxl_disable_parallel": "Allows for processing very high-resolution images with high Effort without excessive RAM usage.\n\nChecked - reduces RAM usage by processing images in sequence when streaming encoding is unavailable. It's slower.\n\nUnchecked - always processes images in parallel, but may exhaust your RAM.\n\nBoth options allow for using multiple cores.",
     "jpeg_encoder": "JPEGLI - the new state of the art in JPEG encoding. Fast and high quality.\n\nlibjpeg - the original JPEG encoder. Well-tested, stable, and great at preserving noise. Use it when JPEGLI cannot convert a particular image.",
     "progressive_jpegli": "Enabled - generated JPEGs will be compatible with very old devices, but their file size will increase.\n\nDisabled - generated JPEGs will smaller and load faster.",
     "keep_if_larger": "Prevents \"Delete Original\" and \"Replace\" options (output tab) from deleting the original image if the result is larger",
@@ -53,5 +54,4 @@ TOOLTIPS = {
     "no_exceptions": "The pop-up displaying exceptions encountered during conversion will no longer appear.",
     "exiftool_args": "Arguments used for handling metadata, correspond to the options is the modify tab.\n\nSupported variables:\n\n$src - source image path.\n\n$dst - destination image path.\n\nRemember to add \"-overwrite_original\" to avoid leftover files.",
     "encoder_args": "Additional arguments for the encoders.\n\nMake sure all arguments you add are valid; otherwise, the encoder will stop working.",
-    "multithreading": "Controls how encoders are run.\n\nPerformance - maximizes speed but requires a lot of RAM. Runs encoders in parallel.\n\nLow RAM - slower but uses less RAM. Useful for large images and devices with low RAM. Runs encoders sequentially.",
 }

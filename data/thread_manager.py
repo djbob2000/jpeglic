@@ -9,19 +9,17 @@ class ThreadManager:
         self.threads_per_worker = 1
         self.burst_threadpool = []
     
-    def configure(self, format: str, item_count: int, used_thread_count: int, mode="Performance") -> None:
-        if mode == "Performance":
+    def configure(self, format: str, item_count: int, used_thread_count: int, parallel=True) -> None:
+        if parallel:
             self.burst_threadpool = self._getBurstThreadPool(
                 item_count,
                 used_thread_count,
             )
             self.threadpool.setMaxThreadCount(used_thread_count)  
-        elif mode == "Low RAM":
+        else:
             self.burst_threadpool = []
             self.threads_per_worker = used_thread_count
             self.threadpool.setMaxThreadCount(1)
-        else:
-            logging.error(f"[ThreadManager - configure] Mode not recognized ({mode})")
 
     def getAvailableThreads(self, index: int) -> int:
         if self.burst_threadpool:
@@ -63,3 +61,28 @@ class ThreadManager:
             thread_pool[i] += 1
         
         return thread_pool
+    
+    def isParallelRecommended(self,
+        mode: str,
+        jxl_disable_parallel: bool,
+        effort: int,
+        jxl_modular: bool,
+        lossless: bool,
+        intelligent_effort: bool
+    ) -> bool:
+        if mode != "JPEG XL":
+            return True
+
+        if not jxl_disable_parallel:
+            return True
+        
+        if jxl_modular:
+            return False
+        
+        if effort <= 7 and not intelligent_effort and not lossless:
+            return True
+
+        if 10 > effort and lossless:
+            return True
+        
+        return False

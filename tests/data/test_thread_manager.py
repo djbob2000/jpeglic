@@ -28,7 +28,7 @@ def test_configure_dynamic(thread_manager):
     thread_manager.threadpool.setMaxThreadCount.assert_called_once_with(11)
 
 def test_configure_low_ram(thread_manager):
-    thread_manager.configure("JPEG XL", 5, 11, "Low RAM")
+    thread_manager.configure("JPEG XL", 5, 11, False)
 
     assert thread_manager.burst_threadpool == []
     assert thread_manager.getAvailableThreads(0) == 11
@@ -58,3 +58,19 @@ def test_getAvailableThreads_index_error(thread_manager, caplog):
 ])
 def test__getBurstThreadPool(workers, cores, expected, thread_manager):
     assert thread_manager._getBurstThreadPool(workers, cores) == expected
+
+@pytest.mark.parametrize("mode, jxl_disable_parallel, effort, jxl_modular, lossless, intelligent_effort, expected", [
+    ("JPEG", True, 0, False, False, False, True),
+    ("JPEG XL", True, 7, False, False, False, True),
+    ("JPEG XL", True, 8, False, False, False, False),
+    ("JPEG XL", True, 9, False, False, False, False),
+    ("JPEG XL", True, 7, False, True, False, True),
+    ("JPEG XL", True, 9, False, True, False, True),
+    ("JPEG XL", True, 10, False, True, False, False),
+    ("JPEG XL", True, 7, True, False, False, False),
+    ("JPEG XL", False, 10, True, False, False, True),
+])
+def test_isParallelRecommended(mode, jxl_disable_parallel, effort, jxl_modular, lossless, intelligent_effort, expected, thread_manager):
+    assert thread_manager.isParallelRecommended(
+        mode, jxl_disable_parallel, effort, jxl_modular, lossless, intelligent_effort
+    ) == expected
