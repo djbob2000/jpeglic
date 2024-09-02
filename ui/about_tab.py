@@ -29,9 +29,12 @@ class AboutTab(QWidget):
         version_l = QLabel(f"Version {VERSION}")
         credits_l = QLabel(f"""
             <div style='line-height: 120%;'>
-            <a href=\"mailto:contact@codepoems.eu\">contact@codepoems.eu</a><br>
-            <a href=\"{QUrl.fromLocalFile(LICENSE_PATH).toString()}\">license</a> / 
-            <a href=\"{QUrl.fromLocalFile(LICENSE_3RD_PARTY_PATH).toString()}\">3rd party</a>
+                <a href=\"https://codepoems.eu\">website</a>
+                <br>
+                <a href=\"mailto:contact@codepoems.eu\">contact@codepoems.eu</a>
+                <br>
+                <a href=\"{QUrl.fromLocalFile(LICENSE_PATH).toString()}\">license</a> / 
+                <a href=\"{QUrl.fromLocalFile(LICENSE_3RD_PARTY_PATH).toString()}\">3rd party</a>
             </div>
         """)
         credits_l.linkActivated.connect(lambda qurl: openUrl(qurl))
@@ -64,13 +67,11 @@ class AboutTab(QWidget):
         self.update_checker.finished.connect(lambda: self.update_btn.setEnabled(True))
         self.manual_btn = QPushButton("Manual", clicked=lambda: openRemoteUrl("https://xl-docs.codepoems.eu/"))
         self.report_bug_btn = QPushButton("Report Bug", clicked=lambda: openRemoteUrl("https://github.com/JacobDev1/xl-converter/issues"))
-        self.website_btn = QPushButton("Website", clicked=lambda: openRemoteUrl("https://codepoems.eu/xl-converter"))
         self.donate_btn = QPushButton("Donate", clicked=lambda: openRemoteUrl("https://codepoems.eu/donate"))
 
         buttons_vb.addWidget(self.update_btn)
         buttons_vb.addWidget(self.manual_btn)
         buttons_vb.addWidget(self.report_bug_btn)
-        buttons_vb.addWidget(self.website_btn)
         buttons_vb.addWidget(self.donate_btn)
         tab_lt.addLayout(buttons_vb)
 
