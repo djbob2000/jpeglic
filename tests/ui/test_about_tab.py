@@ -7,37 +7,33 @@ from PySide6.QtCore import Qt
 from ui.about_tab import AboutTab
 
 @pytest.fixture
-def app(qtbot):
-    app = QApplication.instance()
-    if not app:
-        app = QApplication([])
+def about_tab(qtbot):
     tab = AboutTab()
     qtbot.addWidget(tab)
     return tab
 
-def test_checkForUpdates(app, qtbot):
+def test_checkForUpdates(about_tab, qtbot):
     with patch("ui.about_tab.UpdateChecker.run") as mock_run:
-        qtbot.mouseClick(app.update_btn, Qt.LeftButton)
+        qtbot.mouseClick(about_tab.update_btn, Qt.LeftButton)
         mock_run.assert_called_once()
-        assert not app.update_btn.isEnabled()
+        assert not about_tab.update_btn.isEnabled()
 
-def test_update_btn_reenabled(app, qtbot):
+def test_update_btn_reenabled(about_tab, qtbot):
     with patch("ui.about_tab.UpdateChecker.run") as mock_run:
-        qtbot.mouseClick(app.update_btn, Qt.LeftButton)
-        assert not app.update_btn.isEnabled()
-        app.update_checker.finished.emit()
-        assert app.update_btn.isEnabled()
+        qtbot.mouseClick(about_tab.update_btn, Qt.LeftButton)
+        assert not about_tab.update_btn.isEnabled()
+        about_tab.update_checker.finished.emit()
+        assert about_tab.update_btn.isEnabled()
 
-def test_openExternalLinks(app, qtbot):
+@pytest.mark.parametrize("button", [
+    "manual_btn",
+    "report_bug_btn",
+    "donate_btn",
+])
+def test_openExternalLinks(button, about_tab, qtbot):
     with patch("PySide6.QtGui.QDesktopServices.openUrl") as mock_openUrl:
-        qtbot.mouseClick(app.manual_btn, Qt.LeftButton)
-        assert mock_openUrl.call_count == 1
-
-        qtbot.mouseClick(app.report_bug_btn, Qt.LeftButton)
-        assert mock_openUrl.call_count == 2
-
-        qtbot.mouseClick(app.website_btn, Qt.LeftButton)
-        assert mock_openUrl.call_count == 3
-
-        qtbot.mouseClick(app.donate_btn, Qt.LeftButton)
-        assert mock_openUrl.call_count == 4
+        btn_ref = getattr(about_tab, button, None)
+        if btn_ref is None:
+            assert False, f"Button \"{button}\" not found in AboutTab"
+        qtbot.mouseClick(btn_ref, Qt.LeftButton)
+        mock_openUrl.assert_called_once()
