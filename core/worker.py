@@ -432,7 +432,7 @@ class Worker(QRunnable):
                         if (
                             (self.settings["keep_if_larger"] or self.settings["copy_if_larger"]) and
                             os.path.getsize(self.org_item_abs_path) < os.path.getsize(self.output) and
-                            os.path.samefile(self.org_item_abs_path, self.final_output)
+                            (os.path.isfile(self.final_output) and os.path.samefile(self.org_item_abs_path, self.final_output))
                         ):
                             self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, False)
                         else:
