@@ -98,7 +98,7 @@ class SettingsTab(QWidget):
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
 
         self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Transcoding"))
-        self.jxl_disable_parallel_cb = self.wm.addWidget("jxl_disable_parallel_cb", QCheckBox("JPEG XL - Disable Parallel Encoding for High Effort"))
+        self.jxl_disable_parallel_cb = self.wm.addWidget("jxl_disable_parallel_cb", QCheckBox("JPEG XL - Optimize RAM Usage"))
         self.play_sound_on_finish_cb = self.wm.addWidget("play_sound_on_finish_cb", QCheckBox("Play Sound When Conversion Finishes"))
         self.play_sound_on_finish_vol_l = self.wm.addWidget("play_sound_on_finish_vol_l", QLabel("Volume"))
         self.play_sound_on_finish_vol_sb = self.wm.addWidget("play_sound_on_finish_vol_sb", SpinBox())
