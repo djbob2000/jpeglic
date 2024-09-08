@@ -7,6 +7,7 @@ import platform
 
 from PySide6.QtGui import (
     QDropEvent,
+    QCloseEvent,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -142,6 +143,9 @@ class Interact:
     def __init__(self, main_window):
         self.main_window = main_window
         self.root = self.main_window.input_tab.file_view.invisibleRootItem()
+
+    def tear_down(self):
+        self.main_window.closeEvent(QCloseEvent())
 
     def add_item(self, path):
         path = Path(path)
@@ -289,6 +293,7 @@ class TestMainWindow(unittest.TestCase):
     
     def tearDown(self):
         self.data.cleanup()
+        self.app.tear_down()
 
     def test_dependencies(self):
         FILES = (
