@@ -213,6 +213,11 @@ class Builder():
         self.build_appimage_name = f"xl-converter-linux-{VERSION}-x86_64.AppImage"
     
     def build(self):
+        build_type = self.args.getArg('build_type')
+
+        if build_type is not None and build_type not in ("sh", "appimage", "innosetup"):
+            raise Exception("build_type incorrect")
+
         self._verifyTools()
         self._prepare()
         self._buildBinaries()
@@ -222,7 +227,7 @@ class Builder():
 
         match platform.system():
             case "Linux":
-                match self.args.getArg("build_type"):
+                match build_type:
                     case "sh":
                         self._appendDesktopEntry()
                         self._appendInstaller()
@@ -232,7 +237,7 @@ class Builder():
                         self._buildAppImage()
             case "Windows":
                 self.downloader.downloadRedistributable()
-                match self.args.getArg("build_type"):
+                match build_type:
                     case "innosetup":
                         self._appendInstaller()
                     # case "portable":
