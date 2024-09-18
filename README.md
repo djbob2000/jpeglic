@@ -13,7 +13,7 @@ Read the [Manual](https://xl-docs.codepoems.eu)
 
 ## Supported Formats
 
-Encode to **JPEG XL, AVIF, WebP, and JPEG**. Convert from **HEIF, TIFF,** and [more](https://xl-docs.codepoems.eu/supported-formats)
+Encode to **JPEG XL, AVIF, WebP, and JPEG**.
 
 ## Features
 #### JPEGLI
