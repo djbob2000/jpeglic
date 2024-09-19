@@ -64,7 +64,7 @@ class OutputTab(QWidget):
         threads_hb.addWidget(self.threads_sb)
 
         duplicates_hb = QHBoxLayout()
-        duplicates_hb.addWidget(QLabel("Duplicates"))
+        duplicates_hb.addWidget(QLabel("If Output Exists"))
         duplicates_hb.addWidget(self.duplicates_cmb)
 
         conv_grp_lt.addLayout(duplicates_hb)
@@ -168,7 +168,7 @@ class OutputTab(QWidget):
 
         # Format - layout
         format_cmb_hb = QHBoxLayout()                       # Format ComboBox
-        format_cmb_hb.addWidget(QLabel("Format"))
+        format_cmb_hb.addWidget(QLabel("Format / Mode"))
         format_cmb_hb.addWidget(self.format_cmb)
         
         effort_hb = QHBoxLayout()                           # Effort
