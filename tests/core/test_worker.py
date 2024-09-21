@@ -264,7 +264,6 @@ def test_setupConversion_jpeg_reconstruction_rec_data_found(setupConversion_patc
     worker.item_ext = "jxl"
 
     worker.setupConversion()
-    assert worker.jpeg_rec_data_found
     assert worker.output_ext == "jpg"
 
 def test_setupConversion_jpeg_reconstruction_rec_data_not_found(setupConversion_patches, worker):
@@ -277,7 +276,6 @@ def test_setupConversion_jpeg_reconstruction_rec_data_not_found(setupConversion_
         worker.setupConversion()
 
     assert "Reconstruction data not found" in exc.value.msg
-    assert not worker.jpeg_rec_data_found
     assert worker.output_ext == "png"
 
 def test_setupConversion_jpeg_reconstruction_rec_data_not_found_png_fallback(setupConversion_patches, worker):
@@ -289,7 +287,6 @@ def test_setupConversion_jpeg_reconstruction_rec_data_not_found_png_fallback(set
 
     worker.setupConversion()
 
-    assert not worker.jpeg_rec_data_found
     assert worker.output_ext == "png"
 
 def test_setupConversion_jpeg_reconstruction_bad_input(setupConversion_patches, worker):
@@ -358,7 +355,7 @@ def test_convert_args_jpeg_xl(
         worker.convert()
 
         assert mock_convert.call_args[0][3] == expected_args
-        assert worker.jpg_to_jxl_lossless == expected_jpg_to_jxl_lossless
+        assert worker.lossless_jpeg == expected_jpg_to_jxl_lossless
 
 @pytest.mark.parametrize("quality, speed, chroma_subsampling, expected_args", [
     (80, 6, "Default", ["-q 80", "-s 6", "-j 4"]),
@@ -643,10 +640,11 @@ def test_runExifTool_happy_path(mock_exiftool_env):
 def test_runExifTool_dont_run(mock_exiftool_env):
     worker, mocks = mock_exiftool_env
 
-    worker.params["format"] = "Lossless JPEG Transcoding"
+    worker.lossless_jpeg = True
     worker.runExifTool()
     mocks["runExifTool"].assert_not_called()
 
+    worker.lossless_jpeg = False
     worker.params["format"] = "JPEG XL"
     worker.params["misc"]["keep_metadata"] = "Not ExifTool"
     worker.runExifTool()
@@ -764,7 +762,7 @@ def test_smallestLossless_jpg_to_jxl_lossless(jxl_lossless_jpeg, smallestLossles
 
     worker.smallestLossless()
 
-    assert worker.jpg_to_jxl_lossless == jxl_lossless_jpeg
+    assert worker.lossless_jpeg == jxl_lossless_jpeg
     assert mock_convert.call_args[0][1] == "original/image" if jxl_lossless_jpeg else "proxy/image"
 
 @pytest.mark.parametrize("png_size, webp_size, jxl_size, expected_smallest", [

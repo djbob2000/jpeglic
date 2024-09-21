@@ -81,8 +81,7 @@ class Worker(QRunnable):
 
         # Flags
         self.skip = False
-        self.jpg_to_jxl_lossless = False
-        self.jpeg_rec_data_found = False      # Reconstruction data found
+        self.lossless_jpeg = False
 
         # Misc.
         self.scl_params = None
@@ -185,8 +184,7 @@ class Worker(QRunnable):
                 raise FileException("S3", "Only JPEG XL images are allowed.")
             
             self.output_ext = getExtensionJxl(self.item_abs_path)
-            self.jpeg_rec_data_found = self.output_ext == "jpg"
-            if not self.jpeg_rec_data_found and not self.params["jxl_png_fallback"]:
+            if self.output_ext != "jpg" and not self.params["jxl_png_fallback"]:
                 raise FileException("S4", "Reconstruction data not found.")
         elif self.params["format"] == "Lossless JPEG Transcoding":
             if self.item_ext not in JPEG_ALIASES:
@@ -253,7 +251,7 @@ class Worker(QRunnable):
                     if self.settings["jxl_lossless_jpeg"]:
                         args[2] = "--lossless_jpeg=1"
                         if self.item_ext in JPEG_ALIASES:
-                            self.jpg_to_jxl_lossless = True
+                            self.lossless_jpeg = True
                     else:
                         args[2] = "--lossless_jpeg=0"
                 else:
@@ -317,7 +315,7 @@ class Worker(QRunnable):
                 raise GenericException("C0", f"Unknown format ({self.params['format']})")
 
         # Prepare metadata
-        args.extend(metadata.getArgs(encoder, self.params["misc"]["keep_metadata"], self.jpg_to_jxl_lossless))
+        args.extend(metadata.getArgs(encoder, self.params["misc"]["keep_metadata"], self.lossless_jpeg))
 
         # Custom arguments
         if self.settings["enable_custom_args"]:
@@ -379,7 +377,7 @@ class Worker(QRunnable):
     def runExifTool(self):
         # Apply metadata (ExifTool)
         if (
-            self.params["format"] not in ("Lossless JPEG Transcoding", "JPEG Reconstruction") and
+            not self.lossless_jpeg and
             self.params["misc"]["keep_metadata"].startswith("ExifTool")
         ):
             exiftool_available = metadata.isExifToolAvailable(self.mutex)
@@ -508,12 +506,12 @@ class Worker(QRunnable):
 
         # Handle metadata
         if self.settings["jxl_lossless_jpeg"]:
-            self.jpg_to_jxl_lossless = self.item_ext in JPEG_ALIASES
-        args["jxl"].extend([f"--lossless_jpeg={1 if self.jpg_to_jxl_lossless else 0}"])
+            self.lossless_jpeg = self.item_ext in JPEG_ALIASES
+        args["jxl"].extend([f"--lossless_jpeg={1 if self.lossless_jpeg else 0}"])
 
         args["png"].extend(metadata.getArgs(OXIPNG_PATH, self.params["misc"]["keep_metadata"]))
         args["webp"].extend(metadata.getArgs(IMAGE_MAGICK_PATH, self.params["misc"]["keep_metadata"]))
-        args["jxl"].extend(metadata.getArgs(CJXL_PATH, self.params["misc"]["keep_metadata"], self.jpg_to_jxl_lossless))
+        args["jxl"].extend(metadata.getArgs(CJXL_PATH, self.params["misc"]["keep_metadata"], self.lossless_jpeg))
 
         # Generate files
         for key in path_pool:
@@ -527,7 +525,7 @@ class Worker(QRunnable):
                 case "webp":
                     convert(IMAGE_MAGICK_PATH, self.item_abs_path, path_pool["webp"], args["webp"], self.n)
                 case "jxl":
-                    if self.jpg_to_jxl_lossless:
+                    if self.lossless_jpeg:
                         src = self.org_item_abs_path
                     else:
                         src = self.item_abs_path
@@ -565,6 +563,7 @@ class Worker(QRunnable):
         self.final_output = os.path.join(self.output_dir, f"{self.item_name}.{sm_f_key}")
 
     def losslesslyRecompressJPEG(self):
+        self.lossless_jpeg = True
         args = [
             "--lossless_jpeg=1",
             f"-e {self.params['effort']}",
@@ -573,4 +572,5 @@ class Worker(QRunnable):
         convert(CJXL_PATH, self.item_abs_path, self.output, args, self.n)
 
     def reconstructJPEG(self):
+        self.lossless_jpeg = True
         convert(DJXL_PATH, self.org_item_abs_path, self.output, [f"--num_threads={self.available_threads}"], self.n)

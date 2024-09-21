@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 
 from data.constants import (
     ALLOWED_INPUT_IMAGE_MAGICK,
@@ -30,7 +31,7 @@ def optimize(bin_path, src, args = [], n = None):
     if n != None:
         log((bin_path, *parseArgs(args), src), n)
 
-def getExtensionJxl(src_path):
+def getExtensionJxl(src_path: str) -> Literal["jpg", "png"]:
     """Assign extension based on If JPEG reconstruction data is available. Only use If src format is jxl."""
     if "JPEG bitstream reconstruction data available" in runProcessOutput(JXLINFO_PATH, src_path)[0]:
         return "jpg"
