@@ -1,8 +1,12 @@
+# Config
+
 PYTHON 				= python
 ENV_BUILD 			= ./env_build
 ENV_DEV 			= ./env_dev
 REQUIREMENTS_BUILD 	= requirements.txt
 REQUIREMENTS_TEST 	= requirements_test.txt
+
+# Build / Misc.
 
 .PHONY: clean
 clean:
@@ -22,27 +26,6 @@ src: clean
 	rm .rsync-exclude
 
 	cd dist && 7z a src_`date +%Y%m%d_%H%M%S`.zip src/
-
-.PHONY: test-slowest
-test-slowest:
-	export PYTHONPATH=$$PYTHONPATH:. && pytest --durations=10 --durations-min=0.02 tests/
-
-.PHONY: test-no-cache
-test-no-cache:
-	export PYTHONPATH=$$PYTHONPATH:. && pytest --cache-clear tests/
-
-.PHONY: test-old
-test-old:
-	@if [ -n "$(name)" ]; then \
-		$(PYTHON) -m unittest test_old.TestMainWindow.$(name); \
-	else \
-		$(PYTHON) test_old.py; \
-	fi
-
-.PHONY: coverage
-coverage:
-	export PYTHONPATH=$$PYTHONPATH:. && pytest --cov=core --cov=ui --cov=main --cov=data --cov=build --cov-report term-missing tests/
-	coverage html
 
 .PHONY: venv-build
 venv-build:
@@ -68,3 +51,30 @@ venv-dev:
 		$(ENV_DEV)/bin/python3 -m pip install -r $(REQUIREMENTS_TEST); \
 		echo "venv-build has been created at $(ENV_DEV)"; \
 	fi
+
+# Testing
+
+.PHONY: test
+test:
+	$(PYTHON) test.py
+
+.PHONY: test-slowest
+test-slowest:
+	export PYTHONPATH=$$PYTHONPATH:. && pytest --durations=10 --durations-min=0.02 tests/
+
+.PHONY: test-no-cache
+test-no-cache:
+	export PYTHONPATH=$$PYTHONPATH:. && pytest --cache-clear tests/
+
+.PHONY: test-convert
+test-convert:
+	@if [ -n "$(name)" ]; then \
+		xvfb-run $(PYTHON) -m unittest test_convert.TestMainWindow.$(name); \
+	else \
+		xvfb-run $(PYTHON) test_convert.py; \
+	fi
+
+.PHONY: coverage
+coverage:
+	export PYTHONPATH=$$PYTHONPATH:. && pytest --cov=core --cov=ui --cov=main --cov=data --cov=build --cov-report term-missing tests/
+	coverage html
