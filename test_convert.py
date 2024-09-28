@@ -208,7 +208,7 @@ class Interact:
     def wait_for_done(self):
         while True:
             sleep(100)
-            if self.main_window.items.getCompletedItemCount() == self.main_window.items.getItemCount():
+            if self.main_window.controller.getCompletedItemCount() == self.main_window.controller.getItemCount():
                 break
 
     def set_effort(self, effort):

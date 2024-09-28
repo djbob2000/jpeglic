@@ -1,3 +1,6 @@
+from typing import Optional, Dict
+from copy import deepcopy
+
 from PySide6.QtWidgets import(
     QWidget,
     QGridLayout,
@@ -256,6 +259,9 @@ class OutputTab(QWidget):
         self.onFormatChange()
         self.onDeleteOriginalChanged()
         self.onOutputToggled()
+
+        # Vars
+        self.cached_states = self.getSettings()
     
     def setToolTipsStatic(self):
         """Sets tooltips at once at startup."""
@@ -491,7 +497,7 @@ class OutputTab(QWidget):
             i.setChecked(True)
         
         self.jxl_png_fallback_cb.setChecked(True)
-    
+
     def setQualityRange(self, _min, _max):
         for i in self.wm.getWidgetsByTag("quality"):
             i.setRange(_min, _max)
@@ -536,13 +542,14 @@ class OutputTab(QWidget):
             case "Lossless JPEG Transcoding":
                 self.wm.applyVar("jxl_lossless_jpeg_effort", "effort_sb", 9)
 
-    def saveState(self):
-        self.wm.disableAutoSaving(
-            "quality_sb",
-            "quality_sl",
-            "effort_sb",
-            "lossless_cb",
-        )
-
-        self.saveFormatState()
-        self.wm.saveState()
+    def saveState(self, new_states: Optional[Dict] = None) -> None:
+        if new_states is None or new_states != self.cached_states:
+            self.cached_states = deepcopy(new_states)
+            self.wm.disableAutoSaving(
+                "quality_sb",
+                "quality_sl",
+                "effort_sb",
+                "lossless_cb",
+            )
+            self.saveFormatState()
+            self.wm.saveState()

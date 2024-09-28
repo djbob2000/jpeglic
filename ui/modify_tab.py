@@ -1,4 +1,6 @@
 import platform
+from typing import Optional, Dict
+from copy import deepcopy
 
 from PySide6.QtWidgets import(
     QWidget,
@@ -234,6 +236,9 @@ class ModifyTab(QWidget):
         # Add to main layout
         tab_lt.addWidget(downscale_grp,0,0)
         tab_lt.addWidget(misc_grp,0,1)
+
+        # Vars
+        self.cached_states = self.getSettings()
     
     def toggleDownscaleUI(self, n):
         self.wm.setEnabledByTag("downscale_ui", n)
@@ -291,6 +296,11 @@ class ModifyTab(QWidget):
             }
         }
     
+    def saveState(self, new_states: Optional[Dict] = None) -> None:
+        if new_states is None or new_states != self.cached_states:
+            self.wm.saveState()
+            self.cached_states = deepcopy(new_states)
+
     def getReportData(self):
         """Used by ExceptionView"""
         settings = self.getSettings()

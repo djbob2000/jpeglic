@@ -1,5 +1,7 @@
 import os
 import logging
+from typing import Optional, Dict
+from copy import deepcopy
 
 from PySide6.QtWidgets import(
     QWidget,
@@ -67,6 +69,9 @@ class SettingsTab(QWidget):
 
         # Apply Settings
         self.setDarkModeEnabled(self.dark_theme_cb.isChecked())
+
+        # Vars
+        self.cached_states = {}
 
     def setupUI(self):
         self.main_lt = QGridLayout()
@@ -434,3 +439,8 @@ class SettingsTab(QWidget):
         self.cjpegli_args_te.clear()
         self.im_args_te.clear()
         self.avifenc_args_te.clear()
+    
+    def saveState(self, new_states: Optional[Dict] = None) -> None:
+        if new_states is None or new_states != self.cached_states:
+            self.wm.saveState()
+            self.cached_states = deepcopy(new_states)

@@ -43,7 +43,6 @@ class TimeLeft(QObject):
         
         self.completed_item_count += 1
         self._updateEstimation()
-        # self._emitEstimationUpdated()
 
     # Private methods
     def _updateEstimation(self):
