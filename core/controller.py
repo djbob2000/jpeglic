@@ -3,6 +3,8 @@ import textwrap
 import os
 from typing import Dict, Any, Tuple, Union, List
 from pathlib import Path
+from dataclasses import dataclass, field
+from enum import Enum, auto
 
 from PySide6.QtCore import (
     QThreadPool,
@@ -47,21 +49,13 @@ class Controller(QObject):
         modify_tab_settings: dict[str, Any],
     ) -> Dict[str, Union[str, bool, List]]:
         """Performs pre-conversion checks. Remember to parse data before."""
-        output = {
-            "display_error": False,
-            "error_title": "",
-            "error_dsc": "",
-            "allowed_to_proceed": True,
-            "flags": [],    # Possible: "disable_downscaling"
-        }
+        output = CheckStatus()
 
         if input_tab_item_count == 0:
-            output.update({
-                "allowed_to_proceed": False,
-                "display_error": True,
-                "error_title": "Empty List",
-                "error_dsc": "File list is empty.\nDrag and drop images (or folders) onto the program to add them."
-            })
+            output.setError(
+                "Empty List",
+                "File list is empty.\nDrag and drop images (or folders) onto the program to add them.",
+            )
             return output
 
         if output_tab_settings["custom_output_dir"]:
@@ -70,51 +64,43 @@ class Controller(QObject):
                 try:
                     os.makedirs(custom_dir_path, exist_ok=True)
                 except OSError as err:
-                    output.update({
-                        "allowed_to_proceed": False,
-                        "display_error": True,
-                        "error_title": "Access Error",
-                        "error_dsc": f"Make sure the output path is accessible\nand you have write permissions to it.\n{textwrap.fill(str(err), width=75)}"
-                    })
+                    output.setError(
+                        "Access Error",
+                        f"Make sure the output path is accessible\nand you have write permissions to it.\n{textwrap.fill(str(err), width=75)}"
+                    )
                     return output
             else:
                 if output_tab_settings["keep_dir_struct"]:
-                    output.update({
-                        "allowed_to_proceed": False,
-                        "display_error": True,
-                        "error_title": "Path Conflict",
-                        "error_dsc": "A relative path cannot be combined with \"Keep Folder Structure\".\nEnter an absolute path (or choose one by clicking on the button with 3 dots)."
-                    })
+                    output.setError(
+                        "Path Conflict",
+                        "A relative path cannot be combined with \"Keep Folder Structure\".\nEnter an absolute path (or choose one by clicking on the button with 3 dots)."
+                    )
                     return output
 
         if output_tab_settings["format"] == "Smallest Lossless" and sm_is_format_pool_empty:
-            output.update({
-                "allowed_to_proceed": False,
-                "display_error": True,
-                "error_title": "Format Error",
-                "error_dsc": "Select at least one format."
-            })
+            output.setError(
+                "Format Error",
+                "Select at least one format."
+            )
             return output
 
         if (
             modify_tab_settings["downscaling"]["enabled"] and
             output_tab_settings["format"] in ("Smallest Lossless", "Lossless JPEG Transcoding", "JPEG Reconstruction")
         ):
-            output.update({
-                "display_error": True,
-                "error_title": "Downscaling Disabled",
-                "error_dsc": f"Downscaling was set to disabled,\nbecause it's not available for {output_tab_settings['format']}."
-            })
-            output["flags"].extend([ "disable_downscaling" ])
+            output.setError(
+                "Downscaling Disabled",
+                f"Downscaling was set to disabled as it is not available for {output_tab_settings['format']}.",
+                allowed_to_proceed=True
+            )
+            output.addFlags(CheckFlags.DISABLE_DOWNSCALING)
             return output
 
         if self.items.getItemCount() == 0:
-            output.update({
-                "allowed_to_proceed": False,
-                "display_error": True,
-                "error_title": "Data Error",
-                "error_dsc": "Something went wrong.\nParsed data is empty"
-            })
+            output.setError(
+                "Data Error",
+                "Something went wrong.\nParsed data is empty"
+            )
             return output
 
         return output
@@ -206,3 +192,25 @@ class Controller(QObject):
     def workerCanceled(self, n: int) -> None:
         self.finishProcessing()
         logging.debug(f"[Worker #{n}] Canceled")
+
+class CheckFlags:
+    DISABLE_DOWNSCALING = auto()
+
+@dataclass
+class CheckStatus:
+    allowed_to_proceed: bool = True
+    display_error: bool = False
+    error_title: str = ""
+    error_dsc: str = ""
+    flags: List[CheckFlags] = field(default_factory=list)
+
+    def setError(self, title: str, description: str, allowed_to_proceed: bool = False, display_error: bool = True) -> None:
+        self.display_error = display_error
+        self.error_title = title
+        self.error_description = description
+        self.allowed_to_proceed = allowed_to_proceed
+    
+    def addFlags(self, *new_flags: List[CheckFlags]) -> None:
+        for new_flag in new_flags:
+            if new_flag not in self.flags:
+                self.flags.append(new_flag)

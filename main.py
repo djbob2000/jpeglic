@@ -38,7 +38,7 @@ from data import fonts
 import data.task_status as task_status
 from data.sounds import finished_sound
 from data.logging_manager import LoggingManager
-from core.controller import Controller
+from core.controller import Controller, CheckFlags
 
 class MainWindow(QMainWindow):
     moved = Signal()
@@ -145,23 +145,24 @@ class MainWindow(QMainWindow):
         modify_tab_settings = self.modify_tab.getSettings()
         settings_tab_settings = self.settings_tab.getSettings()
 
-        # Checks
         self.controller.parseData(self.input_tab.getItems())
-        checks = self.controller.checkProcessingRequirements(
+        
+        # Checks
+        check_status = self.controller.checkProcessingRequirements(
             self.input_tab.file_view.topLevelItemCount(),
             self.output_tab.smIsFormatPoolEmpty(),
             output_tab_settings,
             modify_tab_settings,
         )
 
-        if checks["display_error"]:
-            self.notifications.notify(checks["error_title"], checks["error_dsc"])
+        if check_status.display_error:
+            self.notifications.notify(check_status.error_title, check_status.error_description)
 
-        if "disable_downscaling" in checks["flags"]:
+        if CheckFlags.DISABLE_DOWNSCALING in check_status.flags:
             self.modify_tab.disableDownscaling()
             modify_tab_settings = self.modify_tab.getSettings()
 
-        if not checks["allowed_to_proceed"]:
+        if not check_status.allowed_to_proceed:
             return
         
         # Misc.
