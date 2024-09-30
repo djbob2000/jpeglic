@@ -35,6 +35,7 @@ class Controller(QObject):
         self.time_left = TimeLeft()
         self.thread_manager = ThreadManager(self.threadpool)
         self.items = Items()
+        self.mutex = QMutex()
 
         # Flags
         self.finish_emitted = False     # debounce
@@ -146,7 +147,7 @@ class Controller(QObject):
                 output_tab_settings | modify_tab_settings,
                 settings_tab_settings,
                 self.thread_manager.getAvailableThreads(i),
-                QMutex()
+                self.mutex
             )
             worker.signals.started.connect(self.workerStarted)
             worker.signals.completed.connect(self.workerCompleted)
