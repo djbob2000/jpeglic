@@ -2,6 +2,8 @@ import subprocess
 import os
 import logging
 
+from data.process_manager import ProcessManager
+
 def _getStartupInfo():
     """Get startup info for Windows. Prevents console window from showing."""
     startupinfo = None
@@ -15,13 +17,16 @@ def runProcess(*cmd, cwd=None):
     """Run process."""
     logging.info(f"[runProcess] {cmd}")
 
-    process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=_getStartupInfo(), cwd=cwd)
-    
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=_getStartupInfo(), cwd=cwd)
+    ProcessManager.addProcess(process)
+    process.wait()
+    stdout, stderr = process.communicate()
+
     try:
-        if process.stdout:
-            logging.debug(f"[runProcess] {process.stdout.decode('utf-8')}")
-        if process.stderr:
-            logging.debug(f"[runProcess] {process.stderr.decode('utf-8')}")
+        if stdout:
+            logging.debug(f"[runProcess] {stdout.decode('utf-8')}")
+        if stderr:
+            logging.debug(f"[runProcess] {stderr.decode('utf-8')}")
     except Exception as err:
         logging.error(f"[runProcess] Failed to decode process output. {err}")
 

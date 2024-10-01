@@ -17,6 +17,7 @@ from PySide6.QtCore import (
 from data.time_left import TimeLeft
 from data.thread_manager import ThreadManager
 from data.items import Items
+from data.process_manager import ProcessManager
 import data.task_status as task_status
 from core.worker import Worker
 
@@ -103,6 +104,14 @@ class Controller(QObject):
                 "Something went wrong.\nParsed data is empty"
             )
             return output
+        
+        thread_count = self.threadpool.activeThreadCount()
+        if thread_count > 0:
+            output.setError(
+                "Still Processing",
+                f"{'A thread' if thread_count == 1 else str(thread_count) + 'threads '} from the last session {'is' if thread_count == 1 else 'are'} still finishing.\nWait a moment before trying again."
+            )
+            return output
 
         return output
 
@@ -136,6 +145,7 @@ class Controller(QObject):
         )
         task_status.reset()
         self.finish_emitted = False
+        ProcessManager.clear()
 
         # Start
         for i in range(self.items.getItemCount()):
@@ -157,20 +167,25 @@ class Controller(QObject):
         
         self.time_left.startCounting(self.items.getItemCount())
         self.processing_started.emit()
-        self.update_progress_line1.emit(f"Converted 0 out of {self.items.getItemCount()} images")   # Needs to stay after processing_started.emit()
+        self.update_progress_line1.emit(f"Starting the conversion...")   # Needs to stay after processing_started.emit()
 
     def finishProcessing(self) -> None:
         if self.finish_emitted:
             return
+        self.finish_emitted = True
         self.time_left.stopCounting()
         self.processing_finished.emit()
-        self.finish_emitted = True
+        ProcessManager.clear()
 
     def getItemCount(self) -> int:
         return self.items.getItemCount()
    
     def getCompletedItemCount(self) -> int:
         return self.items.getCompletedItemCount()
+    
+    def cancel(self):
+        task_status.cancel()
+        ProcessManager.terminateAll()
 
     @Slot(int)
     def workerStarted(self, n: int) -> None:
@@ -183,7 +198,7 @@ class Controller(QObject):
         self.update_progress_line1.emit(f"Converted {self.items.getCompletedItemCount()} out of {self.items.getItemCount()} images")
         self.update_progress_value.emit(self.items.getCompletedItemCount())
 
-        if self.items.getCompletedItemCount() >= self.items.getItemCount():
+        if self.items.getCompletedItemCount() >= self.items.getItemCount() or task_status.wasCanceled():
             self.finishProcessing()
         
         logging.debug(f"Active Workers: {self.threadpool.activeThreadCount()}")

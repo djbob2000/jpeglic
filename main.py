@@ -38,6 +38,7 @@ from data import fonts
 import data.task_status as task_status
 from data.sounds import finished_sound
 from data.logging_manager import LoggingManager
+from data.process_manager import ProcessManager
 from core.controller import Controller, CheckFlags
 
 class MainWindow(QMainWindow):
@@ -101,7 +102,7 @@ class MainWindow(QMainWindow):
         self.controller.processing_finished.connect(self.finishProcessing)
         self.controller.processing_started.connect(self.startProcessing)
 
-        self.progress_dlg.canceled.connect(task_status.cancel)
+        self.progress_dlg.canceled.connect(self.controller.cancel)
         self.moved.connect(self.progress_dlg.updatePosition)
         
         self.input_tab.convert.connect(self.convert)
@@ -131,7 +132,7 @@ class MainWindow(QMainWindow):
         if settings["play_sound_on_finish"]:
             finished_sound.play(volume=settings["play_sound_on_finish_vol"])
 
-        if not self.exception_view.isEmpty() and not settings["no_exceptions"]:
+        if not self.exception_view.isEmpty() and not settings["no_exceptions"] and not task_status.wasCanceled():
             self.exception_view.resizeToContent()
             self.exception_view.show()
         
@@ -195,6 +196,8 @@ class MainWindow(QMainWindow):
         self.settings_tab.saveState()
         self.output_tab.saveState()
         self.modify_tab.saveState()
+        if self.threadpool.activeThreadCount() > 0:
+            ProcessManager.terminateAll()
         super().closeEvent(e)
     
     def dragEnterEvent(self, e):
