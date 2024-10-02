@@ -109,7 +109,7 @@ class Controller(QObject):
         if thread_count > 0:
             output.setError(
                 "Still Processing",
-                f"{'A thread' if thread_count == 1 else str(thread_count) + 'threads '} from the last session {'is' if thread_count == 1 else 'are'} still finishing.\nWait a moment before trying again."
+                f"{'A thread' if thread_count == 1 else str(thread_count) + ' threads'} from the last session {'is' if thread_count == 1 else 'are'} still finishing.\nWait a moment before trying again."
             )
             return output
 
@@ -127,7 +127,7 @@ class Controller(QObject):
         used_thread_count: int,
     ) -> None:
         """Starts the conversion."""
-        
+
         # Setup
         enable_parallel = self.thread_manager.isParallelRecommended(
             output_tab_settings["format"],
@@ -147,7 +147,8 @@ class Controller(QObject):
         self.finish_emitted = False
         ProcessManager.clear()
 
-        # Start
+        # Loader
+        worker_data = []
         for i in range(self.items.getItemCount()):
             abs_path, anchor_path = self.items.getItem(i)
             worker = Worker(
@@ -159,12 +160,17 @@ class Controller(QObject):
                 self.thread_manager.getAvailableThreads(i),
                 self.mutex
             )
-            worker.signals.started.connect(self.workerStarted)
-            worker.signals.completed.connect(self.workerCompleted)
-            worker.signals.canceled.connect(self.workerCanceled)
-            worker.signals.exception.connect(self.exception)
-            self.threadpool.start(worker)
+            worker_data.append((worker, worker.signals))
         
+        for _, signals in worker_data:
+            signals.started.connect(self.workerStarted)
+            signals.completed.connect(self.workerCompleted)
+            signals.canceled.connect(self.workerCanceled)
+            signals.exception.connect(self.exception)
+            
+        for worker, _ in worker_data:
+            self.threadpool.start(worker)
+
         self.time_left.startCounting(self.items.getItemCount())
         self.processing_started.emit()
         self.update_progress_line1.emit(f"Starting the conversion...")   # Needs to stay after processing_started.emit()
