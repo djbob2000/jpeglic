@@ -209,7 +209,7 @@ class Controller(QObject):
         self.finishProcessing()
         logging.debug(f"[Worker #{n}] Canceled")
 
-class CheckFlags:
+class CheckFlags(Enum):
     DISABLE_DOWNSCALING = auto()
 
 @dataclass
