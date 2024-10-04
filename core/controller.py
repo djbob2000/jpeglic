@@ -149,13 +149,14 @@ class Controller(QObject):
 
         # Loader
         worker_data = []
+        params = output_tab_settings | modify_tab_settings
         for i in range(self.items.getItemCount()):
             abs_path, anchor_path = self.items.getItem(i)
             worker = Worker(
                 i,
                 abs_path,
                 anchor_path,
-                output_tab_settings | modify_tab_settings,
+                params,
                 settings_tab_settings,
                 self.thread_manager.getAvailableThreads(i),
                 self.mutex
