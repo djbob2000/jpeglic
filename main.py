@@ -148,7 +148,6 @@ class MainWindow(QMainWindow):
 
         self.controller.parseData(self.input_tab.getItems())
         
-        # Checks
         check_status = self.controller.checkProcessingRequirements(
             self.input_tab.file_view.topLevelItemCount(),
             self.output_tab.smIsFormatPoolEmpty(),
@@ -166,18 +165,11 @@ class MainWindow(QMainWindow):
         if not check_status.allowed_to_proceed:
             return
         
-        # Misc.
-        self.exception_view.close()
-        self.exception_view.clear()
-        self.exception_view.updateReportHeader(
-            self.output_tab.getReportData(),
-            self.modify_tab.getReportData(),
-        )
+        self.exception_view.reset()
         self.settings_tab.saveState(settings_tab_settings)
         self.output_tab.saveState(output_tab_settings)
         self.modify_tab.saveState(modify_tab_settings)
 
-        # Processing
         self.controller.startProcessing(
             output_tab_settings,
             modify_tab_settings,

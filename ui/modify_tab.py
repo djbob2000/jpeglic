@@ -301,14 +301,6 @@ class ModifyTab(QWidget):
             self.wm.saveState()
             self.cached_states = deepcopy(new_states)
 
-    def getReportData(self):
-        """Used by ExceptionView"""
-        settings = self.getSettings()
-        return {
-            "Downscaling": dictToList(settings["downscaling"]),
-            "Misc.": dictToList(settings["misc"])
-        }
-
     def getResampling(self):
         if self.resample_visible:
             return self.resample_cmb.currentText()

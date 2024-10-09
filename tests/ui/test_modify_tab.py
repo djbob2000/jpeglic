@@ -73,9 +73,6 @@ def test_resetToDefault(app):
 def test_getSettings_key_error(app):
     app.getSettings()
 
-def test_getReportData_key_error(app):
-    app.getReportData()
-
 @pytest.mark.parametrize("mode, percent, resolution, file_size, shortest, longest", [
     ("Percent", True, False, False, False, False),
     ("Resolution", False, True, False, False, False),

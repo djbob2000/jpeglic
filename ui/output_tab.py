@@ -331,15 +331,6 @@ class OutputTab(QWidget):
             "jxl_png_fallback": self.jxl_png_fallback_cb.isChecked(),
         }
     
-    def getReportData(self):
-        """Used by ExceptionView"""
-        report = self.getSettings()
-        report.pop("custom_output_dir_path")
-
-        return {
-            "Output": dictToList(report)
-        }
-
     def onThreadSlChange(self):
         self.threads_sb.setValue(self.threads_sl.value())
 

@@ -93,10 +93,8 @@ body:
         #### Attachments (Optional)
 
         You can share files (such as logs) alongside your issue.
-
-        There are 2 types of logs you can save to file:
-        1. Exception logs (pop up when errors occur)
-        2. Program-wide logs (Settings -> Advanced (at the very bottom) -> Start Logging)
+        
+        Logs can be generated in the settings -- Settings -> Advanced (at the very bottom) -> Start Logging.
 
         Sharing files:
 

@@ -32,7 +32,6 @@ class ExceptionView(QDialog):
         self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
         
         self.notifications = Notifications(self)
-        self.report_data = {}
 
         # Table
         headers = [
@@ -91,12 +90,6 @@ class ExceptionView(QDialog):
         while self.table.rowCount() > 0:
             self.table.removeRow(0)
 
-    def updateReportHeader(self, *data):
-        """Include additional information in the debug file (If one is saved)."""
-        self.report_data = {}
-        for e in data:
-            self.report_data.update(e)
-
     def saveToFile(self):
         if self.table.rowCount() == 0:
             self.notifications.notify("Empty List", "Exception list is empty, there is nothing to save.")
@@ -120,15 +113,6 @@ class ExceptionView(QDialog):
                 writer.writerow(("Version", VERSION))
                 writer.writerow(("OS", platform.system()))
 
-                # Additional data
-                if self.report_data:
-                    writer.writerow([])
-                    for k, v in self.report_data.items():
-                        writer.writerow((k,))
-                        for row in v:
-                            writer.writerow(row)
-                        writer.writerow([])
-
                 # Row data
                 writer.writerow(("Exceptions",))
                 writer.writerow(("ID", "Exception", "Extension"))
@@ -151,3 +135,8 @@ class ExceptionView(QDialog):
     
     def isEmpty(self):
         return self.table.rowCount() == 0
+    
+    def reset(self):
+        """Runs close() then clear()."""
+        self.close()
+        self.clear()
