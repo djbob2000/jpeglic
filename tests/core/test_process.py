@@ -24,27 +24,29 @@ def test___getStartupInfo_windows():
     else:
         assert _getStartupInfo() is None
 
-# subprocess.run mock
-class MockCompletedProcess:
-    def __init__(self, stdout, stdin):
-        self.stdout = stdout
-        self.stdin = stdin
+def test_runProcess():
+    cmd = ("echo", "Hello world")
+    expected_stdout = b"Hello world\n"
+    expected_stderr = b""
 
-@pytest.mark.parametrize(
-    "cmd,expected_stdout", [
-        (("echo", "Hello World"), b"Hello World\n"),
-    ]
-)
-def test_runProcess(cmd, expected_stdout):
-    with patch("core.process.subprocess.run") as mock_run, \
-        patch("core.process.logging") as mock_logging:
-    
-        mock_run.return_value = MockCompletedProcess(stdout=expected_stdout, stdin=b"")
+    with (
+        patch("core.process.subprocess.Popen", autospec=True) as mock_popen,
+        patch("core.process.logging.debug") as mock_logging_debug,
+        patch("core.process.logging.info") as mock_logging_info,
+        patch("data.process_manager.ProcessManager.addProcess") as mock_addProcess,
+    ):
+        mock_process = mock_popen.return_value
+        mock_process.communicate.return_value = (expected_stdout, expected_stderr)
+        mock_process.wait.return_value = None
+
         runProcess(*cmd)
 
-        mock_run.assert_called_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=ANY, cwd=None)
-        assert cmd[1] in mock_logging.debug.call_args[0][0]
-        assert str(cmd) in mock_logging.info.call_args[0][0]
+        mock_popen.assert_called_once_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=ANY, cwd=None)
+        mock_addProcess.assert_called_once_with(mock_process)
+        mock_process.wait.assert_called_once()
+        mock_process.communicate.assert_called_once()
+        mock_logging_debug.assert_called_once_with(f"[runProcess] {expected_stdout.decode('utf-8')}")
+        mock_logging_info.assert_called_once_with(f"[runProcess] {cmd}")
 
 def test_runProcessOutput():
     with (
