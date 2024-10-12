@@ -108,7 +108,6 @@ class WidgetManager():
 
     def getVar(self, var: str) -> Any:
         if not var in self.variables:
-            self.error(f"Var not found ({var})", "getVar")
             return None
 
         return self.variables[var]

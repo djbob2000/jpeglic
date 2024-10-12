@@ -187,9 +187,8 @@ def test_getVar(app):
     app.wm.setVar("sample_var", 10)
     assert app.wm.getVar("sample_var") == 10
 
-def test_getVar_no_var(caplog, app):
-    app.wm.getVar("sample_var")
-    assert "Var not found" in caplog.text
+def test_getVar_no_var(app):
+    assert app.wm.getVar("sample_var") is None
 
 def test_applyVar(app):
     app.wm._applyValue = MagicMock()
