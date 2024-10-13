@@ -17,7 +17,8 @@ from PySide6.QtWidgets import(
 )
 from PySide6.QtCore import(
     Qt,
-    Signal
+    Signal,
+    QDir,
 )
 
 from .widget_manager import WidgetManager
@@ -348,11 +349,15 @@ class OutputTab(QWidget):
         return empty
         
     def chooseOutput(self):
-        dlg = QFileDialog()
-        dlg.setWindowTitle("Choose Output Folder")
+        dlg = QFileDialog(
+            self,
+            "Choose Output Folder",
+            self.wm.getVar("choose_output_last_dir") or QDir.homePath()
+        )
         dlg.setFileMode(QFileDialog.Directory)
 
         if dlg.exec():
+            self.wm.setVar("choose_output_last_dir", dlg.directory().absolutePath())
             self.choose_output_ct_le.setText(dlg.selectedFiles()[0])
 
     def onOutputToggled(self):
