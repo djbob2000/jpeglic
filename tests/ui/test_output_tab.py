@@ -179,12 +179,12 @@ def test_jpeg_xl_effort_10(app):
     app.setJxlEffort10Enabled(True)
     assert app.effort_sb.maximum() == 10
 
-@pytest.mark.parametrize("format, min, max", [
+@pytest.mark.parametrize("file_format, min_val, max_val", [
     ("JPEG XL", 1, 9),
     ("AVIF", 0, 10),
 ])
-def test_effort_ranges(app, format, min, max):
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText(format))
+def test_effort_ranges(app, file_format, min_val, max_val):
+    app.format_cmb.setCurrentIndex(app.format_cmb.findText(file_format))
     
-    assert app.effort_sb.minimum() == min
-    assert app.effort_sb.maximum() == max
+    assert app.effort_sb.minimum() == min_val
+    assert app.effort_sb.maximum() == max_val
