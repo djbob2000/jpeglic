@@ -10,7 +10,8 @@ from PySide6.QtWidgets import(
 )
 from PySide6.QtCore import(
     Signal,
-    QUrl
+    QUrl,
+    QDir,
 )
 from PySide6.QtGui import(
     QShortcut,
@@ -21,6 +22,7 @@ from .file_view import FileView
 from data.constants import ALLOWED_INPUT, ALLOWED_INPUT_FILTERS
 from core.utils import scanDir
 from .notifications import Notifications
+from ui.widget_manager import WidgetManager
 
 class InputTab(QWidget):
     convert = Signal()
@@ -29,8 +31,8 @@ class InputTab(QWidget):
         super(InputTab, self).__init__()
         self.file_view = FileView(self)
         self.notify = Notifications(self)
-
-        # Apply Settings
+        self.wm = WidgetManager("InputTab")
+        
         self.disableSorting(settings["sorting_disabled"])
 
         # Shortcuts
@@ -65,6 +67,9 @@ class InputTab(QWidget):
         input_l.addWidget(clear_list_btn,1,2)
         input_l.addWidget(self.convert_btn,1,3,1,2)
         input_l.addWidget(self.file_view,0,0,1,0)
+
+        # Init
+        self.wm.loadState()
 
     # Items
     def getItems(self):
@@ -101,12 +106,17 @@ class InputTab(QWidget):
         self.file_view.finishAddingItems()
 
     def addFiles(self):
-        dlg = QFileDialog()
-        dlg.setWindowTitle("Add Images")
+        dlg = QFileDialog(
+            self,
+            "Add Images",
+            self.wm.getVar("add_files_last_dir") or QDir.homePath(),
+        )
         dlg.setFileMode(QFileDialog.ExistingFiles)
         dlg.setNameFilters(ALLOWED_INPUT_FILTERS)
 
         if dlg.exec():
+            self.wm.setVar("add_files_last_dir", dlg.directory().absolutePath())
+
             # Add items
             file_paths = []
             for i in dlg.selectedFiles():
@@ -119,11 +129,15 @@ class InputTab(QWidget):
             self._addItems(file_paths)
 
     def addFolder(self):
-        dlg = QFileDialog()
-        dlg.setWindowTitle("Add Images from a Folder")
+        dlg = QFileDialog(
+            self,
+            "Add Images from a Folder",
+            self.wm.getVar("add_folder_last_dir") or QDir.homePath()
+        )
         dlg.setFileMode(QFileDialog.Directory)
 
         if dlg.exec():
+            self.wm.setVar("add_folder_last_dir", dlg.directory().absolutePath())
             selected_dir = dlg.selectedFiles()[0]
             
             try:
@@ -149,3 +163,6 @@ class InputTab(QWidget):
     
     def disableSorting(self, disabled):
         self.file_view.disableSorting(disabled)
+    
+    def saveState(self):
+        self.wm.saveState()
