@@ -193,6 +193,7 @@ def test_chooseOutput_var_default(app):
     with (
         patch("ui.output_tab.QFileDialog") as mock_qfiledialog,
         patch("ui.widget_manager.WidgetManager.getVar", return_value=None),
+        patch("ui.utils.isPathValidStr", return_value=False),
     ):
         mock_qfiledialog.return_value.exec.return_value = False
 
@@ -206,6 +207,7 @@ def test_chooseOutput_var_load(app):
         patch("ui.output_tab.QFileDialog") as mock_qfiledialog,
         patch("ui.widget_manager.WidgetManager.getVar", return_value=last_used),
         patch("ui.widget_manager.WidgetManager.setVar") as mock_setVar,
+        patch("ui.output_tab.isPathValidStr", return_value=True),
     ):
         mock_qfiledialog.return_value.exec.return_value = False
 
@@ -219,6 +221,7 @@ def test_chooseOutput_var_save(app):
         patch("ui.output_tab.QFileDialog") as mock_qfiledialog,
         patch("ui.widget_manager.WidgetManager.getVar", return_value=last_used),
         patch("ui.widget_manager.WidgetManager.setVar") as mock_setVar,
+        patch("ui.output_tab.isPathValidStr", return_value=False),
     ):
         mock_qfiledialog.return_value.exec.return_value = True
         mock_qfiledialog.return_value.directory.return_value.absolutePath.return_value = last_used

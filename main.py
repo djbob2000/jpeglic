@@ -188,6 +188,7 @@ class MainWindow(QMainWindow):
         self.settings_tab.saveState()
         self.output_tab.saveState()
         self.modify_tab.saveState()
+        self.input_tab.saveState()
         if self.threadpool.activeThreadCount() > 0:
             ProcessManager.terminateAll()
         super().closeEvent(e)

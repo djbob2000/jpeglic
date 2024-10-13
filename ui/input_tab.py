@@ -1,6 +1,7 @@
 from pathlib import Path
 import logging
 from typing import List, Tuple
+import os
 
 from PySide6.QtWidgets import(
     QWidget,
@@ -23,6 +24,7 @@ from data.constants import ALLOWED_INPUT, ALLOWED_INPUT_FILTERS
 from core.utils import scanDir
 from .notifications import Notifications
 from ui.widget_manager import WidgetManager
+from ui.utils import isPathValidStr
 
 class InputTab(QWidget):
     convert = Signal()
@@ -106,10 +108,14 @@ class InputTab(QWidget):
         self.file_view.finishAddingItems()
 
     def addFiles(self):
+        dir_to_load = self.wm.getVar("add_files_last_dir")
+        if dir_to_load is None or not isPathValidStr(dir_to_load):
+            dir_to_load = QDir.homePath()
+
         dlg = QFileDialog(
             self,
             "Add Images",
-            self.wm.getVar("add_files_last_dir") or QDir.homePath(),
+            dir_to_load,
         )
         dlg.setFileMode(QFileDialog.ExistingFiles)
         dlg.setNameFilters(ALLOWED_INPUT_FILTERS)
@@ -129,10 +135,14 @@ class InputTab(QWidget):
             self._addItems(file_paths)
 
     def addFolder(self):
+        dir_to_load = self.wm.getVar("add_folder_last_dir")
+        if dir_to_load is None or not isPathValidStr(dir_to_load):
+            dir_to_load = QDir.homePath()
+
         dlg = QFileDialog(
             self,
             "Add Images from a Folder",
-            self.wm.getVar("add_folder_last_dir") or QDir.homePath()
+            dir_to_load
         )
         dlg.setFileMode(QFileDialog.Directory)
 

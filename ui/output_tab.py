@@ -26,7 +26,7 @@ from core.utils import dictToList
 from ui.slider import Slider
 from ui.combobox import ComboBox
 from ui.spinbox import SpinBox
-from ui.utils import setToolTip
+from ui.utils import setToolTip, isPathValidStr
 from data.tooltips import TOOLTIPS
 
 class OutputTab(QWidget):
@@ -349,10 +349,14 @@ class OutputTab(QWidget):
         return empty
         
     def chooseOutput(self):
+        dir_to_load = self.wm.getVar("choose_output_last_dir")
+        if dir_to_load is None or not isPathValidStr(dir_to_load):
+            dir_to_load = QDir.homePath()
+
         dlg = QFileDialog(
             self,
             "Choose Output Folder",
-            self.wm.getVar("choose_output_last_dir") or QDir.homePath()
+            dir_to_load
         )
         dlg.setFileMode(QFileDialog.Directory)
 

@@ -45,6 +45,7 @@ def test_addFiles_var_default(input_tab):
         patch("ui.input_tab.QFileDialog") as mock_qfiledialog,
         patch("ui.input_tab.QFileDialog.exec", return_value=True),
         patch("ui.widget_manager.WidgetManager.getVar", return_value=None),
+        patch("ui.utils.isPathValidStr", return_value=False),
     ):
         input_tab.addFiles()
         mock_qfiledialog.assert_called_once_with(input_tab, ANY, QDir.homePath())
@@ -55,6 +56,7 @@ def test_addFiles_var_load(input_tab):
         patch("ui.input_tab.QFileDialog") as mock_qfiledialog,
         patch("ui.input_tab.QFileDialog.exec", return_value=True) as mock_exec,
         patch("ui.widget_manager.WidgetManager.getVar", return_value=last_used) as mock_getVar,
+        patch("ui.input_tab.isPathValidStr", return_value=True),
     ):
         input_tab.addFiles()
         mock_qfiledialog.assert_called_once_with(input_tab, ANY, last_used)
@@ -66,6 +68,7 @@ def test_addFiles_var_save(input_tab):
         patch("ui.input_tab.QFileDialog.exec", return_value=True) as mock_exec,
         patch("ui.widget_manager.WidgetManager.getVar", return_value=None) as mock_getVar,
         patch("ui.widget_manager.WidgetManager.setVar") as mock_setVar,
+        patch("ui.input_tab.isPathValidStr", return_value=True),
     ):
         mock_qfiledialog.return_value.directory.return_value.absolutePath.return_value = last_used
 
@@ -86,6 +89,7 @@ def test_addFolder_var_default(input_tab):
         patch("ui.input_tab.QFileDialog") as mock_qfiledialog,
         patch("ui.input_tab.QFileDialog.exec", return_value=True),
         patch("ui.widget_manager.WidgetManager.getVar", return_value=None),
+        patch("ui.input_tab.isPathValidStr", return_value=False),
     ):
         input_tab.addFolder()
         mock_qfiledialog.assert_called_once_with(input_tab, ANY, QDir.homePath())
@@ -96,6 +100,7 @@ def test_addFolder_var_load(input_tab):
         patch("ui.input_tab.QFileDialog") as mock_qfiledialog,
         patch("ui.input_tab.QFileDialog.exec", return_value=True),
         patch("ui.widget_manager.WidgetManager.getVar", return_value=last_used),
+        patch("ui.input_tab.isPathValidStr", return_value=True),
     ):
         input_tab.addFolder()
         mock_qfiledialog.assert_called_once_with(input_tab, ANY, last_used)
@@ -107,6 +112,7 @@ def test_addFolder_var_save(input_tab):
         patch("ui.input_tab.QFileDialog.exec", return_value=True),
         patch("ui.widget_manager.WidgetManager.getVar", return_value=None),
         patch("ui.widget_manager.WidgetManager.setVar") as mock_setVar,
+        patch("ui.input_tab.isPathValidStr", return_value=True),
     ):
         mock_qfiledialog.return_value.directory.return_value.absolutePath.return_value = last_used
 

@@ -109,3 +109,15 @@ def test_openUrl_exception(mock_openUrl):
     utils.openUrl(url)
 
     assert "test" in mock_openUrl["logging"].call_args[0][0]
+
+def test_isPathValidStr_valid():
+    with patch("ui.utils.os.access", return_value=True):
+        assert utils.isPathValidStr("/home/Pictures") == True
+
+def test_isPathValidStr_invalid_type():
+    with patch("ui.utils.os.access", return_value=True):
+        assert utils.isPathValidStr(None) == False
+
+def test_isPathValidStr_invalid_no_access():
+    with patch("ui.utils.os.access", return_value=False):
+        assert utils.isPathValidStr("/home/Pictures") == False

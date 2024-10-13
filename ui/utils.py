@@ -56,3 +56,12 @@ def openUrl(qurl: QUrl) -> None:
             QDesktopServices.openUrl(qurl)
     except Exception as e:
         logging.error(f"[ui.utils.openUrl] Failed to open URL. {e}")
+
+def isPathValidStr(path: str) -> bool:
+    """Checks if a given path is valid and accessible for R/W."""
+    if (
+        type(path) is str and
+        os.access(path, os.R_OK | os.W_OK)
+    ):
+        return True
+    return False
