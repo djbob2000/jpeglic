@@ -24,9 +24,9 @@ def runProcess(*cmd, cwd=None):
 
     try:
         if stdout:
-            logging.debug(f"[runProcess] {stdout.decode('utf-8')}")
+            logging.info(f"[runProcess] {stdout.decode('utf-8')}")
         if stderr:
-            logging.debug(f"[runProcess] {stderr.decode('utf-8')}")
+            logging.info(f"[runProcess] {stderr.decode('utf-8')}")
     except Exception as err:
         logging.error(f"[runProcess] Failed to decode process output. {err}")
 
@@ -43,10 +43,10 @@ def runProcessOutput(*cmd, cwd=None) -> (str, str):
         stdout, stderr = "", ""
         if process.stdout:
             stdout = process.stdout.decode("utf-8")
-            logging.debug(f"[runProcessOutput] {stdout}")
+            logging.info(f"[runProcessOutput] {stdout}")
         if process.stderr:
             stderr = process.stderr.decode("utf-8")
-            logging.debug(f"[runProcessOutput] {stderr}")
+            logging.info(f"[runProcessOutput] {stderr}")
     except Exception as err:
         logging.error(f"Failed to decode process output. {err}")
 

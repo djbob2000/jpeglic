@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock, ANY
+from unittest.mock import patch, MagicMock, ANY, call
 import subprocess
 import os
 
@@ -31,7 +31,6 @@ def test_runProcess():
 
     with (
         patch("core.process.subprocess.Popen", autospec=True) as mock_popen,
-        patch("core.process.logging.debug") as mock_logging_debug,
         patch("core.process.logging.info") as mock_logging_info,
         patch("data.process_manager.ProcessManager.addProcess") as mock_addProcess,
     ):
@@ -45,8 +44,9 @@ def test_runProcess():
         mock_addProcess.assert_called_once_with(mock_process)
         mock_process.wait.assert_called_once()
         mock_process.communicate.assert_called_once()
-        mock_logging_debug.assert_called_once_with(f"[runProcess] {expected_stdout.decode('utf-8')}")
-        mock_logging_info.assert_called_once_with(f"[runProcess] {cmd}")
+        assert len(mock_logging_info.call_args_list) == 2
+        assert mock_logging_info.call_args_list[0][0][0] == f"[runProcess] {cmd}"
+        assert mock_logging_info.call_args_list[1][0][0] == f"[runProcess] {expected_stdout.decode('utf-8')}"
 
 def test_runProcessOutput():
     with (

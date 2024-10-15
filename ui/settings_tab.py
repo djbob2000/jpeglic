@@ -351,7 +351,7 @@ class SettingsTab(QWidget):
             self.logging_manager.stopLoggingToFile()
             self.start_logging_btn.setText("Start Logging")
         else:
-            self.logging_manager.startLoggingToFile("DEBUG")
+            self.logging_manager.startLoggingToFile("INFO")
             self.start_logging_btn.setText("Stop Logging")
 
     def openLogsDir(self):
