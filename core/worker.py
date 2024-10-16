@@ -37,7 +37,7 @@ from core.utils import getFreeSpaceLeft
 
 class Signals(QObject):
     started = Signal(int)
-    completed = Signal(int)
+    completed = Signal(int, bool)
     canceled = Signal(int)
     exception = Signal(str, str, str)
 
@@ -81,6 +81,7 @@ class Worker(QRunnable):
 
         # Flags
         self.skip = False
+        self.skipped = False
         self.lossless_jpeg = False
 
         # Misc.
@@ -94,7 +95,7 @@ class Worker(QRunnable):
     def run(self):
         if task_status.wasCanceled():
             self.signals.canceled.emit(self.n)
-            return False
+            return
         else:
             self.signals.started.emit(self.n)
 
@@ -103,7 +104,7 @@ class Worker(QRunnable):
             self.setupConversion()
 
             if self.skip:
-                self.signals.completed.emit(self.n)
+                self.signals.completed.emit(self.n, True)
                 return
             
             match self.params["format"]:
@@ -123,18 +124,12 @@ class Worker(QRunnable):
             return
         except (GenericException, FileException) as err:
             self.logException(err.id, err.msg)
-            self.signals.completed.emit(self.n)
-            return
         except OSError as err:
             self.logException("OSError", str(err))
-            self.signals.completed.emit(self.n)
-            return
         except Exception as err:
             self.logException("Exception", str(err))
-            self.signals.completed.emit(self.n)
-            return
 
-        self.signals.completed.emit(self.n)
+        self.signals.completed.emit(self.n, self.skipped)
     
     def runChecks(self):
         # Input was moved / deleted
@@ -422,6 +417,7 @@ class Worker(QRunnable):
                 
                 if self.params["format"] == "Smallest Lossless" and mode == "Skip":
                     if os.path.isfile(self.final_output):
+                        self.skipped = True
                         os.remove(self.output)
                     else:
                         os.rename(self.output, self.final_output)

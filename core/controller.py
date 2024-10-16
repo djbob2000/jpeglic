@@ -199,9 +199,12 @@ class Controller(QObject):
         logging.debug(f"[Worker #{n}] Started")
 
     @Slot(int)
-    def workerCompleted(self, n: int) -> None:
+    def workerCompleted(self, n: int, skipped: bool) -> None:
         self.items.addCompletedItem()
-        self.time_left.addCompletedItem()
+        if not skipped:
+            self.time_left.addCompletedItem()
+        else:
+            self.time_left.addSkippedItem()
         self.update_progress_line1.emit(f"Converted {self.items.getCompletedItemCount()} out of {self.items.getItemCount()} images")
         self.update_progress_value.emit(self.items.getCompletedItemCount())
 

@@ -44,6 +44,15 @@ class TimeLeft(QObject):
         self.completed_item_count += 1
         self._updateEstimation()
 
+    def addSkippedItem(self):
+        """Call on item skipped. Updates estimated time left data."""
+        if self.start_time is None:
+            return
+
+        if self.item_count > 1:
+            self.item_count -= 1
+            self._updateEstimation()
+
     # Private methods
     def _updateEstimation(self):
         """Updates estimation without subtracting one."""

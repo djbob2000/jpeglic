@@ -51,6 +51,14 @@ def test_addCompletedItem(time_left):
 
     assert time_left.completed_item_count == 1
 
+def test_addSkippedItem(time_left):
+    time_left._updateEstimation = MagicMock()
+
+    time_left.startCounting(100)
+    time_left.addSkippedItem()
+
+    assert time_left.item_count == 99
+
 @patch("time.time", side_effect=[10, 20])
 def test__updateEstimation(mock_time, caplog, time_left):
     time_left.item_count = 10
