@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Any
 
-from PySide6.QtWidgets import QWidget, QLineEdit, QComboBox, QTextEdit, QCheckBox, QRadioButton, QSlider, QSpinBox
+from PySide6.QtWidgets import QWidget, QLineEdit, QComboBox, QTextEdit, QCheckBox, QRadioButton, QSlider, QSpinBox, QDoubleSpinBox
 
 from data.constants import CONFIG_LOCATION, VERSION
 
@@ -155,6 +155,9 @@ class WidgetManager():
         elif widget_class in ("QSlider", "QSpinBox"):
             if not type(val) is int:
                 val_mismatch = True
+        elif widget_class in ("QDoubleSpinBox"):
+            if not type(val) is float:
+                val_mismatch = True
 
         if val_mismatch:
             self.error(f"Type mismatch (Tried applying {type(val)} onto [{_id}: {widget_class}])", "_applyValue")
@@ -167,6 +170,8 @@ class WidgetManager():
             case "QSlider":
                 widget.setValue(val)
             case "QSpinBox":
+                widget.setValue(val)
+            case "QDoubleSpinBox":
                 widget.setValue(val)
             case "QComboBox":
                 index = widget.findText(val)
@@ -183,7 +188,7 @@ class WidgetManager():
                 self.error(f"Unsupported widget class ({widget_class})", "_applyValue")
 
     def _getWidgetSubclass(self, widget) -> str:
-        supported_widgets = (QCheckBox, QSpinBox, QComboBox, QTextEdit, QSlider, QRadioButton, QLineEdit)     # Sorted by popularity
+        supported_widgets = (QCheckBox, QSpinBox, QComboBox, QTextEdit, QSlider, QRadioButton, QLineEdit, QDoubleSpinBox)     # Sorted by popularity
         
         for w in supported_widgets:
             if isinstance(widget, w):
@@ -215,6 +220,8 @@ class WidgetManager():
                 case "QSlider":
                     widget_states[key] = self.widgets[key].value()
                 case "QSpinBox":
+                    widget_states[key] = self.widgets[key].value()
+                case "QDoubleSpinBox":
                     widget_states[key] = self.widgets[key].value()
                 case "QComboBox":
                     widget_states[key] = self.widgets[key].currentText()    # Text (not index) in case order was changed

@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QSlider,
     QSpinBox,
+    QDoubleSpinBox,
     QComboBox,
 )
 
@@ -216,6 +217,7 @@ def test_applyVar_no_var(app):
     (QRadioButton, True, "isChecked"),
     (QSlider, 50, "value"),
     (QSpinBox, 50, "value"),
+    (QDoubleSpinBox, 2.1, "value"),
 ])
 def test__applyValue(widget, value, get_method, caplog, app):
     w = widget()
@@ -236,6 +238,7 @@ def test__applyValue(widget, value, get_method, caplog, app):
     (QRadioButton, "test", "isChecked"),
     (QSlider, False, "value"),
     (QSpinBox, False, "value"),
+    (QDoubleSpinBox, False, "value"),
 ])
 def test__applyValue_value_mismatch(widget, value, get_method, caplog, app):
     w = widget()
@@ -290,6 +293,7 @@ def test_saveState(mock_open, mock_isdir, app):
     cb = QCheckBox()
     sl = QSlider()
     sb = QSpinBox()
+    dsb = QDoubleSpinBox()
     cmb = QComboBox()
     cmb.addItems(["item_0", "item_1"])
     rb = QRadioButton()
@@ -299,6 +303,7 @@ def test_saveState(mock_open, mock_isdir, app):
     cb.setChecked(True)
     sl.setValue(50)
     sb.setValue(50)
+    dsb.setValue(2.1)
     cmb.setCurrentIndex(1)
     rb.setChecked(True)
     le.setText("sample_0")
@@ -307,6 +312,7 @@ def test_saveState(mock_open, mock_isdir, app):
     app.wm.addWidget("cb", cb)
     app.wm.addWidget("sl", sl)
     app.wm.addWidget("sb", sb)
+    app.wm.addWidget("dsb", dsb)
     app.wm.addWidget("cmb", cmb)
     app.wm.addWidget("rb", rb)
     app.wm.addWidget("le", le)
@@ -321,6 +327,7 @@ def test_saveState(mock_open, mock_isdir, app):
     assert written_json["widgets"]["cb"] == cb.isChecked()
     assert written_json["widgets"]["sl"] == sl.value()
     assert written_json["widgets"]["sb"] == sb.value()
+    assert written_json["widgets"]["dsb"] == dsb.value()
     assert written_json["widgets"]["cmb"] == cmb.currentText()
     assert written_json["widgets"]["rb"] == rb.isChecked()
     assert written_json["widgets"]["le"] == le.text()
