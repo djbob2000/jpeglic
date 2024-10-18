@@ -45,6 +45,7 @@ def worker():
                 "height": 2000,
                 "shortest_side": 2000,
                 "longest_side": 2000,
+                "megapixels": 2.0,
                 "resample": "Default",
             },
             "misc": {

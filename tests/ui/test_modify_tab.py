@@ -41,6 +41,8 @@ def test_toggleDownscaleUI(enabled, app):
     assert app.shortest_sb.isEnabled() == enabled
     assert app.longest_l.isEnabled() == enabled
     assert app.longest_sb.isEnabled() == enabled
+    assert app.megapixels_sb.isEnabled() == enabled
+    assert app.megapixels_l.isEnabled() == enabled
 
 def test_resetToDefault(app):
     app.downscale_cb.setChecked(True)
@@ -69,49 +71,35 @@ def test_resetToDefault(app):
     assert app.pixel_h_sb.value() == 2000
     assert app.shortest_sb.value() == 1080
     assert app.longest_sb.value() == 1920
+    assert app.megapixels_sb.value() == 2.1
 
 def test_getSettings_key_error(app):
     app.getSettings()
 
-@pytest.mark.parametrize("mode, percent, resolution, file_size, shortest, longest", [
-    ("Percent", True, False, False, False, False),
-    ("Resolution", False, True, False, False, False),
-    ("File Size", False, False, True, False, False),
-    ("Shortest Side", False, False, False, True, False),
-    ("Longest Side", False, False, False, False, True),
+@pytest.mark.parametrize("mode_title", [
+    ("Percent"),
+    ("Resolution"),
+    ("File Size"),
+    ("Shortest Side"),
+    ("Longest Side"),
+    ("Megapixels"),
 ])
-def test_onModeChanged_visibility(mode, percent, resolution, file_size, shortest, longest, app):
-    app.mode_cmb.setCurrentIndex(app.mode_cmb.findText(mode))
-    assert app.percent_l.isVisibleTo(app) == percent
-    assert app.percent_sb.isVisibleTo(app) == percent
-    assert app.pixel_h_l.isVisibleTo(app) == resolution
-    assert app.pixel_h_sb.isVisibleTo(app) == resolution
-    assert app.pixel_w_l.isVisibleTo(app) == resolution
-    assert app.pixel_w_sb.isVisibleTo(app) == resolution
-    assert app.file_size_l.isVisibleTo(app) == file_size
-    assert app.file_size_sb.isVisibleTo(app) == file_size
-    assert app.shortest_l.isVisibleTo(app) == shortest
-    assert app.shortest_sb.isVisibleTo(app) == shortest
-    assert app.longest_l.isVisibleTo(app) == longest
-    assert app.longest_sb.isVisibleTo(app) == longest
-
-@pytest.mark.parametrize("downscaling_on", [
-    False, True,
-])
-def test_customResampling_visibility(downscaling_on, app):
-    app.downscale_cb.setChecked(downscaling_on)
-    assert app.percent_l.isEnabled() == downscaling_on
-    assert app.percent_sb.isEnabled() == downscaling_on
-    assert app.pixel_h_l.isEnabled() == downscaling_on
-    assert app.pixel_h_sb.isEnabled() == downscaling_on
-    assert app.pixel_w_l.isEnabled() == downscaling_on
-    assert app.pixel_w_sb.isEnabled() == downscaling_on
-    assert app.file_size_l.isEnabled() == downscaling_on
-    assert app.file_size_sb.isEnabled() == downscaling_on
-    assert app.shortest_l.isEnabled() == downscaling_on
-    assert app.shortest_sb.isEnabled() == downscaling_on
-    assert app.longest_l.isEnabled() == downscaling_on
-    assert app.longest_sb.isEnabled() == downscaling_on
+def test_onModeChanged_visibility(mode_title, app):
+    app.mode_cmb.setCurrentIndex(app.mode_cmb.findText(mode_title))
+    assert app.percent_l.isVisibleTo(app) == (mode_title == "Percent")
+    assert app.percent_sb.isVisibleTo(app) == (mode_title == "Percent")
+    assert app.pixel_h_l.isVisibleTo(app) == (mode_title == "Resolution")
+    assert app.pixel_h_sb.isVisibleTo(app) == (mode_title == "Resolution")
+    assert app.pixel_w_l.isVisibleTo(app) == (mode_title == "Resolution")
+    assert app.pixel_w_sb.isVisibleTo(app) == (mode_title == "Resolution")
+    assert app.file_size_l.isVisibleTo(app) == (mode_title == "File Size")
+    assert app.file_size_sb.isVisibleTo(app) == (mode_title == "File Size")
+    assert app.shortest_l.isVisibleTo(app) == (mode_title == "Shortest Side")
+    assert app.shortest_sb.isVisibleTo(app) == (mode_title == "Shortest Side")
+    assert app.longest_l.isVisibleTo(app) == (mode_title == "Longest Side")
+    assert app.longest_sb.isVisibleTo(app) == (mode_title == "Longest Side")
+    assert app.megapixels_sb.isVisibleTo(app) == (mode_title == "Megapixels")
+    assert app.megapixels_l.isVisibleTo(app) == (mode_title == "Megapixels")
 
 def test_getResampling_disabled(app):
     app.toggleCustomResampling(False)

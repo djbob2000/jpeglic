@@ -10,6 +10,7 @@ from PySide6.QtWidgets import(
     QPushButton,
     QVBoxLayout,
     QCheckBox,
+    QDoubleSpinBox,
     QLabel,
     QGroupBox,
     QSizePolicy,
@@ -23,11 +24,11 @@ from data.constants import ALLOWED_RESAMPLING
 from .widget_manager import WidgetManager
 from core.utils import dictToList
 from ui.combobox import ComboBox
-from ui.spinbox import SpinBox
+from ui.spinbox import SpinBox, DoubleSpinBox
 from ui.utils import setToolTip
 from data.tooltips import TOOLTIPS
 
-MAX_RES_PX = 999999999
+MAX_RES_PX = 999_999_999
 MAX_FILE_SIZE = 1024**2   # KiB
 
 class ModifyTab(QWidget):
@@ -60,8 +61,9 @@ class ModifyTab(QWidget):
             "Percent",
             "Shortest Side",
             "Longest Side",
+            "Megapixels",
             "File Size",
-            ))
+        ))
         self.mode_cmb.currentIndexChanged.connect(self.onModeChanged)
 
         self.mode_l = self.wm.addWidget("mode_l", QLabel("Scale to"))
@@ -141,6 +143,19 @@ class ModifyTab(QWidget):
         shortest_hb.addWidget(self.shortest_sb)
         self.downscaling_lt.addLayout(shortest_hb)
 
+        # Megapixels
+        megapixels_hb = QHBoxLayout()
+        self.megapixels_l = self.wm.addWidget("megapixels_l", QLabel("Megapixels"))
+        self.megapixels_sb = self.wm.addWidget("megapixels_sb", DoubleSpinBox())
+
+        self.megapixels_sb.setRange(0.01, 9_999_999)
+        self.megapixels_sb.setDecimals(2)
+        self.megapixels_sb.setSuffix(" MP")
+        
+        megapixels_hb.addWidget(self.megapixels_l)
+        megapixels_hb.addWidget(self.megapixels_sb)
+        self.downscaling_lt.addLayout(megapixels_hb)
+
         # Resample
         resample_hb = QHBoxLayout()
 
@@ -218,6 +233,9 @@ class ModifyTab(QWidget):
         self.wm.addTags("longest_l", "downscale_ui", "longest")
         self.wm.addTags("longest_sb", "downscale_ui", "longest")
 
+        self.wm.addTags("megapixels_l", "downscale_ui", "megapixels")
+        self.wm.addTags("megapixels_sb", "downscale_ui", "megapixels")
+
         self.wm.addTags("resample_l", "downscale_ui", "resample")
         self.wm.addTags("resample_cmb", "downscale_ui", "resample")
 
@@ -255,6 +273,7 @@ class ModifyTab(QWidget):
         setToolTip(TOOLTIPS["downscaling"], self.downscale_cb)
         setToolTip(TOOLTIPS["downscaling_file_size"], self.file_size_sb)
         setToolTip(TOOLTIPS["downscaling_percent"], self.percent_sb)
+        setToolTip(TOOLTIPS["downscaling_megapixels"], self.megapixels_sb)
 
     def resetToDefault(self):
         self.disableDownscaling()
@@ -268,6 +287,7 @@ class ModifyTab(QWidget):
         self.pixel_h_sb.setValue(2000)
         self.shortest_sb.setValue(1080)
         self.longest_sb.setValue(1920)
+        self.megapixels_sb.setValue(2.1)
     
     def onModeChanged(self):
         index = self.mode_cmb.currentText()
@@ -276,6 +296,7 @@ class ModifyTab(QWidget):
         self.wm.setVisibleByTag("file_size", index == "File Size")
         self.wm.setVisibleByTag("shortest", index == "Shortest Side")
         self.wm.setVisibleByTag("longest", index == "Longest Side")
+        self.wm.setVisibleByTag("megapixels", index == "Megapixels")
     
     def getSettings(self):
         return {
@@ -288,6 +309,7 @@ class ModifyTab(QWidget):
                 "file_size": self.file_size_sb.value(),
                 "shortest_side": self.shortest_sb.value(),
                 "longest_side": self.longest_sb.value(),
+                "megapixels": self.megapixels_sb.value(),
                 "resample": self.getResampling(),
             },
             "misc": {

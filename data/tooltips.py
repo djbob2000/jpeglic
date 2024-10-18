@@ -35,6 +35,7 @@ TOOLTIPS = {
     "downscaling": "Scales down the resolution of your image.",
     "downscaling_file_size": "Scales image to approximated file size in kibibytes.\n\nIt is about 4 times slower than regular conversion. Its accuracy varies.\n\nYou can preserve higher resolution by decreasing the quality (output tab). Use other modes whenever possible\n\nThe algorithm uses linear regression to predict image scale.",
     "downscaling_percent": "Scales to that percentage.\n\nExample: 80% will result in both width and height being 80% of the original resolution.",
+    "downscaling_megapixels": "Scales down to megapixel count.\n\nA megapixel is the total pixel count of an image divided by a million.\n\nFormula: (width * height) / 1 000 000\n\Reference (rounded):\n\n- 0.9 MP - 1280 x 720 (HD)\n\n- 2.1 MP - 1920 x 1080 (Full HD)\n\n- 8.3 MP - 3840 x 2160 (4K)\n\n- 33.2 MP - 7680 x 4320 (8K)",
 
     # Settings tab
     "disable_delete_startup": "Disables \"delete original\" (output tab) when you launch the application.",

@@ -208,6 +208,9 @@ def _downscaleManualModes(params):
             args.append(f"-resize {params['shortest_side']}x{params['shortest_side']}^>")
         case "Longest Side":
             args.append(f"-resize {params['longest_side']}x{params['longest_side']}>")
+        case "Megapixels":
+            megapixels = int(params['megapixels'] * 1_000_000)
+            args.append(f"-resize {megapixels}@>")
         case _:
             raise GenericException("D2", f"Downscaling mode not recognized ({params['mode']})")
     
@@ -313,7 +316,5 @@ def downscale(params):
     
     if params["mode"] == "File Size":
         _downscaleToFileSizeStepAuto(params)
-    elif params["mode"] in ("Percent", "Resolution", "Shortest Side", "Longest Side"):
-        _downscaleManualModes(params)
     else:
-        raise GenericException("D0", f"Downscaling mode not recognized ({params['mode']})")
+        _downscaleManualModes(params)
