@@ -2,8 +2,9 @@ import os
 import platform
 import logging
 from contextlib import contextmanager
+import traceback
 
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QHBoxLayout
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
 
@@ -65,3 +66,22 @@ def isPathValidStr(path: str) -> bool:
     ):
         return True
     return False
+
+def createQHBoxLayout(*widgets: QWidget) -> QHBoxLayout:
+    """Returns a QHBoxLayout containing the specified widgets.
+    
+    Skips invalid types. Returns an empty QHboxLayout if no argument is valid."""
+    layout = QHBoxLayout()
+    for widget in widgets:
+        if not isinstance(widget, QWidget):
+            caller_frame = traceback.extract_stack()[-2]
+            logging.error(f"[ui.utils.createQHBoxLayout] Type mismatch. Expected QWidget, got {type(widget)}.\n\tCaller: {caller_frame.filename}:{caller_frame.lineno}")
+            continue
+
+        try:
+            layout.addWidget(widget)
+        except Exception as e:
+            caller_frame = traceback.extract_stack()[-2]
+            logging.error(f"[ui.utils.createQHBoxLayout] Failed to add a widget.\n\t{e}\n\tCaller: {caller_frame.filename}:{caller_frame.lineno}")
+    
+    return layout

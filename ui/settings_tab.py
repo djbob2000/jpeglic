@@ -31,7 +31,7 @@ from ui.spinbox import SpinBox
 from ui.combobox import ComboBox
 from data.logging_manager import LoggingManager
 from ui.notifications import Notifications
-from ui.utils import setToolTip, openLocalUrl
+from ui.utils import setToolTip, openLocalUrl, createQHBoxLayout
 from data.tooltips import TOOLTIPS
 
 class Signals(QObject):
@@ -170,18 +170,18 @@ class SettingsTab(QWidget):
         self.categories_lt.addWidget(self.restore_defaults_btn)
 
         ## General
-        self.settings_lt.addLayout(self.createQHboxLayout(self.disable_on_startup_l, self.disable_delete_startup_cb, self.disable_downscaling_startup_cb))
+        self.settings_lt.addLayout(createQHBoxLayout(self.disable_on_startup_l, self.disable_delete_startup_cb, self.disable_downscaling_startup_cb))
         self.settings_lt.addWidget(self.dark_theme_cb)
         self.settings_lt.addWidget(self.quality_prec_snap_cb)
         self.settings_lt.addWidget(self.no_sorting_cb)
         self.settings_lt.addWidget(self.play_sound_on_finish_cb)
-        self.play_sound_on_finish_vol_hb = self.createQHboxLayout(self.play_sound_on_finish_vol_l, self.play_sound_on_finish_vol_sb)
+        self.play_sound_on_finish_vol_hb = createQHBoxLayout(self.play_sound_on_finish_vol_l, self.play_sound_on_finish_vol_sb)
         self.settings_lt.addLayout(self.play_sound_on_finish_vol_hb)
 
         ## Conversion
         self.settings_lt.addWidget(self.jxl_lossless_jpeg_cb)
         self.settings_lt.addWidget(self.jxl_disable_parallel_cb)
-        self.jpg_encoder_hb = self.createQHboxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
+        self.jpg_encoder_hb = createQHBoxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
         self.settings_lt.addLayout(self.jpg_encoder_hb)
         self.jpg_encoder_hb.addStretch()
         self.settings_lt.addWidget(self.disable_progressive_jpegli_cb)
@@ -193,17 +193,17 @@ class SettingsTab(QWidget):
         self.settings_lt.addWidget(self.custom_resampling_cb)
         self.settings_lt.addWidget(self.no_exceptions_cb)
         self.settings_lt.addWidget(self.exiftool_l)
-        self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_wipe_l, self.exiftool_wipe_te))
-        self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_preserve_l, self.exiftool_preserve_te))
-        self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_unsafe_wipe_l, self.exiftool_unsafe_wipe_te))
-        self.settings_lt.addLayout(self.createQHboxLayout(self.exiftool_custom_l, self.exiftool_custom_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_wipe_l, self.exiftool_wipe_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_preserve_l, self.exiftool_preserve_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_unsafe_wipe_l, self.exiftool_unsafe_wipe_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_custom_l, self.exiftool_custom_te))
         self.settings_lt.addWidget(self.exiftool_reset_btn)
         self.settings_lt.addWidget(self.custom_args_cb)
-        self.settings_lt.addLayout(self.createQHboxLayout(self.cjxl_args_l, self.cjxl_args_te))
-        self.settings_lt.addLayout(self.createQHboxLayout(self.avifenc_args_l, self.avifenc_args_te))
-        self.settings_lt.addLayout(self.createQHboxLayout(self.cjpegli_args_l, self.cjpegli_args_te))
-        self.settings_lt.addLayout(self.createQHboxLayout(self.im_args_l, self.im_args_te))
-        self.settings_lt.addLayout(self.createQHboxLayout(self.start_logging_btn, self.open_log_dir_btn, self.wipe_log_dir_btn))
+        self.settings_lt.addLayout(createQHBoxLayout(self.cjxl_args_l, self.cjxl_args_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.avifenc_args_l, self.avifenc_args_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.cjpegli_args_l, self.cjpegli_args_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.im_args_l, self.im_args_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.start_logging_btn, self.open_log_dir_btn, self.wipe_log_dir_btn))
 
         ## All
         self.settings_lt.addStretch()
@@ -370,7 +370,7 @@ class SettingsTab(QWidget):
 
         self.notifications.notify("File Message", self.logging_manager.wipeLogsDir())
 
-    def createQHboxLayout(self, *widgets) -> QHBoxLayout:
+    def createQHBoxLayout(self, *widgets) -> QHBoxLayout:
         """Creates and returns a QHBoxLayout containing the specified widgets."""
         layout = QHBoxLayout()
         for w in widgets:

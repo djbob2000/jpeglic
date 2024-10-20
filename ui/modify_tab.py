@@ -25,7 +25,7 @@ from .widget_manager import WidgetManager
 from core.utils import dictToList
 from ui.combobox import ComboBox
 from ui.spinbox import SpinBox, DoubleSpinBox
-from ui.utils import setToolTip
+from ui.utils import setToolTip, createQHBoxLayout
 from data.tooltips import TOOLTIPS
 
 MAX_RES_PX = 999_999_999
@@ -38,23 +38,30 @@ class ModifyTab(QWidget):
         super(ModifyTab, self).__init__()
         self.wm = WidgetManager("ModifyTab")
 
-        # Set Main Layout
-        tab_lt = QGridLayout()
-        self.setLayout(tab_lt)
-        
-        self.downscaling_lt = QVBoxLayout()
-        downscale_grp = QGroupBox("Downscaling")
-        downscale_grp.setLayout(self.downscaling_lt)
+        # General setup
+        self._setupWidgets()
+        self._setupLayouts()
+        self._setupTags()
+        self._setupSignals()
 
-        # Enable Downscaling
+        # Set Default
+        self.resetToDefault()
+        self.toggleDownscaleUI(False)
+        self.wm.loadState()
+        self.onModeChanged()
+        self._setToolTips()
+
+        # Apply Settings
+        if settings["disable_downscaling_startup"]:
+            self.disableDownscaling()
+        self.toggleCustomResampling(settings["custom_resampling"])
+
+        # Vars
+        self.resample_visible = False
+        self.cached_states = self.getSettings()
+    
+    def _setupWidgets(self):
         self.downscale_cb = self.wm.addWidget("downscale_cb", QCheckBox("Downscale"))
-        self.downscale_cb.stateChanged.connect(self.toggleDownscaleUI)
-
-        self.downscaling_lt.addWidget(self.downscale_cb)
-
-        # Scale by
-        self.mode_hb = QHBoxLayout()
-
         self.mode_cmb = self.wm.addWidget("mode_cmb", ComboBox())
         self.mode_cmb.addItems((
             "Resolution",
@@ -64,122 +71,41 @@ class ModifyTab(QWidget):
             "Megapixels",
             "File Size",
         ))
-        self.mode_cmb.currentIndexChanged.connect(self.onModeChanged)
-
         self.mode_l = self.wm.addWidget("mode_l", QLabel("Scale to"))
-        self.mode_hb.addWidget(self.mode_l)
-        self.mode_hb.addWidget(self.mode_cmb)
-        self.downscaling_lt.addLayout(self.mode_hb)
-
-        # Percent
-        percent_hb = QHBoxLayout()
         self.percent_l = self.wm.addWidget("percent_l", QLabel("Percent"))
         self.percent_sb = self.wm.addWidget("percent_sb", SpinBox())
-        
         self.percent_sb.setRange(1, 99)
         self.percent_sb.setSuffix(" %")
-        
-        percent_hb.addWidget(self.percent_l)
-        percent_hb.addWidget(self.percent_sb)
-        self.downscaling_lt.addLayout(percent_hb)
-
-        # Resolution - Width
-        pixel_w_hb = QHBoxLayout()
         self.pixel_w_l = self.wm.addWidget("pixel_w_l", QLabel("Max Width"))
         self.pixel_w_sb = self.wm.addWidget("pixel_w_sb", SpinBox())
-
         self.pixel_w_sb.setRange(1, MAX_RES_PX)
         self.pixel_w_sb.setSuffix(" px")
-        
-        pixel_w_hb.addWidget(self.pixel_w_l)
-        pixel_w_hb.addWidget(self.pixel_w_sb)
-        self.downscaling_lt.addLayout(pixel_w_hb)
-        
-        # Resolution - Height
-        pixel_h_hb = QHBoxLayout()
         self.pixel_h_l = self.wm.addWidget("pixel_h_l", QLabel("Max Height"))
         self.pixel_h_sb = self.wm.addWidget("pixel_h_sb", SpinBox())
-
         self.pixel_h_sb.setRange(1, MAX_RES_PX)
         self.pixel_h_sb.setSuffix(" px")
-        
-        pixel_h_hb.addWidget(self.pixel_h_l)
-        pixel_h_hb.addWidget(self.pixel_h_sb)
-        self.downscaling_lt.addLayout(pixel_h_hb)
-
-        # File Size
-        file_size_hb = QHBoxLayout()
         self.file_size_l = self.wm.addWidget("file_size_l", QLabel("File Size"))
         self.file_size_sb = self.wm.addWidget("file_size_sb", SpinBox())
-
         self.file_size_sb.setRange(1, MAX_FILE_SIZE)
         self.file_size_sb.setSuffix(" KiB")
-        
-        file_size_hb.addWidget(self.file_size_l)
-        file_size_hb.addWidget(self.file_size_sb)
-        self.downscaling_lt.addLayout(file_size_hb)
-
-        # Longest Side
-        longest_hb = QHBoxLayout()
         self.longest_l = self.wm.addWidget("longest_l", QLabel("Max Size"))
         self.longest_sb = self.wm.addWidget("longest_sb", SpinBox())
-       
         self.longest_sb.setRange(1, MAX_RES_PX)
         self.longest_sb.setSuffix(" px")
-        
-        longest_hb.addWidget(self.longest_l)
-        longest_hb.addWidget(self.longest_sb)
-        self.downscaling_lt.addLayout(longest_hb)
-
-        # Shortest Side
-        shortest_hb = QHBoxLayout()
         self.shortest_l = self.wm.addWidget("shortest_l", QLabel("Max Size"))
         self.shortest_sb = self.wm.addWidget("shortest_sb", SpinBox())
-
         self.shortest_sb.setRange(1, MAX_RES_PX)
         self.shortest_sb.setSuffix(" px")
-        
-        shortest_hb.addWidget(self.shortest_l)
-        shortest_hb.addWidget(self.shortest_sb)
-        self.downscaling_lt.addLayout(shortest_hb)
-
-        # Megapixels
-        megapixels_hb = QHBoxLayout()
         self.megapixels_l = self.wm.addWidget("megapixels_l", QLabel("Megapixels"))
         self.megapixels_sb = self.wm.addWidget("megapixels_sb", DoubleSpinBox())
-
         self.megapixels_sb.setRange(0.01, 9_999_999)
         self.megapixels_sb.setDecimals(2)
         self.megapixels_sb.setSuffix(" MP")
-        
-        megapixels_hb.addWidget(self.megapixels_l)
-        megapixels_hb.addWidget(self.megapixels_sb)
-        self.downscaling_lt.addLayout(megapixels_hb)
-
-        # Resample
-        resample_hb = QHBoxLayout()
-
         self.resample_l = self.wm.addWidget("resample_l", QLabel("Resample"))
-        resample_hb.addWidget(self.resample_l)
         self.resample_cmb = self.wm.addWidget("resample_cmb", ComboBox())
         self.resample_cmb.addItem(("Default"))
         self.resample_cmb.addItems(ALLOWED_RESAMPLING)
-        self.resample_visible = False
-
-        resample_hb.addWidget(self.resample_cmb)
-        self.downscaling_lt.addLayout(resample_hb)
-
-        # Misc
-        misc_grp = QGroupBox("Misc.")
-        misc_grp_lt = QVBoxLayout()
-        misc_grp.setLayout(misc_grp_lt)
-
-        # Date / Time
         self.date_time_cb = self.wm.addWidget("date_time_cb", QCheckBox("Preserve Date && Time"))
-        misc_grp_lt.addWidget(self.date_time_cb)
-
-        # Metadata
-        metadata_hb = QHBoxLayout()
         self.metadata_l = self.wm.addWidget("metadata_l", QLabel("Metadata"))
         self.metadata_cmb = self.wm.addWidget("metadata_cmb", ComboBox())
         self.metadata_cmb.addItems((
@@ -189,82 +115,77 @@ class ModifyTab(QWidget):
                 "ExifTool - Preserve",
                 "ExifTool - Unsafe Wipe",
                 "ExifTool - Custom"
-            ))
+        ))
+        self.default_btn = QPushButton("Reset to Default")
+        self.convert_btn = QPushButton("Convert")
 
-        metadata_hb.addWidget(self.metadata_l)
-        metadata_hb.addWidget(self.metadata_cmb)
+    def _setupLayouts(self):
+        # Downscaling - general
+        self.downscaling_lt = QVBoxLayout()
+        self.downscaling_lt.addWidget(self.downscale_cb)
+        downscale_grp = QGroupBox("Downscaling")
+        downscale_grp.setLayout(self.downscaling_lt)
+
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.mode_l, self.mode_cmb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.percent_l, self.percent_sb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.pixel_w_l, self.pixel_w_sb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.pixel_h_l, self.pixel_h_sb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.file_size_l, self.file_size_sb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.longest_l, self.longest_sb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.shortest_l, self.shortest_sb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.megapixels_l, self.megapixels_sb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.resample_l, self.resample_cmb))
+
+        # Misc. - general
+        misc_grp = QGroupBox("Misc.")
+        misc_grp_lt = QVBoxLayout()
+        metadata_hb = createQHBoxLayout(self.metadata_l, self.metadata_cmb)
+        misc_grp_lt.addWidget(self.date_time_cb)
         misc_grp_lt.addLayout(metadata_hb)
+        misc_grp.setLayout(misc_grp_lt)
 
-        # Bottom
-        default_btn = QPushButton("Reset to Default")
-        default_btn.clicked.connect(self.resetToDefault)
-        convert_btn = QPushButton("Convert")
-        convert_btn.clicked.connect(self.convert.emit)
+        # Main
+        self.main_lt = QGridLayout()
+        self.setLayout(self.main_lt)
+        self.main_lt.addWidget(downscale_grp,0,0)
+        self.main_lt.addWidget(misc_grp,0,1)
+        self.main_lt.addWidget(self.default_btn,2,0)
+        self.main_lt.addWidget(self.convert_btn,2,1)
 
-        tab_lt.addWidget(default_btn,2,0)
-        tab_lt.addWidget(convert_btn,2,1)
-
-        # Size Policy
-        tab_lt.setAlignment(Qt.AlignTop)
+        # Size policy
+        self.main_lt.setAlignment(Qt.AlignTop)
         metadata_hb.setAlignment(Qt.AlignLeft)
-
         downscale_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         misc_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.metadata_cmb.setMinimumWidth(180)
 
-        # WidgetManager Tags
+    def _setupTags(self):
         self.wm.addTags("mode_cmb", "downscale_ui")
         self.wm.addTags("mode_l", "downscale_ui")
-
         self.wm.addTags("percent_l", "downscale_ui", "percent")
         self.wm.addTags("percent_sb", "downscale_ui", "percent")
-        
         self.wm.addTags("pixel_h_l", "downscale_ui", "pixel")
         self.wm.addTags("pixel_h_sb", "downscale_ui", "pixel")
         self.wm.addTags("pixel_w_l", "downscale_ui", "pixel")
         self.wm.addTags("pixel_w_sb", "downscale_ui", "pixel")
-
         self.wm.addTags("file_size_l", "downscale_ui", "file_size")
         self.wm.addTags("file_size_sb", "downscale_ui", "file_size")
-        
         self.wm.addTags("shortest_l", "downscale_ui", "shortest")
         self.wm.addTags("shortest_sb", "downscale_ui", "shortest")
-
         self.wm.addTags("longest_l", "downscale_ui", "longest")
         self.wm.addTags("longest_sb", "downscale_ui", "longest")
-
         self.wm.addTags("megapixels_l", "downscale_ui", "megapixels")
         self.wm.addTags("megapixels_sb", "downscale_ui", "megapixels")
-
         self.wm.addTags("resample_l", "downscale_ui", "resample")
         self.wm.addTags("resample_cmb", "downscale_ui", "resample")
 
-        # Set Default
-        self.resetToDefault()
-        self.toggleDownscaleUI(False)
-        self.wm.loadState()
-        self.onModeChanged()
-        self.setToolTips()
+    def _setupSignals(self):
+        self.downscale_cb.stateChanged.connect(self.toggleDownscaleUI)
+        self.mode_cmb.currentIndexChanged.connect(self.onModeChanged)
+        self.default_btn.clicked.connect(self.resetToDefault)
+        self.convert_btn.clicked.connect(self.convert.emit)
 
-        # Apply Settings
-        if settings["disable_downscaling_startup"]:
-            self.disableDownscaling()
-        self.toggleCustomResampling(settings["custom_resampling"])
-
-        # Add to main layout
-        tab_lt.addWidget(downscale_grp,0,0)
-        tab_lt.addWidget(misc_grp,0,1)
-
-        # Vars
-        self.cached_states = self.getSettings()
-    
-    def toggleDownscaleUI(self, n):
-        self.wm.setEnabledByTag("downscale_ui", n)
-    
-    def disableDownscaling(self):
-        self.downscale_cb.setChecked(False)
-    
-    def setToolTips(self):
+    def _setToolTips(self):
         setToolTip(TOOLTIPS["metadata"], self.metadata_cmb)
         if platform.system() == "Linux":
             setToolTip(TOOLTIPS["date_time_linux"], self.date_time_cb)
@@ -274,6 +195,12 @@ class ModifyTab(QWidget):
         setToolTip(TOOLTIPS["downscaling_file_size"], self.file_size_sb)
         setToolTip(TOOLTIPS["downscaling_percent"], self.percent_sb)
         setToolTip(TOOLTIPS["downscaling_megapixels"], self.megapixels_sb)
+    
+    def toggleDownscaleUI(self, n):
+        self.wm.setEnabledByTag("downscale_ui", n)
+    
+    def disableDownscaling(self):
+        self.downscale_cb.setChecked(False)
 
     def resetToDefault(self):
         self.disableDownscaling()
@@ -290,6 +217,7 @@ class ModifyTab(QWidget):
         self.megapixels_sb.setValue(2.1)
     
     def onModeChanged(self):
+        """Enables or disables widgets based on the currently selected mode."""
         index = self.mode_cmb.currentText()
         self.wm.setVisibleByTag("percent", index == "Percent")
         self.wm.setVisibleByTag("pixel", index == "Resolution")

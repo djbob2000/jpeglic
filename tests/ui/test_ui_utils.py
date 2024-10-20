@@ -2,7 +2,7 @@ import logging
 from unittest.mock import patch
 from contextlib import ExitStack
 
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QLabel, QComboBox
 from PySide6.QtCore import QUrl
 import pytest
 
@@ -121,3 +121,39 @@ def test_isPathValidStr_invalid_type():
 def test_isPathValidStr_invalid_no_access():
     with patch("ui.utils.os.access", return_value=False):
         assert utils.isPathValidStr("/home/Pictures") == False
+    
+def test_createQHBoxLayout_all_valid():
+    widgets = [QLabel("test"), QComboBox(), QWidget()]
+
+    widgets_hb = utils.createQHBoxLayout(*widgets)
+    for widget in widgets:
+        assert widgets_hb.indexOf(widget) != -1
+    assert widgets_hb.count() == 3
+
+def test_createQHBoxLayout_no_valid_args(caplog):
+    caplog.set_level(logging.ERROR)
+    widgets_hb = utils.createQHBoxLayout(None, "test", 0)
+    assert widgets_hb.count() == 0
+    assert sum(1 for record in caplog.records if record.levelname == "ERROR") == 3
+    assert "Type mismatch" in caplog.text
+
+def test_createQHBoxLayout_mixed(caplog):
+    widgets = [QLabel("test"), None, QComboBox()]
+
+    widgets_hb = utils.createQHBoxLayout(*widgets)
+
+    for widget in widgets:
+        if not isinstance(widget, QWidget):
+            continue
+        assert widgets_hb.indexOf(widget) != -1
+    assert widgets_hb.count() == 2
+    assert sum(1 for record in caplog.records if record.levelname == "ERROR") == 1
+    assert "Type mismatch" in caplog.text
+
+def test_createQHBoxLayout_addWidget_failed(caplog):
+    with patch("ui.utils.QHBoxLayout.addWidget", side_effect=Exception):
+        widgets_hb = utils.createQHBoxLayout(QLabel("test"))
+
+    assert widgets_hb.count() == 0
+    assert sum(1 for record in caplog.records if record.levelname == "ERROR") == 1
+    assert "Failed to add a widget" in caplog.text
