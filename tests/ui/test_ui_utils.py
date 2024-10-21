@@ -1,9 +1,9 @@
 import logging
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from contextlib import ExitStack
 
 from PySide6.QtWidgets import QWidget, QLabel, QComboBox
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QUrl, QObject
 import pytest
 
 import ui.utils as utils
@@ -157,3 +157,24 @@ def test_createQHBoxLayout_addWidget_failed(caplog):
     assert widgets_hb.count() == 0
     assert sum(1 for record in caplog.records if record.levelname == "ERROR") == 1
     assert "Failed to add a widget" in caplog.text
+
+def test_blockSignals_all_valid():
+    objects = [
+        MagicMock(spec=QObject),
+        MagicMock(spec=QObject),
+    ]
+
+    with utils.blockSignals(*objects):
+        for obj in objects:
+            obj.blockSignals.assert_called_once_with(True)
+
+    for obj in objects:
+        obj.blockSignals.assert_called_with(False)
+
+def test_blockSignals_mixed():
+    _object = MagicMock(spec=QObject)
+
+    with utils.blockSignals(_object, None, "test"):
+        _object.blockSignals.assert_called_once_with(True)
+
+    _object.blockSignals.assert_called_with(False)

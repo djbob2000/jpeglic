@@ -5,7 +5,7 @@ from contextlib import contextmanager
 import traceback
 
 from PySide6.QtWidgets import QWidget, QHBoxLayout
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QUrl, QObject
 from PySide6.QtGui import QDesktopServices
 
 from core.process import runProcess
@@ -85,3 +85,15 @@ def createQHBoxLayout(*widgets: QWidget) -> QHBoxLayout:
             logging.error(f"[ui.utils.createQHBoxLayout] Failed to add a widget.\n\t{e}\n\tCaller: {caller_frame.filename}:{caller_frame.lineno}")
     
     return layout
+
+@contextmanager
+def blockSignals(*objects: QObject) -> None:
+    """A contextmanager blocking signals of QObjects."""
+    blocked = []
+    for obj in objects:
+        if isinstance(obj, QObject):
+            obj.blockSignals(True)
+            blocked.append(obj)
+    yield
+    for obj in blocked:
+        obj.blockSignals(False)
