@@ -202,15 +202,27 @@ def _downscaleManualModes(params):
     match params["mode"]:
         case "Percent":
             args.append(f"-resize {params['percent']}%")
+
         case "Resolution":
-            args.append(f"-resize {params['width']}x{params['height']}>")
+            if params['width'] != float("inf") and params['height'] != float("inf"):
+                args.append(f"-resize {params['width']}x{params['height']}>")
+            elif params['width'] != float("inf"):
+                args.append(f"-resize {params['width']}x>")
+            elif params['height'] != float("inf"):
+                args.append(f"-resize x{params['height']}>")
+            else:
+                raise GenericException("D20", "Expected downscaling disabled.")
+
         case "Shortest Side":
             args.append(f"-resize {params['shortest_side']}x{params['shortest_side']}^>")
+
         case "Longest Side":
             args.append(f"-resize {params['longest_side']}x{params['longest_side']}>")
+
         case "Megapixels":
             megapixels = int(params['megapixels'] * 1_000_000)
             args.append(f"-resize {megapixels}@>")
+            
         case _:
             raise GenericException("D2", f"Downscaling mode not recognized ({params['mode']})")
     

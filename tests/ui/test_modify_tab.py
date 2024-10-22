@@ -8,11 +8,10 @@ from ui.modify_tab import ModifyTab
 
 @pytest.fixture
 def app(qtbot):
-    with patch("ui.modify_tab.WidgetManager.loadState"), \
-        patch("ui.modify_tab.WidgetManager.saveState"):
-        app = QApplication.instance()
-        if not app:
-            app = QApplication([])
+    with (
+        patch("ui.modify_tab.WidgetManager.loadState"),
+        patch("ui.modify_tab.WidgetManager.saveState"),
+    ):
         tab = ModifyTab({
             "disable_downscaling_startup": False,
             "custom_resampling": False,
@@ -31,10 +30,11 @@ def test_toggleDownscaleUI(enabled, app):
     app.toggleDownscaleUI(enabled)
     assert app.percent_l.isEnabled() == enabled
     assert app.percent_sb.isEnabled() == enabled
-    assert app.pixel_h_l.isEnabled() == enabled
-    assert app.pixel_h_sb.isEnabled() == enabled
-    assert app.pixel_w_l.isEnabled() == enabled
-    assert app.pixel_w_sb.isEnabled() == enabled
+    if not enabled:
+        assert app.pixel_h_cb.isEnabled() == enabled
+        assert app.pixel_w_cb.isEnabled() == enabled
+        assert app.pixel_h_sb.isEnabled() == enabled
+        assert app.pixel_w_sb.isEnabled() == enabled
     assert app.file_size_l.isEnabled() == enabled
     assert app.file_size_sb.isEnabled() == enabled
     assert app.shortest_l.isEnabled() == enabled
@@ -56,6 +56,8 @@ def test_resetToDefault(app):
     app.pixel_h_sb.setValue(1000)
     app.shortest_sb.setValue(5000)
     app.longest_sb.setValue(5000)
+    app.pixel_w_cb.setChecked(False)
+    app.pixel_h_cb.setChecked(False)
 
     app.resetToDefault()
 
@@ -72,8 +74,28 @@ def test_resetToDefault(app):
     assert app.shortest_sb.value() == 1080
     assert app.longest_sb.value() == 1920
     assert app.megapixels_sb.value() == 2.1
+    assert app.pixel_w_cb.isChecked() == True
+    assert app.pixel_h_cb.isChecked() == True
 
-def test_getSettings_key_error(app):
+def test__returnDownscalingEnabled_disabled(app):
+    app.downscale_cb.setChecked(False)
+    assert not app._returnDownscalingEnabled()
+
+def test__returnDownscalingEnabled_resolution_options_disabled(app):
+    app.mode_cmb.setCurrentIndex(app.mode_cmb.findText("Resolution"))
+    app.pixel_w_cb.setChecked(False)
+    app.pixel_h_cb.setChecked(False)
+
+    assert not app._returnDownscalingEnabled()
+
+def test__returnDownscalingEnabled_disabled(app):
+    app.mode_cmb.setCurrentIndex(app.mode_cmb.findText("Resolution"))
+    app.pixel_w_cb.setChecked(True)
+    app.downscale_cb.setChecked(True)
+
+    assert app._returnDownscalingEnabled()
+
+def test_getSettings_no_key_error(app):
     app.getSettings()
 
 @pytest.mark.parametrize("mode_title", [
@@ -86,12 +108,12 @@ def test_getSettings_key_error(app):
 ])
 def test_onModeChanged_visibility(mode_title, app):
     app.mode_cmb.setCurrentIndex(app.mode_cmb.findText(mode_title))
+    assert app.pixel_h_cb.isVisibleTo(app) == (mode_title == "Resolution")
+    assert app.pixel_h_sb.isVisibleTo(app) == (mode_title == "Resolution")
+    assert app.pixel_w_cb.isVisibleTo(app) == (mode_title == "Resolution")
+    assert app.pixel_w_sb.isVisibleTo(app) == (mode_title == "Resolution")
     assert app.percent_l.isVisibleTo(app) == (mode_title == "Percent")
     assert app.percent_sb.isVisibleTo(app) == (mode_title == "Percent")
-    assert app.pixel_h_l.isVisibleTo(app) == (mode_title == "Resolution")
-    assert app.pixel_h_sb.isVisibleTo(app) == (mode_title == "Resolution")
-    assert app.pixel_w_l.isVisibleTo(app) == (mode_title == "Resolution")
-    assert app.pixel_w_sb.isVisibleTo(app) == (mode_title == "Resolution")
     assert app.file_size_l.isVisibleTo(app) == (mode_title == "File Size")
     assert app.file_size_sb.isVisibleTo(app) == (mode_title == "File Size")
     assert app.shortest_l.isVisibleTo(app) == (mode_title == "Shortest Side")
@@ -100,6 +122,34 @@ def test_onModeChanged_visibility(mode_title, app):
     assert app.longest_sb.isVisibleTo(app) == (mode_title == "Longest Side")
     assert app.megapixels_sb.isVisibleTo(app) == (mode_title == "Megapixels")
     assert app.megapixels_l.isVisibleTo(app) == (mode_title == "Megapixels")
+
+@pytest.mark.parametrize("downscaling_cb, width_cb, height_cb, expected_width_sb_enabled, expected_height_sb_enabled", [
+    (True, True, True, True, True),
+    (False, False, False, False, False),
+    (False, True, True, False, False),
+    (True, True, False, True, False),
+    (True, False, True, False, True),
+    (True, False, False, False, False),
+])
+def test_resolution_checkboxes_interactions(downscaling_cb, width_cb, height_cb, expected_width_sb_enabled, expected_height_sb_enabled, app):
+    app.downscale_cb.setChecked(downscaling_cb)
+    app.pixel_w_cb.setChecked(width_cb)
+    app.pixel_h_cb.setChecked(height_cb)
+    assert app.pixel_w_sb.isEnabled() == expected_width_sb_enabled
+    assert app.pixel_h_sb.isEnabled() == expected_height_sb_enabled
+    
+def test_resolution_checkboxes_resetToDefault(app):
+    app.downscale_cb.setChecked(True)
+    app.resetToDefault()
+    assert not app.pixel_w_sb.isEnabled()
+    assert not app.pixel_h_sb.isEnabled()
+    
+    app.pixel_w_cb.setChecked(False)
+    app.pixel_h_cb.setChecked(False)
+    app.downscale_cb.setChecked(False)
+    app.resetToDefault()
+    assert not app.pixel_w_sb.isEnabled()
+    assert not app.pixel_h_sb.isEnabled()
 
 def test_getResampling_disabled(app):
     app.toggleCustomResampling(False)

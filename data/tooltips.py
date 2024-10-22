@@ -33,9 +33,13 @@ TOOLTIPS = {
     "date_time_linux": "Preserves date and time.\n\nOn Linux, it also preserves permission bits and extended attributes.",
     "metadata": "Controls how metadata is handled.\n\nEncoder modes are faster and recommended. ExifTool is more thorough but more error-prone.\n\nEncoder - Wipe - wipes metadata. Works well for encoding everything except PNG, where it depends on the input format.\n\nEncoder - Preserve - preserves metadata. Works on common input formats, may not work for less popular ones.\n\nExifTool - Wipe - deletes all metadata except that which affects the final image.\n\nExifTool - Preserve - preserves all metadata.\n\nExifTool - Unsafe Wipe - deletes every last bit of metadata, including color profile. It can potentially alter the final image, but is the most effective.\n\nExifTool - Custom - empty. It allows you to specify custom behavior (in the settings).\n\nView and edit ExifTool commands in the settings (Settings -> Advanced -> ExifTool Arguments).",
     "downscaling": "Scales down the resolution of your image.",
+    "downscaling_resolution_width_enabled": "Checked - restricts width to a given amount of pixels.\n\nUnchecked - imposes no restrictions on width. Disables downscaling for this dimension.",
+    "downscaling_resolution_height_enabled": "Checked - restricts height to a given amount of pixels.\n\nUnchecked - imposes no restrictions on height. Disables downscaling for this dimension.",
+    "downscaling_resolution_width": "Scales down to fit to a given width in pixels.",
+    "downscaling_resolution_height": "Scales down to fit to a given height in pixels.",
     "downscaling_file_size": "Scales image to approximated file size in kibibytes.\n\nIt is about 4 times slower than regular conversion. Its accuracy varies.\n\nYou can preserve higher resolution by decreasing the quality (output tab). Use other modes whenever possible\n\nThe algorithm uses linear regression to predict image scale.",
     "downscaling_percent": "Scales to that percentage.\n\nExample: 80% will result in both width and height being 80% of the original resolution.",
-    "downscaling_megapixels": "Scales down to megapixel count.\n\nA megapixel is the total pixel count of an image divided by a million.\n\nFormula: (width * height) / 1 000 000\n\Reference (rounded):\n\n- 0.9 MP - 1280 x 720 (HD)\n\n- 2.1 MP - 1920 x 1080 (Full HD)\n\n- 8.3 MP - 3840 x 2160 (4K)\n\n- 33.2 MP - 7680 x 4320 (8K)",
+    "downscaling_megapixels": "Scales down to megapixel count.\n\nA megapixel is the total pixel count of an image divided by a million.\n\nFormula: (width * height) / 1 000 000\n\nReference (rounded):\n\n- 0.9 MP - 1280 x 720 (HD)\n\n- 2.1 MP - 1920 x 1080 (Full HD)\n\n- 8.3 MP - 3840 x 2160 (4K)\n\n- 33.2 MP - 7680 x 4320 (8K)",
 
     # Settings tab
     "disable_delete_startup": "Disables \"delete original\" (output tab) when you launch the application.",

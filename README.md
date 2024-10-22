@@ -34,7 +34,7 @@ Losslessly transcode JPEG to JPEG XL, and reverse the process when needed.
 
 #### Downscaling
 
-Scale down images to resolution, percent, shortest (and longest) side, or even file size.
+Scale down images to resolution, percent, shortest (and longest) side, megapixels, or even file size.
 
 ## Building from Source
 

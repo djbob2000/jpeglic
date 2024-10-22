@@ -25,7 +25,7 @@ from .widget_manager import WidgetManager
 from core.utils import dictToList
 from ui.combobox import ComboBox
 from ui.spinbox import SpinBox, DoubleSpinBox
-from ui.utils import setToolTip, createQHBoxLayout
+from ui.utils import setToolTip, createQHBoxLayout, blockSignals
 from data.tooltips import TOOLTIPS
 
 MAX_RES_PX = 999_999_999
@@ -43,13 +43,13 @@ class ModifyTab(QWidget):
         self._setupLayouts()
         self._setupTags()
         self._setupSignals()
+        self._setToolTips()
 
         # Set Default
         self.resetToDefault()
         self.toggleDownscaleUI(False)
         self.wm.loadState()
         self.onModeChanged()
-        self._setToolTips()
 
         # Apply Settings
         if settings["disable_downscaling_startup"]:
@@ -76,11 +76,11 @@ class ModifyTab(QWidget):
         self.percent_sb = self.wm.addWidget("percent_sb", SpinBox())
         self.percent_sb.setRange(1, 99)
         self.percent_sb.setSuffix(" %")
-        self.pixel_w_l = self.wm.addWidget("pixel_w_l", QLabel("Max Width"))
+        self.pixel_w_cb = self.wm.addWidget("pixel_w_cb", QCheckBox("Max Width"))
         self.pixel_w_sb = self.wm.addWidget("pixel_w_sb", SpinBox())
         self.pixel_w_sb.setRange(1, MAX_RES_PX)
         self.pixel_w_sb.setSuffix(" px")
-        self.pixel_h_l = self.wm.addWidget("pixel_h_l", QLabel("Max Height"))
+        self.pixel_h_cb = self.wm.addWidget("pixel_h_cb", QCheckBox("Max Height"))
         self.pixel_h_sb = self.wm.addWidget("pixel_h_sb", SpinBox())
         self.pixel_h_sb.setRange(1, MAX_RES_PX)
         self.pixel_h_sb.setSuffix(" px")
@@ -128,8 +128,8 @@ class ModifyTab(QWidget):
 
         self.downscaling_lt.addLayout(createQHBoxLayout(self.mode_l, self.mode_cmb))
         self.downscaling_lt.addLayout(createQHBoxLayout(self.percent_l, self.percent_sb))
-        self.downscaling_lt.addLayout(createQHBoxLayout(self.pixel_w_l, self.pixel_w_sb))
-        self.downscaling_lt.addLayout(createQHBoxLayout(self.pixel_h_l, self.pixel_h_sb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.pixel_w_cb, self.pixel_w_sb))
+        self.downscaling_lt.addLayout(createQHBoxLayout(self.pixel_h_cb, self.pixel_h_sb))
         self.downscaling_lt.addLayout(createQHBoxLayout(self.file_size_l, self.file_size_sb))
         self.downscaling_lt.addLayout(createQHBoxLayout(self.longest_l, self.longest_sb))
         self.downscaling_lt.addLayout(createQHBoxLayout(self.shortest_l, self.shortest_sb))
@@ -164,10 +164,10 @@ class ModifyTab(QWidget):
         self.wm.addTags("mode_l", "downscale_ui")
         self.wm.addTags("percent_l", "downscale_ui", "percent")
         self.wm.addTags("percent_sb", "downscale_ui", "percent")
-        self.wm.addTags("pixel_h_l", "downscale_ui", "pixel")
-        self.wm.addTags("pixel_h_sb", "downscale_ui", "pixel")
-        self.wm.addTags("pixel_w_l", "downscale_ui", "pixel")
-        self.wm.addTags("pixel_w_sb", "downscale_ui", "pixel")
+        self.wm.addTags("pixel_h_cb", "downscale_ui", "pixel")
+        self.wm.addTags("pixel_h_sb", "pixel")
+        self.wm.addTags("pixel_w_cb", "downscale_ui", "pixel")
+        self.wm.addTags("pixel_w_sb", "pixel")
         self.wm.addTags("file_size_l", "downscale_ui", "file_size")
         self.wm.addTags("file_size_sb", "downscale_ui", "file_size")
         self.wm.addTags("shortest_l", "downscale_ui", "shortest")
@@ -184,6 +184,8 @@ class ModifyTab(QWidget):
         self.mode_cmb.currentIndexChanged.connect(self.onModeChanged)
         self.default_btn.clicked.connect(self.resetToDefault)
         self.convert_btn.clicked.connect(self.convert.emit)
+        self.pixel_w_cb.toggled.connect(self._onResWidthToggled)
+        self.pixel_h_cb.toggled.connect(self._onResHeightToggled)
 
     def _setToolTips(self):
         setToolTip(TOOLTIPS["metadata"], self.metadata_cmb)
@@ -195,15 +197,28 @@ class ModifyTab(QWidget):
         setToolTip(TOOLTIPS["downscaling_file_size"], self.file_size_sb)
         setToolTip(TOOLTIPS["downscaling_percent"], self.percent_sb)
         setToolTip(TOOLTIPS["downscaling_megapixels"], self.megapixels_sb)
+        setToolTip(TOOLTIPS["downscaling_resolution_width_enabled"], self.pixel_w_cb)
+        setToolTip(TOOLTIPS["downscaling_resolution_width"], self.pixel_w_sb)
+        setToolTip(TOOLTIPS["downscaling_resolution_height_enabled"], self.pixel_h_cb)
+        setToolTip(TOOLTIPS["downscaling_resolution_height"], self.pixel_h_sb)
+
+    def _onResWidthToggled(self, enabled: bool) -> None:
+        if self.downscale_cb.isEnabled():
+            self.pixel_w_sb.setEnabled(enabled)
     
-    def toggleDownscaleUI(self, n):
-        self.wm.setEnabledByTag("downscale_ui", n)
+    def _onResHeightToggled(self, enabled: bool) -> None:
+        if self.downscale_cb.isEnabled():
+            self.pixel_h_sb.setEnabled(enabled)
+
+    def toggleDownscaleUI(self, enabled: bool) -> None:
+        self.wm.setEnabledByTag("downscale_ui", enabled)
+        self._onResWidthToggled(self.pixel_w_cb.isChecked() if enabled else False)
+        self._onResHeightToggled(self.pixel_h_cb.isChecked() if enabled else False)
     
     def disableDownscaling(self):
         self.downscale_cb.setChecked(False)
 
     def resetToDefault(self):
-        self.disableDownscaling()
         self.metadata_cmb.setCurrentIndex(0)
         self.date_time_cb.setChecked(False)
         self.mode_cmb.setCurrentIndex(0)
@@ -215,25 +230,43 @@ class ModifyTab(QWidget):
         self.shortest_sb.setValue(1080)
         self.longest_sb.setValue(1920)
         self.megapixels_sb.setValue(2.1)
+        with blockSignals(self.pixel_w_cb, self.pixel_h_cb):
+            self.pixel_w_cb.setChecked(True)
+            self.pixel_h_cb.setChecked(True)
+        
+        self.disableDownscaling()
     
     def onModeChanged(self):
         """Enables or disables widgets based on the currently selected mode."""
         index = self.mode_cmb.currentText()
-        self.wm.setVisibleByTag("percent", index == "Percent")
         self.wm.setVisibleByTag("pixel", index == "Resolution")
+        self.wm.setVisibleByTag("percent", index == "Percent")
         self.wm.setVisibleByTag("file_size", index == "File Size")
         self.wm.setVisibleByTag("shortest", index == "Shortest Side")
         self.wm.setVisibleByTag("longest", index == "Longest Side")
         self.wm.setVisibleByTag("megapixels", index == "Megapixels")
+
+    def _returnDownscalingEnabled(self) -> bool:
+        if not self.downscale_cb.isChecked():
+            return False
+        
+        if (
+            self.mode_cmb.currentText() == "Resolution" and
+            self.pixel_w_cb.isChecked() == False and 
+            self.pixel_h_cb.isChecked() == False 
+        ):
+            return False
+        
+        return True
     
     def getSettings(self):
         return {
             "downscaling": {
-                "enabled": self.downscale_cb.isChecked(),
+                "enabled": self._returnDownscalingEnabled(),
                 "mode": self.mode_cmb.currentText(),
                 "percent": self.percent_sb.value(),
-                "width": self.pixel_w_sb.value(),
-                "height": self.pixel_h_sb.value(),
+                "width": self.pixel_w_sb.value() if self.pixel_w_cb.isChecked() else float("inf"),
+                "height": self.pixel_h_sb.value() if self.pixel_h_cb.isChecked() else float("inf"),
                 "file_size": self.file_size_sb.value(),
                 "shortest_side": self.shortest_sb.value(),
                 "longest_side": self.longest_sb.value(),

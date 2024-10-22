@@ -1,4 +1,3 @@
-import pdb
 import os
 from unittest.mock import patch
 
@@ -118,6 +117,37 @@ def test__downscaleManualModes_mode(mode, expected_arg, params_fixture):
     with patch("core.downscale.convert") as mock_convert:
         downscale._downscaleManualModes(params_fixture)
         mock_convert.assert_called_once_with(params_fixture["enc"], params_fixture["src"], params_fixture["dst"], [expected_arg], params_fixture["n"])
+
+@pytest.mark.parametrize("width, height, expected_arg", [
+    (float("inf"), 1000, "-resize x1000>"),
+    (1000, float("inf"), "-resize 1000x>"),
+    (1920, 1080, "-resize 1920x1080>"),
+])
+def test___downscaleManualModes_resolution(width, height, expected_arg, params_fixture):
+    params_fixture.update({
+        "enc": IMAGE_MAGICK_PATH,
+        "mode": "Resolution",
+        "width": width,
+        "height": height,
+    })
+    with patch("core.downscale.convert") as mock_convert:
+        downscale._downscaleManualModes(params_fixture)
+        mock_convert.assert_called_once_with(
+            params_fixture["enc"],
+            params_fixture["src"],
+            params_fixture["dst"],
+            [expected_arg],
+            params_fixture["n"]
+        )
+
+def test___downscaleManualModes_resolution_exception(params_fixture):
+    params_fixture.update({
+        "mode": "Resolution",
+        "width": float("inf"),
+        "height": float("inf"),
+    })
+    with pytest.raises(GenericException):
+        downscale._downscaleManualModes(params_fixture)
 
 def test__downscaleManualModes_mode_unknown(params_fixture):
     params_fixture.update({
