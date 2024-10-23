@@ -131,7 +131,7 @@ class Controller(QObject):
         # Setup
         enable_parallel = self.thread_manager.isParallelRecommended(
             output_tab_settings["format"],
-            settings_tab_settings['jxl_disable_parallel'],
+            settings_tab_settings['jxl_optimizer'],
             output_tab_settings['effort'],
             output_tab_settings['jxl_modular'],
             output_tab_settings['lossless'],

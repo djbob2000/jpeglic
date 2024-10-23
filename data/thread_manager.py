@@ -64,7 +64,7 @@ class ThreadManager:
     
     def isParallelRecommended(self,
         mode: str,
-        jxl_disable_parallel: bool,
+        jxl_optimizer: bool,
         effort: int,
         jxl_modular: bool,
         lossless: bool,
@@ -73,7 +73,7 @@ class ThreadManager:
         if mode != "JPEG XL":
             return True
 
-        if not jxl_disable_parallel:
+        if not jxl_optimizer:
             return True
         
         if jxl_modular:

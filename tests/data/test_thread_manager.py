@@ -59,7 +59,7 @@ def test_getAvailableThreads_index_error(thread_manager, caplog):
 def test__getBurstThreadPool(workers, cores, expected, thread_manager):
     assert thread_manager._getBurstThreadPool(workers, cores) == expected
 
-@pytest.mark.parametrize("mode, jxl_disable_parallel, effort, jxl_modular, lossless, intelligent_effort, expected", [
+@pytest.mark.parametrize("mode, jxl_optimizer, effort, jxl_modular, lossless, intelligent_effort, expected", [
     ("JPEG", True, 0, False, False, False, True),
     ("JPEG XL", True, 7, False, False, False, True),
     ("JPEG XL", True, 8, False, False, False, False),
@@ -70,7 +70,7 @@ def test__getBurstThreadPool(workers, cores, expected, thread_manager):
     ("JPEG XL", True, 7, True, False, False, False),
     ("JPEG XL", False, 10, True, False, False, True),
 ])
-def test_isParallelRecommended(mode, jxl_disable_parallel, effort, jxl_modular, lossless, intelligent_effort, expected, thread_manager):
+def test_isParallelRecommended(mode, jxl_optimizer, effort, jxl_modular, lossless, intelligent_effort, expected, thread_manager):
     assert thread_manager.isParallelRecommended(
-        mode, jxl_disable_parallel, effort, jxl_modular, lossless, intelligent_effort
+        mode, jxl_optimizer, effort, jxl_modular, lossless, intelligent_effort
     ) == expected

@@ -102,8 +102,8 @@ class SettingsTab(QWidget):
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
 
+        self.jxl_optimizer_cb = self.wm.addWidget("jxl_optimizer_cb", QCheckBox("JPEG XL - Optimize RAM Usage"))
         self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Transcoding"))
-        self.jxl_disable_parallel_cb = self.wm.addWidget("jxl_disable_parallel_cb", QCheckBox("JPEG XL - Optimize RAM Usage"))
         self.play_sound_on_finish_cb = self.wm.addWidget("play_sound_on_finish_cb", QCheckBox("Play Sound When Conversion Finishes"))
         self.play_sound_on_finish_vol_l = self.wm.addWidget("play_sound_on_finish_vol_l", QLabel("Volume"))
         self.play_sound_on_finish_vol_sb = self.wm.addWidget("play_sound_on_finish_vol_sb", SpinBox())
@@ -179,8 +179,8 @@ class SettingsTab(QWidget):
         self.settings_lt.addLayout(self.play_sound_on_finish_vol_hb)
 
         ## Conversion
+        self.settings_lt.addWidget(self.jxl_optimizer_cb)
         self.settings_lt.addWidget(self.jxl_lossless_jpeg_cb)
-        self.settings_lt.addWidget(self.jxl_disable_parallel_cb)
         self.jpg_encoder_hb = createQHBoxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
         self.settings_lt.addLayout(self.jpg_encoder_hb)
         self.jpg_encoder_hb.addStretch()
@@ -274,7 +274,7 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["no_exceptions"], self.no_exceptions_cb)
         setToolTip(TOOLTIPS["exiftool_args"], self.exiftool_wipe_te, self.exiftool_custom_te, self.exiftool_preserve_te, self.exiftool_unsafe_wipe_te)
         setToolTip(TOOLTIPS["encoder_args"], self.avifenc_args_te, self.cjpegli_args_te, self.cjxl_args_te, self.im_args_te)
-        setToolTip(TOOLTIPS["jxl_disable_parallel"], self.jxl_disable_parallel_cb)
+        setToolTip(TOOLTIPS["jxl_optimizer"], self.jxl_optimizer_cb)
 
     def changeCategory(self, category):
         # Category buttons
@@ -293,7 +293,7 @@ class SettingsTab(QWidget):
             ],
             "Conversion": [
                 "jxl_lossless_jpeg_cb",
-                "jxl_disable_parallel_cb",
+                "jxl_optimizer_cb",
                 "jpg_encoder_l", "jpg_encoder_cmb",
                 "disable_progressive_jpegli_cb",
                 "keep_if_larger_cb",
@@ -394,7 +394,7 @@ class SettingsTab(QWidget):
             "enable_quality_precision_snapping": self.quality_prec_snap_cb.isChecked(),
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
             "jxl_lossless_jpeg": self.jxl_lossless_jpeg_cb.isChecked(),
-            "jxl_disable_parallel": self.jxl_disable_parallel_cb.isChecked(),
+            "jxl_optimizer": self.jxl_optimizer_cb.isChecked(),
             "play_sound_on_finish": self.play_sound_on_finish_cb.isChecked(),
             "play_sound_on_finish_vol": round(self.play_sound_on_finish_vol_sb.value() / 100, 2),
             "keep_if_larger": self.keep_if_larger_cb.isChecked(),
@@ -424,8 +424,8 @@ class SettingsTab(QWidget):
         self.play_sound_on_finish_cb.setChecked(False)
         self.play_sound_on_finish_vol_sb.setValue(60)
 
+        self.jxl_optimizer_cb.setChecked(True)
         self.enable_jxl_effort_10.setChecked(False)
-        self.jxl_disable_parallel_cb.setChecked(True)
         self.custom_resampling_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)
         self.jpg_encoder_cmb.setCurrentIndex(0)

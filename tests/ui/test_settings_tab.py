@@ -31,7 +31,7 @@ def test_changeCategory_visibility(category, app, qtbot):
         ],
         "conversion": [
             "jxl_lossless_jpeg_cb",
-            "jxl_disable_parallel_cb",
+            "jxl_optimizer_cb",
             "jpg_encoder_l", "jpg_encoder_cmb",
             "disable_progressive_jpegli_cb",
             "keep_if_larger_cb",
