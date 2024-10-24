@@ -54,7 +54,7 @@ TOOLTIPS = {
     "progressive_jpegli": "Enabled - generated JPEGs will be compatible with very old devices, but their file size will increase.\n\nDisabled - generated JPEGs will smaller and load faster.",
     "keep_if_larger": "Prevents \"Delete Original\" and \"Replace\" options (output tab) from deleting the original image if the result is larger",
     "copy_if_larger": "Copies the original image to the output folder when the result is larger.",
-    "enable_jxl_effort_10": "Raises Effort limit from 9 to 10. Effort 10 is very slow but can produce smaller files in lossless.",
+    "jxl_effort_10": "Raises Effort limit from 9 to 10. Effort 10 is very slow but can produce smaller files in lossless.",
     "resample": "Enables resampling mode selection in the modify tab.",
     "no_exceptions": "The pop-up displaying exceptions encountered during conversion will no longer appear.",
     "exiftool_args": "Arguments used for handling metadata, correspond to the options is the modify tab.\n\nSupported variables:\n\n$src - source image path.\n\n$dst - destination image path.\n\nRemember to add \"-overwrite_original\" to avoid leftover files.",

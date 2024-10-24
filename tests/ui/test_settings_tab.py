@@ -39,7 +39,7 @@ def test_changeCategory_visibility(category, app, qtbot):
         ],
         "advanced": [
             "no_exceptions_cb",
-            "enable_jxl_effort_10",
+            "jxl_effort_10_cb",
             "custom_resampling_cb",
             "exiftool_l",
             "exiftool_reset_btn",
@@ -77,7 +77,7 @@ def test_setDarkModeEnabled(mock_setTheme, app):
 @pytest.mark.parametrize("signal_attr, widget_attr", [
     ("custom_resampling", "custom_resampling_cb"),
     ("disable_sorting", "no_sorting_cb"),
-    ("enable_jxl_effort_10", "enable_jxl_effort_10"),
+    ("enable_jxl_effort_10", "jxl_effort_10_cb"),
 ])
 def test_signals(app, qtbot, signal_attr, widget_attr):
     with qtbot.waitSignal(getattr(app.signals, signal_attr)) as blocker:
@@ -96,7 +96,7 @@ def test_resetToDefault(app):
     assert app.disable_delete_startup_cb.isChecked() == True
     assert app.no_exceptions_cb.isChecked() == False
     
-    assert app.enable_jxl_effort_10.isChecked() == False
+    assert app.jxl_effort_10_cb.isChecked() == False
     assert app.custom_resampling_cb.isChecked() == False
     assert app.disable_progressive_jpegli_cb.isChecked() == False
 
