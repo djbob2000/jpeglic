@@ -26,7 +26,7 @@ from core.utils import dictToList
 from ui.slider import Slider
 from ui.combobox import ComboBox
 from ui.spinbox import SpinBox
-from ui.utils import setToolTip, isPathValidStr
+from ui.utils import setToolTip, isPathValidStr, createQHBoxLayout
 from data.tooltips import TOOLTIPS
 
 class OutputTab(QWidget):
@@ -35,90 +35,62 @@ class OutputTab(QWidget):
     def __init__(self, max_threads, settings):
         super(OutputTab, self).__init__()
 
+        # Components
         self.wm = WidgetManager("OutputTab")
+
+        # Variables
         self.prev_format = None
-
         self.MAX_THREAD_COUNT = max_threads
+        self.enable_jxl_effort_10 = settings["enable_jxl_effort_10"]
+        self.jpg_encoder = settings["jpg_encoder"]
 
-        # Main layout
-        output_page_lt = QGridLayout()
-        self.setLayout(output_page_lt)
+        # Setup
+        self._setupWidgets()
+        self._setupLayouts()
+        self._setupSignals()
+        self._setToolTipsStatic()
 
-        # Conversion - widgets
+        # Load states
+        self.resetToDefault()
+        self.wm.loadState()
+        
+        # Update states
+        if settings["disable_delete_startup"]:
+            self.delete_original_cb.setChecked(False)
+        self.enableQualityPrecisionSnapping(settings["enable_quality_precision_snapping"])
+
+        self._onFormatChange()
+        self._onDeleteOriginalChanged()
+        self._onOutputToggled()
+
+        # Variables
+        self.cached_states = self.getSettings()
+    
+    def _setupWidgets(self):
+        # Conversion
         self.threads_sl = self.wm.addWidget("threads_sl", Slider())
         self.threads_sb = self.wm.addWidget("threads_sb", SpinBox())
-
         self.threads_sl.setRange(1, self.MAX_THREAD_COUNT)
         self.threads_sb.setRange(1, self.MAX_THREAD_COUNT)
         self.threads_sl.setTickInterval(1)
-        self.threads_sl.valueChanged.connect(self.onThreadSlChange)
-        self.threads_sb.valueChanged.connect(self.onThreadSbChange)
-        
         self.duplicates_cmb = self.wm.addWidget("duplicates_cmb", ComboBox())
         self.duplicates_cmb.addItems(("Rename", "Replace", "Skip"))
 
-        # Conversion - layout
-        conv_grp = QGroupBox("Conversion")
-        conv_grp_lt = QVBoxLayout()
-        conv_grp.setLayout(conv_grp_lt)
-        
-        threads_hb = QHBoxLayout()
-        threads_hb.addWidget(QLabel("Threads"))
-        threads_hb.addWidget(self.threads_sl)
-        threads_hb.addWidget(self.threads_sb)
-
-        duplicates_hb = QHBoxLayout()
-        duplicates_hb.addWidget(QLabel("If Output Exists"))
-        duplicates_hb.addWidget(self.duplicates_cmb)
-
-        conv_grp_lt.addLayout(duplicates_hb)
-        conv_grp_lt.addLayout(threads_hb)
-        
-        # After Conversion - widgets
+        # After Conversion
         self.clear_after_conv_cb = self.wm.addWidget("clear_after_conv_cb", QCheckBox("Clear File List"))
         self.delete_original_cb = self.wm.addWidget("delete_original_cb", QCheckBox("Delete Original"))
         self.delete_original_cmb = self.wm.addWidget("delete_original_cmb", ComboBox())
-
         self.delete_original_cmb.addItems(("To Trash", "Permanently"))
-        self.delete_original_cb.stateChanged.connect(self.onDeleteOriginalChanged)
 
-        # After conversion - layout
-        after_conv_grp = QGroupBox("After Conversion")
-        after_conv_grp_lt = QVBoxLayout()
-        after_conv_grp.setLayout(after_conv_grp_lt)
-
-        after_conv_grp_lt.addWidget(self.clear_after_conv_cb)
-        delete_original_hb = QHBoxLayout()
-        delete_original_hb.addWidget(self.delete_original_cb)
-        delete_original_hb.addWidget(self.delete_original_cmb)
-        after_conv_grp_lt.addLayout(delete_original_hb)
-
-        # Output - widgets
+        # Output
         self.choose_output_src_rb = self.wm.addWidget("choose_output_src_rb", QRadioButton("Source Folder"))
         self.choose_output_ct_rb = self.wm.addWidget("choose_output_ct_rb", QRadioButton("Custom"))
         self.choose_output_ct_le = self.wm.addWidget("choose_output_ct_le", QLineEdit(), "output_ct")
         self.choose_output_ct_btn = self.wm.addWidget("choose_output_ct_btn", QPushButton("..."), "output_ct")
         self.keep_dir_struct_cb = self.wm.addWidget("keep_dir_struct_cb", QCheckBox("Keep Folder Structure"))
-
-        self.choose_output_ct_btn.clicked.connect(self.chooseOutput)        
-        self.choose_output_ct_rb.toggled.connect(self.onOutputToggled)
         self.choose_output_ct_btn.setMaximumWidth(25)
 
-        # Output - layout
-        output_grp = QGroupBox("Save To")
-        output_grp_lt = QVBoxLayout()
-        output_grp.setLayout(output_grp_lt)
-
-        output_hb = QHBoxLayout()
-        output_hb.addWidget(self.choose_output_ct_rb)
-        for i in self.wm.getWidgetsByTag("output_ct"):
-            output_hb.addWidget(i)
-
-        output_grp_lt.addWidget(self.choose_output_src_rb)
-        output_grp_lt.addLayout(output_hb)
-        output_grp_lt.addWidget(self.keep_dir_struct_cb)
-
-        # Format - widgets
+        # Format
         self.format_cmb = self.wm.addWidget("format_cmb", ComboBox())
         self.format_cmb.addItems((
             "JPEG XL",
@@ -130,36 +102,20 @@ class OutputTab(QWidget):
             "JPEG Reconstruction",
             "Smallest Lossless",
         ))
-        self.format_cmb.currentIndexChanged.connect(self.onFormatChange)
-
-        self.effort_l = self.wm.addWidget("effort_l", QLabel("Effort"))
-        self.effort_sb = self.wm.addWidget("effort_sb", SpinBox())
+        self.effort_l = self.wm.addWidget("effort_l", QLabel("Effort"), "effort")
+        self.effort_sb = self.wm.addWidget("effort_sb", SpinBox(), "effort")
         self.int_effort_cb = self.wm.addWidget("int_effort_cb", QCheckBox("Intelligent"))
-        self.int_effort_cb.toggled.connect(self.onEffortToggled)
-
-        self.wm.addTag("effort", "effort_l")
-        self.wm.addTag("effort", "int_effort_cb")
-        self.wm.addTag("effort", "effort_sb")
-
         self.quality_l = self.wm.addWidget("quality_l", QLabel("Quality"), "quality_all")
         self.quality_sb = self.wm.addWidget("quality_sb", SpinBox(), "quality", "quality_all")
         self.quality_sl = self.wm.addWidget("quality_sl", Slider(), "quality", "quality_all")
-        self.quality_sl.valueChanged.connect(self.onQualitySlChanged)
-        self.quality_sb.valueChanged.connect(self.onQualitySbChanged)
-
         self.lossless_cb = self.wm.addWidget("lossless_cb", QCheckBox("Lossless"), "lossless")
         self.lossless_spacer_l = self.wm.addWidget("lossless_spacer_l", QLabel(""), "lossless")
-        self.lossless_cb.toggled.connect(self.onLosslessToggled)
-
         self.max_compression_cb = self.wm.addWidget("max_compression_cb", QCheckBox("Max Compression"))
-        
         self.jxl_modular_l = self.wm.addWidget("jxl_modular_l", QLabel("Lossy Mode"), "jxl_advanced")
         self.jxl_modular_cb = self.wm.addWidget("jxl_modular_cb", QCheckBox("Modular"), "jxl_advanced")
-
         self.smallest_lossless_png_cb = self.wm.addWidget("smallest_lossless_png_cb", QCheckBox("PNG"), "format_pool")
         self.smallest_lossless_webp_cb = self.wm.addWidget("smallest_lossless_webp_cb", QCheckBox("WebP"), "format_pool")
         self.smallest_lossless_jxl_cb = self.wm.addWidget("smallest_lossless_jxl_cb", QCheckBox("JPEG XL"), "format_pool")
-        
         self.chroma_subsampling_l = self.wm.addWidget("chroma_subsampling_l", QLabel("Chroma Subsampling", self), "chroma_subsampling")
         self.chroma_subsampling_jpegli_cmb = self.wm.addWidget("chroma_subsampling_jpegli_cmb", ComboBox(self), "chroma_subsampling")
         self.chroma_subsampling_jpegli_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
@@ -167,104 +123,78 @@ class OutputTab(QWidget):
         self.chroma_subsampling_avif_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0", "4:0:0",))
         self.chroma_subsampling_jpg_cmb = self.wm.addWidget("chroma_subsampling_jpg_cmb", ComboBox(self), "chroma_subsampling")
         self.chroma_subsampling_jpg_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
-
         self.jxl_png_fallback_cb = self.wm.addWidget("jxl_png_fallback_cb", QCheckBox("PNG Fallback"))
 
-        # Format - layout
-        format_cmb_hb = QHBoxLayout()                       # Format ComboBox
-        format_cmb_hb.addWidget(QLabel("Format / Mode"))
-        format_cmb_hb.addWidget(self.format_cmb)
+        # Buttons
+        self.reset_to_default_btn = QPushButton("Reset to Default")
+        self.convert_btn = QPushButton("Convert")
+    
+    def _setupLayouts(self):
+        # Conversion
+        self.conv_grp = QGroupBox("Conversion")
+        self.conv_grp_lt = QVBoxLayout(self.conv_grp)
+        self.conv_grp_lt.addLayout(createQHBoxLayout(QLabel("If Output Exists"), self.duplicates_cmb))
+        self.conv_grp_lt.addLayout(createQHBoxLayout(QLabel("Threads"), self.threads_sl, self.threads_sb))
+
+        # After conversion
+        self.after_conv_grp = QGroupBox("After Conversion")
+        after_conv_grp_lt = QVBoxLayout(self.after_conv_grp)
+        after_conv_grp_lt.addWidget(self.clear_after_conv_cb)
+        after_conv_grp_lt.addLayout(createQHBoxLayout(self.delete_original_cb, self.delete_original_cmb))
+
+        # Output
+        self.output_grp = QGroupBox("Save To")
+        self.output_grp_lt = QVBoxLayout(self.output_grp)
+        self.output_grp_lt.addWidget(self.choose_output_src_rb)
+        self.output_grp_lt.addLayout(createQHBoxLayout(self.choose_output_ct_rb, self.choose_output_ct_le, self.choose_output_ct_btn))
+        self.output_grp_lt.addWidget(self.keep_dir_struct_cb)
+
+        # Format
+        self.format_grp = QGroupBox("Format")
+        self.format_grp_lt = QVBoxLayout(self.format_grp)
+        self.format_grp_lt.addLayout(createQHBoxLayout(QLabel("Format / Mode"), self.format_cmb))
+        self.format_grp_lt.addLayout(createQHBoxLayout(self.effort_l, self.int_effort_cb, self.effort_sb))
+        self.format_grp_lt.addLayout(createQHBoxLayout(self.quality_l, self.quality_sl, self.quality_sb))
+        self.format_grp_lt.addLayout(createQHBoxLayout(self.jxl_modular_l, self.jxl_modular_cb))
+        self.format_grp_lt.addLayout(createQHBoxLayout(self.lossless_spacer_l, self.lossless_cb))
+        self.format_grp_lt.addLayout(createQHBoxLayout(self.smallest_lossless_png_cb, self.smallest_lossless_webp_cb, self.smallest_lossless_jxl_cb))
+        self.format_grp_lt.addWidget(self.max_compression_cb)
+        self.format_grp_lt.addLayout(createQHBoxLayout(self.chroma_subsampling_l, self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_avif_cmb, self.chroma_subsampling_jpg_cmb))
+        self.format_grp_lt.addWidget(self.jxl_png_fallback_cb)
+
+        # Main
+        self.main_lt = QGridLayout(self)
+        self.main_lt.addWidget(self.reset_to_default_btn, 2, 0)
+        self.main_lt.addWidget(self.convert_btn, 2, 1)
+        self.main_lt.addWidget(self.format_grp, 0, 1)
+        self.main_lt.addWidget(self.output_grp, 0, 0)
+        self.main_lt.addWidget(self.conv_grp, 1, 0)
+        self.main_lt.addWidget(self.after_conv_grp, 1, 1)
         
-        effort_hb = QHBoxLayout()                           # Effort
-        for i in self.wm.getWidgetsByTag("effort"):
-            effort_hb.addWidget(i)
-
-        lossless_hb = QHBoxLayout()                         # Lossless
-        lossless_hb.addWidget(self.lossless_spacer_l)
-        lossless_hb.addWidget(self.lossless_cb)
-
-        quality_hb = QHBoxLayout()                          # Quality
-        quality_hb.addWidget(self.quality_l)
-        quality_hb.addWidget(self.quality_sl)
-        quality_hb.addWidget(self.quality_sb)
-
-        jxl_advanced_hb = QHBoxLayout()                     # JPEG XL Mode
-        jxl_advanced_hb.addWidget(self.jxl_modular_l)
-        jxl_advanced_hb.addWidget(self.jxl_modular_cb)
-
-        format_sm_l_hb = QHBoxLayout()                      # Smallest Lossless
-        for i in self.wm.getWidgetsByTag("format_pool"):
-            format_sm_l_hb.addWidget(i)
-
-        self.chroma_subsampling_hb = QHBoxLayout()      # Chroma subsampling
-        self.chroma_subsampling_hb.addWidget(self.chroma_subsampling_l)
-        self.chroma_subsampling_hb.addWidget(self.chroma_subsampling_jpegli_cmb)
-        self.chroma_subsampling_hb.addWidget(self.chroma_subsampling_avif_cmb)
-        self.chroma_subsampling_hb.addWidget(self.chroma_subsampling_jpg_cmb)
-
-        # Layout
-        format_grp = QGroupBox("Format")
-        format_grp_lt = QVBoxLayout()
-        format_grp.setLayout(format_grp_lt)
-        format_grp_lt.addLayout(format_cmb_hb)
-        format_grp_lt.addLayout(effort_hb)
-        format_grp_lt.addLayout(quality_hb)
-        format_grp_lt.addLayout(jxl_advanced_hb)
-        format_grp_lt.addLayout(lossless_hb)
-        format_grp_lt.addLayout(format_sm_l_hb)
-        format_grp_lt.addWidget(self.max_compression_cb)
-        format_grp_lt.addLayout(self.chroma_subsampling_hb)
-        format_grp_lt.addWidget(self.jxl_png_fallback_cb)
+        # Size policies
+        self.main_lt.setAlignment(Qt.AlignTop)
+        self.main_lt.setRowMinimumHeight(0, 150)
+        self.format_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.conv_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.after_conv_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.output_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.format_cmb.setMinimumWidth(220)
 
-        # Buttons
-        reset_to_default_btn = QPushButton("Reset to Default")
-        reset_to_default_btn.clicked.connect(self.resetToDefault)
-        self.convert_btn_2 = QPushButton("Convert")
-        self.convert_btn_2.clicked.connect(self.convert.emit)
-        
-        # Main layout
-        output_page_lt.addWidget(reset_to_default_btn,2,0)
-        output_page_lt.addWidget(self.convert_btn_2,2,1)
-        
-        output_page_lt.addWidget(format_grp,0,1)
-        output_page_lt.addWidget(output_grp, 0, 0)
-        output_page_lt.addWidget(conv_grp,1,0)
-        output_page_lt.addWidget(after_conv_grp,1,1)
-        
-        # Size policy
-        output_page_lt.setAlignment(Qt.AlignTop)
-        output_page_lt.setRowMinimumHeight(0, 150)
+    def _setupSignals(self):
+        self.threads_sl.valueChanged.connect(lambda n: self.threads_sb.setValue(n))
+        self.threads_sb.valueChanged.connect(lambda n: self.threads_sl.setValue(n))
+        self.delete_original_cb.stateChanged.connect(self._onDeleteOriginalChanged)
+        self.choose_output_ct_btn.clicked.connect(self._chooseOutput)        
+        self.choose_output_ct_rb.toggled.connect(self._onOutputToggled)
+        self.format_cmb.currentIndexChanged.connect(self._onFormatChange)
+        self.int_effort_cb.toggled.connect(self._onEffortToggled)
+        self.quality_sl.valueChanged.connect(lambda n: self.quality_sb.setValue(n))
+        self.quality_sb.valueChanged.connect(lambda n: self.quality_sl.setValue(n))
+        self.lossless_cb.toggled.connect(self._onLosslessToggled)
+        self.reset_to_default_btn.clicked.connect(self.resetToDefault)
+        self.convert_btn.clicked.connect(self.convert.emit)
 
-        format_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        conv_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        after_conv_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        output_grp.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # Load Settings
-        self.enable_jxl_effort_10 = settings["enable_jxl_effort_10"]
-        self.jpg_encoder = settings["jpg_encoder"]
-        
-        # Misc
-        self.resetToDefault()
-        self.wm.loadState()
-        self.setToolTipsStatic()
-        
-        # Apply Settings
-        if settings["disable_delete_startup"]:
-            self.delete_original_cb.setChecked(False)
-
-        self.enableQualityPrecisionSnapping(settings["enable_quality_precision_snapping"])
-
-        # Setup widgets' states
-        self.onFormatChange()
-        self.onDeleteOriginalChanged()
-        self.onOutputToggled()
-
-        # Vars
-        self.cached_states = self.getSettings()
-    
-    def setToolTipsStatic(self):
+    def _setToolTipsStatic(self):
         """Sets tooltips at once at startup."""
         setToolTip(TOOLTIPS["duplicates"], self.duplicates_cmb)
         setToolTip(TOOLTIPS["threads"], self.threads_sl, self.threads_sb)
@@ -284,7 +214,7 @@ class OutputTab(QWidget):
         setToolTip(TOOLTIPS["smallest_lossless_jpeg_xl"], self.smallest_lossless_jxl_cb)
         setToolTip(TOOLTIPS["smallest_lossless_max_comp"], self.max_compression_cb)
 
-    def setToolTipsDynamic(self):
+    def _setToolTipsDynamic(self):
         """Sets tooltips. Their content can change."""
         match self.format_cmb.currentText():
             case "JPEG XL":
@@ -303,8 +233,22 @@ class OutputTab(QWidget):
             case "Lossless JPEG Transcoding":
                 setToolTip(TOOLTIPS["effort_jpeg_recomp"], self.effort_sb)
 
+    # //////////////////////////////////////////////////////////
+    # /                      Getters
+    # //////////////////////////////////////////////////////////
+
     def isClearAfterConvChecked(self):
         return self.clear_after_conv_cb.isChecked()
+
+    def getUsedThreadCount(self) -> int:
+        return self.threads_sl.value()
+
+    def smIsFormatPoolEmpty(self) -> bool:
+        empty = True
+        for w in self.wm.getWidgetsByTag("format_pool"):
+            if w.isChecked():
+                empty = False
+        return empty
 
     def getSettings(self):
         return {
@@ -331,24 +275,12 @@ class OutputTab(QWidget):
                 },
             "jxl_png_fallback": self.jxl_png_fallback_cb.isChecked(),
         }
-    
-    def onThreadSlChange(self):
-        self.threads_sb.setValue(self.threads_sl.value())
 
-    def onThreadSbChange(self):
-        self.threads_sl.setValue(self.threads_sb.value())
+    # //////////////////////////////////////////////////////////
+    # /                      Handlers
+    # //////////////////////////////////////////////////////////
 
-    def getUsedThreadCount(self):
-        return self.threads_sl.value()
-
-    def smIsFormatPoolEmpty(self):
-        empty = True
-        for w in self.wm.getWidgetsByTag("format_pool"):
-            if w.isChecked():
-                empty = False
-        return empty
-        
-    def chooseOutput(self):
+    def _chooseOutput(self):
         dir_to_load = self.wm.getVar("choose_output_last_dir")
         if dir_to_load is None or not isPathValidStr(dir_to_load):
             dir_to_load = QDir.homePath()
@@ -364,13 +296,13 @@ class OutputTab(QWidget):
             self.wm.setVar("choose_output_last_dir", dlg.directory().absolutePath())
             self.choose_output_ct_le.setText(dlg.selectedFiles()[0])
 
-    def onOutputToggled(self):
+    def _onOutputToggled(self):
         src_checked = self.choose_output_src_rb.isChecked()
         self.wm.setEnabledByTag("output_ct", not src_checked)
         self.keep_dir_struct_cb.setEnabled(not src_checked)
         
-    def onFormatChange(self):
-        self.saveFormatState()
+    def _onFormatChange(self):
+        self._saveFormatVars()
         
         cur_format = self.format_cmb.currentText()
         self.prev_format = cur_format
@@ -378,8 +310,7 @@ class OutputTab(QWidget):
         # Visible
         self.wm.setVisibleByTag("quality_all", cur_format in ("JPEG XL", "AVIF", "WebP", "JPEG"))
         self.int_effort_cb.setVisible(cur_format == "JPEG XL")
-        self.effort_sb.setVisible(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
-        self.effort_l.setVisible(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
+        self.wm.setVisibleByTag("effort", cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
         self.wm.setVisibleByTag("jxl_advanced", cur_format == "JPEG XL")
         self.wm.setVisibleByTag("lossless", cur_format in ("JPEG XL", "WebP"))
         self.wm.setVisibleByTag("format_pool", cur_format == "Smallest Lossless")
@@ -402,56 +333,50 @@ class OutputTab(QWidget):
             self.effort_l.setText("Method")
 
         if cur_format in ("JPEG XL", "AVIF"):
-            self.setQualityRange(0, 99)
+            self._setQualityRange(0, 99)
         elif cur_format == "WebP":
-            self.setQualityRange(1, 99)
+            self._setQualityRange(1, 99)
         else:
-            self.setQualityRange(1, 100)
+            self._setQualityRange(1, 100)
         
         # Update states
         self.wm.setCheckedByTag("lossless", False)
         self.effort_sb.setEnabled(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
         
         if cur_format == "JPEG XL":
-            self.onEffortToggled()  # It's very important to update int_effort_cb to avoid issues when changing formats while it's enabled
+            self._onEffortToggled()  # It's very important to update int_effort_cb to avoid issues when changing formats while it's enabled
 
-        self.loadFormatState()
-        self.setToolTipsDynamic()
-        
-    def onQualitySlChanged(self):
-        self.quality_sb.setValue(self.quality_sl.value())
-
-    def onQualitySbChanged(self):
-        self.quality_sl.setValue(self.quality_sb.value())
+        self._loadFormatVars()
+        self._setToolTipsDynamic()
     
-    def onDeleteOriginalChanged(self):
+    def _onDeleteOriginalChanged(self):
         self.delete_original_cmb.setEnabled(self.delete_original_cb.isChecked())
 
-    def onEffortToggled(self):
+    def _onEffortToggled(self):
         self.effort_sb.setEnabled(not self.int_effort_cb.isChecked())
 
-    def onLosslessToggled(self):
+    def _onLosslessToggled(self):
         lossless_checked = self.lossless_cb.isChecked()
-
         self.wm.setEnabledByTag("quality_all", not lossless_checked)
         self.wm.setEnabledByTag("jxl_advanced", not lossless_checked)        
 
-    def onJPGEncoderChanged(self, encoder):
+    def onJPEGEncoderChanged(self, encoder: str) -> None:
         if self.format_cmb.currentText() == "JPEG":
             self.chroma_subsampling_jpg_cmb.setVisible(encoder == "libjpeg")
             self.chroma_subsampling_jpegli_cmb.setVisible(encoder == "JPEGLI")
 
-    def setJxlEffort10Enabled(self, enabled):
+    def setJxlEffort10Enabled(self, enabled: bool) -> None:
         self.enable_jxl_effort_10 = enabled
         if self.format_cmb.currentText() == "JPEG XL":
             self.effort_sb.setRange(1, 10 if self.enable_jxl_effort_10 else 9)
 
-    def enableQualityPrecisionSnapping(self, enabled):
-        if enabled:
-            self.quality_sl.setTickInterval(0)
-        else:
-            self.quality_sl.setTickInterval(5)
+    def enableQualityPrecisionSnapping(self, enabled: bool) -> None:
+        self.quality_sl.setTickInterval(0 if enabled else 5)
 
+    # //////////////////////////////////////////////////////////
+    # /                   Actions / Utils
+    # //////////////////////////////////////////////////////////
+    
     def resetToDefault(self):
         self.wm.cleanVars()
         cur_format = self.format_cmb.currentText()
@@ -498,11 +423,11 @@ class OutputTab(QWidget):
         
         self.jxl_png_fallback_cb.setChecked(True)
 
-    def setQualityRange(self, _min, _max):
+    def _setQualityRange(self, _min: int, _max: int) -> None:
         for i in self.wm.getWidgetsByTag("quality"):
             i.setRange(_min, _max)
 
-    def saveFormatState(self):
+    def _saveFormatVars(self):
         if self.prev_format == None:
             return
 
@@ -524,7 +449,7 @@ class OutputTab(QWidget):
             case "Lossless JPEG Transcoding":
                 self.wm.setVar("jxl_lossless_jpeg_effort", self.effort_sb.value())
 
-    def loadFormatState(self):
+    def _loadFormatVars(self):
         match self.prev_format:
             case "JPEG XL":
                 self.wm.applyVar("jxl_quality", "quality_sl", 80)
@@ -551,5 +476,5 @@ class OutputTab(QWidget):
                 "effort_sb",
                 "lossless_cb",
             )
-            self.saveFormatState()
+            self._saveFormatVars()
             self.wm.saveState()

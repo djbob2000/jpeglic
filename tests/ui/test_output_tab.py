@@ -189,7 +189,7 @@ def test_effort_ranges(app, file_format, min_val, max_val):
     assert app.effort_sb.minimum() == min_val
     assert app.effort_sb.maximum() == max_val
 
-def test_chooseOutput_var_default(app):
+def test__chooseOutput_var_default(app):
     with (
         patch("ui.output_tab.QFileDialog") as mock_qfiledialog,
         patch("ui.widget_manager.WidgetManager.getVar", return_value=None),
@@ -197,11 +197,11 @@ def test_chooseOutput_var_default(app):
     ):
         mock_qfiledialog.return_value.exec.return_value = False
 
-        app.chooseOutput()
+        app._chooseOutput()
 
         mock_qfiledialog.assert_called_once_with(app, ANY, QDir.homePath())
 
-def test_chooseOutput_var_load(app):
+def test__chooseOutput_var_load(app):
     last_used = "/home/user/Pictures"
     with (
         patch("ui.output_tab.QFileDialog") as mock_qfiledialog,
@@ -211,11 +211,11 @@ def test_chooseOutput_var_load(app):
     ):
         mock_qfiledialog.return_value.exec.return_value = False
 
-        app.chooseOutput()
+        app._chooseOutput()
 
         mock_qfiledialog.assert_called_once_with(app, ANY, last_used)
 
-def test_chooseOutput_var_save(app):
+def test__chooseOutput_var_save(app):
     last_used = "/home/user/Pictures"
     with (
         patch("ui.output_tab.QFileDialog") as mock_qfiledialog,
@@ -227,6 +227,6 @@ def test_chooseOutput_var_save(app):
         mock_qfiledialog.return_value.directory.return_value.absolutePath.return_value = last_used
         app.choose_output_ct_le = MagicMock()
 
-        app.chooseOutput()
+        app._chooseOutput()
 
         mock_setVar.assert_called_once_with("choose_output_last_dir", last_used)

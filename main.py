@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
         self.settings_tab.signals.enable_jxl_effort_10.connect(self.output_tab.setJxlEffort10Enabled)
         self.settings_tab.signals.custom_resampling.connect(self.modify_tab.toggleCustomResampling)
         self.settings_tab.signals.enable_quality_prec_snap.connect(self.output_tab.enableQualityPrecisionSnapping)
-        self.settings_tab.signals.change_jpg_encoder.connect(self.output_tab.onJPGEncoderChanged)
+        self.settings_tab.signals.change_jpg_encoder.connect(self.output_tab.onJPEGEncoderChanged)
 
     def setupMisc(self) -> None:
         select_tab_sc = []
