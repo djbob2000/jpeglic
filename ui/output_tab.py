@@ -41,8 +41,10 @@ class OutputTab(QWidget):
         # Variables
         self.prev_format = None
         self.MAX_THREAD_COUNT = max_threads
-        self.enable_jxl_effort_10 = settings["enable_jxl_effort_10"]
         self.jpg_encoder = settings["jpg_encoder"]
+        self.enable_jxl_effort_10 = settings["enable_jxl_effort_10"]
+        self.jxl_lossy_modular_visible = settings["jxl_lossy_modular"]
+        self.jxl_int_effort_visible = settings["jxl_int_effort"]
 
         # Setup
         self._setupWidgets()
@@ -57,7 +59,7 @@ class OutputTab(QWidget):
         # Update states
         if settings["disable_delete_startup"]:
             self.delete_original_cb.setChecked(False)
-        self.enableQualityPrecisionSnapping(settings["enable_quality_precision_snapping"])
+        self.onQualityPrecisionSnappingEnabled(settings["enable_quality_precision_snapping"])
 
         self._onFormatChange()
         self._onDeleteOriginalChanged()
@@ -111,8 +113,8 @@ class OutputTab(QWidget):
         self.lossless_cb = self.wm.addWidget("lossless_cb", QCheckBox("Lossless"), "lossless")
         self.lossless_spacer_l = self.wm.addWidget("lossless_spacer_l", QLabel(""), "lossless")
         self.max_compression_cb = self.wm.addWidget("max_compression_cb", QCheckBox("Max Compression"))
-        self.jxl_modular_l = self.wm.addWidget("jxl_modular_l", QLabel("Lossy Mode"), "jxl_advanced")
-        self.jxl_modular_cb = self.wm.addWidget("jxl_modular_cb", QCheckBox("Modular"), "jxl_advanced")
+        self.jxl_modular_l = self.wm.addWidget("jxl_modular_l", QLabel("Lossy Mode"), "jxl_losssy_modular")
+        self.jxl_modular_cb = self.wm.addWidget("jxl_modular_cb", QCheckBox("Modular"), "jxl_losssy_modular")
         self.smallest_lossless_png_cb = self.wm.addWidget("smallest_lossless_png_cb", QCheckBox("PNG"), "format_pool")
         self.smallest_lossless_webp_cb = self.wm.addWidget("smallest_lossless_webp_cb", QCheckBox("WebP"), "format_pool")
         self.smallest_lossless_jxl_cb = self.wm.addWidget("smallest_lossless_jxl_cb", QCheckBox("JPEG XL"), "format_pool")
@@ -257,8 +259,8 @@ class OutputTab(QWidget):
             "lossless": self.lossless_cb.isChecked(),
             "max_compression": self.max_compression_cb.isChecked(),
             "effort": self.effort_sb.value(),
-            "intelligent_effort": self.int_effort_cb.isChecked(),
-            "jxl_modular": self.jxl_modular_cb.isChecked(),
+            "intelligent_effort": self.int_effort_cb.isChecked() if self.jxl_int_effort_visible else False,
+            "jxl_modular": self.jxl_modular_cb.isChecked() if self.jxl_lossy_modular_visible else False,
             "avif_chroma_subsampling": self.chroma_subsampling_avif_cmb.currentText(),
             "jpegli_chroma_subsampling": self.chroma_subsampling_jpegli_cmb.currentText(),
             "jpg_chroma_subsampling": self.chroma_subsampling_jpg_cmb.currentText(),
@@ -309,9 +311,9 @@ class OutputTab(QWidget):
 
         # Visible
         self.wm.setVisibleByTag("quality_all", cur_format in ("JPEG XL", "AVIF", "WebP", "JPEG"))
-        self.int_effort_cb.setVisible(cur_format == "JPEG XL")
+        self.int_effort_cb.setVisible(cur_format == "JPEG XL" and self.jxl_int_effort_visible)
         self.wm.setVisibleByTag("effort", cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
-        self.wm.setVisibleByTag("jxl_advanced", cur_format == "JPEG XL")
+        self.wm.setVisibleByTag("jxl_losssy_modular", cur_format == "JPEG XL" and self.jxl_lossy_modular_visible)
         self.wm.setVisibleByTag("lossless", cur_format in ("JPEG XL", "WebP"))
         self.wm.setVisibleByTag("format_pool", cur_format == "Smallest Lossless")
         self.max_compression_cb.setVisible(cur_format == "Smallest Lossless")
@@ -342,9 +344,7 @@ class OutputTab(QWidget):
         # Update states
         self.wm.setCheckedByTag("lossless", False)
         self.effort_sb.setEnabled(cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
-        
-        if cur_format == "JPEG XL":
-            self._onEffortToggled()  # It's very important to update int_effort_cb to avoid issues when changing formats while it's enabled
+        self._onEffortToggled()  # It's very important to update int_effort_cb to avoid issues when changing formats while it's enabled
 
         self._loadFormatVars()
         self._setToolTipsDynamic()
@@ -353,25 +353,39 @@ class OutputTab(QWidget):
         self.delete_original_cmb.setEnabled(self.delete_original_cb.isChecked())
 
     def _onEffortToggled(self):
-        self.effort_sb.setEnabled(not self.int_effort_cb.isChecked())
+        if self.format_cmb.currentText() == "JPEG XL" and self.jxl_int_effort_visible:
+            self.effort_sb.setEnabled(not self.int_effort_cb.isChecked())
+        else:
+            self.effort_sb.setEnabled(True)
 
     def _onLosslessToggled(self):
         lossless_checked = self.lossless_cb.isChecked()
         self.wm.setEnabledByTag("quality_all", not lossless_checked)
-        self.wm.setEnabledByTag("jxl_advanced", not lossless_checked)        
+        self.wm.setEnabledByTag("jxl_losssy_modular", not lossless_checked)        
 
     def onJPEGEncoderChanged(self, encoder: str) -> None:
         if self.format_cmb.currentText() == "JPEG":
             self.chroma_subsampling_jpg_cmb.setVisible(encoder == "libjpeg")
             self.chroma_subsampling_jpegli_cmb.setVisible(encoder == "JPEGLI")
 
-    def setJxlEffort10Enabled(self, enabled: bool) -> None:
+    def onJXLEffort10Enabled(self, enabled: bool) -> None:
         self.enable_jxl_effort_10 = enabled
         if self.format_cmb.currentText() == "JPEG XL":
             self.effort_sb.setRange(1, 10 if self.enable_jxl_effort_10 else 9)
 
-    def enableQualityPrecisionSnapping(self, enabled: bool) -> None:
+    def onQualityPrecisionSnappingEnabled(self, enabled: bool) -> None:
         self.quality_sl.setTickInterval(0 if enabled else 5)
+
+    def onJXLLossyModularVisibleToggled(self, visible: bool) -> None:
+        self.jxl_lossy_modular_visible = visible
+        if self.format_cmb.currentText() == "JPEG XL":
+            self.wm.setVisibleByTag("jxl_losssy_modular", visible)
+    
+    def onJXLIntEffortVisibleToggled(self, visible: bool) -> None:
+        self.jxl_int_effort_visible = visible
+        if self.format_cmb.currentText() == "JPEG XL":
+            self.int_effort_cb.setVisible(visible)
+        self._onEffortToggled()
 
     # //////////////////////////////////////////////////////////
     # /                   Actions / Utils

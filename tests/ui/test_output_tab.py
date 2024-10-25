@@ -10,9 +10,6 @@ from ui.output_tab import OutputTab
 def app(qtbot):
     with patch("ui.output_tab.WidgetManager.loadState"), \
         patch("ui.output_tab.WidgetManager.saveState"):
-        app = QApplication.instance()
-        if not app:
-            app = QApplication([])
         tab = OutputTab(
             4,
             {
@@ -20,6 +17,8 @@ def app(qtbot):
                 "enable_jxl_effort_10": False,
                 "enable_quality_precision_snapping": False,
                 "jpg_encoder": "JPEGLI",
+                "jxl_lossy_modular": False,
+                "jxl_int_effort": False,
             }
         )
         qtbot.addWidget(tab)
@@ -84,8 +83,53 @@ def test_output_toggled(app):
     assert not app.choose_output_ct_le.isEnabled()
     assert not app.choose_output_ct_btn.isEnabled()
 
+def test__onEffortToggled_jpeg_xl(app):
+    app.jxl_int_effort_visible = True
+    with (
+        patch.object(app.format_cmb, "currentText", return_value="JPEG XL"),
+        patch.object(app.int_effort_cb, "isChecked", return_value=True),
+        patch.object(app.effort_sb, "setEnabled") as mock_setEnabled,
+    ):
+        app._onEffortToggled()
+        mock_setEnabled.assert_called_once_with(False)
+
+def test__onEffortToggled_other(app):
+    app.jxl_int_effort_visible = True
+    with (
+        patch.object(app.format_cmb, "currentText", return_value="PNG"),
+        patch.object(app.effort_sb, "setEnabled") as mock_setEnabled,
+    ):
+        app._onEffortToggled()
+        mock_setEnabled.assert_called_once_with(True)
+
+
+@pytest.mark.parametrize("visible", [True, False])
+def test_onJXLLossyModularVisibleToggled(visible, app):
+    with (
+        patch.object(app.format_cmb, "currentText", return_value="JPEG XL"),
+        patch("ui.output_tab.WidgetManager.setVisibleByTag") as mock_setVisibleByTag,
+    ):
+        app.onJXLLossyModularVisibleToggled(visible)
+
+        assert app.jxl_lossy_modular_visible == visible
+        mock_setVisibleByTag.assert_called_once_with("jxl_losssy_modular", visible)
+
+@pytest.mark.parametrize("visible", [True, False])
+def test_onJXLIntEffortVisibleToggled(visible, app):
+    with (
+        patch.object(app.format_cmb, "currentText", return_value="JPEG XL"),
+        patch.object(app.int_effort_cb, "setVisible") as mock_setVisible,
+        patch.object(app, "_onEffortToggled") as mock__onEffortToggled,
+    ):
+        app.onJXLIntEffortVisibleToggled(visible)
+
+        assert app.jxl_int_effort_visible == visible
+        mock_setVisible.assert_called_once_with(visible)
+        mock__onEffortToggled.assert_called_once()
+
 def test_onFormatChange_int_e_toggle(app):
     app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))
+    app.onJXLIntEffortVisibleToggled(True)
     app.int_effort_cb.setChecked(True)
 
     assert not app.effort_sb.isEnabled()
@@ -104,7 +148,7 @@ def test_onFormatChange_lossless_toggled(app):
     assert app.quality_sb.isEnabled()
 
 @pytest.mark.parametrize("file_format, visible_widgets", [
-    ("JPEG XL", ["quality", "int_effort", "effort", "lossless", "jxl_modular"]),
+    ("JPEG XL", ["quality", "effort", "lossless"]),
     ("AVIF", ["quality", "effort", "chroma_subsampling"]),
     ("WebP", ["quality", "effort", "lossless"]),
     ("JPEG", ["quality", "chroma_subsampling"]),
@@ -152,9 +196,25 @@ def test_onFormatChange_visibility(app, file_format, visible_widgets):
     assert app.max_compression_cb.isVisibleTo(app) == smallest_lossless
     assert app.jxl_png_fallback_cb.isVisibleTo(app) == ("png_fallback" in visible_widgets)
 
+@pytest.mark.parametrize("widget_name, variable_name", [
+    ("int_effort_cb", "jxl_int_effort_visible"),
+    ("jxl_modular_l", "jxl_lossy_modular_visible"),
+    ("jxl_modular_cb", "jxl_lossy_modular_visible"),
+])
+def test_onFormatChange_visibility_controled_by_vars(widget_name, variable_name, app):
+    if not hasattr(app, variable_name):
+        raise AssertionError(f"Variable \"{variable_name}\" does not exist")
+    setattr(app, variable_name, False)
+    app._onFormatChange()
+    assert not getattr(app, widget_name).isVisibleTo(app), f"Widget \"{widget_name}\" does not exist"
+    setattr(app, variable_name, True)
+    app._onFormatChange()
+    assert getattr(app, widget_name).isVisibleTo(app), f"Widget \"{widget_name}\" does not exist"
+
 def test_onFormatChange_lossless_glitch(app):
     """Tests if an option set in one format affects others."""
     app.lossless_cb.setChecked(True)
+    app.onJXLIntEffortVisibleToggled(True)
     assert not app.quality_sl.isEnabled()
 
     app.format_cmb.setCurrentIndex(app.format_cmb.findText("WebP"))
@@ -164,6 +224,7 @@ def test_onFormatChange_lossless_glitch(app):
     
 def test_onFormatChange_int_e_glitch(app):
     app.int_effort_cb.setChecked(True)
+    app.onJXLIntEffortVisibleToggled(True)
     assert not app.effort_sb.isEnabled()
 
     app.format_cmb.setCurrentIndex(app.format_cmb.findText("AVIF"))
@@ -176,7 +237,7 @@ def test_jpeg_xl_effort_10(app):
     app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))
     
     assert app.effort_sb.maximum() == 9
-    app.setJxlEffort10Enabled(True)
+    app.onJXLEffort10Enabled(True)
     assert app.effort_sb.maximum() == 10
 
 @pytest.mark.parametrize("file_format, min_val, max_val", [
@@ -230,3 +291,15 @@ def test__chooseOutput_var_save(app):
         app._chooseOutput()
 
         mock_setVar.assert_called_once_with("choose_output_last_dir", last_used)
+
+@pytest.mark.parametrize("widget_name, variable_name, associated_key", [
+    ("int_effort_cb", "jxl_int_effort_visible", "intelligent_effort"),
+    ("jxl_modular_cb", "jxl_lossy_modular_visible", "jxl_modular"),
+])
+def test_getSettings_special(widget_name, variable_name, associated_key, app):
+    getattr(app, widget_name).setChecked(True)
+    setattr(app, variable_name, False)
+    assert not app.getSettings()[associated_key]
+    setattr(app, variable_name, True)
+    assert app.getSettings()[associated_key]
+

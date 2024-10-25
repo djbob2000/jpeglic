@@ -35,11 +35,13 @@ from ui.utils import setToolTip, openLocalUrl, createQHBoxLayout
 from data.tooltips import TOOLTIPS
 
 class Signals(QObject):
-    custom_resampling = Signal(bool)
-    disable_sorting = Signal(bool)
-    enable_jxl_effort_10 = Signal(bool)
-    enable_quality_prec_snap = Signal(bool)
-    change_jpg_encoder = Signal(str)
+    custom_resampling_toggled = Signal(bool)
+    sorting_toggled = Signal(bool)
+    jxl_effort_10_toggled = Signal(bool)
+    quality_prec_snap_toggled = Signal(bool)
+    jpeg_encoder_changed = Signal(str)
+    jxl_lossy_modular_toggled = Signal(bool)
+    jxl_int_effort_toggled = Signal(bool)
 
 class SettingsTab(QWidget):
     def __init__(self):
@@ -106,6 +108,7 @@ class SettingsTab(QWidget):
 
         # Conversion
         self.jxl_optimizer_cb = self.wm.addWidget("jxl_optimizer_cb", QCheckBox("JPEG XL - Optimize RAM Usage"))
+        self.jxl_lossy_modular_cb = self.wm.addWidget("jxl_lossy_modular_cb", QCheckBox("JPEG XL - Allow Lossy Modular"))
         self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Transcoding"))
         self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("JPEG Encoder"))
         self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", ComboBox())
@@ -116,6 +119,7 @@ class SettingsTab(QWidget):
 
         # Advanced
         self.jxl_effort_10_cb = self.wm.addWidget("jxl_effort_10_cb", QCheckBox("JPEG XL - Enable Effort 10", self))
+        self.jxl_int_effort_cb = self.wm.addWidget("jxl_int_effort_cb", QCheckBox("JPEG XL - Allow Intelligent Effort (Deprecated)"))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
         self.no_exceptions_cb = self.wm.addWidget("no_exceptions_cb", QCheckBox("Disable Exception Popups", self))
         self.exiftool_l = QLabel("ExifTool Arguments")
@@ -178,6 +182,7 @@ class SettingsTab(QWidget):
 
         ## Conversion
         self.settings_lt.addWidget(self.jxl_optimizer_cb)
+        self.settings_lt.addWidget(self.jxl_lossy_modular_cb)
         self.settings_lt.addWidget(self.jxl_lossless_jpeg_cb)
         self.jpg_encoder_hb = createQHBoxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
         self.settings_lt.addLayout(self.jpg_encoder_hb)
@@ -188,6 +193,7 @@ class SettingsTab(QWidget):
 
         ## Advanced
         self.settings_lt.addWidget(self.jxl_effort_10_cb)
+        self.settings_lt.addWidget(self.jxl_int_effort_cb)
         self.settings_lt.addWidget(self.custom_resampling_cb)
         self.settings_lt.addWidget(self.no_exceptions_cb)
         self.settings_lt.addWidget(self.exiftool_l)
@@ -237,18 +243,17 @@ class SettingsTab(QWidget):
         self.dark_theme_cb.toggled.connect(self.setDarkModeEnabled)
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
         self.play_sound_on_finish_cb.toggled.connect(self.onPlaySoundOnFinishVolumeToggled)
-
-        self.no_sorting_cb.toggled.connect(self.signals.disable_sorting)
-        self.jxl_effort_10_cb.clicked.connect(self.signals.enable_jxl_effort_10)
-        self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling.emit)
-        self.quality_prec_snap_cb.toggled.connect(self.signals.enable_quality_prec_snap)
-        self.jpg_encoder_cmb.currentTextChanged.connect(self.signals.change_jpg_encoder)
-
+        self.no_sorting_cb.toggled.connect(self.signals.sorting_toggled)
+        self.jxl_effort_10_cb.clicked.connect(self.signals.jxl_effort_10_toggled)
+        self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling_toggled.emit)
+        self.quality_prec_snap_cb.toggled.connect(self.signals.quality_prec_snap_toggled)
+        self.jpg_encoder_cmb.currentTextChanged.connect(self.signals.jpeg_encoder_changed)
         self.exiftool_reset_btn.clicked.connect(self.resetExifTool)
-
         self.start_logging_btn.clicked.connect(self.toggleLogging)
         self.open_log_dir_btn.clicked.connect(self.openLogsDir)
         self.wipe_log_dir_btn.clicked.connect(self.wipeLogsDir)
+        self.jxl_lossy_modular_cb.toggled.connect(self.signals.jxl_lossy_modular_toggled)
+        self.jxl_int_effort_cb.toggled.connect(self.signals.jxl_int_effort_toggled)
 
         self.general_btn.clicked.connect(lambda: self.changeCategory("General"))
         self.conversion_btn.clicked.connect(lambda: self.changeCategory("Conversion"))
@@ -273,6 +278,8 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["exiftool_args"], self.exiftool_wipe_te, self.exiftool_custom_te, self.exiftool_preserve_te, self.exiftool_unsafe_wipe_te)
         setToolTip(TOOLTIPS["encoder_args"], self.avifenc_args_te, self.cjpegli_args_te, self.cjxl_args_te, self.im_args_te)
         setToolTip(TOOLTIPS["jxl_optimizer"], self.jxl_optimizer_cb)
+        setToolTip(TOOLTIPS["jxl_int_effort"], self.jxl_int_effort_cb)
+        setToolTip(TOOLTIPS["jxl_lossy_modular"], self.jxl_lossy_modular_cb)
 
     def changeCategory(self, category):
         # Category buttons
@@ -291,6 +298,7 @@ class SettingsTab(QWidget):
             ],
             "Conversion": [
                 "jxl_lossless_jpeg_cb",
+                "jxl_lossy_modular_cb",
                 "jxl_optimizer_cb",
                 "jpg_encoder_l", "jpg_encoder_cmb",
                 "disable_progressive_jpegli_cb",
@@ -299,6 +307,7 @@ class SettingsTab(QWidget):
             ],
             "Advanced": [
                 "no_exceptions_cb",
+                "jxl_int_effort_cb",
                 "jxl_effort_10_cb",
                 "custom_resampling_cb",
                 "exiftool_l",
@@ -393,6 +402,8 @@ class SettingsTab(QWidget):
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
             "jxl_lossless_jpeg": self.jxl_lossless_jpeg_cb.isChecked(),
             "jxl_optimizer": self.jxl_optimizer_cb.isChecked(),
+            "jxl_lossy_modular": self.jxl_lossy_modular_cb.isChecked(),
+            "jxl_int_effort": self.jxl_int_effort_cb.isChecked(),
             "play_sound_on_finish": self.play_sound_on_finish_cb.isChecked(),
             "play_sound_on_finish_vol": round(self.play_sound_on_finish_vol_sb.value() / 100, 2),
             "keep_if_larger": self.keep_if_larger_cb.isChecked(),
@@ -423,6 +434,7 @@ class SettingsTab(QWidget):
         self.play_sound_on_finish_vol_sb.setValue(60)
 
         self.jxl_optimizer_cb.setChecked(True)
+        self.jxl_lossy_modular_cb.setChecked(False)
         self.jxl_effort_10_cb.setChecked(False)
         self.custom_resampling_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)
@@ -430,8 +442,8 @@ class SettingsTab(QWidget):
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
 
+        self.jxl_int_effort_cb.setChecked(False)
         self.resetExifTool()
-
         self.custom_args_cb.setChecked(False)
         self.cjxl_args_te.clear()
         self.cjpegli_args_te.clear()

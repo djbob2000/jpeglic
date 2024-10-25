@@ -108,11 +108,13 @@ class MainWindow(QMainWindow):
         self.input_tab.convert.connect(self.convert)
         self.output_tab.convert.connect(self.convert)
         self.modify_tab.convert.connect(self.convert)
-        self.settings_tab.signals.disable_sorting.connect(self.input_tab.disableSorting)
-        self.settings_tab.signals.enable_jxl_effort_10.connect(self.output_tab.setJxlEffort10Enabled)
-        self.settings_tab.signals.custom_resampling.connect(self.modify_tab.toggleCustomResampling)
-        self.settings_tab.signals.enable_quality_prec_snap.connect(self.output_tab.enableQualityPrecisionSnapping)
-        self.settings_tab.signals.change_jpg_encoder.connect(self.output_tab.onJPEGEncoderChanged)
+        self.settings_tab.signals.sorting_toggled.connect(self.input_tab.disableSorting)
+        self.settings_tab.signals.jxl_effort_10_toggled.connect(self.output_tab.onJXLEffort10Enabled)
+        self.settings_tab.signals.custom_resampling_toggled.connect(self.modify_tab.toggleCustomResampling)
+        self.settings_tab.signals.quality_prec_snap_toggled.connect(self.output_tab.onQualityPrecisionSnappingEnabled)
+        self.settings_tab.signals.jpeg_encoder_changed.connect(self.output_tab.onJPEGEncoderChanged)
+        self.settings_tab.signals.jxl_lossy_modular_toggled.connect(self.output_tab.onJXLLossyModularVisibleToggled)
+        self.settings_tab.signals.jxl_int_effort_toggled.connect(self.output_tab.onJXLIntEffortVisibleToggled)
 
     def setupMisc(self) -> None:
         select_tab_sc = []

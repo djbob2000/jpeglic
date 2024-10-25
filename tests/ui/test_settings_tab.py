@@ -11,10 +11,6 @@ def app(qtbot):
     with patch("ui.settings_tab.WidgetManager.loadState"), \
         patch("ui.settings_tab.WidgetManager.saveState"), \
         patch("ui.settings_tab.setTheme"):
-        app = QApplication.instance()
-        if not app:
-            app = QApplication([])
-
         tab = SettingsTab()
         qtbot.addWidget(tab)
         return tab
@@ -30,16 +26,18 @@ def test_changeCategory_visibility(category, app, qtbot):
             "play_sound_on_finish_cb", "play_sound_on_finish_vol_l", "play_sound_on_finish_vol_sb",
         ],
         "conversion": [
-            "jxl_lossless_jpeg_cb",
             "jxl_optimizer_cb",
+            "jxl_lossy_modular_cb",
+            "jxl_lossless_jpeg_cb",
             "jpg_encoder_l", "jpg_encoder_cmb",
             "disable_progressive_jpegli_cb",
             "keep_if_larger_cb",
             "copy_if_larger_cb",
         ],
         "advanced": [
-            "no_exceptions_cb",
             "jxl_effort_10_cb",
+            "jxl_int_effort_cb",
+            "no_exceptions_cb",
             "custom_resampling_cb",
             "exiftool_l",
             "exiftool_reset_btn",
@@ -75,9 +73,9 @@ def test_setDarkModeEnabled(mock_setTheme, app):
     assert mock_setTheme.called_once_with("light")
 
 @pytest.mark.parametrize("signal_attr, widget_attr", [
-    ("custom_resampling", "custom_resampling_cb"),
-    ("disable_sorting", "no_sorting_cb"),
-    ("enable_jxl_effort_10", "jxl_effort_10_cb"),
+    ("custom_resampling_toggled", "custom_resampling_cb"),
+    ("sorting_toggled", "no_sorting_cb"),
+    ("jxl_effort_10_toggled", "jxl_effort_10_cb"),
 ])
 def test_signals(app, qtbot, signal_attr, widget_attr):
     with qtbot.waitSignal(getattr(app.signals, signal_attr)) as blocker:
@@ -96,10 +94,13 @@ def test_resetToDefault(app):
     assert app.disable_delete_startup_cb.isChecked() == True
     assert app.no_exceptions_cb.isChecked() == False
     
+    assert app.jxl_optimizer_cb.isChecked() == True
     assert app.jxl_effort_10_cb.isChecked() == False
+    assert app.jxl_lossy_modular_cb.isChecked() == False
     assert app.custom_resampling_cb.isChecked() == False
     assert app.disable_progressive_jpegli_cb.isChecked() == False
 
+    assert app.jxl_int_effort_cb.isChecked() == False
     assert app.custom_args_cb.isChecked() == False
     assert app.cjxl_args_te.toPlainText() == ""
     assert app.cjpegli_args_te.toPlainText() == ""
