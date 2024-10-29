@@ -21,6 +21,28 @@ from data.process_manager import ProcessManager
 import data.task_status as task_status
 from core.worker import Worker
 
+class CheckFlags(Enum):
+    DISABLE_DOWNSCALING = auto()
+
+@dataclass
+class CheckStatus:
+    allowed_to_proceed: bool = True
+    display_error: bool = False
+    error_title: str = ""
+    error_description: str = ""
+    flags: List[CheckFlags] = field(default_factory=list)
+
+    def setError(self, title: str, description: str, allowed_to_proceed: bool = False, display_error: bool = True) -> None:
+        self.display_error = display_error
+        self.error_title = title
+        self.error_description = description
+        self.allowed_to_proceed = allowed_to_proceed
+    
+    def addFlags(self, *new_flags: List[CheckFlags]) -> None:
+        for new_flag in new_flags:
+            if new_flag not in self.flags:
+                self.flags.append(new_flag)
+
 class Controller(QObject):
     processing_started = Signal()
     processing_finished = Signal()      # finished / canceled
@@ -49,7 +71,7 @@ class Controller(QObject):
         sm_is_format_pool_empty: bool,
         output_tab_settings: dict[str, Any],
         modify_tab_settings: dict[str, Any],
-    ) -> Dict[str, Union[str, bool, List]]:
+    ) -> CheckStatus:
         """Performs pre-conversion checks. Remember to parse data before."""
         output = CheckStatus()
 
@@ -174,7 +196,7 @@ class Controller(QObject):
 
         self.time_left.startCounting(self.items.getItemCount())
         self.processing_started.emit()
-        self.update_progress_line1.emit(f"Starting the conversion...")   # Needs to stay after processing_started.emit()
+        self.update_progress_line1.emit("Starting the conversion...")   # Needs to stay after processing_started.emit()
 
     def finishProcessing(self) -> None:
         if self.finish_emitted:
@@ -218,25 +240,3 @@ class Controller(QObject):
     def workerCanceled(self, n: int) -> None:
         self.finishProcessing()
         logging.debug(f"[Worker #{n}] Canceled")
-
-class CheckFlags(Enum):
-    DISABLE_DOWNSCALING = auto()
-
-@dataclass
-class CheckStatus:
-    allowed_to_proceed: bool = True
-    display_error: bool = False
-    error_title: str = ""
-    error_dsc: str = ""
-    flags: List[CheckFlags] = field(default_factory=list)
-
-    def setError(self, title: str, description: str, allowed_to_proceed: bool = False, display_error: bool = True) -> None:
-        self.display_error = display_error
-        self.error_title = title
-        self.error_description = description
-        self.allowed_to_proceed = allowed_to_proceed
-    
-    def addFlags(self, *new_flags: List[CheckFlags]) -> None:
-        for new_flag in new_flags:
-            if new_flag not in self.flags:
-                self.flags.append(new_flag)
