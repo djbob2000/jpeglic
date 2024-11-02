@@ -143,7 +143,7 @@ class MainWindow(QMainWindow):
 
         self.setUIEnabled(True)
 
-    def convert(self):
+    def convert(self) -> None:
         output_tab_settings = self.output_tab.getSettings()
         modify_tab_settings = self.modify_tab.getSettings()
         settings_tab_settings = self.settings_tab.getSettings()
@@ -186,31 +186,31 @@ class MainWindow(QMainWindow):
         return self.tabs.isEnabled()
     
     # Events
-    def closeEvent(self, e):
+    def closeEvent(self, event) -> None:
         self.settings_tab.saveState()
         self.output_tab.saveState()
         self.modify_tab.saveState()
         self.input_tab.saveState()
         if self.threadpool.activeThreadCount() > 0:
             ProcessManager.terminateAll()
-        super().closeEvent(e)
+        super().closeEvent(event)
     
-    def dragEnterEvent(self, e):
-        if self.isUIEnabled() and e.mimeData().hasUrls():
-            e.accept()
+    def dragEnterEvent(self, event) -> None:
+        if self.isUIEnabled() and event.mimeData().hasUrls():
+            event.accept()
         else:
-            e.ignore()
+            event.ignore()
 
-    def dropEvent(self, e):
-        if e.mimeData().hasUrls():
-            e.accept()
+    def dropEvent(self, event) -> None:
+        if event.mimeData().hasUrls():
+            event.accept()
             self.tabs.setCurrentIndex(0)
-            self.input_tab.file_view.dropEvent(e)
+            self.input_tab.file_view.dropEvent(event)
         else:
-            e.ignore()
+            event.ignore()
     
-    def moveEvent(self, e):
-        super().moveEvent(e)
+    def moveEvent(self, event) -> None:
+        super().moveEvent(event)
         self.moved.emit()
 
 if __name__ == "__main__":
