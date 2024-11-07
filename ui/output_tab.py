@@ -408,7 +408,7 @@ class OutputTab(QWidget):
                 self.quality_sl.setValue(90)
                 self.effort_sb.setValue(6)
             case "Lossless JPEG Transcoding":
-                self.effort_sb.setValue(9)
+                self.effort_sb.setValue(7)
         
         self.int_effort_cb.setChecked(False)
         self.jxl_modular_cb.setChecked(False)
@@ -479,7 +479,7 @@ class OutputTab(QWidget):
             case "JPEG":
                 self.wm.applyVar("jpg_quality", "quality_sl", 90)
             case "Lossless JPEG Transcoding":
-                self.wm.applyVar("jxl_lossless_jpeg_effort", "effort_sb", 9)
+                self.wm.applyVar("jxl_lossless_jpeg_effort", "effort_sb", 7)
 
     def saveState(self, new_states: Optional[Dict] = None) -> None:
         if new_states is None or new_states != self.cached_states:
