@@ -34,7 +34,7 @@ def test_initial_state(app):
     assert settings["effort"] == 7
     assert settings["intelligent_effort"] == False
     assert settings["jxl_modular"] == False
-    assert settings["jxl_png_fallback"] == True
+    assert settings["jxl_png_fallback"] == False
     assert settings["delete_original"] == False
     assert settings["jxl_verify"] == False
     assert not app.smIsFormatPoolEmpty()
@@ -180,7 +180,6 @@ def test_onFormatChange_visibility(app, file_format, visible_widgets):
     # Misc.
     jxl_modular = "jxl_modular" in visible_widgets
     assert app.jxl_modular_cb.isVisibleTo(app) == jxl_modular
-    assert app.jxl_modular_l.isVisibleTo(app) == jxl_modular
 
     chroma_subsampling = "chroma_subsampling" in visible_widgets
     assert app.chroma_subsampling_l.isVisibleTo(app) == chroma_subsampling
@@ -201,7 +200,6 @@ def test_onFormatChange_visibility(app, file_format, visible_widgets):
 
 @pytest.mark.parametrize("widget_name, variable_name", [
     ("int_effort_cb", "jxl_int_effort_visible"),
-    ("jxl_modular_l", "jxl_lossy_modular_visible"),
     ("jxl_modular_cb", "jxl_lossy_modular_visible"),
 ])
 def test_onFormatChange_visibility_controled_by_vars(widget_name, variable_name, app):

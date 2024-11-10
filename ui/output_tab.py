@@ -111,10 +111,8 @@ class OutputTab(QWidget):
         self.quality_sb = self.wm.addWidget("quality_sb", SpinBox(), "quality", "quality_all")
         self.quality_sl = self.wm.addWidget("quality_sl", Slider(), "quality", "quality_all")
         self.lossless_cb = self.wm.addWidget("lossless_cb", QCheckBox("Lossless"), "lossless")
-        self.lossless_spacer_l = self.wm.addWidget("lossless_spacer_l", QLabel(""), "lossless")
         self.max_compression_cb = self.wm.addWidget("max_compression_cb", QCheckBox("Max Compression"))
-        self.jxl_modular_l = self.wm.addWidget("jxl_modular_l", QLabel("Lossy Mode"), "jxl_losssy_modular")
-        self.jxl_modular_cb = self.wm.addWidget("jxl_modular_cb", QCheckBox("Modular"), "jxl_losssy_modular")
+        self.jxl_modular_cb = self.wm.addWidget("jxl_modular_cb", QCheckBox("Lossy Modular"), "jxl_losssy_modular")
         self.smallest_lossless_png_cb = self.wm.addWidget("smallest_lossless_png_cb", QCheckBox("PNG"), "format_pool")
         self.smallest_lossless_webp_cb = self.wm.addWidget("smallest_lossless_webp_cb", QCheckBox("WebP"), "format_pool")
         self.smallest_lossless_jxl_cb = self.wm.addWidget("smallest_lossless_jxl_cb", QCheckBox("JPEG XL"), "format_pool")
@@ -158,8 +156,7 @@ class OutputTab(QWidget):
         self.format_grp_lt.addLayout(createQHBoxLayout(QLabel("Format / Mode"), self.format_cmb))
         self.format_grp_lt.addLayout(createQHBoxLayout(self.effort_l, self.int_effort_cb, self.effort_sb))
         self.format_grp_lt.addLayout(createQHBoxLayout(self.quality_l, self.quality_sl, self.quality_sb))
-        self.format_grp_lt.addLayout(createQHBoxLayout(self.jxl_modular_l, self.jxl_modular_cb))
-        self.format_grp_lt.addLayout(createQHBoxLayout(self.lossless_spacer_l, self.lossless_cb))
+        self.format_grp_lt.addLayout(createQHBoxLayout(self.lossless_cb, self.jxl_modular_cb))
         self.format_grp_lt.addLayout(createQHBoxLayout(self.smallest_lossless_png_cb, self.smallest_lossless_webp_cb, self.smallest_lossless_jxl_cb))
         self.format_grp_lt.addWidget(self.max_compression_cb)
         self.format_grp_lt.addLayout(createQHBoxLayout(self.chroma_subsampling_l, self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_avif_cmb, self.chroma_subsampling_jpg_cmb))
@@ -441,7 +438,7 @@ class OutputTab(QWidget):
         for i in self.wm.getWidgetsByTag("format_pool"):
             i.setChecked(True)
         
-        self.jxl_png_fallback_cb.setChecked(True)
+        self.jxl_png_fallback_cb.setChecked(False)
 
     def _setQualityRange(self, _min: int, _max: int) -> None:
         for i in self.wm.getWidgetsByTag("quality"):
