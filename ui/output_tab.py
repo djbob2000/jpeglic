@@ -126,6 +126,7 @@ class OutputTab(QWidget):
         self.chroma_subsampling_jpg_cmb = self.wm.addWidget("chroma_subsampling_jpg_cmb", ComboBox(self), "chroma_subsampling")
         self.chroma_subsampling_jpg_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
         self.jxl_png_fallback_cb = self.wm.addWidget("jxl_png_fallback_cb", QCheckBox("PNG Fallback"))
+        self.jxl_verify_cb = self.wm.addWidget("jxl_verify_cb", QCheckBox("Verify"))
 
         # Buttons
         self.reset_to_default_btn = QPushButton("Reset to Default")
@@ -163,6 +164,7 @@ class OutputTab(QWidget):
         self.format_grp_lt.addWidget(self.max_compression_cb)
         self.format_grp_lt.addLayout(createQHBoxLayout(self.chroma_subsampling_l, self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_avif_cmb, self.chroma_subsampling_jpg_cmb))
         self.format_grp_lt.addWidget(self.jxl_png_fallback_cb)
+        self.format_grp_lt.addWidget(self.jxl_verify_cb)
 
         # Main
         self.main_lt = QGridLayout(self)
@@ -208,6 +210,7 @@ class OutputTab(QWidget):
         setToolTip(TOOLTIPS["format"], self.format_cmb)
         setToolTip(TOOLTIPS["jxl_modular"], self.jxl_modular_cb)
         setToolTip(TOOLTIPS["jxl_png_fallback"], self.jxl_png_fallback_cb)
+        setToolTip(TOOLTIPS["jxl_verify"], self.jxl_verify_cb)
         setToolTip(TOOLTIPS["int_effort"], self.int_effort_cb)
         setToolTip(TOOLTIPS["chroma_subsampling_jpeg"], self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_jpg_cmb)
         setToolTip(TOOLTIPS["chroma_subsampling_avif"], self.chroma_subsampling_avif_cmb)
@@ -261,6 +264,7 @@ class OutputTab(QWidget):
             "effort": self.effort_sb.value(),
             "intelligent_effort": self.int_effort_cb.isChecked() if self.jxl_int_effort_visible else False,
             "jxl_modular": self.jxl_modular_cb.isChecked() if self.jxl_lossy_modular_visible else False,
+            "jxl_verify": self.jxl_verify_cb.isChecked(),
             "avif_chroma_subsampling": self.chroma_subsampling_avif_cmb.currentText(),
             "jpegli_chroma_subsampling": self.chroma_subsampling_jpegli_cmb.currentText(),
             "jpg_chroma_subsampling": self.chroma_subsampling_jpg_cmb.currentText(),
@@ -322,6 +326,7 @@ class OutputTab(QWidget):
         self.chroma_subsampling_jpegli_cmb.setVisible(cur_format == "JPEG" and self.jpg_encoder == "JPEGLI")
         self.chroma_subsampling_avif_cmb.setVisible(cur_format == "AVIF")
         self.jxl_png_fallback_cb.setVisible(cur_format == "JPEG Reconstruction")
+        self.jxl_verify_cb.setVisible(cur_format == "Lossless JPEG Transcoding")
 
         # Params
         if cur_format == "AVIF":
@@ -412,6 +417,7 @@ class OutputTab(QWidget):
         
         self.int_effort_cb.setChecked(False)
         self.jxl_modular_cb.setChecked(False)
+        self.jxl_verify_cb.setChecked(False)
 
         self.choose_output_src_rb.setChecked(True)
         self.keep_dir_struct_cb.setChecked(False)

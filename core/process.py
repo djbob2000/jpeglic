@@ -4,6 +4,32 @@ import logging
 
 from data.process_manager import ProcessManager
 
+def runProcess2(*cmd: str, cwd: str | None = None) -> (str, str):
+    """Replacement for runProcess() and runProcessOutput().
+    
+    Returns:
+        (stdout, stderr)
+    """
+    logging.info(f"[runProcess2] {cmd}")
+
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=_getStartupInfo(), cwd=cwd)
+    ProcessManager.addProcess(process)
+    process.wait()
+    stdout, stderr = process.communicate()
+
+    try:
+        if stdout:
+            stdout = stdout.decode("utf-8")
+            logging.info(f"[runProcess2] {stdout}")
+
+        if stderr:
+            stderr = stderr.decode("utf-8")
+            logging.info(f"[runProcess2] {stderr}")
+    except Exception as err:
+        logging.error(f"[runProcess2] Failed to decode process output. {err}")
+
+    return (stdout or "", stderr or "")
+
 def _getStartupInfo():
     """Get startup info for Windows. Prevents console window from showing."""
     startupinfo = None

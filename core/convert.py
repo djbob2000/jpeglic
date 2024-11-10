@@ -9,8 +9,27 @@ from data.constants import (
     JXLINFO_PATH,
     AVIFENC_PATH
 )
-from core.process import runProcess, runProcessOutput
-from core.exceptions import GenericException
+from core.process import runProcess, runProcessOutput, runProcess2
+from core.exceptions import GenericException, CancellationException
+import data.task_status as task_status
+
+def runBinary(bin_path: str, args: list, src: str, dst: str) -> (str, str):
+    """Replacement for convert().
+    
+    Returns:
+        (stdout, stderr)
+
+    Raises:
+        CancellationException: if task_status is canceled
+    """
+    cmd = (bin_path, *parseArgs(args), src, dst)
+    
+    stdout, stderr = runProcess2(*cmd)
+
+    if task_status.wasCanceled():
+        raise CancellationException()
+
+    return (stdout, stderr)
 
 def convert(encoder_path, src, dst, args = [], n = None):
     """Universal method for all encoders."""

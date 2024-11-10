@@ -27,13 +27,14 @@ from data.constants import (
 
 from core.proxy import Proxy
 from core.pathing import getUniqueFilePath, getExtension, getOutputDir
-from core.convert import convert, getDecoder, getDecoderArgs, getExtensionJxl, optimize
+from core.convert import convert, getDecoder, getDecoderArgs, getExtensionJxl, optimize, runBinary
 from core.downscale import downscale, decodeAndDownscale
 import core.metadata as metadata
 import data.task_status as task_status
 from core.exceptions import CancellationException, GenericException, FileException
 import core.conflicts as conflicts
-from core.utils import getFreeSpaceLeft
+from core.utils import getFreeSpaceLeft, b2sum
+from core.process import runProcessOutput
 
 class Signals(QObject):
     started = Signal(int)
@@ -109,7 +110,7 @@ class Worker(QRunnable):
             
             match self.params["format"]:
                 case "Lossless JPEG Transcoding":
-                    self.losslesslyRecompressJPEG()
+                    self.losslesslyTranscodeJPEG()
                 case "JPEG Reconstruction":
                     self.reconstructJPEG()
                 case "Smallest Lossless":
@@ -559,14 +560,57 @@ class Worker(QRunnable):
         self.output_ext = sm_f_key
         self.final_output = os.path.join(self.output_dir, f"{self.item_name}.{sm_f_key}")
 
-    def losslesslyRecompressJPEG(self):
+    def losslesslyTranscodeJPEG(self):
         self.lossless_jpeg = True
-        args = [
-            "--lossless_jpeg=1",
-            f"-e {self.params['effort']}",
-            f"--num_threads={self.available_threads}",
-        ]
-        convert(CJXL_PATH, self.item_abs_path, self.output, args, self.n)
+
+        stdout, stderr = runBinary(
+            CJXL_PATH,
+            [
+                "--lossless_jpeg=1",
+                f"-e {self.params['effort']}",
+                f"--num_threads={self.available_threads}",
+            ],
+            self.item_abs_path,
+            self.output,
+        )
+
+        if not os.path.isfile(self.output):
+            raise FileException("lossless_jpeg_0", f"Transcoding failed. {stderr}")
+
+        # Verify
+        if self.params["jxl_verify"]:
+            # Preparation
+            with QMutexLocker(self.mutex):
+                tmp_path = getUniqueFilePath(
+                    self.output_dir,
+                    "tmp",
+                    "jpg",
+                    True
+                )
+            stdout, stderr = runBinary(
+                DJXL_PATH,
+                [f"--num_threads={self.available_threads}"],
+                self.output,
+                tmp_path,
+            )
+            if not os.path.isfile(tmp_path):
+                raise FileException("lossless_jpeg_1", f"File not found. {stderr}")
+            if not os.path.isfile(self.item_abs_path):
+                raise FileException("lossless_jpeg_2", "Source deleted, cannot generate checksum.")
+
+            # Verification
+            src_b2sum, targer_b2sum = b2sum(self.item_abs_path), b2sum(tmp_path)
+            try:
+                os.remove(tmp_path)
+            except OSError as e:
+                raise FileException("lossless_jpeg_3", f"Cannot remove temp file. {e}")
+
+            if src_b2sum != targer_b2sum:
+                try:
+                    os.remove(self.output)
+                except OSError as e:
+                    raise FileException("lossless_jpeg_4", f"Cannot remove temp file. {e}")
+                raise FileException("lossless_jpeg_5", f"Checksum mismatch. {stderr}")
 
     def reconstructJPEG(self):
         self.lossless_jpeg = True

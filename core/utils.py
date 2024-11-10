@@ -3,6 +3,7 @@ import os
 import logging
 from pathlib import Path
 from typing import List, Any
+from hashlib import blake2b
 
 def scanDir(path: str) -> list:
     """Recursively scan a directory for files. Returns paths or raises FileNotFoundError If a directory was not found."""
@@ -43,3 +44,22 @@ def getFreeSpaceLeft(path: str) -> int:
     except Exception as e:
         logging.error(f"[getFreeSpaceLeft] {e}")
         return -1
+
+def b2sum(file_path: str, digest_size: int = 64, chunk_size: int = 8192) -> str:
+    """Calculates BLAKE2b sum from a given file.
+    
+    Raises:
+        OSError: if file cannot be read.
+        ValueError: if digest_size is not between 1 and 64
+    """
+    path = Path(file_path)
+    hasher = blake2b(digest_size=digest_size)
+
+    try:
+        with path.open("rb") as f:
+            while chunk := f.read(chunk_size):
+                hasher.update(chunk)
+    except OSError as e:
+        raise OSError(f"Cannot calculate checksum. {e}")
+
+    return hasher.hexdigest()

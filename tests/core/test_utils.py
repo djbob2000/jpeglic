@@ -1,5 +1,7 @@
 from pathlib import Path
 import os
+from unittest.mock import mock_open, patch
+from hashlib import blake2b
 
 import pytest
 
@@ -81,3 +83,35 @@ def test_clip():
     assert utils.clip(150, 0, 100) == 100
     assert utils.clip(-50, 0, 100) == 0
     assert utils.clip(50, 0, 100) == 50
+
+def test_b2sum_valid_path():
+    file_content = b"test"
+    expected_hash = blake2b(file_content, digest_size=64).hexdigest()
+
+    with (
+        patch.object(Path, "open", mock_open(read_data=file_content)),
+    ):
+        assert utils.b2sum("path/to/file") == expected_hash, "The hash does not match."
+
+def test_b2sum_invalid_path():
+    with (
+        patch.object(Path, "open", side_effect=OSError("File not found")),
+        pytest.raises(OSError),
+    ):
+        utils.b2sum("path/to/file")
+
+def test_b2sum_invalid_digest_size():
+    with (
+        patch.object(Path, "open", mock_open(read_data=b"test")),
+        pytest.raises(ValueError)
+    ):
+        utils.b2sum("path/to/file", digest_size=65)
+
+def test_b2sum_different_chunk_size():
+    file_content = b"test"
+    expected_hash = blake2b(file_content, digest_size=64).hexdigest()
+
+    with (
+        patch.object(Path, "open", mock_open(read_data=file_content)),
+    ):
+        assert utils.b2sum("path/to/file", chunk_size=8) == expected_hash, "The hash does not match."

@@ -33,6 +33,7 @@ def worker():
             "effort": 7,
             "lossless": False,
             "jxl_modular": False,
+            "jxl_verify": False,
             "avif_chroma_subsampling": "Default",
             "jpegli_chroma_subsampling": "Default",
             "jxl_png_fallback": False,
@@ -848,25 +849,156 @@ def test_smallestLossless_args(jxl_lossless_jpeg, smallestLossless_patches, work
                     "--metadata_arg"
                 ]
 
-@pytest.mark.parametrize("effort, expected_args", [
-    (7, ["--lossless_jpeg=1", "-e 7", "--num_threads=4"]),
-    (9, ["--lossless_jpeg=1", "-e 9", "--num_threads=4"]),
-])
-def test_losslesslyRecompressJPEG(effort, expected_args, worker):
-    worker.params["effort"] = effort
+def test_losslesslyTranscodeJPEG_no_output(worker):
+    expected_stderr = "sample stderr"
     with (
-        patch("core.worker.convert") as mock_convert,
-        patch("core.worker.CJXL_PATH", "/path/cjxl"),
+        patch("core.worker.runBinary", return_value=("", expected_stderr)) as mock_runBinary,
+        patch("core.worker.os.path.isfile", return_value=False),
+        pytest.raises(FileException) as exc_info,
     ):
-        worker.losslesslyRecompressJPEG()
+        worker.losslesslyTranscodeJPEG()
 
-    mock_convert.assert_called_once_with(
-        "/path/cjxl",
-        worker.item_abs_path,
-        worker.output,
-        expected_args,
-        0
+        mock_runBinary.assert_called_once()
+        assert expected_stderr in str(exc_info.value)
+
+@pytest.fixture
+def worker_losslesslyTranscodeJPEG(worker):
+    worker.params["jxl_verify"] = True
+
+    var_patches = {
+        "cjxl_path": patch("core.worker.CJXL_PATH", "cjxl_path"),
+        "djxl_path": patch("core.worker.DJXL_PATH", "djxl_path"),
+        "output": patch.object(worker, "output", "path/to/output.jxl"),
+        "item_abs_path": patch.object(worker, "item_abs_path", "path/to/item_abs_path.jpeg"),
+    }
+
+    mock_patches = {
+        "runBinary": patch("core.worker.runBinary", return_value=("", "")),
+        "isfile": patch("core.worker.os.path.isfile", return_value=True),
+        "remove": patch("core.worker.os.remove"),
+        "b2sum": patch("core.worker.b2sum", side_effect=("123", "123")),
+        "QMutexLocker": patch("core.worker.QMutexLocker"),
+        "getUniqueFilePath": patch("core.worker.getUniqueFilePath", return_value="tmp_path"),
+    }
+
+    with ExitStack() as stack:
+        mocks = {name: stack.enter_context(patcher) for name, patcher in mock_patches.items()}
+        variables = {name: stack.enter_context(patcher) for name, patcher in var_patches.items()}
+        yield worker, mocks, variables
+
+def test_losslesslyTranscodeJPEG_verify_happy_path(worker_losslesslyTranscodeJPEG):
+    worker, mocks, variables = worker_losslesslyTranscodeJPEG
+
+    worker.losslesslyTranscodeJPEG()
+
+    mocks["QMutexLocker"].assert_called_once_with(worker.mutex)
+    assert mocks["runBinary"].call_count == 2
+    assert mocks["runBinary"].call_args_list[0][0] == (
+        variables["cjxl_path"],
+        [
+            "--lossless_jpeg=1",
+            "-e 7",
+            "--num_threads=4",
+        ],
+        variables["item_abs_path"],
+        variables["output"],
     )
+    assert mocks["runBinary"].call_args_list[1][0] == (
+        variables["djxl_path"],
+        ["--num_threads=4"],
+        variables["output"],
+        mocks["getUniqueFilePath"].return_value,
+    )
+    
+    assert mocks["b2sum"].call_count == 2
+    assert mocks["b2sum"].call_args_list[0][0][0] == variables["item_abs_path"]
+    assert mocks["b2sum"].call_args_list[1][0][0] == mocks["getUniqueFilePath"].return_value
+    
+    assert mocks["remove"].call_count == 1
+    assert mocks["remove"].call_args_list[0][0][0] == mocks["getUniqueFilePath"].return_value
+
+def test_losslesslyTranscodeJPEG_verify_checksum_mismatch(worker_losslesslyTranscodeJPEG):
+    worker, mocks, variables = worker_losslesslyTranscodeJPEG
+    mocks["b2sum"].side_effect = ("123", "321")
+    mocks["runBinary"].side_effect = [
+        ("", ""),
+        ("", "stderr"),
+    ]
+
+    with (
+        pytest.raises(FileException) as excinfo,
+    ):
+        worker.losslesslyTranscodeJPEG()
+        # Raised exception prevents further execution inside the context manager.
+
+    assert "Checksum mismatch" in str(excinfo.value.msg)
+    assert "stderr" in str(excinfo.value.msg)
+
+    assert mocks["b2sum"].call_count == 2
+    assert mocks["b2sum"].call_args_list[0][0][0] == variables["item_abs_path"]
+    assert mocks["b2sum"].call_args_list[1][0][0] == mocks["getUniqueFilePath"].return_value
+    
+    assert mocks["remove"].call_count == 2
+    assert mocks["remove"].call_args_list[0][0][0] == mocks["getUniqueFilePath"].return_value
+    assert mocks["remove"].call_args_list[1][0][0] == variables["output"]
+
+def test_losslesslyTranscodeJPEG_verify_remove_tmp_failed(worker_losslesslyTranscodeJPEG):
+    worker, mocks, variables = worker_losslesslyTranscodeJPEG
+    mocks["remove"].side_effect = OSError()
+    mocks["b2sum"].side_effect = ("123", "321")
+
+    with (
+        pytest.raises(FileException) as excinfo,
+    ):
+        worker.losslesslyTranscodeJPEG()
+
+    assert "lossless_jpeg_3" == str(excinfo.value.id)
+    assert "Cannot remove temp file." in str(excinfo.value)
+
+    assert mocks["b2sum"].call_count == 2
+    assert mocks["b2sum"].call_args_list[0][0][0] == variables["item_abs_path"]
+    assert mocks["b2sum"].call_args_list[1][0][0] == mocks["getUniqueFilePath"].return_value
+    
+    assert mocks["remove"].call_count == 1
+    assert mocks["remove"].call_args_list[0][0][0] == mocks["getUniqueFilePath"].return_value
+
+def test_losslesslyTranscodeJPEG_verify_remove_output_failed(worker_losslesslyTranscodeJPEG):
+    worker, mocks, variables = worker_losslesslyTranscodeJPEG
+    exc_msg = "Output."
+    mocks["remove"].side_effect = (None, OSError(exc_msg))
+    mocks["b2sum"].side_effect = ("123", "321")
+
+    with (
+        pytest.raises(FileException) as excinfo,
+    ):
+        worker.losslesslyTranscodeJPEG()
+
+    assert "lossless_jpeg_4" == str(excinfo.value.id)
+
+    assert mocks["remove"].call_count == 2
+    assert mocks["remove"].call_args_list[1][0][0] == variables["output"]
+
+def test_losslesslyTranscodeJPEG_verify_isfile_tmp_false(worker_losslesslyTranscodeJPEG):
+    worker, mocks, variables = worker_losslesslyTranscodeJPEG
+    mocks["isfile"].side_effect = (True, False)
+
+    with (
+        pytest.raises(FileException) as excinfo,
+    ):
+        worker.losslesslyTranscodeJPEG()
+
+    assert "lossless_jpeg_1" == str(excinfo.value.id)
+
+def test_losslesslyTranscodeJPEG_verify_isfile_source_false(worker_losslesslyTranscodeJPEG):
+    worker, mocks, variables = worker_losslesslyTranscodeJPEG
+    mocks["isfile"].side_effect = (True, True, False)
+
+    with (
+        pytest.raises(FileException) as excinfo,
+    ):
+        worker.losslesslyTranscodeJPEG()
+
+    assert "lossless_jpeg_2" == str(excinfo.value.id)
 
 def test_reconstructJPEG(worker):
     worker.org_item_abs_path = "/original/item/path/image.jxl"

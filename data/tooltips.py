@@ -10,6 +10,7 @@ TOOLTIPS = {
     "format": "Which format are you converting to.\n\nHow should the image be processed.",
     "jxl_modular": "Uses Modular instead of VarDCT for lossy encoding.\n\nEnabled - reduces size and increases eligibility in non-photographic images.\n\nDisabled - uses VarDCT.\n\nThis mode is experimental.\n\nCauses discoloration and additional artifacts around the edges.\n\nUse it sparingly.",
     "jxl_png_fallback": "Image will be decoded to PNG if reconstruction data is not found.",
+    "jxl_verify": "Validates that a JPEG image can be reconstructed, and its checksum matches the original.\n\nAn exception will be displayed if any problems occur.\n\nEnabling this option is unnecessary because the transcoding is highly reliable.\n\nHowever, it does provide an additional reassurance.\n\nThe conversion will be slower if enabled.",
     "lossless": "Enables lossless compression.\n\nPixel data will stay the same if given bit depth is supported.",
     "lossless_jpeg_xl": "Enables lossless compression.\n\nPixel data will stay the same if given bit depth is supported.\n\nIt does not perform Lossless JPEG Transcoding by default.",
     "int_effort": "Prioritizes smaller file size.\n\nOscillates between Effort 7 and 9 based on context.\n\nLossless and Lossy (Modular) - Effort 9\n\nLossy (VarDCT) - smallest out of Effort 7 and 9.",

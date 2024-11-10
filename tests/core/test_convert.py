@@ -5,6 +5,40 @@ import pytest
 import core.convert as convert
 from core.exceptions import GenericException
 from data.constants import AVIFENC_PATH, IMAGE_MAGICK_PATH, DJXL_PATH, AVIFDEC_PATH, ALLOWED_INPUT_IMAGE_MAGICK
+from core.exceptions import CancellationException
+
+def test_runBinary():
+    stdout, stderr = "completed", "test"
+    with (
+        patch("core.convert.task_status.wasCanceled", return_value=False),
+        patch("core.convert.runProcess2", return_value=(stdout, stderr)) as mock_runProcess2,
+    ):
+        assert convert.runBinary(
+            "path/bin",
+            ["-arg1", "-arg2"],
+            "path/src.png",
+            "path/dst.jxl"
+        ) == (stdout, stderr)
+        mock_runProcess2.assert_called_once_with(
+            "path/bin",
+            "-arg1", "-arg2",
+            "path/src.png",
+            "path/dst.jxl"
+        )
+
+def test_runBinary_canceled():
+    with (
+        patch("core.convert.task_status.wasCanceled", return_value=True),
+        patch("core.convert.runProcess2", return_value=("", "")) as mock_runProcess2,
+        pytest.raises(CancellationException)
+    ):
+        convert.runBinary(
+            "path/bin",
+            ["-arg1", "-arg2"],
+            "path/src.png",
+            "path/dst.jxl"
+        )
+        mock_runProcess2.assert_called_once()
 
 def test_convert_avifenc():
     with patch("core.convert.runProcess") as mock_runProcess:
