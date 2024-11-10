@@ -3,6 +3,7 @@ import random
 import os
 from pathlib import Path
 import logging
+import string
 
 from core.exceptions import GenericException
 
@@ -17,7 +18,7 @@ def getUniqueFilePath(output_dir: str, file_name: str, file_ext: str, add_rnd = 
         - add_rnd - add random characters to the file name
     """
 
-    rnd_str = "_" + "".join(random.choice("0123456789abcdef") for _ in range(3)) if add_rnd else ""     # hex
+    rnd_str = "_" + "".join(random.choice(string.hexdigits) for _ in range(4)) if add_rnd else ""
     path = os.path.join(output_dir,f"{file_name}{rnd_str}.{file_ext}")
 
     prev = re.search(r"\([0-9]{1,}\)$", file_name)  	# Detect a previously renamed file

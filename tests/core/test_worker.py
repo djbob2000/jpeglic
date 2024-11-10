@@ -1000,19 +1000,62 @@ def test_losslesslyTranscodeJPEG_verify_isfile_source_false(worker_losslesslyTra
 
     assert "lossless_jpeg_2" == str(excinfo.value.id)
 
-def test_reconstructJPEG(worker):
-    worker.org_item_abs_path = "/original/item/path/image.jxl"
-    worker.output = "/tmp/output/image.jxl"
+@pytest.fixture
+def worker_reconstructJPEG_patched(worker):
+    variables = {
+        "DJXL_PATH": patch("core.worker.DJXL_PATH", "/path/djxl"),
+        "output": patch.object(worker, "output", "/tmp/output/image.jxl"),
+        "org_item_abs_path": patch.object(worker, "org_item_abs_path", "/original/item/path/image.jxl"),
+    }
+
+    mocks = {
+        "runBinary": patch("core.worker.runBinary", return_value=("", "")),
+        "isfile": patch("os.path.isfile", return_value=True),
+    }
+
+    with ExitStack() as stack:
+        _mocks = {name: stack.enter_context(patcher) for name, patcher in mocks.items()}
+        _variables = {name: stack.enter_context(patcher) for name, patcher in variables.items()}
+        yield worker, _mocks, _variables
+
+def test_reconstructJPEG_happy_path(worker_reconstructJPEG_patched):
+    worker, mocks, variables = worker_reconstructJPEG_patched
+    stdout, stderr = "stdout", "stderr"
+    mocks["runBinary"].return_value = (stdout, stderr)
+
+    worker.reconstructJPEG()
+    
+    mocks["runBinary"].assert_called_once_with(
+        variables["DJXL_PATH"],
+        ["--num_threads=4"],
+        variables["org_item_abs_path"],
+        variables["output"],
+    )
+    assert worker.lossless_jpeg
+
+def test_reconstructJPEG_reconstruction_failed(worker_reconstructJPEG_patched):
+    worker, mocks, variables = worker_reconstructJPEG_patched
+    stdout, stderr = "", "stderr"
+    mocks["runBinary"].return_value = (stdout, stderr)
+    mocks["isfile"].side_effect = (False, True)
+
     with (
-        patch("core.worker.convert") as mock_convert,
-        patch("core.worker.DJXL_PATH", "/path/djxl"),
+        pytest.raises(FileException) as excinfo,
     ):
         worker.reconstructJPEG()
     
-    mock_convert.assert_called_once_with(
-        "/path/djxl",
-        "/original/item/path/image.jxl",
-        "/tmp/output/image.jxl",
-        ["--num_threads=4"],
-        0
-    )
+    assert "reconstruct_1" == excinfo.value.id
+    assert "Image failed to reconstruct" in excinfo.value.msg
+    assert stderr in excinfo.value.msg
+
+def test_reconstructJPEG_reconstruction_failed_no_input(worker_reconstructJPEG_patched):
+    worker, mocks, variables = worker_reconstructJPEG_patched
+    mocks["isfile"].side_effect = (False, False)
+
+    with (
+        pytest.raises(FileException) as excinfo,
+    ):
+        worker.reconstructJPEG()
+    
+    assert "reconstruct_0" == excinfo.value.id
+    assert "Source image not found" in excinfo.value.msg

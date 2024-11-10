@@ -583,7 +583,7 @@ class Worker(QRunnable):
             with QMutexLocker(self.mutex):
                 tmp_path = getUniqueFilePath(
                     self.output_dir,
-                    "tmp",
+                    self.item_name,
                     "jpg",
                     True
                 )
@@ -614,4 +614,14 @@ class Worker(QRunnable):
 
     def reconstructJPEG(self):
         self.lossless_jpeg = True
-        convert(DJXL_PATH, self.org_item_abs_path, self.output, [f"--num_threads={self.available_threads}"], self.n)
+        stdout, stderr = runBinary(
+            DJXL_PATH,
+            [f"--num_threads={self.available_threads}"],
+            self.org_item_abs_path,
+            self.output,
+        )
+
+        if not os.path.isfile(self.output):
+            if not os.path.isfile(self.org_item_abs_path):
+                raise FileException("reconstruct_0", "Source image not found.")
+            raise FileException("reconstruct_1", f"Image failed to reconstruct. {stderr}")

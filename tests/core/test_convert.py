@@ -26,6 +26,23 @@ def test_runBinary():
             "path/dst.jxl"
         )
 
+def test_runBinary_no_dst():
+    stdout, stderr = "completed", "test"
+    with (
+        patch("core.convert.task_status.wasCanceled", return_value=False),
+        patch("core.convert.runProcess2", return_value=(stdout, stderr)) as mock_runProcess2,
+    ):
+        assert convert.runBinary(
+            "path/bin",
+            ["-arg1", "-arg2"],
+            "path/src.png",
+        ) == (stdout, stderr)
+        mock_runProcess2.assert_called_once_with(
+            "path/bin",
+            "-arg1", "-arg2",
+            "path/src.png",
+        )
+
 def test_runBinary_canceled():
     with (
         patch("core.convert.task_status.wasCanceled", return_value=True),

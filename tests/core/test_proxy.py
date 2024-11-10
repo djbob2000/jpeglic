@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, patch
+from contextlib import ExitStack
 
 import pytest
 from PySide6.QtCore import QMutex
@@ -36,24 +37,47 @@ def test_isProxyNeeded_downscaling(proxy):
     assert not proxy.isProxyNeeded("JPEG XL", "png", downscaling_enabled=True)
 
 @pytest.fixture
-def generate_patches():
-    with (
-        patch("core.proxy.os.path.isfile", return_value=True) as mock_isfile,
-        patch("core.proxy.convert") as mock_convert,
-        patch("core.proxy.getUniqueFilePath", return_value="/proxy/dst/proxy.png") as mock_getUniqueFilePath,
-    ):
-        yield mock_isfile, mock_convert, mock_getUniqueFilePath
+def proxy_generate_patched(proxy):
+    patches = {
+        "isfile": patch("core.proxy.os.path.isfile", return_value=True),
+        "runBinary": patch("core.proxy.runBinary", return_value=("", "")),
+        "getUniqueFilePath": patch("core.proxy.getUniqueFilePath", return_value="/proxy/dst/proxy.png"),
+        "getDecoder": patch("core.proxy.getDecoder"),
+    }
 
-def test_generate_proxy_success(generate_patches, proxy):
-    proxy.generate("/path/to/src.avif", "avif", "/proxy/dst", "src", 0, QMutex())
-    assert proxy.proxy_path == "/proxy/dst/proxy.png"
+    with ExitStack() as stack:
+        mocks = {name: stack.enter_context(patcher) for name, patcher in patches.items()}
+        yield proxy, mocks
 
-def test_generate_proxy_failure(generate_patches, proxy):
-    mock_isfile, *_ = generate_patches
-    mock_isfile.return_value = False
+def test_generate_proxy_success(proxy_generate_patched):
+    proxy, mocks = proxy_generate_patched
+    src, src_ext, dst_dir, file_name = "/path/to/src.avif", "avif", "/proxy/dst", "src"
+    proxy_path = "/proxy/dst/proxy.png"
+    mocks["getUniqueFilePath"].return_value = proxy_path
 
-    with pytest.raises(FileException):
+    proxy.generate(src, src_ext, dst_dir, file_name, 0, QMutex())
+
+    assert proxy.proxy_path == proxy_path
+    mocks["runBinary"].assert_called_once_with(
+        mocks["getDecoder"].return_value,
+        [],
+        src,
+        proxy_path,
+    )
+    mocks["isfile"].assert_called_once_with(proxy_path)
+
+def test_generate_proxy_failure(proxy_generate_patched):
+    proxy, mocks = proxy_generate_patched
+    stderr = "stderr"
+    mocks["isfile"].return_value = False
+    mocks["runBinary"].return_value = ("", stderr)
+
+    with pytest.raises(FileException) as excinfo:
         proxy.generate("/path/to/src.avif", "avif", "/proxy/dst", "src", 0, QMutex())
+        
+    assert excinfo.value.id == "Proxy1"
+    assert "Generating proxy failed." in excinfo.value.msg
+    assert stderr in excinfo.value.msg
 
 def test_getPath_empty(proxy):
     assert not proxy.proxyExists()

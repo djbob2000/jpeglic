@@ -13,8 +13,14 @@ from core.process import runProcess, runProcessOutput, runProcess2
 from core.exceptions import GenericException, CancellationException
 import data.task_status as task_status
 
-def runBinary(bin_path: str, args: list, src: str, dst: str) -> (str, str):
+def runBinary(bin_path: str, args: list[str], src_path: str, dst_path: str | None = None) -> (str, str):
     """Replacement for convert().
+
+    Args:
+        bin_path: the absolute path to the binary
+        args: a list of str argument
+        src_path: the absolute path to the source file
+        dst_path: an absolute path to the destination file
     
     Returns:
         (stdout, stderr)
@@ -22,8 +28,11 @@ def runBinary(bin_path: str, args: list, src: str, dst: str) -> (str, str):
     Raises:
         CancellationException: if task_status is canceled
     """
-    cmd = (bin_path, *parseArgs(args), src, dst)
-    
+    if dst_path is not None:
+        cmd = (bin_path, *parseArgs(args), src_path, dst_path)
+    else:
+        cmd = (bin_path, *parseArgs(args), src_path)
+
     stdout, stderr = runProcess2(*cmd)
 
     if task_status.wasCanceled():
