@@ -1,5 +1,9 @@
 import os
 
+from PySide6.QtCore import (
+    QMutexLocker,
+)
+
 import data.task_status as task_status
 from data.constants import (
     IMAGE_MAGICK_PATH,
@@ -73,11 +77,12 @@ def cancelCheck(*tmp_files):
 #                           Scaling
 # ------------------------------------------------------------
 
-def _downscaleToFileSizeStepAuto(params):
+def _downscaleToFileSize(params, mutex):
     # Prepare data
     fault_tolerance = 0.1    # 0.1 is 10%
     size_samples = []
-    proxy_src = getUniqueFilePath(params["dst_dir"], params["name"], "png", True)
+    with QMutexLocker(mutex):
+        proxy_src = getUniqueFilePath(params["dst_dir"], params["name"], "png", True)
 
     # JPEG XL - intelligent effort
     if params["format"] == "JPEG XL" and params["jxl_int_e"]:
@@ -169,7 +174,8 @@ def _downscaleToFileSizeStepAuto(params):
         # JPEG XL - intelligent effort
         if params["format"] == "JPEG XL" and params["jxl_int_e"]:
             params["args"][1] = "-e 9"
-            e9_tmp = getUniqueFilePath(params["dst_dir"], params["name"], "jxl", True)
+            with QMutexLocker(mutex):
+                e9_tmp = getUniqueFilePath(params["dst_dir"], params["name"], "jxl", True)
 
             convert(params["enc"], proxy_src, e9_tmp, params["args"], params["n"])
 
@@ -192,7 +198,7 @@ def _downscaleToFileSizeStepAuto(params):
 
         return True
 
-def _downscaleManualModes(params):
+def _downscaleManualModes(params, mutex):
     """Internal wrapper for all regular downscaling modes."""
     # Set arguments
     args = []
@@ -231,7 +237,8 @@ def _downscaleManualModes(params):
         args.extend(params["args"])
         convert(IMAGE_MAGICK_PATH, params["src"], params["dst"], args, params["n"])
     else:
-        downscaled_path = getUniqueFilePath(params["dst_dir"], params["name"], "png", True)
+        with QMutexLocker(mutex):
+            downscaled_path = getUniqueFilePath(params["dst_dir"], params["name"], "png", True)
 
         # Downscale
         # Proxy was handled before in Worker.py
@@ -247,7 +254,8 @@ def _downscaleManualModes(params):
         if params["format"] == "JPEG XL" and params["jxl_int_e"]: 
             params["args"][1] = "-e 9"
 
-            e9_tmp = getUniqueFilePath(params["dst_dir"], params["name"], "jxl", True)
+            with QMutexLocker(mutex):
+                e9_tmp = getUniqueFilePath(params["dst_dir"], params["name"], "jxl", True)
             convert(params["enc"], downscaled_path, e9_tmp, params["args"], params["n"])
 
             try:
@@ -273,7 +281,7 @@ def _downscaleManualModes(params):
 #                           Public
 # ------------------------------------------------------------
 
-def decodeAndDownscale(params, ext, metadata_mode):
+def decodeAndDownscale(params, ext, metadata_mode, mutex):
     """Decode to PNG with downscaling support."""
     params["enc"] = getDecoder(ext)
     params["args"] = metadata.getArgs(params["enc"], metadata_mode)
@@ -282,13 +290,14 @@ def decodeAndDownscale(params, ext, metadata_mode):
         downscale(params)
     else:
         # Generate proxy
-        proxy_path = getUniqueFilePath(params["dst_dir"], params["name"], "png", True)
+        with QMutexLocker(mutex):
+            proxy_path = getUniqueFilePath(params["dst_dir"], params["name"], "png", True)
         convert(params["enc"], params["src"], proxy_path, [], params["n"])
 
         # Downscale
         params["src"] = proxy_path
         params["enc"] = IMAGE_MAGICK_PATH
-        downscale(params)
+        downscale(params, mutex)
 
         # Clean-up
         try:
@@ -296,7 +305,7 @@ def decodeAndDownscale(params, ext, metadata_mode):
         except OSError as err:
             raise FileException("D1", err)
 
-def downscale(params):
+def downscale(params, mutex):
     """A wrapper for all downscaling methods. Keeps the same aspect ratio.
     
         "mode" - downscaling mode
@@ -327,6 +336,6 @@ def downscale(params):
         raise CancellationException()
     
     if params["mode"] == "File Size":
-        _downscaleToFileSizeStepAuto(params)
+        _downscaleToFileSize(params, mutex)
     else:
-        _downscaleManualModes(params)
+        _downscaleManualModes(params, mutex)

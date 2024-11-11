@@ -459,7 +459,7 @@ def test_convert_downscale(worker):
         
         worker.convert()
 
-        mock_downscale.assert_called_once_with(worker.scl_params)
+        mock_downscale.assert_called_once_with(worker.scl_params, worker.mutex)
 
 def test_convert_downscale_png(worker):
     with convert_patches() as patches:
@@ -472,7 +472,8 @@ def test_convert_downscale_png(worker):
         mock_decodeAndDownscale.assert_called_once_with(
             worker.scl_params,
             worker.item_ext,
-            worker.params["misc"]["keep_metadata"]
+            worker.params["misc"]["keep_metadata"],
+            worker.mutex,
         )
 def test_convert_jpeg_xl_intelligent_effort_canceled(worker):
     with (

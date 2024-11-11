@@ -336,9 +336,9 @@ class Worker(QRunnable):
             self.scl_params["jxl_int_e"] = self.params["intelligent_effort"]
 
             if format == "PNG":
-                decodeAndDownscale(self.scl_params, self.item_ext, self.params["misc"]["keep_metadata"])
+                decodeAndDownscale(self.scl_params, self.item_ext, self.params["misc"]["keep_metadata"], self.mutex)
             else:
-                downscale(self.scl_params)
+                downscale(self.scl_params, self.mutex)
         else:   # No downscaling
             if format == "JPEG XL" and self.params["intelligent_effort"]:
                 with QMutexLocker(self.mutex):

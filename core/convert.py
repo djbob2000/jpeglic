@@ -13,7 +13,13 @@ from core.process import runProcess, runProcessOutput, runProcess2
 from core.exceptions import GenericException, CancellationException
 import data.task_status as task_status
 
-def runBinary(bin_path: str, args: list[str], src_path: str, dst_path: str | None = None) -> (str, str):
+def runBinary(
+    bin_path: str,
+    args: list[str],
+    src_path: str,
+    dst_path: str | None = None,
+    args_after_input: bool = False,
+) -> (str, str):
     """Replacement for convert().
 
     Args:
@@ -21,6 +27,7 @@ def runBinary(bin_path: str, args: list[str], src_path: str, dst_path: str | Non
         args: a list of str argument
         src_path: the absolute path to the source file
         dst_path: an absolute path to the destination file
+        args_after_input: insert args after input instead of before
     
     Returns:
         (stdout, stderr)
@@ -28,10 +35,14 @@ def runBinary(bin_path: str, args: list[str], src_path: str, dst_path: str | Non
     Raises:
         CancellationException: if task_status is canceled
     """
-    if dst_path is not None:
-        cmd = (bin_path, *parseArgs(args), src_path, dst_path)
+    cmd = [bin_path]
+    if args_after_input:
+        cmd.extend([src_path, *parseArgs(args)])
     else:
-        cmd = (bin_path, *parseArgs(args), src_path)
+        cmd.extend([*parseArgs(args), src_path])
+
+    if dst_path is not None:
+        cmd.append(dst_path)
 
     stdout, stderr = runProcess2(*cmd)
 

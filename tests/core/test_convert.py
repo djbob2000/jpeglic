@@ -57,6 +57,30 @@ def test_runBinary_canceled():
         )
         mock_runProcess2.assert_called_once()
 
+def test_runBinary_args_after_input():
+    with (
+        patch("core.convert.task_status.wasCanceled", return_value=False),
+        patch("core.convert.runProcess2", return_value=("", "")) as mock_runProcess2,
+    ):
+        convert.runBinary(
+            "path/bin",
+            ["-arg1", "-arg2"],
+            "path/src.png",
+            "path/dst.jxl",
+            args_after_input=False,
+        )
+        assert mock_runProcess2.call_args_list[0][0][1] == "-arg1"
+        assert mock_runProcess2.call_args_list[0][0][2] == "-arg2"
+        convert.runBinary(
+            "path/bin",
+            ["-arg1", "-arg2"],
+            "path/src.png",
+            "path/dst.jxl",
+            args_after_input=True,
+        )
+        assert mock_runProcess2.call_args_list[1][0][2] == "-arg1"
+        assert mock_runProcess2.call_args_list[1][0][3] == "-arg2"
+
 def test_convert_avifenc():
     with patch("core.convert.runProcess") as mock_runProcess:
         convert.convert(AVIFENC_PATH, "src.png", "dst.avif", ["-q", "50"])

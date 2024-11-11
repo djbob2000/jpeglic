@@ -2,6 +2,7 @@ import os
 from unittest.mock import patch
 
 import pytest
+from PySide6.QtCore import QMutex
 
 import core.downscale as downscale
 from core.exceptions import CancellationException, FileException, GenericException
@@ -88,7 +89,7 @@ def test__downscaleManualModes_resample(resample, expected_filter, params_fixtur
         "args": [],
     })
     with patch("core.downscale.convert") as mock_convert:
-        downscale._downscaleManualModes(params_fixture)
+        downscale._downscaleManualModes(params_fixture, QMutex())
         args = params_fixture["args"]
 
         if expected_filter is None:
@@ -115,7 +116,7 @@ def test__downscaleManualModes_mode(mode, expected_arg, params_fixture):
         "resample": "Default",
     })
     with patch("core.downscale.convert") as mock_convert:
-        downscale._downscaleManualModes(params_fixture)
+        downscale._downscaleManualModes(params_fixture, QMutex())
         mock_convert.assert_called_once_with(params_fixture["enc"], params_fixture["src"], params_fixture["dst"], [expected_arg], params_fixture["n"])
 
 @pytest.mark.parametrize("width, height, expected_arg", [
@@ -131,7 +132,7 @@ def test___downscaleManualModes_resolution(width, height, expected_arg, params_f
         "height": height,
     })
     with patch("core.downscale.convert") as mock_convert:
-        downscale._downscaleManualModes(params_fixture)
+        downscale._downscaleManualModes(params_fixture, QMutex())
         mock_convert.assert_called_once_with(
             params_fixture["enc"],
             params_fixture["src"],
@@ -147,7 +148,7 @@ def test___downscaleManualModes_resolution_exception(params_fixture):
         "height": float("inf"),
     })
     with pytest.raises(GenericException):
-        downscale._downscaleManualModes(params_fixture)
+        downscale._downscaleManualModes(params_fixture, QMutex())
 
 def test__downscaleManualModes_mode_unknown(params_fixture):
     params_fixture.update({
@@ -155,7 +156,7 @@ def test__downscaleManualModes_mode_unknown(params_fixture):
         "mode": "unknown",
     })
     with pytest.raises(GenericException):
-        downscale._downscaleManualModes(params_fixture)
+        downscale._downscaleManualModes(params_fixture, QMutex())
 
 
 def test__downscaleManualModes_no_imagemagick(params_fixture):
@@ -167,7 +168,7 @@ def test__downscaleManualModes_no_imagemagick(params_fixture):
         patch("core.downscale.convert") as mock_convert, \
         patch("core.downscale.os.remove"):
 
-        downscale._downscaleManualModes(params_fixture)
+        downscale._downscaleManualModes(params_fixture, QMutex())
         mock_getUniqueFilePath.assert_called_once_with(params_fixture["dst_dir"], params_fixture["name"], "png", True)
 
         mock_convert.assert_any_call(IMAGE_MAGICK_PATH, params_fixture["src"], "new/path/image.png", ["-resize 50%"], params_fixture["n"])
@@ -191,7 +192,7 @@ def test__downscaleManualModes_no_imagemagick_jxl_int_e_e9(params_fixture, side_
         patch("core.downscale.os.rename"), \
         patch("core.downscale.os.path.getsize", side_effect=side_effect):
 
-        downscale._downscaleManualModes(params_fixture)
+        downscale._downscaleManualModes(params_fixture, QMutex())
         mock_convert.assert_any_call(params_fixture["enc"], "path/to/jxl_e7.jxl", params_fixture["dst"], params_fixture["args"], params_fixture["n"])
         mock_remove.assert_any_call(removed_file)
 
@@ -202,7 +203,7 @@ def test__downscaleManualModes_no_imagemagick_jxl_int_e_e9(params_fixture, side_
 @patch("core.downscale.downscale")
 def test_decodeAndDownscale_imagemagick(mock_downscale, params_fixture):
     with patch("core.downscale.getDecoder", return_value=IMAGE_MAGICK_PATH):
-        downscale.decodeAndDownscale(params_fixture, "png", "Encoder - Wipe")
+        downscale.decodeAndDownscale(params_fixture, "png", "Encoder - Wipe", QMutex())
         mock_downscale.assert_called_once_with(params_fixture)
 
 @patch("core.downscale.getDecoder", return_value="path/to/other/decoder")
@@ -212,7 +213,7 @@ def test_decodeAndDownscale_imagemagick(mock_downscale, params_fixture):
 @patch("core.downscale.convert")
 @patch("core.downscale.os.remove")
 def test_decodeAndDownscale_other(mock_getDecoder, mock_downscale,  mock_getUniqueFilePath, mock_convert, mock_remove, params_fixture):
-    downscale.decodeAndDownscale(params_fixture, "jxl", "Encoder - Wipe")
+    downscale.decodeAndDownscale(params_fixture, "jxl", "Encoder - Wipe", QMutex())
     mock_convert.assert_called_once()
     mock_downscale.assert_called_once()
     mock_remove.assert_called_once()
@@ -225,7 +226,7 @@ def test_decodeAndDownscale_other(mock_getDecoder, mock_downscale,  mock_getUniq
 @patch("core.downscale.os.remove", side_effect=OSError("Clean-up failed"))
 def test_decodeAndDownscale_cleanup_failed(mock_getDecoder, mock_getArgs, mock_downscale, mock_getUniqueFilePath, mock_convert, mock_remove, params_fixture):
     with pytest.raises(FileException) as exc_info:
-        downscale.decodeAndDownscale(params_fixture, "png", "Encoder - Wipe")
+        downscale.decodeAndDownscale(params_fixture, "png", "Encoder - Wipe", QMutex())
     
     assert exc_info.value.id == "D1"
     assert "Clean-up failed" in str(exc_info.value.msg)
@@ -233,27 +234,29 @@ def test_decodeAndDownscale_cleanup_failed(mock_getDecoder, mock_getArgs, mock_d
 @patch("core.downscale.task_status.wasCanceled", return_value=True)
 def test_downscale_canceled(mock_wasCanceled, params_fixture):
     with pytest.raises(CancellationException):
-        downscale.downscale(params_fixture)
+        downscale.downscale(params_fixture, QMutex())
 
 def test_downscale_file_size(params_fixture):
-    with patch("core.downscale._downscaleToFileSizeStepAuto") as mock__downscaleToFileSizeStepAuto, \
+    mutex = QMutex()
+    with patch("core.downscale._downscaleToFileSize") as mock__downscaleToFileSize, \
         patch("core.downscale.task_status.wasCanceled", return_value=False):
 
         params_fixture.update({ "mode": "File Size" })
-        downscale.downscale(params_fixture)
-        mock__downscaleToFileSizeStepAuto.assert_called_once_with(params_fixture)
+        downscale.downscale(params_fixture, mutex)
+        mock__downscaleToFileSize.assert_called_once_with(params_fixture, mutex)
 
 @pytest.mark.parametrize("mode", ["Percent", "Resolution", "Shortest Side", "Longest Side"])
 def test_downscale_manual(params_fixture, mode):
+    mutex = QMutex()
     with patch("core.downscale._downscaleManualModes") as mock__downscaleManualModes, \
         patch("core.downscale.task_status.wasCanceled", return_value=False):
 
         params_fixture.update({ "mode": mode })
-        downscale.downscale(params_fixture)
-        mock__downscaleManualModes.assert_called_once_with(params_fixture)
+        downscale.downscale(params_fixture, mutex)
+        mock__downscaleManualModes.assert_called_once_with(params_fixture, mutex)
         
 @patch("core.downscale.task_status.wasCanceled", return_value=False)
 def test_downscale_unknown(mock_wasCanceled, params_fixture):
     params_fixture.update({ "mode": "Unknown" })
     with pytest.raises(GenericException):
-        downscale.downscale(params_fixture)
+        downscale.downscale(params_fixture, QMutex())
