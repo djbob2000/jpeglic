@@ -63,6 +63,7 @@ class OutputTab(QWidget):
 
         self._onFormatChange()
         self._onDeleteOriginalChanged()
+        self._onJXLNormalizeToggled()
         self._onOutputToggled()
 
         # Variables
@@ -125,6 +126,9 @@ class OutputTab(QWidget):
         self.chroma_subsampling_jpg_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
         self.jxl_png_fallback_cb = self.wm.addWidget("jxl_png_fallback_cb", QCheckBox("PNG Fallback"))
         self.jxl_verify_cb = self.wm.addWidget("jxl_verify_cb", QCheckBox("Verify"))
+        self.jxl_normalize_enable_cb = self.wm.addWidget("jxl_normalize_enable_cb", QCheckBox("Normalize"))
+        self.jxl_normalize_when_cmb = self.wm.addWidget("jxl_normalize_when_cmb", ComboBox())
+        self.jxl_normalize_when_cmb.addItems(("On Fail", "Always"))
 
         # Buttons
         self.reset_to_default_btn = QPushButton("Reset to Default")
@@ -161,6 +165,7 @@ class OutputTab(QWidget):
         self.format_grp_lt.addWidget(self.max_compression_cb)
         self.format_grp_lt.addLayout(createQHBoxLayout(self.chroma_subsampling_l, self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_avif_cmb, self.chroma_subsampling_jpg_cmb))
         self.format_grp_lt.addWidget(self.jxl_png_fallback_cb)
+        self.format_grp_lt.addLayout(createQHBoxLayout(self.jxl_normalize_enable_cb, self.jxl_normalize_when_cmb))
         self.format_grp_lt.addWidget(self.jxl_verify_cb)
 
         # Main
@@ -194,6 +199,7 @@ class OutputTab(QWidget):
         self.lossless_cb.toggled.connect(self._onLosslessToggled)
         self.reset_to_default_btn.clicked.connect(self.resetToDefault)
         self.convert_btn.clicked.connect(self.convert.emit)
+        self.jxl_normalize_enable_cb.toggled.connect(self._onJXLNormalizeToggled)
 
     def _setToolTipsStatic(self):
         """Sets tooltips at once at startup."""
@@ -208,6 +214,8 @@ class OutputTab(QWidget):
         setToolTip(TOOLTIPS["jxl_modular"], self.jxl_modular_cb)
         setToolTip(TOOLTIPS["jxl_png_fallback"], self.jxl_png_fallback_cb)
         setToolTip(TOOLTIPS["jxl_verify"], self.jxl_verify_cb)
+        setToolTip(TOOLTIPS["jxl_normalize_enable"], self.jxl_normalize_enable_cb)
+        setToolTip(TOOLTIPS["jxl_normalize_when"], self.jxl_normalize_when_cmb)
         setToolTip(TOOLTIPS["int_effort"], self.int_effort_cb)
         setToolTip(TOOLTIPS["chroma_subsampling_jpeg"], self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_jpg_cmb)
         setToolTip(TOOLTIPS["chroma_subsampling_avif"], self.chroma_subsampling_avif_cmb)
@@ -262,6 +270,8 @@ class OutputTab(QWidget):
             "intelligent_effort": self.int_effort_cb.isChecked() if self.jxl_int_effort_visible else False,
             "jxl_modular": self.jxl_modular_cb.isChecked() if self.jxl_lossy_modular_visible else False,
             "jxl_verify": self.jxl_verify_cb.isChecked(),
+            "jxl_normalize_enable": self.jxl_normalize_enable_cb.isChecked(),
+            "jxl_normalize_when": self.jxl_normalize_when_cmb.currentText(),
             "avif_chroma_subsampling": self.chroma_subsampling_avif_cmb.currentText(),
             "jpegli_chroma_subsampling": self.chroma_subsampling_jpegli_cmb.currentText(),
             "jpg_chroma_subsampling": self.chroma_subsampling_jpg_cmb.currentText(),
@@ -324,6 +334,8 @@ class OutputTab(QWidget):
         self.chroma_subsampling_avif_cmb.setVisible(cur_format == "AVIF")
         self.jxl_png_fallback_cb.setVisible(cur_format == "JPEG Reconstruction")
         self.jxl_verify_cb.setVisible(cur_format == "Lossless JPEG Transcoding")
+        self.jxl_normalize_enable_cb.setVisible(cur_format == "Lossless JPEG Transcoding")
+        self.jxl_normalize_when_cmb.setVisible(cur_format == "Lossless JPEG Transcoding")
 
         # Params
         if cur_format == "AVIF":
@@ -370,6 +382,9 @@ class OutputTab(QWidget):
             self.chroma_subsampling_jpg_cmb.setVisible(encoder == "libjpeg")
             self.chroma_subsampling_jpegli_cmb.setVisible(encoder == "JPEGLI")
 
+    def _onJXLNormalizeToggled(self) -> None:
+        self.jxl_normalize_when_cmb.setEnabled(self.jxl_normalize_enable_cb.isChecked())
+
     def onJXLEffort10Enabled(self, enabled: bool) -> None:
         self.enable_jxl_effort_10 = enabled
         if self.format_cmb.currentText() == "JPEG XL":
@@ -415,6 +430,8 @@ class OutputTab(QWidget):
         self.int_effort_cb.setChecked(False)
         self.jxl_modular_cb.setChecked(False)
         self.jxl_verify_cb.setChecked(False)
+        self.jxl_normalize_enable_cb.setChecked(False)
+        self.jxl_normalize_when_cmb.setCurrentIndex(0)
 
         self.choose_output_src_rb.setChecked(True)
         self.keep_dir_struct_cb.setChecked(False)

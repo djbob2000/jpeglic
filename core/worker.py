@@ -33,8 +33,9 @@ import core.metadata as metadata
 import data.task_status as task_status
 from core.exceptions import CancellationException, GenericException, FileException
 import core.conflicts as conflicts
-from core.utils import getFreeSpaceLeft, b2sum
+from core.utils import getFreeSpaceLeft, remove
 from core.process import runProcessOutput
+import core.lossless_jpeg as lossless_jpeg
 
 class Signals(QObject):
     started = Signal(int)
@@ -90,7 +91,7 @@ class Worker(QRunnable):
         self.anchor_path = anchor_path        # keep_dir_struct
     
     def logException(self, id: str, msg: str):
-        self.signals.exception.emit(id, msg, str(Path(self.item_abs_path).name))
+        self.signals.exception.emit(id, msg, str(Path(self.org_item_abs_path).name))
 
     @Slot()
     def run(self):
@@ -561,67 +562,103 @@ class Worker(QRunnable):
         self.final_output = os.path.join(self.output_dir, f"{self.item_name}.{sm_f_key}")
 
     def losslesslyTranscodeJPEG(self):
-        self.lossless_jpeg = True
-
-        stdout, stderr = runBinary(
-            CJXL_PATH,
-            [
-                "--lossless_jpeg=1",
-                f"-e {self.params['effort']}",
-                f"--num_threads={self.available_threads}",
-            ],
-            self.item_abs_path,
-            self.output,
-        )
-
-        if not os.path.isfile(self.output):
-            raise FileException("lossless_jpeg_0", f"Transcoding failed. {stderr}")
-
-        # Verify
-        if self.params["jxl_verify"]:
-            # Preparation
+        def _normalize() -> str:
+            """Normalizes a JPEG image and returns path to it.
+            
+            Exceptions:
+            FileException: if normalization fails
+            """
             with QMutexLocker(self.mutex):
-                tmp_path = getUniqueFilePath(
+                _normalized_path = getUniqueFilePath(
                     self.output_dir,
                     self.item_name,
                     "jpg",
                     True
                 )
-            stdout, stderr = runBinary(
-                DJXL_PATH,
-                [f"--num_threads={self.available_threads}"],
-                self.output,
-                tmp_path,
+            success, stdout, stderr = lossless_jpeg.normalizeJPEG(
+                self.org_item_abs_path,
+                _normalized_path,
             )
-            if not os.path.isfile(tmp_path):
-                raise FileException("lossless_jpeg_1", f"File not found. {stderr}")
-            if not os.path.isfile(self.item_abs_path):
-                raise FileException("lossless_jpeg_2", "Source deleted, cannot generate checksum.")
+            if not success:
+                raise FileException("lossless_jpeg_2", f"Normalizing failed. {stderr}")
+            return _normalized_path
 
-            # Verification
-            src_b2sum, targer_b2sum = b2sum(self.item_abs_path), b2sum(tmp_path)
-            try:
-                os.remove(tmp_path)
-            except OSError as e:
-                raise FileException("lossless_jpeg_3", f"Cannot remove temp file. {e}")
+        def _transcode() -> (bool, str):
+            """
+            Returns:
+            (success, stderr)
+            """
+            success, stdout, stderr = lossless_jpeg.transcodeJPEGtoJPEGXL(
+                self.item_abs_path,
+                self.output,
+                self.params["effort"],
+                self.available_threads,
+            )
+            return (success, stderr)
 
-            if src_b2sum != targer_b2sum:
-                try:
-                    os.remove(self.output)
-                except OSError as e:
-                    raise FileException("lossless_jpeg_4", f"Cannot remove temp file. {e}")
-                raise FileException("lossless_jpeg_5", f"Checksum mismatch. {stderr}")
+        def _verify() -> None:
+            """Verifies reconstruction data and checksum.
+            
+            Exceptions:
+            FileException: if verification fails
+            """
+            with QMutexLocker(self.mutex):
+                verify_tmp_path = getUniqueFilePath(
+                    self.output_dir,
+                    self.item_name,
+                    "jpg",
+                    True
+                )
+            success, stdout, stderr = lossless_jpeg.verifyJPEGXLReconstructionData(
+                self.output,
+                self.item_abs_path,
+                verify_tmp_path,
+                self.available_threads,
+            )
+
+            if not success:
+                remove(self.output, exc_id="lossless_jpeg_1")
+                raise FileException("lossless_jpeg_0", f"Verification failed. {stderr}")
+
+        # Main part
+        self.lossless_jpeg = True
+        normalized_jpeg_path = None
+
+        if (self.params["jxl_normalize_enable"] and self.params["jxl_normalize_when"] == "Always"):
+            normalized_jpeg_path = self.item_abs_path = _normalize()
+        
+        success, stderr = _transcode()
+        if not success:
+
+            failed, err_id, err_msg = False, "", ""
+            if normalized_jpeg_path is None and (self.params["jxl_normalize_enable"] and self.params["jxl_normalize_when"] == "On Fail"):   # Normalize == On Fail
+                normalized_jpeg_path = self.item_abs_path = _normalize()
+                success, stderr = _transcode()
+                failed, err_id, err_msg = not success, "lossless_jpeg_3", f"Transcoding failed (even after normalizing). It may be CMYK or of other unsupported type.\n {stderr}"
+            elif normalized_jpeg_path is not None:  # Normalize == Always
+                failed, err_id, err_msg = True, "lossless_jpeg_4", f"Transcoding failed (even after normalizing). It may be CMYK or of other unsupported type.\n {stderr}"
+            else:                                   # Normalize off
+                failed, err_id, err_msg = True, "lossless_jpeg_5", f"Transcoding failed. {stderr}"
+
+            if failed:
+                if normalized_jpeg_path:
+                    remove(normalized_jpeg_path, exc_id="lossless_jpeg_6")
+                    normalized_jpeg_path = None
+                raise FileException(err_id, err_msg)
+
+        if self.params["jxl_verify"]:
+            _verify()
+        
+        if normalized_jpeg_path:
+            remove(normalized_jpeg_path, exc_id="lossless_jpeg_7")
 
     def reconstructJPEG(self):
         self.lossless_jpeg = True
-        stdout, stderr = runBinary(
-            DJXL_PATH,
-            [f"--num_threads={self.available_threads}"],
+        success, stdout, stderr = lossless_jpeg.reconstructJPEGfromJPEGXL(
             self.org_item_abs_path,
             self.output,
+            self.available_threads,
         )
 
-        if not os.path.isfile(self.output):
-            if not os.path.isfile(self.org_item_abs_path):
-                raise FileException("reconstruct_0", "Source image not found.")
-            raise FileException("reconstruct_1", f"Image failed to reconstruct. {stderr}")
+        if not success:
+            raise FileException("reconstruct_0", f"Reconstruction failed. {stderr}")

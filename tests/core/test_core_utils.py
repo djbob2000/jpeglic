@@ -6,6 +6,7 @@ from hashlib import blake2b
 import pytest
 
 import core.utils as utils
+from core.exceptions import FileException
 
 @pytest.fixture
 def tmp_dir(tmp_path):
@@ -115,3 +116,23 @@ def test_b2sum_different_chunk_size():
         patch.object(Path, "open", mock_open(read_data=file_content)),
     ):
         assert utils.b2sum("path/to/file", chunk_size=8) == expected_hash, "The hash does not match."
+
+def test_remove_happy_path():
+    file_path, exc_id = "/path/file.jpg", "exception_id_0"
+    with patch("core.utils.os.remove") as mock_remove:
+        utils.remove(file_path, exc_id="exception_id_0")
+    
+    mock_remove.assert_called_once_with(file_path)
+
+def test_remove_sad_path():
+    file_path, exc_id = "/path/file.jpg", "exception_id_0"
+    with (
+        patch("core.utils.os.remove", side_effect=OSError("OSError")) as mock_remove,
+        pytest.raises(FileException) as excinfo,
+    ):
+        utils.remove(file_path, exc_id=exc_id)
+    
+    assert exc_id == excinfo.value.id
+    assert "Failed to remove file" in excinfo.value.msg
+    assert "OSError" in excinfo.value.msg
+    mock_remove.assert_called_once_with(file_path)

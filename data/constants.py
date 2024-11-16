@@ -27,6 +27,7 @@ AVIFENC_PATH = "avifenc"
 AVIFDEC_PATH = "avifdec"
 OXIPNG_PATH = "oxipng"
 EXIFTOOL_PATH = "exiftool"
+JPEGTRAN_PATH = "jpegtran"
 
 if platform.system() == "Windows":
     BASE_PATH = os.path.join(PROGRAM_FOLDER, "bin", "win")
@@ -40,6 +41,7 @@ if platform.system() == "Windows":
     AVIFDEC_PATH = os.path.join(BASE_PATH, "avifdec.exe")
     OXIPNG_PATH = os.path.join(BASE_PATH, "oxipng.exe")
     EXIFTOOL_PATH = os.path.join(BASE_PATH, "exiftool", "exiftool.exe")
+    JPEGTRAN_PATH = os.path.join(BASE_PATH, "jpegtran", "jpegtran.exe")
 
     CONFIG_LOCATION = os.path.normpath(os.path.expanduser("~/AppData/Local/xl-converter"))
 elif platform.system() == "Linux":
@@ -53,6 +55,7 @@ elif platform.system() == "Linux":
     AVIFENC_PATH = f"{BASE_PATH}/avifenc"
     AVIFDEC_PATH = f"{BASE_PATH}/avifdec"
     OXIPNG_PATH = f"{BASE_PATH}/oxipng"
+    JPEGTRAN_PATH = os.path.join(BASE_PATH, "jpegtran")
 
     CONFIG_LOCATION = os.path.expanduser('~/.config/xl-converter')
 

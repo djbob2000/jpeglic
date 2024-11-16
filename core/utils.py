@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import List, Any
 from hashlib import blake2b
 
+from core.exceptions import FileException
+
 def scanDir(path: str) -> list:
     """Recursively scan a directory for files. Returns paths or raises FileNotFoundError If a directory was not found."""
     if not os.path.exists(path):
@@ -63,3 +65,15 @@ def b2sum(file_path: str, digest_size: int = 64, chunk_size: int = 8192) -> str:
         raise OSError(f"Cannot calculate checksum. {e}")
 
     return hasher.hexdigest()
+
+def remove(*file_paths: list[str], exc_id="") -> None:
+    """Removes file(s).
+
+    Raises:
+    FileException: if removing a file fails.
+    """
+    for file_path in file_paths:
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            raise FileException(exc_id, f"Failed to remove file. {e}")

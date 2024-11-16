@@ -7,7 +7,7 @@ from core.exceptions import GenericException
 from data.constants import AVIFENC_PATH, IMAGE_MAGICK_PATH, DJXL_PATH, AVIFDEC_PATH, ALLOWED_INPUT_IMAGE_MAGICK
 from core.exceptions import CancellationException
 
-def test_runBinary():
+def test_runBinary_happy_path():
     stdout, stderr = "completed", "test"
     with (
         patch("core.convert.task_status.wasCanceled", return_value=False),
@@ -80,6 +80,47 @@ def test_runBinary_args_after_input():
         )
         assert mock_runProcess2.call_args_list[1][0][2] == "-arg1"
         assert mock_runProcess2.call_args_list[1][0][3] == "-arg2"
+
+def test_runJPEGtran_happy_path():
+    stdout, stderr = "completed", "test"
+    with (
+        patch("core.convert.JPEGTRAN_PATH", "djxl_path") as var_DJXL_PATH,
+        patch("core.convert.task_status.wasCanceled", return_value=False),
+        patch("core.convert.runProcess2", return_value=(stdout, stderr)) as mock_runProcess2,
+    ):
+        assert convert.runJPEGtran(
+            ["-copy", "all"],
+            "path/src.jpg",
+            "path/dst.jpg",
+        ) == (stdout, stderr)
+    mock_runProcess2.assert_called_once_with(
+        var_DJXL_PATH,
+        "-copy", "all",
+        "-outfile",
+        "path/dst.jpg",
+        "path/src.jpg",
+    )
+
+def test_runJPEGtran_sad_path():
+    stdout, stderr = "completed", "test"
+    with (
+        patch("core.convert.JPEGTRAN_PATH", "djxl_path") as var_DJXL_PATH,
+        patch("core.convert.task_status.wasCanceled", return_value=True),
+        patch("core.convert.runProcess2", return_value=(stdout, stderr)) as mock_runProcess2,
+        pytest.raises(CancellationException) as excinfo,
+    ):
+        convert.runJPEGtran(
+            ["-copy", "all"],
+            "path/src.jpg",
+            "path/dst.jpg",
+        )
+    mock_runProcess2.assert_called_once_with(
+        var_DJXL_PATH,
+        "-copy", "all",
+        "-outfile",
+        "path/dst.jpg",
+        "path/src.jpg",
+    )
 
 def test_convert_avifenc():
     with patch("core.convert.runProcess") as mock_runProcess:

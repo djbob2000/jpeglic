@@ -37,6 +37,8 @@ def test_initial_state(app):
     assert settings["jxl_png_fallback"] == False
     assert settings["delete_original"] == False
     assert settings["jxl_verify"] == False
+    assert settings["jxl_normalize_enable"] == False
+    assert settings["jxl_normalize_when"] == "On Fail"
     assert not app.smIsFormatPoolEmpty()
 
     # Conv.
@@ -154,7 +156,7 @@ def test_onFormatChange_lossless_toggled(app):
     ("WebP", ["quality", "effort", "lossless"]),
     ("JPEG", ["quality", "chroma_subsampling"]),
     ("PNG", []),
-    ("Lossless JPEG Transcoding", ["effort", "jxl_verify"]),
+    ("Lossless JPEG Transcoding", ["effort", "jxl_verify", "jxl_normalize"]),
     ("JPEG Reconstruction", ["png_fallback"]),
     ("Smallest Lossless", ["smallest_lossless"]),
 ])
@@ -197,6 +199,8 @@ def test_onFormatChange_visibility(app, file_format, visible_widgets):
     assert app.jxl_png_fallback_cb.isVisibleTo(app) == ("png_fallback" in visible_widgets)
 
     assert app.jxl_verify_cb.isVisibleTo(app) == ("jxl_verify" in visible_widgets)
+    assert app.jxl_normalize_enable_cb.isVisibleTo(app) == ("jxl_normalize" in visible_widgets)
+    assert app.jxl_normalize_when_cmb.isVisibleTo(app) == ("jxl_normalize" in visible_widgets)
 
 @pytest.mark.parametrize("widget_name, variable_name", [
     ("int_effort_cb", "jxl_int_effort_visible"),

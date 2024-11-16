@@ -7,7 +7,8 @@ from data.constants import (
     AVIFDEC_PATH,
     DJXL_PATH,
     JXLINFO_PATH,
-    AVIFENC_PATH
+    AVIFENC_PATH,
+    JPEGTRAN_PATH,
 )
 from core.process import runProcess, runProcessOutput, runProcess2
 from core.exceptions import GenericException, CancellationException
@@ -45,6 +46,31 @@ def runBinary(
         cmd.append(dst_path)
 
     stdout, stderr = runProcess2(*cmd)
+
+    if task_status.wasCanceled():
+        raise CancellationException()
+
+    return (stdout, stderr)
+
+def runJPEGtran(
+    args: list[str],
+    src_path: str,
+    dst_path: str,
+) -> (str, str):
+    """Runs jpegtran.
+
+    Args:
+        args: a list of str argument
+        src_path: source path. Needs to be a JPEG image.
+        dst_path: output path. Should have a .jpg extension
+    
+    Returns:
+        (stdout, stderr)
+
+    Raises:
+        CancellationException: if task_status is canceled
+    """
+    stdout, stderr = runProcess2(JPEGTRAN_PATH, *parseArgs(args), "-outfile", dst_path, src_path)
 
     if task_status.wasCanceled():
         raise CancellationException()
