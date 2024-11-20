@@ -36,7 +36,7 @@ if platform.system() == "Windows":
     DJXL_PATH = os.path.join(BASE_PATH, "djxl.exe")
     JXLINFO_PATH = os.path.join(BASE_PATH, "jxlinfo.exe")
     CJPEGLI_PATH = os.path.join(BASE_PATH, "cjpegli.exe")
-    IMAGE_MAGICK_PATH = os.path.join(BASE_PATH, "magick.exe")
+    IMAGE_MAGICK_PATH = os.path.join(BASE_PATH, "imagemagick", "magick.exe")
     AVIFENC_PATH = os.path.join(BASE_PATH, "avifenc.exe")
     AVIFDEC_PATH = os.path.join(BASE_PATH, "avifdec.exe")
     OXIPNG_PATH = os.path.join(BASE_PATH, "oxipng.exe")
@@ -51,7 +51,7 @@ elif platform.system() == "Linux":
     DJXL_PATH = f"{BASE_PATH}/djxl"
     JXLINFO_PATH = f"{BASE_PATH}/jxlinfo"
     CJPEGLI_PATH = f"{BASE_PATH}/cjpegli"
-    IMAGE_MAGICK_PATH = f"{BASE_PATH}/magick"
+    IMAGE_MAGICK_PATH = f"{BASE_PATH}/imagemagick/magick"
     AVIFENC_PATH = f"{BASE_PATH}/avifenc"
     AVIFDEC_PATH = f"{BASE_PATH}/avifdec"
     OXIPNG_PATH = f"{BASE_PATH}/oxipng"
