@@ -33,7 +33,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-Name: "install_vcredist"; Description: "Install Microsoft Redistributable (required)"; GroupDescription: "Dependencies"
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -41,24 +40,8 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Files]
 Source: "xl-converter\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
-Source: "..\misc\VC_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Code]
-procedure CheckTask(TaskName: String; Checked: Boolean);
-var
-  TaskIndex: Integer;
-begin
-  TaskIndex := WizardForm.TasksList.Items.IndexOf(TaskName);
-  if TaskIndex <> -1 then
-    WizardForm.TasksList.Checked[TaskIndex] := Checked;
-end;
-
-procedure CurPageChanged(CurPageID: Integer);
-begin
-  if CurPageID = wpSelectTasks then
-    CheckTask('Install Microsoft Redistributable (required)', True);
-end;
 
 [Run]
-Filename: "{tmp}\VC_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing Microsoft Redistributable..."; Check: WizardIsTaskSelected('install_vcredist')
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent

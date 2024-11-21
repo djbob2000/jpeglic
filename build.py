@@ -236,7 +236,7 @@ class Builder():
                         self._appendDesktopEntry()
                         self._buildAppImage()
             case "Windows":
-                self.downloader.downloadRedistributable()
+                # self.downloader.downloadRedistributable()
                 match build_type:
                     case "innosetup":
                         self._appendInstaller()
