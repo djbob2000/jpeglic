@@ -130,7 +130,8 @@ class Args():
 not specified: vanilla build.
 sh (Linux only): 7z archive with an installer script.
 appimage (Linux only): an AppImage build.
-innosetup (Windows only): an InnoSetup script and build ready to compile.""",
+innosetup (Windows only): an InnoSetup script and build ready to compile.
+portable (Windows only): 7z archive with the program.""",
                 action="store"
         )
         self.parser.add_argument("--update-file", "-u", help="Append an update file (to place on a server).", action="store_true")
@@ -184,7 +185,8 @@ class Builder():
         self.appimagetool_path = "misc/appimagetool"
 
         # Windows
-        self.redist_path = "misc/VC_redist.x64.exe"     # Needed for ImageMagick to work
+        # self.redist_path = ".\\misc.\\VC_redist.x64.exe"   # Obsolete
+        self.win_7z_path = "C:\\Program Files\\7-Zip\\7z.exe"
 
         # Binary tools
         self.tools_win = [
@@ -195,7 +197,8 @@ class Builder():
             "avifenc.exe",
             "avifdec.exe",
             "exiftool",
-            "magick.exe",
+            "imagemagick",
+            "jpegtran",
         ]
         self.tools_linux = [
             "cjxl",
@@ -204,18 +207,21 @@ class Builder():
             "cjpegli",
             "avifenc",
             "avifdec",
-            "magick",
+            "imagemagick",
+            "jpegtran",
         ]
         
         # Build Names
         self.build_inno_name = f"xl-converter-win-{VERSION}-x86_64"
+        self.build_win_portable_name = f"xl-converter-win-{VERSION}-x86_64-portable"
+        
         self.build_7z_name = f"xl-converter-linux-{VERSION}-x86_64"
         self.build_appimage_name = f"xl-converter-linux-{VERSION}-x86_64.AppImage"
     
     def build(self):
         build_type = self.args.getArg('build_type')
 
-        if build_type is not None and build_type not in ("sh", "appimage", "innosetup"):
+        if build_type is not None and build_type not in ("sh", "appimage", "innosetup", "portable"):
             raise Exception("build_type incorrect")
 
         self._verifyTools()
@@ -240,8 +246,8 @@ class Builder():
                 match build_type:
                     case "innosetup":
                         self._appendInstaller()
-                    # case "portable":
-                    #     print("[Error] Portable build is unavailable on Windows.")
+                    case "portable":
+                        self._buildPortableWin()
        
         if self.args.getArg("update_file"):
             self._appendUpdateFile()
@@ -366,6 +372,22 @@ class Builder():
         move(f"{self.dst_dir}/{os.path.basename(self.desktop_entry_path)}", dst)
         subprocess.run(("7z", "a", "-snl" , f"{dst_direct}.7z", dst_direct), cwd=self.dst_dir)
     
+    def _buildPortableWin(self) -> None:
+        _7z_present = os.path.isfile(self.win_7z_path)
+        if not _7z_present:
+            if "not recognized as an internal or external command" not in subprocess.run(["7z"], text=True).stderr:
+                self.win_7z_path = "7z"
+            else:
+                raise Exception("[Error] Install 7z.exe to continue. ")
+        
+        move(f"{self.dst_dir}/{self.project_name}", os.path.join(self.dst_dir, self.build_win_portable_name))   # Rename
+        subprocess.run([
+            self.win_7z_path,
+            "a",
+            f"{self.build_win_portable_name}.7z",
+            self.build_win_portable_name,
+        ], cwd=self.dst_dir)
+
     def _verifyTools(self):
         match platform.system():
             case "Windows":
