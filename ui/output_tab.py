@@ -27,6 +27,7 @@ from ui.slider import Slider
 from ui.combobox import ComboBox
 from ui.spinbox import SpinBox
 from ui.utils import setToolTip, isPathValidStr, createQHBoxLayout
+from ui.notifications import Notifications
 from data.tooltips import TOOLTIPS
 
 class OutputTab(QWidget):
@@ -37,6 +38,7 @@ class OutputTab(QWidget):
 
         # Components
         self.wm = WidgetManager("OutputTab")
+        self.notifications = Notifications(self)
 
         # Variables
         self.prev_format = None
@@ -200,6 +202,7 @@ class OutputTab(QWidget):
         self.reset_to_default_btn.clicked.connect(self.resetToDefault)
         self.convert_btn.clicked.connect(self.convert.emit)
         self.jxl_normalize_enable_cb.toggled.connect(self._onJXLNormalizeToggled)
+        self.jxl_normalize_enable_cb.clicked.connect(self._onJXLNormalizeClicked)
 
     def _setToolTipsStatic(self):
         """Sets tooltips at once at startup."""
@@ -384,6 +387,12 @@ class OutputTab(QWidget):
 
     def _onJXLNormalizeToggled(self) -> None:
         self.jxl_normalize_when_cmb.setEnabled(self.jxl_normalize_enable_cb.isChecked())
+
+    def _onJXLNormalizeClicked(self) -> None:
+        """On user's action."""
+        if self.wm.getVar("jxl_normalize_checksum_msg_seen") is None:
+            self.notifications.notify("Checksum Info", "Although \"Normalize\" does not alter quality and preserves metadata, it does change the checksum. Please keep this in mind when enabling this feature.")
+            self.wm.setVar("jxl_normalize_checksum_msg_seen", True)
 
     def onJXLEffort10Enabled(self, enabled: bool) -> None:
         self.enable_jxl_effort_10 = enabled

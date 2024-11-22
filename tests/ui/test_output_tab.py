@@ -8,8 +8,10 @@ from ui.output_tab import OutputTab
 
 @pytest.fixture
 def app(qtbot):
-    with patch("ui.output_tab.WidgetManager.loadState"), \
-        patch("ui.output_tab.WidgetManager.saveState"):
+    with (
+        patch("ui.output_tab.WidgetManager.loadState"),
+        patch("ui.output_tab.WidgetManager.saveState"),
+    ):
         tab = OutputTab(
             4,
             {
@@ -104,7 +106,6 @@ def test__onEffortToggled_other(app):
     ):
         app._onEffortToggled()
         mock_setEnabled.assert_called_once_with(True)
-
 
 @pytest.mark.parametrize("visible", [True, False])
 def test_onJXLLossyModularVisibleToggled(visible, app):
@@ -308,3 +309,26 @@ def test_getSettings_special(widget_name, variable_name, associated_key, app):
     setattr(app, variable_name, True)
     assert app.getSettings()[associated_key]
 
+def test__onJXLNormalizeClicked_no_var(app):
+    with (
+        patch.object(app.wm, "getVar", return_value=None) as mock_getVar,
+        patch.object(app.wm, "setVar") as mock_setVar,
+        patch.object(app.notifications, "notify") as mock_notify,
+    ):
+        app._onJXLNormalizeClicked()
+    
+    mock_getVar.assert_called_once_with("jxl_normalize_checksum_msg_seen")
+    mock_notify.assert_called_once()
+    mock_setVar.assert_called_once_with("jxl_normalize_checksum_msg_seen", True)
+
+def test__onJXLNormalizeClicked_var_present(app):
+    with (
+        patch.object(app.wm, "getVar", return_value=True) as mock_getVar,
+        patch.object(app.wm, "setVar") as mock_setVar,
+        patch.object(app.notifications, "notify") as mock_notify,
+    ):
+        app._onJXLNormalizeClicked()
+    
+    mock_getVar.assert_called_once_with("jxl_normalize_checksum_msg_seen")
+    mock_notify.assert_not_called()
+    mock_setVar.assert_not_called()
