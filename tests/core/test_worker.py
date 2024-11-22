@@ -88,28 +88,6 @@ def normalizePath(path: str):
 def getSuffix(path: str):
     return Path(path).suffix[1:]
 
-@contextmanager
-def convert_patches(
-    getDecoder_return_value = "sample_decoder",
-    getDecoderArgs_return_value = [],
-    metadata_getArgs_return_value = [],
-    getUniqueFilePath_side_effect=["/path/image1.jxl", "/path/image1.jxl"],
-    getsize_side_effect=[300000, 400000]
-):
-    stack = ExitStack()
-    with stack:
-        stack.enter_context(patch("core.downscale.downscale"))
-        stack.enter_context(patch("core.worker.convert"))
-        stack.enter_context(patch("core.worker.getDecoder", return_value=getDecoder_return_value))
-        stack.enter_context(patch("core.worker.getDecoderArgs", return_value=getDecoderArgs_return_value))
-        stack.enter_context(patch("core.metadata.getArgs", return_value=metadata_getArgs_return_value))
-        stack.enter_context(patch("core.worker.getUniqueFilePath", side_effect=getUniqueFilePath_side_effect))
-        stack.enter_context(patch("core.worker.os.path.getsize", side_effect=getsize_side_effect))
-        stack.enter_context(patch("core.worker.os.remove"))
-        stack.enter_context(patch("core.worker.os.rename"))
-        
-        yield stack
-
 @pytest.fixture
 def finishConversion_patches():
     with (
@@ -334,6 +312,31 @@ def test_setupConversion_downscaling_no_key_error(setupConversion_patches, worke
     worker.setupConversion()
     assert worker.scl_params is not None
 
+@pytest.fixture
+def worker_convert_patches(worker):
+    patches = {
+        "runBinary": patch("core.worker.runBinary", return_value=("stdout", "stderr")),
+        "convert": patch("core.worker.convert"),
+        "remove": patch("core.worker.os.remove"),
+        "rename": patch("core.worker.os.rename"),
+        "getsize": patch("core.worker.os.path.getsize", return_value=[300_000, 400_00]),
+        "isfile": patch("core.worker.os.path.isfile", return_value=True),
+        "getUniqueFilePath": patch("core.worker.getUniqueFilePath", return_value="final/path/img.jpg"),
+        "getDecoder": patch("core.worker.getDecoder", return_value="path/to/decoder"),
+        "getDecoderArgs": patch("core.worker.getDecoderArgs", return_value=[]),
+        "getArgs": patch("core.metadata.getArgs", return_value=[]),
+        "getUniqueFilePath": patch("core.worker.getUniqueFilePath", side_effect=["/path/image1.jxl", "/path/image1.jxl"]),
+        "downscale": patch("core.worker.downscale"),
+        "decodeAndDownscale": patch("core.worker.decodeAndDownscale"),
+        "wasCanceled": patch("core.worker.task_status.wasCanceled", return_value=False),
+    }
+
+    worker.params["misc"]["keep_metadata"] = True
+
+    with ExitStack() as stack:
+        _mocks = {name: stack.enter_context(patcher) for name, patcher in patches.items()}
+        yield worker, _mocks
+
 @pytest.mark.parametrize("quality, effort, lossless, modular, intelligent_effort, jxl_lossless_jpeg, item_ext, expected_args, expected_jpg_to_jxl_lossless", [
     (80, 7, True, False, False, True, "png", ["-q 100", "-e 7", "--lossless_jpeg=1", "--num_threads=4"], False),
     (80, 7, False, False, False, False, "png", ["-q 80", "-e 7", "--lossless_jpeg=0", "--num_threads=4"], False),
@@ -343,39 +346,37 @@ def test_setupConversion_downscaling_no_key_error(setupConversion_patches, worke
     (80, 7, True, False, False, True, "jpg", ["-q 100", "-e 7", "--lossless_jpeg=1", "--num_threads=4"], True),
 ])
 def test_convert_args_jpeg_xl(
-    quality, effort, lossless, modular, intelligent_effort, jxl_lossless_jpeg, item_ext, expected_args, expected_jpg_to_jxl_lossless, worker
+    quality, effort, lossless, modular, intelligent_effort, jxl_lossless_jpeg, item_ext, expected_args, expected_jpg_to_jxl_lossless, worker_convert_patches
 ):
-    with convert_patches() as patches:
-        mock_convert = patches.enter_context(patch("core.worker.convert"))
-        worker.params["format"] = "JPEG XL"
-        worker.params["quality"] = quality
-        worker.params["lossless"] = lossless
-        worker.params["effort"] = effort
-        worker.params["jxl_modular"] = modular
-        worker.params["intelligent_effort"] = intelligent_effort
-        worker.settings["jxl_lossless_jpeg"] = jxl_lossless_jpeg
-        worker.item_ext = item_ext
+    worker, mocks = worker_convert_patches
+    worker.params["format"] = "JPEG XL"
+    worker.params["quality"] = quality
+    worker.params["lossless"] = lossless
+    worker.params["effort"] = effort
+    worker.params["jxl_modular"] = modular
+    worker.params["intelligent_effort"] = intelligent_effort
+    worker.settings["jxl_lossless_jpeg"] = jxl_lossless_jpeg
+    worker.item_ext = item_ext
 
-        worker.convert()
+    worker.convert()
 
-        assert mock_convert.call_args[0][3] == expected_args
-        assert worker.lossless_jpeg == expected_jpg_to_jxl_lossless
+    assert mocks["runBinary"].call_args[0][1] == expected_args
+    assert worker.lossless_jpeg == expected_jpg_to_jxl_lossless
 
 @pytest.mark.parametrize("quality, speed, chroma_subsampling, expected_args", [
     (80, 6, "Default", ["-q 80", "-s 6", "-j 4"]),
     (90, 5, "4:4:4", ["-q 90", "-s 5", "-j 4", "-y 444"]),
 ])
-def test_convert_args_avif(quality, speed, chroma_subsampling, expected_args, worker):
-    with convert_patches() as patches:
-        mock_convert = patches.enter_context(patch("core.worker.convert"))
-        worker.params["format"] = "AVIF"
-        worker.params["quality"] = quality
-        worker.params["effort"] = speed
-        worker.params["avif_chroma_subsampling"] = chroma_subsampling
+def test_convert_args_avif(quality, speed, chroma_subsampling, expected_args, worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    worker.params["format"] = "AVIF"
+    worker.params["quality"] = quality
+    worker.params["effort"] = speed
+    worker.params["avif_chroma_subsampling"] = chroma_subsampling
 
-        worker.convert()
-
-        assert mock_convert.call_args[0][3] == expected_args
+    worker.convert()
+    
+    assert mocks["runBinary"].call_args[0][1] == expected_args
 
 @pytest.mark.parametrize("quality, encoder, chroma_subsampling, disable_progressive_jpegli, expected_args", [
     (80, "JPEGLI", "Default", False, ["-q 80"]),
@@ -384,67 +385,61 @@ def test_convert_args_avif(quality, speed, chroma_subsampling, expected_args, wo
     (80, "libjpeg", "Default", False, ["-quality 80"]),
     (80, "libjpeg", "4:4:4", False, ["-quality 80", "-sampling-factor 4:4:4"]),
 ])
-def test_convert_args_jpeg(quality, encoder, chroma_subsampling, disable_progressive_jpegli, expected_args, worker):
-    with convert_patches() as patches:
-        mock_convert = patches.enter_context(patch("core.worker.convert"))
-        worker.params["format"] = "JPEG"
-        worker.settings["jpg_encoder"] = encoder
-        worker.params["quality"] = quality
-        worker.settings["disable_progressive_jpegli"] = disable_progressive_jpegli
-        if encoder == "JPEGLI":
-            worker.params["jpegli_chroma_subsampling"] = chroma_subsampling
-        else:
-            worker.params["jpg_chroma_subsampling"] = chroma_subsampling
+def test_convert_args_jpeg(quality, encoder, chroma_subsampling, disable_progressive_jpegli, expected_args, worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    worker.params["format"] = "JPEG"
+    worker.settings["jpg_encoder"] = encoder
+    worker.params["quality"] = quality
+    worker.settings["disable_progressive_jpegli"] = disable_progressive_jpegli
+    if encoder == "JPEGLI":
+        worker.params["jpegli_chroma_subsampling"] = chroma_subsampling
+    else:
+        worker.params["jpg_chroma_subsampling"] = chroma_subsampling
 
-        worker.convert()
+    worker.convert()
 
-        assert mock_convert.call_args[0][3] == expected_args
+    assert mocks["runBinary"].call_args[0][1] == expected_args
 
 @pytest.mark.parametrize("quality, method, lossless, expected_args", [
     (80, 6, False, ["-quality 80", "-define webp:thread-level=1", "-define webp:method=6"]),
     (50, 5, True, ["-define webp:lossless=true", "-define webp:thread-level=1", "-define webp:method=5"]),
     (50, 5, False, ["-quality 50", "-define webp:thread-level=1", "-define webp:method=5"]),
 ])
-def test_convert_args_webp(quality, method, lossless, expected_args, worker):
-    with convert_patches() as patches:
-        mock_convert = patches.enter_context(patch("core.worker.convert"))
-        worker.params["format"] = "WebP"
-        worker.params["quality"] = quality
-        worker.params["lossless"] = lossless
-        worker.params["effort"] = method
+def test_convert_args_webp(quality, method, lossless, expected_args, worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    worker.params["format"] = "WebP"
+    worker.params["quality"] = quality
+    worker.params["lossless"] = lossless
+    worker.params["effort"] = method
 
+    worker.convert()
+
+    assert mocks["runBinary"].call_args[0][1] == expected_args
+
+def test_convert_args_png(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    mocks["getDecoderArgs"].return_value = ["--test_arg=1"]
+
+    worker.convert()
+
+    assert mocks["runBinary"].call_args[0][0] == mocks["getDecoder"].return_value
+    assert mocks["runBinary"].call_args[0][1] == ["--test_arg=1"]
+
+def test_convert_args_unknown(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+
+    worker.params["format"] = "Unknown"
+
+    with pytest.raises(GenericException):
         worker.convert()
 
-        assert mock_convert.call_args[0][3] == expected_args
+def test_convert_metadata_args(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    mocks["getArgs"].return_value = ["--metadata_arg"]
+    
+    worker.convert()
 
-def test_convert_args_png(worker):
-    with convert_patches(
-        getDecoder_return_value="sample_decoder_path",
-        getDecoderArgs_return_value=["--test_arg=1"]
-    ) as patches:
-        mock_convert = patches.enter_context(patch("core.worker.convert"))
-
-        worker.convert()
-
-        assert mock_convert.call_args[0][0] == "sample_decoder_path"
-        assert mock_convert.call_args[0][3] == ["--test_arg=1"]
-
-def test_convert_args_unknown(worker):
-    with convert_patches():
-        worker.params["format"] = "Unknown"
-
-        with pytest.raises(GenericException):
-            worker.convert()
-
-def test_convert_metadata_args(worker):
-    with convert_patches(
-        metadata_getArgs_return_value=["--metadata_arg"]
-    ) as patches:
-        mock_convert = patches.enter_context(patch("core.worker.convert"))
-        
-        worker.convert()
-
-        assert mock_convert.call_args[0][3] == ["--metadata_arg"]
+    assert mocks["runBinary"].call_args[0][1] == mocks["getArgs"].return_value
 
 def test_convert_custom_args(worker):
     assert "enable_custom_args" in worker.settings
@@ -453,90 +448,76 @@ def test_convert_custom_args(worker):
     assert "cjpegli_args" in worker.settings
     assert "im_args" in worker.settings
 
-def test_convert_downscale(worker):
-    with convert_patches() as patches:
-        worker.params["format"] = "JPEG"
-        worker.params["downscaling"]["enabled"] = True
-        mock_downscale = patches.enter_context(patch("core.worker.downscale"))
+def test_convert_downscale(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    worker.params["format"] = "JPEG"
+    worker.params["downscaling"]["enabled"] = True
+    
+    worker.convert()
+
+    mocks["downscale"].assert_called_once_with(worker.scl_params, worker.mutex)
+
+def test_convert_downscale_png(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    worker.params["format"] = "PNG"
+    worker.params["downscaling"]["enabled"] = True
+    
+    worker.convert()
+
+    mocks["decodeAndDownscale"].assert_called_once_with(
+        worker.scl_params,
+        worker.item_ext,
+        worker.params["misc"]["keep_metadata"],
+        worker.mutex,
+    )
+def test_convert_jpeg_xl_intelligent_effort_canceled(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    mocks["wasCanceled"].return_value = True
+    worker.params["format"] = "JPEG XL"
+    worker.params["intelligent_effort"] = True
         
+    with pytest.raises(CancellationException):
         worker.convert()
 
-        mock_downscale.assert_called_once_with(worker.scl_params, worker.mutex)
+    mocks["wasCanceled"].assert_called_once()
+    mocks["remove"].assert_called_once()
 
-def test_convert_downscale_png(worker):
-    with convert_patches() as patches:
-        worker.params["format"] = "PNG"
-        worker.params["downscaling"]["enabled"] = True
-        mock_decodeAndDownscale = patches.enter_context(patch("core.worker.decodeAndDownscale"))
+def test_convert_jpeg_xl_intelligent_effort_e9_smaller(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    mocks["getsize"].side_effect = [300_000, 400_000]
+    mocks["getUniqueFilePath"].side_effect = ["path_e7", "path_e9"]
+    worker.params["format"] = "JPEG XL"
+    worker.params["intelligent_effort"] = True
+    
+    worker.convert()
+
+    assert mocks["convert"].call_count == 2
+    assert mocks["convert"].call_args_list[0][0][2] == "path_e7"
+    assert mocks["convert"].call_args_list[1][0][2] == "path_e9"
+    mocks["remove"].assert_called_once_with("path_e7")
+    mocks["rename"].assert_called_once_with("path_e9", worker.output)
+
+def test_convert_jpeg_xl_intelligent_effort_e7_smaller(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    mocks["getsize"].side_effect=[400_000, 300_000]
+    mocks["getUniqueFilePath"].side_effect = ["path_e7", "path_e9"]
+    worker.params["format"] = "JPEG XL"
+    worker.params["intelligent_effort"] = True
+    
+    worker.convert()
+
+    assert mocks["convert"].call_count == 2
+    assert mocks["convert"].call_args_list[0][0][2] == "path_e7"
+    assert mocks["convert"].call_args_list[1][0][2] == "path_e9"
+    mocks["remove"].assert_called_once_with("path_e9")
+    mocks["rename"].assert_called_once_with("path_e7", worker.output)
+
+def test_convert_regular(worker_convert_patches):
+    worker, mocks = worker_convert_patches
         
-        worker.convert()
+    worker.convert()
 
-        mock_decodeAndDownscale.assert_called_once_with(
-            worker.scl_params,
-            worker.item_ext,
-            worker.params["misc"]["keep_metadata"],
-            worker.mutex,
-        )
-def test_convert_jpeg_xl_intelligent_effort_canceled(worker):
-    with (
-        convert_patches() as patches,
-        patch("core.worker.task_status.wasCanceled", return_value=True) as mock_canceled,
-        patch("core.worker.os.remove") as mock_remove,
-    ):
-        worker.params["format"] = "JPEG XL"
-        worker.params["intelligent_effort"] = True
-        
-        with pytest.raises(CancellationException):
-            worker.convert()
-
-        mock_canceled.assert_called_once()
-        mock_remove.assert_called_once()
-
-def test_convert_jpeg_xl_intelligent_effort_e9_smaller(worker):
-    with convert_patches(
-        getsize_side_effect=[300_000, 400_000],
-        getUniqueFilePath_side_effect=["path_e7", "path_e9"]
-    ) as patches:
-        mock_convert = patches.enter_context(patch("core.worker.convert"))
-        mock_remove = patches.enter_context(patch("core.worker.os.remove"))
-        mock_rename = patches.enter_context(patch("core.worker.os.rename"))
-        worker.params["format"] = "JPEG XL"
-        worker.params["intelligent_effort"] = True
-        
-        worker.convert()
-
-        assert mock_convert.call_count == 2
-        assert mock_convert.call_args_list[0][0][2] == "path_e7"
-        assert mock_convert.call_args_list[1][0][2] == "path_e9"
-        mock_remove.assert_called_once_with("path_e7")
-        mock_rename.assert_called_once_with("path_e9", worker.output)
-
-def test_convert_jpeg_xl_intelligent_effort_e7_smaller(worker):
-    with convert_patches(
-        getsize_side_effect=[400_000, 300_000],
-        getUniqueFilePath_side_effect=["path_e7", "path_e9"]
-    ) as patches:
-        mock_convert = patches.enter_context(patch("core.worker.convert"))
-        mock_remove = patches.enter_context(patch("core.worker.os.remove"))
-        mock_rename = patches.enter_context(patch("core.worker.os.rename"))
-        worker.params["format"] = "JPEG XL"
-        worker.params["intelligent_effort"] = True
-        
-        worker.convert()
-
-        assert mock_convert.call_count == 2
-        assert mock_convert.call_args_list[0][0][2] == "path_e7"
-        assert mock_convert.call_args_list[1][0][2] == "path_e9"
-        mock_remove.assert_called_once_with("path_e9")
-        mock_rename.assert_called_once_with("path_e7", worker.output)
-
-def test_convert_regular(worker):
-    with convert_patches() as patches:
-        mock_convert = patches.enter_context(patch("core.worker.convert"))
-        
-        worker.convert()
-
-        mock_convert.assert_called_once()
+    mocks["runBinary"].assert_called_once()
 
 def test_finishConversion_proxy(finishConversion_patches, worker):
     worker.item_abs_path = "item_abs_path"

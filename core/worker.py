@@ -370,7 +370,9 @@ class Worker(QRunnable):
                 except OSError as err:
                     raise FileException("C2", err)
             else:   # Regular conversion
-                convert(encoder, self.item_abs_path, self.output, args, self.n)
+                stdout, stderr = runBinary(encoder, args, self.item_abs_path, self.output, args_after_input=(encoder == IMAGE_MAGICK_PATH))
+                if not os.path.isfile(self.output):
+                    raise FileException("C3", f"[{os.path.basename(encoder)}] {stderr}")
     
     def runExifTool(self):
         # Apply metadata (ExifTool)
