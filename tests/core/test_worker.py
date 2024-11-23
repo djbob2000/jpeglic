@@ -110,36 +110,6 @@ def postConversionRoutines_patches():
     ):
         yield mock_isfile, mock_runExifTool, mock_copystat, mock_remove, mock_send2trash
 
-@pytest.fixture
-def smallestLossless_patches():
-    def getsize_side_effect(file_path):
-        size_map = {
-            "png": 250_000,
-            "webp": 200_000,
-            "jxl": 150_000,
-        }
-        suffix = Path(file_path).suffix[1:]
-        return size_map.get(suffix, 0)
-
-    def getUniqueFilePath_side_effect(output_dir, item_name, key, random):
-        size_map = {
-            "png": "tmp/image.png",
-            "webp": "tmp/image.webp",
-            "jxl": "tmp/image.jxl",
-        }
-        return size_map.get(key, 0)
-
-    with (
-        patch("core.worker.os.path.getsize", side_effect=getsize_side_effect) as mock_getsize,
-        patch("core.worker.getUniqueFilePath", side_effect=getUniqueFilePath_side_effect) as mock_getUniqueFilePath,
-        patch("core.worker.metadata.getArgs", return_value=[]) as mock_getArgs,
-        patch("core.worker.shutil.copy") as mock_copy,
-        patch("core.worker.optimize") as mock_optimize,
-        patch("core.worker.convert") as mock_convert,
-        patch("core.worker.os.remove") as mock_remove,
-    ):
-        yield mock_getsize, mock_getUniqueFilePath, mock_getArgs, mock_copy, mock_optimize, mock_convert, mock_remove
-
 def test_logException(worker):
     worker.item_abs_path = str(Path("/test/path/image.png"))
     spy = QSignalSpy(worker.signals.exception)
@@ -181,7 +151,7 @@ def setupConversion_patches():
     with (
         patch("core.worker.Proxy.isProxyNeeded", return_value=False) as mock_isProxyNeeded,
         patch("core.worker.os.makedirs", side_effect=None) as mock_makedirs,
-        patch("core.worker.getUniqueFilePath", return_value=normalizePath("/output/dir/image.jpg")) as mock_getUniqueFilePath,
+        patch("core.worker.getUniqueTmpFilePath", return_value=normalizePath("/output/dir/image.jpg")) as mock_getUniqueTmpFilePath,
         patch("core.worker.getOutputDir", return_value="/output/dir/") as mock_getOutputDir,
         patch("core.worker.getExtensionJxl", return_value="jpg") as mock_getExtensionJxl,
         patch("core.worker.os.path.isfile", side_effect=[True, True]) as mock_isfile,
@@ -190,7 +160,7 @@ def setupConversion_patches():
         patch("core.worker.getExtension", return_value="jxl") as mock_getExtension,
     ):
         yield (
-            mock_getUniqueFilePath,     # 0
+            mock_getUniqueTmpFilePath,     # 0
             mock_getOutputDir,          # 1
             mock_isProxyNeeded,         # 2
             mock_makedirs,              # 3
@@ -207,10 +177,10 @@ def test_setupConversion_regular(setupConversion_patches, worker):
     final_output = normalizePath("/output/dir/image.jpg")
     worker.item_name = "image"
     worker.params["format"] = "JPEG"
-    mock_getUniqueFilePath = setupConversion_patches[0]
+    mock_getUniqueTmpFilePath = setupConversion_patches[0]
     mock_getOutputDir = setupConversion_patches[1]
     mock_getExtension = setupConversion_patches[8]
-    mock_getUniqueFilePath.return_value = output
+    mock_getUniqueTmpFilePath.return_value = output
     mock_getOutputDir.return_value = output_dir
     mock_getExtension.return_value = "jpg"
 
@@ -281,8 +251,8 @@ def test_setupConversion_jpeg_reconstruction_bad_input(setupConversion_patches, 
     assert "Only JPEG XL images are allowed" in exc.value.msg
 
 def test_setupConversion_assign_output_path(setupConversion_patches, worker):
-    mock_getUniqueFilePath, mock_getOutputDir = setupConversion_patches[0], setupConversion_patches[1]
-    mock_getUniqueFilePath.return_value = normalizePath("/tmp/path/image.jxl")
+    mock_getUniqueTmpFilePath, mock_getOutputDir = setupConversion_patches[0], setupConversion_patches[1]
+    mock_getUniqueTmpFilePath.return_value = normalizePath("/tmp/path/image.jxl")
     mock_getOutputDir.return_value = normalizePath("/tmp/path/")
     worker.params["format"] = "JPEG XL"
     worker.item_name = "image"
@@ -321,11 +291,10 @@ def worker_convert_patches(worker):
         "rename": patch("core.worker.os.rename"),
         "getsize": patch("core.worker.os.path.getsize", return_value=[300_000, 400_00]),
         "isfile": patch("core.worker.os.path.isfile", return_value=True),
-        "getUniqueFilePath": patch("core.worker.getUniqueFilePath", return_value="final/path/img.jpg"),
+        "getUniqueTmpFilePath": patch("core.worker.getUniqueTmpFilePath", return_value="final/path/img.jpg"),
         "getDecoder": patch("core.worker.getDecoder", return_value="path/to/decoder"),
         "getDecoderArgs": patch("core.worker.getDecoderArgs", return_value=[]),
         "getArgs": patch("core.metadata.getArgs", return_value=[]),
-        "getUniqueFilePath": patch("core.worker.getUniqueFilePath", side_effect=["/path/image1.jxl", "/path/image1.jxl"]),
         "downscale": patch("core.worker.downscale"),
         "decodeAndDownscale": patch("core.worker.decodeAndDownscale"),
         "wasCanceled": patch("core.worker.task_status.wasCanceled", return_value=False),
@@ -485,7 +454,7 @@ def test_convert_jpeg_xl_intelligent_effort_canceled(worker_convert_patches):
 def test_convert_jpeg_xl_intelligent_effort_e9_smaller(worker_convert_patches):
     worker, mocks = worker_convert_patches
     mocks["getsize"].side_effect = [300_000, 400_000]
-    mocks["getUniqueFilePath"].side_effect = ["path_e7", "path_e9"]
+    mocks["getUniqueTmpFilePath"].side_effect = ["path_e7", "path_e9"]
     worker.params["format"] = "JPEG XL"
     worker.params["intelligent_effort"] = True
     
@@ -500,7 +469,7 @@ def test_convert_jpeg_xl_intelligent_effort_e9_smaller(worker_convert_patches):
 def test_convert_jpeg_xl_intelligent_effort_e7_smaller(worker_convert_patches):
     worker, mocks = worker_convert_patches
     mocks["getsize"].side_effect=[400_000, 300_000]
-    mocks["getUniqueFilePath"].side_effect = ["path_e7", "path_e9"]
+    mocks["getUniqueTmpFilePath"].side_effect = ["path_e7", "path_e9"]
     worker.params["format"] = "JPEG XL"
     worker.params["intelligent_effort"] = True
     
@@ -701,20 +670,50 @@ def test_postConversionRoutines_delete_failed(postConversionRoutines_patches, wo
 
     assert "Failed to delete original file" in exc.value.msg
 
+@pytest.fixture
+def smallestLossless_patches():
+    def getsize_side_effect(file_path):
+        size_map = {
+            "png": 250_000,
+            "webp": 200_000,
+            "jxl": 150_000,
+        }
+        suffix = Path(file_path).suffix[1:]
+        return size_map.get(suffix, 0)
+
+    def getUniqueTmpFilePath_side_effect(output_dir, key):
+        size_map = {
+            "png": "tmp/image.png",
+            "webp": "tmp/image.webp",
+            "jxl": "tmp/image.jxl",
+        }
+        return size_map.get(key, 0)
+
+    with (
+        patch("core.worker.os.path.getsize", side_effect=getsize_side_effect) as mock_getsize,
+        patch("core.worker.getUniqueTmpFilePath", side_effect=getUniqueTmpFilePath_side_effect) as mock_getUniqueTmpFilePath,
+        patch("core.worker.metadata.getArgs", return_value=[]) as mock_getArgs,
+        patch("core.worker.shutil.copy") as mock_copy,
+        patch("core.worker.optimize") as mock_optimize,
+        patch("core.worker.convert") as mock_convert,
+        patch("core.worker.os.remove") as mock_remove,
+    ):
+        yield mock_getsize, mock_getUniqueTmpFilePath, mock_getArgs, mock_copy, mock_optimize, mock_convert, mock_remove
+
 @pytest.mark.parametrize("png, webp, jxl", [
     (True, True, True),
     (False, True, True),
     (False, False, True),
 ])
 def test_smallestLossless_path_pool_filled(png, webp, jxl, smallestLossless_patches, worker):
-    _, mock_getUniqueFilePath, *_ = smallestLossless_patches
+    _, mock_getUniqueTmpFilePath, *_ = smallestLossless_patches
     worker.params["smallest_format_pool"]["png"] = png
     worker.params["smallest_format_pool"]["jxl"] = webp
     worker.params["smallest_format_pool"]["webp"] = jxl
 
     worker.smallestLossless()
 
-    assert mock_getUniqueFilePath.call_count == sum([png, webp, jxl])
+    assert mock_getUniqueTmpFilePath.call_count == sum([png, webp, jxl])
 
 def test_smallestLossless_path_pool_empty(smallestLossless_patches, worker):
     worker.params["smallest_format_pool"] = {}
@@ -845,7 +844,7 @@ def worker_losslesslyTranscodeJPEG_patches(worker):
     mocks = {
         "remove": patch("core.worker.remove"),
         "QMutexLocker": patch("core.worker.QMutexLocker"),
-        "getUniqueFilePath": patch("core.worker.getUniqueFilePath", return_value="tmp_path"),
+        "getUniqueTmpFilePath": patch("core.worker.getUniqueTmpFilePath", return_value="tmp_path"),
         "transcodeJPEGtoJPEGXL": patch("core.worker.lossless_jpeg.transcodeJPEGtoJPEGXL", return_value=(True, "stdout", "stdout")),
         "normalizeJPEG": patch("core.worker.lossless_jpeg.normalizeJPEG", return_value=(True, "stdout", "stdout")),
         "verifyJPEGXLReconstructionData": patch("core.worker.lossless_jpeg.verifyJPEGXLReconstructionData", return_value=(True, "stdout", "stdout")),
@@ -897,16 +896,14 @@ def test_losslesslyTranscodeJPEG_verify_happy_path(worker_losslesslyTranscodeJPE
         worker.params["effort"],
         worker.available_threads,
     )
-    mocks["getUniqueFilePath"].assert_called_once_with(
+    mocks["getUniqueTmpFilePath"].assert_called_once_with(
         variables["output_dir"],
-        variables["item_name"],
         "jpg",
-        True,
     )
     mocks["verifyJPEGXLReconstructionData"].assert_called_once_with(
         variables["output"],
         variables["item_abs_path"],
-        mocks["getUniqueFilePath"].return_value,
+        mocks["getUniqueTmpFilePath"].return_value,
         worker.available_threads,
     )
     mocks["normalizeJPEG"].assert_not_called()
@@ -929,11 +926,11 @@ def test_losslesslyTranscodeJPEG_verify_failed(worker_losslesslyTranscodeJPEG_pa
         worker.params["effort"],
         worker.available_threads,
     )
-    mocks["getUniqueFilePath"].assert_called_once_with(variables["output_dir"], variables["item_name"], "jpg", True)
+    mocks["getUniqueTmpFilePath"].assert_called_once_with(variables["output_dir"], "jpg")
     mocks["verifyJPEGXLReconstructionData"].assert_called_once_with(
         variables["output"],
         variables["item_abs_path"],
-        mocks["getUniqueFilePath"].return_value,
+        mocks["getUniqueTmpFilePath"].return_value,
         worker.available_threads,
     )
     mocks["normalizeJPEG"].assert_not_called()
@@ -956,18 +953,16 @@ def test_losslesslyTranscodeJPEG_normalize_always(worker_losslesslyTranscodeJPEG
 
     worker.losslesslyTranscodeJPEG()
 
-    mocks["getUniqueFilePath"].assert_called_once_with(
+    mocks["getUniqueTmpFilePath"].assert_called_once_with(
         variables["output_dir"],
-        variables["item_name"],
         "jpg",
-        True,
     )
     mocks["normalizeJPEG"].assert_called_once_with(
         worker.org_item_abs_path,
-        mocks["getUniqueFilePath"].return_value,
+        mocks["getUniqueTmpFilePath"].return_value,
     )
-    assert worker.item_abs_path == mocks["getUniqueFilePath"].return_value
-    mocks["remove"].assert_called_once_with(mocks["getUniqueFilePath"].return_value, exc_id="lossless_jpeg_7")
+    assert worker.item_abs_path == mocks["getUniqueTmpFilePath"].return_value
+    mocks["remove"].assert_called_once_with(mocks["getUniqueTmpFilePath"].return_value, exc_id="lossless_jpeg_7")
     mocks["verifyJPEGXLReconstructionData"].assert_not_called()
     mocks["transcodeJPEGtoJPEGXL"].assert_called_once()
 
@@ -983,7 +978,7 @@ def test_losslesslyTranscodeJPEG_normalize_failed(worker_losslesslyTranscodeJPEG
     assert "lossless_jpeg_2" == exc_info.value.id
     assert "Normalizing failed" in exc_info.value.msg
     assert "stderr" in exc_info.value.msg
-    mocks["getUniqueFilePath"].assert_called_once()
+    mocks["getUniqueTmpFilePath"].assert_called_once()
     mocks["normalizeJPEG"].assert_called_once()
     mocks["verifyJPEGXLReconstructionData"].assert_not_called()
 

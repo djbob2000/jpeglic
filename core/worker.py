@@ -26,7 +26,7 @@ from data.constants import (
 )
 
 from core.proxy import Proxy
-from core.pathing import getUniqueFilePath, getExtension, getOutputDir
+from core.pathing import getUniqueFilePath, getExtension, getOutputDir, getUniqueTmpFilePath
 from core.convert import convert, getDecoder, getDecoderArgs, getExtensionJxl, optimize, runBinary
 from core.downscale import downscale, decodeAndDownscale
 import core.metadata as metadata
@@ -192,7 +192,7 @@ class Worker(QRunnable):
         
         # Assign output path
         with QMutexLocker(self.mutex):
-            self.output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, True)
+            self.output = getUniqueTmpFilePath(self.output_dir, self.output_ext)
         
         self.final_output = os.path.join(self.output_dir, f"{self.item_name}.{self.output_ext}")
 
@@ -343,8 +343,8 @@ class Worker(QRunnable):
         else:   # No downscaling
             if format == "JPEG XL" and self.params["intelligent_effort"]:
                 with QMutexLocker(self.mutex):
-                    path_e7 = getUniqueFilePath(self.output_dir, self.item_name, "jxl", True)
-                    path_e9 = getUniqueFilePath(self.output_dir, self.item_name, "jxl", True)
+                    path_e7 = getUniqueTmpFilePath(self.output_dir, "jxl")
+                    path_e9 = getUniqueTmpFilePath(self.output_dir, "jxl")
                 
                 args[1] = "-e 7"
                 convert(encoder, self.item_abs_path, path_e7, args, self.n)
@@ -433,12 +433,12 @@ class Worker(QRunnable):
                             os.path.getsize(self.org_item_abs_path) < os.path.getsize(self.output) and
                             (os.path.isfile(self.final_output) and os.path.samefile(self.org_item_abs_path, self.final_output))
                         ):
-                            self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, False)
+                            self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext)
                         else:
                             if os.path.isfile(self.final_output):
                                 os.remove(self.final_output)
                     elif mode == "Rename" or mode == "Skip":
-                        self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext, False)
+                        self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext)
                     
                     os.rename(self.output, self.final_output)
 
@@ -449,7 +449,7 @@ class Worker(QRunnable):
                     self.params["format"] not in ("Lossless JPEG Transcoding", "JPEG Reconstruction")
                 ):
                     os.remove(self.final_output)
-                    self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.item_ext, False)
+                    self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.item_ext)
                     shutil.copy(self.org_item_abs_path, self.final_output)
         except OSError as err:
             raise FileException("F1", f"Conversion could not finish. {err}")
@@ -482,7 +482,7 @@ class Worker(QRunnable):
         with QMutexLocker(self.mutex):
             for key in self.params["smallest_format_pool"]:
                 if self.params["smallest_format_pool"][key]:
-                    path_pool[key] = getUniqueFilePath(self.output_dir, self.item_name, key, True)
+                    path_pool[key] = getUniqueTmpFilePath(self.output_dir, key)
 
         if len(path_pool) == 0:
             raise GenericException("SL0", "No formats selected.")
@@ -571,12 +571,7 @@ class Worker(QRunnable):
             FileException: if normalization fails
             """
             with QMutexLocker(self.mutex):
-                _normalized_path = getUniqueFilePath(
-                    self.output_dir,
-                    self.item_name,
-                    "jpg",
-                    True
-                )
+                _normalized_path = getUniqueTmpFilePath(self.output_dir, "jpg")
             success, stdout, stderr = lossless_jpeg.normalizeJPEG(
                 self.org_item_abs_path,
                 _normalized_path,
@@ -605,12 +600,7 @@ class Worker(QRunnable):
             FileException: if verification fails
             """
             with QMutexLocker(self.mutex):
-                verify_tmp_path = getUniqueFilePath(
-                    self.output_dir,
-                    self.item_name,
-                    "jpg",
-                    True
-                )
+                verify_tmp_path = getUniqueTmpFilePath(self.output_dir, "jpg")
             success, stdout, stderr = lossless_jpeg.verifyJPEGXLReconstructionData(
                 self.output,
                 self.item_abs_path,

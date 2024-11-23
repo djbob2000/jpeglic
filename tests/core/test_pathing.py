@@ -1,35 +1,125 @@
+import time
 from unittest.mock import patch
+from pathlib import Path
+import threading
 
 import pytest
-from pathlib import Path
 
-from core.pathing import (
-    getUniqueFilePath,
-    getExtension,
-    getOutputDir,
-    isANSICompatible,
-)
+import core.pathing as pathing
 from core.exceptions import GenericException
 
-@pytest.mark.parametrize("file_name, file_ext, output_dir, add_random, isfile_side_effect, expected_path", [
-    # Base
-    ("image", "jxl", Path("/home/user/images"), False, [False], Path("/home/user/images/image.jxl")),
-    ("image", "jxl", Path("/home/user/images"), False, [True, False], Path("/home/user/images/image (1).jxl")),
-    ("image", "jxl", Path("/home/user/images"), False, [True, True, False], Path("/home/user/images/image (2).jxl")),
-    ("image (10)", "jxl", Path("/home/user/images"), False, [False], Path("/home/user/images/image (10).jxl")),
-    ("image (10)", "jxl", Path("/home/user/images"), False, [True, True, False], Path("/home/user/images/image (11).jxl")), # Needs two passes
+@pytest.fixture
+def UniquePathStore():
+    yield pathing.UniquePathStore
+    pathing.UniquePathStore.clear()
+
+def test_UniquePathStore_init(UniquePathStore):
+    assert UniquePathStore._lock.locked() == False
+    assert UniquePathStore._paths == set()
+
+def test_UniquePathStore_add_and_exists(UniquePathStore):
+    test_path = "/tmp/test/path.jpg"
+    assert not UniquePathStore.exists(test_path)
+    UniquePathStore.add(test_path)
+    assert UniquePathStore.exists(test_path)
+
+def test_UniquePathStore_clear(UniquePathStore):
+    test_path = "/tmp/test/path.jpg"
+    UniquePathStore.add(test_path)
+    UniquePathStore.clear()
+    assert UniquePathStore._paths == set()
+
+def test_UniquePathStore_concurrency(UniquePathStore):
+    paths = [f"/tmp/test/image ({i}).jpg" for i in range(100)]
+
+    def addPaths():
+        for path in paths:
+            UniquePathStore.add(path)
+            time.sleep(0.0001)
     
-    # Add Random
-    ("image", "jxl", Path("/home/user/images"), True, [False], Path("/home/user/images/image_abcd.jxl")),
-    ("image", "jxl", Path("/home/user/images"), True, [True, False], Path("/home/user/images/image (1)_abcd.jxl")),
-    ("image (3)", "jxl", Path("/home/user/images"), True, [True, True, False], Path("/home/user/images/image (4)_abcd.jxl")),
+    def checkPaths():
+        for path in paths:
+            UniquePathStore.exists(path)
+            time.sleep(0.0001)
+    
+    threads = []
+    for _ in range(6):
+        threads.append(threading.Thread(target=addPaths))
+        threads.append(threading.Thread(target=checkPaths))
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+    
+    assert len(UniquePathStore._paths) == len(paths)
+    for path in paths:
+        assert UniquePathStore.exists(path)
+
+def test_UniquePathStore_mutex_release(UniquePathStore):
+    test_path = "/tmp/test/path.jpg"
+
+    UniquePathStore.add(test_path)
+    assert not UniquePathStore._lock.locked()
+    
+    UniquePathStore.exists(test_path)
+    assert not UniquePathStore._lock.locked()
+    
+    UniquePathStore.clear()
+    assert not UniquePathStore._lock.locked()
+
+@pytest.mark.parametrize("file_name, file_ext, output_dir, isfile_side_effect, exists_side_effect, expected_path", [
+    # Base
+    ("image", "jxl", Path("/home/user/images"), [False], [False], Path("/home/user/images/image.jxl")),
+    ("image", "jxl", Path("/home/user/images"), [True, False], [False], Path("/home/user/images/image (1).jxl")),
+    ("image", "jxl", Path("/home/user/images"), [True, True, False], [False], Path("/home/user/images/image (2).jxl")),
+    ("image (10)", "jxl", Path("/home/user/images"), [False], [False], Path("/home/user/images/image (10).jxl")),
+    ("image (10)", "jxl", Path("/home/user/images"), [True, True, False], [False], Path("/home/user/images/image (11).jxl")),  # Needs one more pass to acknowledge parenthesis
+    
+    # UniquePathStore
+    ("image (10)", "jxl", Path("/home/user/images"), [False, False], [True, False], Path("/home/user/images/image (10).jxl")),
+    ("image (10)", "jxl", Path("/home/user/images"), [False, False, False], [True, True, False], Path("/home/user/images/image (11).jxl")),
+    ("image (10)", "jxl", Path("/home/user/images"), [True, True, False, False], [True, False], Path("/home/user/images/image (12).jxl")),
 ])
-def test_getUniqueFilePath(file_name, file_ext, output_dir, add_random, isfile_side_effect, expected_path):
+def test_getUniqueFilePath(file_name, file_ext, output_dir, isfile_side_effect, exists_side_effect, expected_path):
     with (
         patch("os.path.isfile", side_effect=isfile_side_effect),
-        patch("random.choice", side_effect=list("abcd")),
+        patch("core.pathing.UniquePathStore.exists", side_effect=exists_side_effect),
     ):
-        assert getUniqueFilePath(str(output_dir), file_name, file_ext, add_random) == str(expected_path)
+        assert pathing.getUniqueFilePath(str(output_dir), file_name, file_ext) == str(expected_path)
+
+def test_getUniqueTmpFilePath_happy_path():
+    with (
+        patch("core.pathing.os.path.isfile", return_value=False),
+        patch("core.pathing.UniquePathStore.exists", return_value=False),
+        patch("core.pathing.secrets.token_hex", return_value="abcdef12"),
+    ):
+        pathing.getUniqueTmpFilePath(str(Path("/tmp")), "jpg") == str(Path("/tmp", f"tmp_abcdef12.jpg"))
+
+def test_getUniqueTmpFilePath_isfile_true():
+    with (
+        patch("core.pathing.os.path.isfile", side_effect=[True, False]),
+        patch("core.pathing.UniquePathStore.exists", return_value=False),
+        patch("core.pathing.secrets.token_hex", side_effect=["1"*8, "2"*8]),
+    ):
+        pathing.getUniqueTmpFilePath(str(Path("/tmp")), "jpg") == str(Path("/tmp", f"tmp_{'2'*8}.jpg"))
+
+def test_getUniqueTmpFilePath_path_store_exists():
+    with (
+        patch("core.pathing.os.path.isfile", return_value=False),
+        patch("core.pathing.UniquePathStore.exists", side_effect=[True, False]),
+        patch("core.pathing.secrets.token_hex", side_effect=["1"*8, "2"*8]),
+    ):
+        pathing.getUniqueTmpFilePath(str(Path("/tmp")), "jpg") == str(Path("/tmp", f"tmp_{'2'*8}.jpg"))
+
+def test_getUniqueTmpFilePath_path_store_exists_and_isfile_true():
+    with (
+        patch("core.pathing.os.path.isfile", side_effect=[True, False, False]),
+        patch("core.pathing.UniquePathStore.exists", side_effect=[True, False]),
+        patch("core.pathing.secrets.token_hex", side_effect=["1"*8, "2"*8, "3"*8]),
+    ):
+        pathing.getUniqueTmpFilePath(str(Path("/tmp")), "jpg") == str(Path("/tmp", f"tmp_{'3'*8}.jpg"))
 
 @pytest.mark.parametrize("file_format, extension", [
     ("JPEG XL", "jxl"),
@@ -40,11 +130,11 @@ def test_getUniqueFilePath(file_name, file_ext, output_dir, add_random, isfile_s
     ("Smallest Lossless", None),
 ])
 def test_getExtension(file_format, extension):
-    assert getExtension(file_format) == extension
+    assert pathing.getExtension(file_format) == extension
 
 def test_getExtension_exception():
     with pytest.raises(GenericException) as exc:
-        getExtension("FLIF")
+        pathing.getExtension("FLIF")
     assert "No extension declared" in exc.value.msg
 
 @pytest.mark.parametrize(
@@ -59,7 +149,7 @@ def test_getExtension_exception():
     ]
 )
 def test_getOutputDir(item_dir_path, item_anchor_path, custom_dir, custom_dir_path, keep_dir_struct, expected):
-    assert getOutputDir(str(item_dir_path), item_anchor_path, custom_dir, str(custom_dir_path), keep_dir_struct) == str(expected)
+    assert pathing.getOutputDir(str(item_dir_path), item_anchor_path, custom_dir, str(custom_dir_path), keep_dir_struct) == str(expected)
 
 @pytest.mark.parametrize(
     "item_dir_path,item_anchor_path,custom_dir,custom_dir_path,keep_dir_struct", [
@@ -67,11 +157,11 @@ def test_getOutputDir(item_dir_path, item_anchor_path, custom_dir, custom_dir_pa
     ]
 )
 def test_getOutputDir_exception(item_dir_path, item_anchor_path, custom_dir, custom_dir_path, keep_dir_struct, caplog):
-    getOutputDir(item_dir_path, item_anchor_path, custom_dir, custom_dir_path, keep_dir_struct)
+    pathing.getOutputDir(item_dir_path, item_anchor_path, custom_dir, custom_dir_path, keep_dir_struct)
     assert "[Pathing] Failed to calculate relative path." in caplog.text
 
 def test_isANSICompatible_compatible():
-    assert isANSICompatible("C:\\Users\\User\\Pictures")
+    assert pathing.isANSICompatible("C:\\Users\\User\\Pictures")
 
 def test_isANSICompatible_not_compatible():
-    assert not isANSICompatible("D:\\画像")
+    assert not pathing.isANSICompatible("D:\\画像")

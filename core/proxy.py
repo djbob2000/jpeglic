@@ -12,7 +12,7 @@ from data.constants import (
     ALLOWED_INPUT_AVIFENC,
     ALLOWED_INPUT_IMAGE_MAGICK,
 )
-from core.pathing import getUniqueFilePath
+from core.pathing import getUniqueTmpFilePath
 from core.convert import getDecoder, runBinary
 from core.exceptions import FileException
 
@@ -61,7 +61,7 @@ class Proxy():
     def generate(self, src: str, src_ext: str, dst_dir: str, file_name: str, n: int, mutex: QMutex) -> str:
         """Generate a proxy image."""
         with QMutexLocker(mutex):
-            self.proxy_path = getUniqueFilePath(dst_dir, file_name, "png", True)
+            self.proxy_path = getUniqueTmpFilePath(dst_dir, "png")
     
         stdout, stderr = runBinary(
             getDecoder(src_ext),

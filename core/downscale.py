@@ -10,7 +10,7 @@ from data.constants import (
     ALLOWED_RESAMPLING,
 )
 from core.utils import clip
-from core.pathing import getUniqueFilePath
+from core.pathing import getUniqueTmpFilePath
 import core.metadata as metadata
 from core.convert import convert, getDecoder
 from core.exceptions import CancellationException, GenericException, FileException
@@ -82,7 +82,7 @@ def _downscaleToFileSize(params, mutex):
     fault_tolerance = 0.1    # 0.1 is 10%
     size_samples = []
     with QMutexLocker(mutex):
-        proxy_src = getUniqueFilePath(params["dst_dir"], params["name"], "png", True)
+        proxy_src = getUniqueTmpFilePath(params["dst_dir"], "png")
 
     # JPEG XL - intelligent effort
     if params["format"] == "JPEG XL" and params["jxl_int_e"]:
@@ -175,7 +175,7 @@ def _downscaleToFileSize(params, mutex):
         if params["format"] == "JPEG XL" and params["jxl_int_e"]:
             params["args"][1] = "-e 9"
             with QMutexLocker(mutex):
-                e9_tmp = getUniqueFilePath(params["dst_dir"], params["name"], "jxl", True)
+                e9_tmp = getUniqueTmpFilePath(params["dst_dir"], "jxl")
 
             convert(params["enc"], proxy_src, e9_tmp, params["args"], params["n"])
 
@@ -238,7 +238,7 @@ def _downscaleManualModes(params, mutex):
         convert(IMAGE_MAGICK_PATH, params["src"], params["dst"], args, params["n"])
     else:
         with QMutexLocker(mutex):
-            downscaled_path = getUniqueFilePath(params["dst_dir"], params["name"], "png", True)
+            downscaled_path = getUniqueTmpFilePath(params["dst_dir"], "png")
 
         # Downscale
         # Proxy was handled before in Worker.py
@@ -255,7 +255,7 @@ def _downscaleManualModes(params, mutex):
             params["args"][1] = "-e 9"
 
             with QMutexLocker(mutex):
-                e9_tmp = getUniqueFilePath(params["dst_dir"], params["name"], "jxl", True)
+                e9_tmp = getUniqueTmpFilePath(params["dst_dir"], "jxl")
             convert(params["enc"], downscaled_path, e9_tmp, params["args"], params["n"])
 
             try:
@@ -291,7 +291,7 @@ def decodeAndDownscale(params, ext, metadata_mode, mutex):
     else:
         # Generate proxy
         with QMutexLocker(mutex):
-            proxy_path = getUniqueFilePath(params["dst_dir"], params["name"], "png", True)
+            proxy_path = getUniqueTmpFilePath(params["dst_dir"], "png")
         convert(params["enc"], params["src"], proxy_path, [], params["n"])
 
         # Downscale

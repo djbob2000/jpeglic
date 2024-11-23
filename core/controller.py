@@ -20,6 +20,7 @@ from data.items import Items
 from data.process_manager import ProcessManager
 import data.task_status as task_status
 from core.worker import Worker
+from core.pathing import UniquePathStore
 
 class CheckFlags(Enum):
     DISABLE_DOWNSCALING = auto()
@@ -166,8 +167,9 @@ class Controller(QObject):
             enable_parallel,
         )
         task_status.reset()
-        self.finish_emitted = False
         ProcessManager.clear()
+        UniquePathStore.clear()
+        self.finish_emitted = False
 
         # Loader
         worker_data = []

@@ -41,7 +41,7 @@ def proxy_generate_patched(proxy):
     patches = {
         "isfile": patch("core.proxy.os.path.isfile", return_value=True),
         "runBinary": patch("core.proxy.runBinary", return_value=("", "")),
-        "getUniqueFilePath": patch("core.proxy.getUniqueFilePath", return_value="/proxy/dst/proxy.png"),
+        "getUniqueTmpFilePath": patch("core.proxy.getUniqueTmpFilePath", return_value="/proxy/dst/proxy.png"),
         "getDecoder": patch("core.proxy.getDecoder"),
     }
 
@@ -53,7 +53,7 @@ def test_generate_proxy_success(proxy_generate_patched):
     proxy, mocks = proxy_generate_patched
     src, src_ext, dst_dir, file_name = "/path/to/src.avif", "avif", "/proxy/dst", "src"
     proxy_path = "/proxy/dst/proxy.png"
-    mocks["getUniqueFilePath"].return_value = proxy_path
+    mocks["getUniqueTmpFilePath"].return_value = proxy_path
 
     proxy.generate(src, src_ext, dst_dir, file_name, 0, QMutex())
 

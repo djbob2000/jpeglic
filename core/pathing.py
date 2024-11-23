@@ -1,25 +1,44 @@
 import re
-import random
 import os
 from pathlib import Path
 import logging
 import string
+from threading import Lock
+import secrets
 
 from core.exceptions import GenericException
 
-def getUniqueFilePath(output_dir: str, file_name: str, file_ext: str, add_rnd = False):
+class UniquePathStore():
+    """Thread-safe class for storing already used paths to check for uniqueness."""
+    _paths = set()
+    _lock = Lock()
+
+    @classmethod
+    def add(cls, path: str) -> None:
+        with cls._lock:
+            cls._paths.add(path)
+
+    @classmethod
+    def exists(cls, path: str) -> bool:
+        with cls._lock:
+            return path in cls._paths
+
+    @classmethod
+    def clear(cls) -> None:
+        with cls._lock:
+            cls._paths = set()
+
+def getUniqueFilePath(output_dir: str, file_name: str, file_ext: str) -> str:
     """
-    Get a unique file name within a directory.
+    Returns a unique file name path within a directory. Uses UniquePathStore to prevent non-unique combinations.
     
     Params:
         - output_dir - the directory where the file needs to be unique
         - file_name - the original name of the file
         - file_ext - the file extension (without dot)
-        - add_rnd - add random characters to the file name
     """
 
-    rnd_str = "_" + "".join(random.choice(string.hexdigits) for _ in range(4)) if add_rnd else ""
-    path = os.path.join(output_dir,f"{file_name}{rnd_str}.{file_ext}")
+    path = os.path.join(output_dir,f"{file_name}.{file_ext}")
 
     prev = re.search(r"\([0-9]{1,}\)$", file_name)  	# Detect a previously renamed file
     n = int(prev.group(0)[1:-1]) if prev else 1			# Parse previously assigned number
@@ -28,10 +47,25 @@ def getUniqueFilePath(output_dir: str, file_name: str, file_ext: str, add_rnd = 
     spacing = "" if strip_p else " "											# Add spacing to files without parenthesis
     new_file_name = file_name[:-len(prev.group(0))] if strip_p else file_name	# Strip parenthesis
 
-    while os.path.isfile(path):
-        path = os.path.join(output_dir,f"{new_file_name}{spacing}({n}){rnd_str}.{file_ext}")
+    while os.path.isfile(path) or UniquePathStore.exists(path):
+        path = os.path.join(output_dir, f"{new_file_name}{spacing}({n}).{file_ext}")
         n += 1
 
+    UniquePathStore.add(path)
+    return path
+
+def getUniqueTmpFilePath(output_dir: str, file_ext: str) -> str:
+    """"Returns a unique file name path within a directory. Uses UniquePathStore to prevent non-unique combinations."""
+    def getPath(output_dir: str, file_ext: str):
+        # secrets.token_hex(nbytes)
+        # nbytes * 2 == sequence length
+        # 16 ^ (2 * nbytes) == number of combinations
+        return os.path.join(output_dir, f"tmp_{secrets.token_hex(4)}.{file_ext}")
+
+    path = getPath(output_dir, file_ext)
+    while os.path.isfile(path) or UniquePathStore.exists(path):
+        path = getPath(output_dir, file_ext)
+    
     return path
 
 def getExtension(_format):

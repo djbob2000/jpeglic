@@ -164,12 +164,14 @@ def test__downscaleManualModes_no_imagemagick(params_fixture):
         "mode": "Percent",
         "percent": 50,
     })
-    with patch("core.downscale.getUniqueFilePath", return_value="new/path/image.png") as mock_getUniqueFilePath, \
-        patch("core.downscale.convert") as mock_convert, \
-        patch("core.downscale.os.remove"):
+    with (
+        patch("core.downscale.getUniqueTmpFilePath", return_value="new/path/image.png") as mock_getUniqueTmpFilePath,
+        patch("core.downscale.convert") as mock_convert,
+        patch("core.downscale.os.remove"),
+    ):
 
         downscale._downscaleManualModes(params_fixture, QMutex())
-        mock_getUniqueFilePath.assert_called_once_with(params_fixture["dst_dir"], params_fixture["name"], "png", True)
+        mock_getUniqueTmpFilePath.assert_called_once_with(params_fixture["dst_dir"], "png")
 
         mock_convert.assert_any_call(IMAGE_MAGICK_PATH, params_fixture["src"], "new/path/image.png", ["-resize 50%"], params_fixture["n"])
         mock_convert.assert_any_call(params_fixture["enc"], "new/path/image.png", params_fixture["dst"], [], params_fixture["n"])
@@ -186,12 +188,13 @@ def test__downscaleManualModes_no_imagemagick_jxl_int_e_e9(params_fixture, side_
         "percent": 50,
         "args": ["-q 80", "-e 7"],
     })
-    with patch("core.downscale.getUniqueFilePath", side_effect=["path/to/jxl_e7.jxl", "path/to/jxl_e9.jxl"]), \
-        patch("core.downscale.convert") as mock_convert, \
-        patch("core.downscale.os.remove") as mock_remove, \
-        patch("core.downscale.os.rename"), \
-        patch("core.downscale.os.path.getsize", side_effect=side_effect):
-
+    with (
+        patch("core.downscale.getUniqueTmpFilePath", side_effect=["path/to/jxl_e7.jxl", "path/to/jxl_e9.jxl"]),
+        patch("core.downscale.convert") as mock_convert,
+        patch("core.downscale.os.remove") as mock_remove,
+        patch("core.downscale.os.rename"),
+        patch("core.downscale.os.path.getsize", side_effect=side_effect),
+    ):
         downscale._downscaleManualModes(params_fixture, QMutex())
         mock_convert.assert_any_call(params_fixture["enc"], "path/to/jxl_e7.jxl", params_fixture["dst"], params_fixture["args"], params_fixture["n"])
         mock_remove.assert_any_call(removed_file)
@@ -209,10 +212,10 @@ def test_decodeAndDownscale_imagemagick(mock_downscale, params_fixture):
 @patch("core.downscale.getDecoder", return_value="path/to/other/decoder")
 @patch("core.downscale.metadata.getArgs", return_value=[])
 @patch("core.downscale.downscale")
-@patch("core.downscale.getUniqueFilePath", return_value="path/to/proxy/image.png")
+@patch("core.downscale.getUniqueTmpFilePath", return_value="path/to/proxy/image.png")
 @patch("core.downscale.convert")
 @patch("core.downscale.os.remove")
-def test_decodeAndDownscale_other(mock_getDecoder, mock_downscale,  mock_getUniqueFilePath, mock_convert, mock_remove, params_fixture):
+def test_decodeAndDownscale_other(mock_getDecoder, mock_downscale,  mock_getUniqueTmpFilePath, mock_convert, mock_remove, params_fixture):
     downscale.decodeAndDownscale(params_fixture, "jxl", "Encoder - Wipe", QMutex())
     mock_convert.assert_called_once()
     mock_downscale.assert_called_once()
@@ -221,10 +224,10 @@ def test_decodeAndDownscale_other(mock_getDecoder, mock_downscale,  mock_getUniq
 @patch("core.downscale.getDecoder", return_value="path/to/other/decoder")
 @patch("core.downscale.metadata.getArgs", return_value=[])
 @patch("core.downscale.downscale")
-@patch("core.downscale.getUniqueFilePath", return_value="path/to/proxy/image.png")
+@patch("core.downscale.getUniqueTmpFilePath", return_value="path/to/proxy/image.png")
 @patch("core.downscale.convert")
 @patch("core.downscale.os.remove", side_effect=OSError("Clean-up failed"))
-def test_decodeAndDownscale_cleanup_failed(mock_getDecoder, mock_getArgs, mock_downscale, mock_getUniqueFilePath, mock_convert, mock_remove, params_fixture):
+def test_decodeAndDownscale_cleanup_failed(mock_getDecoder, mock_getArgs, mock_downscale, mock_getUniqueTmpFilePath, mock_convert, mock_remove, params_fixture):
     with pytest.raises(FileException) as exc_info:
         downscale.decodeAndDownscale(params_fixture, "png", "Encoder - Wipe", QMutex())
     

@@ -146,6 +146,7 @@ def test_startProcessing(controller, output_tab_settings, modify_tab_settings, s
         patch.object(controller.thread_manager, "getAvailableThreads", return_value=4),
         patch("core.controller.task_status.reset") as mock_task_status_reset,
         patch("core.controller.ProcessManager.clear") as mock_ProcessManager_clear,
+        patch("core.controller.UniquePathStore.clear") as mock_UniquePathStore_clear,
         patch.object(controller.items, "getItemCount", return_value=100) as mock_getItemCount,
         patch.object(controller.items, "getItem", side_effect=[(f"abs_path_{i}", f"anchor_path_{i}") for i in range(100)]),
         patch("core.controller.Worker", autospec=Worker) as mock_worker,
@@ -177,6 +178,7 @@ def test_startProcessing(controller, output_tab_settings, modify_tab_settings, s
         )
         mock_task_status_reset.assert_called_once()
         mock_ProcessManager_clear.assert_called_once()
+        mock_UniquePathStore_clear.assert_called_once()
         assert mock_worker.call_count == 100
         worker_calls = mock_worker.call_args_list
         for i in range(100):
