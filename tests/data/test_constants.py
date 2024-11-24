@@ -10,7 +10,7 @@ import data.constants as constants
 @pytest.mark.parametrize("mock_os", ["Windows", "Linux"])
 def test_vars_filled(mock_os):
     assert constants.VERSION != ""
-    assert constants.VERSION_FILE_URL != ""
+    assert constants.UPDATE_CHECKER_VER_FILE_URL != ""
 
     assert constants.PROGRAM_FOLDER != ""
     assert constants.ICON_SVG != ""

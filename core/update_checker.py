@@ -7,7 +7,7 @@ from PySide6.QtCore import(
     QThread,
 )
 
-from data.constants import VERSION_FILE_URL, VERSION
+from data.constants import UPDATE_CHECKER_VER_FILE_URL, VERSION
 
 # For debugging
 SIMULATE_SERVER = False
@@ -31,7 +31,7 @@ class Worker(QObject):
             return
         
         try:
-            response = requests.get(VERSION_FILE_URL)
+            response = requests.get(UPDATE_CHECKER_VER_FILE_URL)
         except requests.ConnectionError as err:
             self.misc_error.emit("Couldn't connect to the server.")
             logging.error(f"[UpdateChecker] {err}")

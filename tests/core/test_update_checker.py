@@ -9,7 +9,7 @@ from core.update_checker import (
     Runner,
     SIMULATE_SERVER_JSON
 )
-from data.constants import VERSION, VERSION_FILE_URL
+from data.constants import VERSION, UPDATE_CHECKER_VER_FILE_URL
 
 @pytest.fixture
 def worker():
@@ -37,7 +37,7 @@ def test_worker_simulate_server(worker):
 
 def test_worker_connection_success(worker, requests_mock):
     tmp = {"latest_version": VERSION}
-    requests_mock.get(VERSION_FILE_URL, json=tmp, status_code=200)
+    requests_mock.get(UPDATE_CHECKER_VER_FILE_URL, json=tmp, status_code=200)
     json_spy = QSignalSpy(worker.json)
     finished_spy = QSignalSpy(worker.finished)
 
@@ -51,7 +51,7 @@ def test_worker_connection_success(worker, requests_mock):
     assert finished_spy.count() == 1
 
 def test_worker_connection_failed(worker, requests_mock, caplog):
-    requests_mock.get(VERSION_FILE_URL, exc=requests.ConnectionError("No internet connection"))
+    requests_mock.get(UPDATE_CHECKER_VER_FILE_URL, exc=requests.ConnectionError("No internet connection"))
     misc_spy = QSignalSpy(worker.misc_error)
     finished_spy = QSignalSpy(worker.finished)
     
@@ -65,7 +65,7 @@ def test_worker_connection_failed(worker, requests_mock, caplog):
     assert finished_spy.count() == 1
 
 def test_worker_status_code_error(worker, requests_mock):
-    requests_mock.get(VERSION_FILE_URL, json={}, status_code=404)
+    requests_mock.get(UPDATE_CHECKER_VER_FILE_URL, json={}, status_code=404)
     status_code_error_spy = QSignalSpy(worker.status_code_error)
     finished_spy = QSignalSpy(worker.finished)
 
@@ -78,7 +78,7 @@ def test_worker_status_code_error(worker, requests_mock):
     assert finished_spy.count() == 1
 
 def test_worker_parse_json_failed(worker, requests_mock):
-    requests_mock.get(VERSION_FILE_URL, json=None, status_code=200)
+    requests_mock.get(UPDATE_CHECKER_VER_FILE_URL, json=None, status_code=200)
     misc_error_spy = QSignalSpy(worker.misc_error)
     finished_spy = QSignalSpy(worker.finished)
 

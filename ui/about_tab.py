@@ -12,7 +12,7 @@ from PySide6.QtCore import(
     QUrl,
 )
 
-from data.constants import VERSION, LICENSE_PATH, LICENSE_3RD_PARTY_PATH
+from data.constants import VERSION, LICENSE_PATH, LICENSE_3RD_PARTY_PATH, ENABLE_UPDATE_CHECKER
 from ui.update_checker import UpdateChecker
 from ui.utils import openRemoteUrl, openUrl
 from data import fonts
@@ -65,6 +65,7 @@ class AboutTab(QWidget):
         buttons_vb.addWidget(self.manual_btn)
         buttons_vb.addWidget(self.report_bug_btn)
         buttons_vb.addWidget(self.donate_btn)
+        self.update_btn.setEnabled(ENABLE_UPDATE_CHECKER)
         
         # Main
         self.content_w = QWidget()

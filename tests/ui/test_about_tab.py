@@ -12,6 +12,13 @@ def about_tab(qtbot):
     qtbot.addWidget(tab)
     return tab
 
+@pytest.mark.parametrize("enabled", [True, False])
+def test_toggle_update_checker(enabled, qtbot):
+    with patch("ui.about_tab.ENABLE_UPDATE_CHECKER", enabled):
+        tab = AboutTab()
+        qtbot.addWidget(tab)
+    assert tab.update_btn.isEnabled() == enabled
+
 def test_checkForUpdates(about_tab, qtbot):
     with patch("ui.about_tab.UpdateChecker.run") as mock_run:
         qtbot.mouseClick(about_tab.update_btn, Qt.LeftButton)
