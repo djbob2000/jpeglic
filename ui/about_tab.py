@@ -12,7 +12,7 @@ from PySide6.QtCore import(
     QUrl,
 )
 
-from data.constants import VERSION, LICENSE_PATH, LICENSE_3RD_PARTY_PATH, ENABLE_UPDATE_CHECKER
+import data.constants as constants
 from ui.update_checker import UpdateChecker
 from ui.utils import openRemoteUrl, openUrl
 from data import fonts
@@ -29,15 +29,15 @@ class AboutTab(QWidget):
     def setupWidgets(self):
         # Labels
         self.title_l = QLabel(f"XL Converter")
-        self.version_l = QLabel(f"Version {VERSION}")
+        self.version_l = QLabel(f"Version {constants.VERSION}")
         self.credits_l = QLabel(f"""
             <div style='line-height: 120%;'>
                 <a href=\"https://codepoems.eu\">website</a>
                 <br>
                 <a href=\"mailto:contact@codepoems.eu\">contact@codepoems.eu</a>
                 <br>
-                <a href=\"{QUrl.fromLocalFile(LICENSE_PATH).toString()}\">license</a> / 
-                <a href=\"{QUrl.fromLocalFile(LICENSE_3RD_PARTY_PATH).toString()}\">3rd party</a>
+                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_PATH).toString()}\">license</a> / 
+                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_3RD_PARTY_PATH).toString()}\">3rd party</a>
             </div>
         """)
         self.credits_l.linkActivated.connect(lambda qurl: openUrl(qurl))
@@ -65,7 +65,7 @@ class AboutTab(QWidget):
         buttons_vb.addWidget(self.manual_btn)
         buttons_vb.addWidget(self.report_bug_btn)
         buttons_vb.addWidget(self.donate_btn)
-        self.update_btn.setEnabled(ENABLE_UPDATE_CHECKER)
+        self.update_btn.setEnabled(constants.UPDATE_CHECKER_ENABLED)
         
         # Main
         self.content_w = QWidget()

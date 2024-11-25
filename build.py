@@ -6,6 +6,7 @@ import argparse
 import stat
 import hashlib
 from pathlib import Path
+import re
 
 import PyInstaller.__main__
 import requests
@@ -212,11 +213,12 @@ class Builder():
         ]
         
         # Build Names
-        self.build_inno_name = f"xl-converter-win-{VERSION}-x86_64"
-        self.build_win_portable_name = f"xl-converter-win-{VERSION}-x86_64-portable"
+        self.version_sanitized = re.sub(r"[ \n]", "-", VERSION)   # No whitespaces or newline characters
+        self.build_inno_name = f"xl-converter-win-{self.version_sanitized}-x86_64"
+        self.build_win_portable_name = f"xl-converter-win-{self.version_sanitized}-x86_64-portable"
         
-        self.build_7z_name = f"xl-converter-linux-{VERSION}-x86_64"
-        self.build_appimage_name = f"xl-converter-linux-{VERSION}-x86_64.AppImage"
+        self.build_7z_name = f"xl-converter-linux-{self.version_sanitized}-x86_64"
+        self.build_appimage_name = f"xl-converter-linux-{self.version_sanitized}-x86_64.AppImage"
     
     def build(self):
         build_type = self.args.getArg('build_type')
@@ -380,7 +382,10 @@ class Builder():
             else:
                 raise Exception("[Error] Install 7z.exe to continue. ")
         
-        move(f"{self.dst_dir}/{self.project_name}", os.path.join(self.dst_dir, self.build_win_portable_name))   # Rename
+        try:
+            shutil.move(os.path.join(self.dst_dir, self.project_name), os.path.join(self.dst_dir, self.build_win_portable_name))
+        except OSError as e:
+            raise OSError(f"[Error] failed to move file (_buildPortableWin) {e}")
         subprocess.run([
             self.win_7z_path,
             "a",
