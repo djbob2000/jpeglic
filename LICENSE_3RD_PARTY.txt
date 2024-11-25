@@ -11,6 +11,10 @@ libavif: AV1 Image File Format Library
 - License: BSD-2-Clause
 - URL: https://github.com/AOMediaCodec/libavif/blob/main/LICENSE
 
+AOM AV1: AV1 Codec Library
+- License: BSD 2 Clause License
+- URL: https://aomedia.googlesource.com/aom/
+
 ImageMagick
 - License: ImageMagick License
 - URL: https://imagemagick.org/script/license.php
