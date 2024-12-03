@@ -4,6 +4,7 @@ import shutil
 import hashlib
 from pathlib import Path
 import platform
+from unittest.mock import patch
 
 from PySide6.QtGui import (
     QDropEvent,
@@ -25,6 +26,7 @@ from PIL import Image, ImageDraw
 
 from main import MainWindow
 from data.constants import *
+import core.controller as controller 
 
 # CONFIG
 SAMPLE_IMG_FOLDER = Path(".").resolve() / "sample_img"
@@ -202,7 +204,9 @@ class Interact:
         self.convert()
 
     def convert(self):
-        self.main_window.convert()
+        mock_CheckStatus = controller.CheckStatus()
+        with patch.object(self.main_window.controller, "checkProcessingRequirements", return_value=mock_CheckStatus):   # Without this activeThreadCount can return > 0 on Windows.
+            self.main_window.convert()
         self.wait_for_done()
 
     def wait_for_done(self):
