@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import logging
-import os
+from pathlib import Path
 
 from PySide6.QtWidgets import QWidget, QApplication
 from PySide6.QtGui import QPalette
@@ -33,11 +33,12 @@ def hexToRGBA(hex_color: str, alpha: int = 255) -> None:
 
 def _getIconPath(icon_name: str) -> str:
     """Returns paths to the icon. If file not found, logs an error."""
-    path = os.path.join(constants.ASSETS_ICONS_DIR, icon_name)
-    if not os.path.isfile(path):
+    path = Path(constants.ASSETS_ICONS_DIR, icon_name)
+    if not path.is_file():
         logging.error(f"[ui.theme] Cannot find icon: {path}")
         return ""
-    return path
+
+    return path.as_posix()      # Must be `as_posix()`, otherwise the stylesheet will fail to parse on Windows.
 
 def setTheme(theme="Ralsei"):
     match theme:

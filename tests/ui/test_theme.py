@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
-import os
 from contextlib import ExitStack
+from pathlib import Path
 
 import pytest
 
@@ -23,7 +23,7 @@ def test_setTheme_no_exception():
 @pytest.fixture
 def _getIconPath_patches():
     patches = {
-        "isfile": patch("ui.theme.os.path.isfile", return_value=True),
+        "is_file": patch("ui.theme.Path.is_file", return_value=True),
     }
 
     variables = {
@@ -39,12 +39,12 @@ def _getIconPath_patches():
 def test__getIconPath_happy_path(_getIconPath_patches, caplog):
     mocks, variables = _getIconPath_patches
 
-    assert theme._getIconPath("test_icon.svg") == os.path.join(variables["ASSETS_ICONS_DIR"], "test_icon.svg")
+    assert theme._getIconPath("test_icon.svg") == Path(variables["ASSETS_ICONS_DIR"], "test_icon.svg").as_posix()
     assert caplog.records == []
 
 def test__getIconPath_sad_path(_getIconPath_patches, caplog):
     mocks, variables = _getIconPath_patches
-    mocks["isfile"].return_value = False
+    mocks["is_file"].return_value = False
 
     assert theme._getIconPath("test_icon.svg") == ""
     assert "Cannot find icon" in caplog.records[0].msg
