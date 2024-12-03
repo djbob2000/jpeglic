@@ -16,7 +16,7 @@ LICENSE_PATH = os.path.join(PROGRAM_FOLDER, "LICENSE.txt")
 LICENSE_3RD_PARTY_PATH = os.path.join(PROGRAM_FOLDER, "LICENSE_3RD_PARTY.txt")
 ICON_SVG = os.path.join(PROGRAM_FOLDER, "icons/logo.svg")
 FONTS_DIR = os.path.join(PROGRAM_FOLDER, "fonts")
-FINISHED_SOUND_PATH = os.path.join(PROGRAM_FOLDER, "sounds/finished.wav")
+FINISHED_SOUND_PATH = os.path.join(PROGRAM_FOLDER, "assets", "sounds", "finished.wav")
 LOGS_DIR = ""
 ASSETS_ICONS_DIR = os.path.join(PROGRAM_FOLDER, "assets", "icons")
 

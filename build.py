@@ -173,7 +173,6 @@ class Builder():
             "LICENSE.txt",
             "LICENSE_3RD_PARTY.txt",
             "./fonts/",
-            "./sounds/",
             "./assets/",
         )
 
