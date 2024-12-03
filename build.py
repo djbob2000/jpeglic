@@ -172,8 +172,9 @@ class Builder():
         self.assets = (
             "LICENSE.txt",
             "LICENSE_3RD_PARTY.txt",
-            "fonts/",
-            "sounds/",
+            "./fonts/",
+            "./sounds/",
+            "./assets/",
         )
 
         # Assets

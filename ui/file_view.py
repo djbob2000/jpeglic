@@ -28,10 +28,6 @@ class FileView(QTreeWidget):
         self.setDragDropMode(QAbstractItemView.InternalMove)    # Required for dropEvent to fire
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setStyleSheet("""QTreeView::item:focus {
-                border: none;
-                outline: none;
-            }""")   # Disables the dark outline after deselecting an item
         self.sortByColumn(1, Qt.SortOrder.DescendingOrder)
         
         # Flags

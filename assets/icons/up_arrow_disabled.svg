@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="305.89511"
+   height="225.66164"
+   viewBox="0 0 305.89511 225.66164"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="up_arrow.svg"
+   inkscape:export-filename="up_arrow.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050">
+    <inkscape:page
+       x="0"
+       y="0"
+       width="305.89511"
+       height="225.66164"
+       id="page1"
+       margin="0"
+       bleed="0" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     id="layer1"
+     transform="translate(-873.87518,-316.33859)">
+    <path
+       id="rect1"
+       style="fill:#9a9a9a;fill-opacity:1;stroke:none;stroke-width:9.50139;stroke-linecap:square;paint-order:markers stroke fill"
+       d="M 1026.8234,316.33859 873.87518,542.00022 h 305.89512 z" />
+  </g>
+</svg>

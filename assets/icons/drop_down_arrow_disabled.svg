@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="96.163231mm"
+   height="57.308731mm"
+   viewBox="0 0 96.163231 57.308731"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="drop_down_arrow.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm">
+    <inkscape:page
+       x="0"
+       y="0"
+       width="96.163231"
+       height="57.308731"
+       id="page2"
+       margin="0"
+       bleed="0" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     id="layer1"
+     transform="translate(-56.547453,-124.64924)">
+    <path
+       id="rect1"
+       style="fill:#9a9a9a;fill-opacity:1;stroke-width:3.26341;stroke-linecap:square;paint-order:markers stroke fill"
+       d="m 56.547453,124.64924 48.081357,57.30873 48.08187,-57.30873 h -19.29536 l -28.78651,34.31061 -28.785999,-34.31061 z" />
+  </g>
+</svg>

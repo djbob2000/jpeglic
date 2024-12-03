@@ -32,12 +32,12 @@ class AboutTab(QWidget):
         self.version_l = QLabel(f"Version {constants.VERSION}")
         self.credits_l = QLabel(f"""
             <div style='line-height: 120%;'>
-                <a href=\"https://codepoems.eu\">website</a>
+                <a href=\"https://codepoems.eu\" style=\"color: #00ff76;\">website</a>
                 <br>
-                <a href=\"mailto:contact@codepoems.eu\">contact@codepoems.eu</a>
+                <a href=\"mailto:contact@codepoems.eu\" style=\"color: #00ff76;\">contact@codepoems.eu</a>
                 <br>
-                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_PATH).toString()}\">license</a> / 
-                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_3RD_PARTY_PATH).toString()}\">3rd party</a>
+                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_PATH).toString()}\" style=\"color: #00ff76;\">license</a> / 
+                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_3RD_PARTY_PATH).toString()}\" style=\"color: #00ff76;\">3rd party</a>
             </div>
         """)
         self.credits_l.linkActivated.connect(lambda qurl: openUrl(qurl))

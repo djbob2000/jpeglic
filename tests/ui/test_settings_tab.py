@@ -19,7 +19,6 @@ def app(qtbot):
 def test_changeCategory_visibility(category, app, qtbot):
     visibility = {
         "general": [
-            "dark_theme_cb",
             "disable_on_startup_l", "disable_downscaling_startup_cb", "disable_delete_startup_cb",
             "no_sorting_cb",
             "quality_prec_snap_cb",
@@ -64,14 +63,6 @@ def test_changeCategory_visibility(category, app, qtbot):
         assert widget_p.isVisibleTo(app) == ( widget_str in visibility[category] ), \
             f"Expected {widget_str in visibility[category]} got {widget_p.isVisibleTo(app)} ({widget_str})"
 
-@patch("ui.settings_tab.setTheme")
-def test_setDarkModeEnabled(mock_setTheme, app):
-    app.dark_theme_cb.setChecked(True)
-    assert mock_setTheme.called_once_with("dark")
-    mock_setTheme.reset_mock()
-    app.dark_theme_cb.setChecked(False)
-    assert mock_setTheme.called_once_with("light")
-
 @pytest.mark.parametrize("signal_attr, widget_attr", [
     ("custom_resampling_toggled", "custom_resampling_cb"),
     ("sorting_toggled", "no_sorting_cb"),
@@ -88,7 +79,6 @@ def test_getSettings_no_key_error(app):
 def test_resetToDefault(app):
     app.resetToDefault()
 
-    assert app.dark_theme_cb.isChecked() == True
     assert app.no_sorting_cb.isChecked() == False
     assert app.disable_downscaling_startup_cb.isChecked() == True
     assert app.disable_delete_startup_cb.isChecked() == True

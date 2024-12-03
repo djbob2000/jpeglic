@@ -89,11 +89,6 @@ class MainWindow(QMainWindow):
         self.output_tab.setMaximumSize(MAX_WIDTH, MAX_HEIGHT)
         self.modify_tab.setMaximumSize(MAX_WIDTH, MAX_HEIGHT)
 
-        self.tabs.setStyleSheet("""
-            QTabBar::tab { margin-right: 10px; }
-            QTabBar::tab:first { margin-left: 12px; }
-        """)
-
     def setupSignals(self) -> None:
         self.controller.update_progress_line1.connect(self.progress_dlg.setLabelTextLine1)
         self.controller.update_progress_line2.connect(self.progress_dlg.setLabelTextLine2)

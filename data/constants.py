@@ -18,6 +18,7 @@ ICON_SVG = os.path.join(PROGRAM_FOLDER, "icons/logo.svg")
 FONTS_DIR = os.path.join(PROGRAM_FOLDER, "fonts")
 FINISHED_SOUND_PATH = os.path.join(PROGRAM_FOLDER, "sounds/finished.wav")
 LOGS_DIR = ""
+ASSETS_ICONS_DIR = os.path.join(PROGRAM_FOLDER, "assets", "icons")
 
 CJXL_PATH = "cjxl"
 DJXL_PATH = "djxl"

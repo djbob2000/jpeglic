@@ -70,7 +70,7 @@ class SettingsTab(QWidget):
         self.onPlaySoundOnFinishVolumeToggled()
 
         # Apply Settings
-        self.setDarkModeEnabled(self.dark_theme_cb.isChecked())
+        setTheme()
 
         # Vars
         self.cached_states = {}
@@ -86,6 +86,7 @@ class SettingsTab(QWidget):
         self.settings_w.setLayout(self.settings_lt)
         self.settings_sa.setWidget(self.settings_w)
         self.categories_lt.setContentsMargins(0, 1, 0, 1)
+        self.settings_sa.setObjectName("settingsScrollArea")
 
         self.main_lt.addLayout(self.categories_lt, 0, 0)
         self.main_lt.addWidget(self.settings_sa, 0, 1)
@@ -94,7 +95,6 @@ class SettingsTab(QWidget):
 
     def setupWidgets(self):
         # General
-        self.dark_theme_cb = self.wm.addWidget("dark_theme_cb", QCheckBox("Dark Theme", self))
         self.disable_on_startup_l = QLabel("Disable on Startup")
         self.disable_downscaling_startup_cb = self.wm.addWidget("disable_downscaling_startup_cb", QCheckBox("Downscaling", self))
         self.disable_delete_startup_cb = self.wm.addWidget("disable_delete_startup_cb", QCheckBox("Delete Original", self))
@@ -173,7 +173,6 @@ class SettingsTab(QWidget):
 
         ## General
         self.settings_lt.addLayout(createQHBoxLayout(self.disable_on_startup_l, self.disable_delete_startup_cb, self.disable_downscaling_startup_cb))
-        self.settings_lt.addWidget(self.dark_theme_cb)
         self.settings_lt.addWidget(self.quality_prec_snap_cb)
         self.settings_lt.addWidget(self.no_sorting_cb)
         self.settings_lt.addWidget(self.play_sound_on_finish_cb)
@@ -240,7 +239,6 @@ class SettingsTab(QWidget):
         self.jpg_encoder_cmb.setMinimumWidth(150)
 
     def setupSignals(self):
-        self.dark_theme_cb.toggled.connect(self.setDarkModeEnabled)
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
         self.play_sound_on_finish_cb.toggled.connect(self.onPlaySoundOnFinishVolumeToggled)
         self.no_sorting_cb.toggled.connect(self.signals.sorting_toggled)
@@ -263,7 +261,6 @@ class SettingsTab(QWidget):
     def setToolTips(self):
         setToolTip(TOOLTIPS["disable_delete_startup"], self.disable_delete_startup_cb)
         setToolTip(TOOLTIPS["disable_downscaling_startup"], self.disable_downscaling_startup_cb)
-        setToolTip(TOOLTIPS["dark_theme"], self.dark_theme_cb)
         setToolTip(TOOLTIPS["quality_prec_snap"], self.quality_prec_snap_cb)
         setToolTip(TOOLTIPS["sorting"], self.no_sorting_cb)
         setToolTip(TOOLTIPS["play_sound_on_finish"], self.play_sound_on_finish_cb)
@@ -290,7 +287,6 @@ class SettingsTab(QWidget):
         # Settings
         visibility = {
             "General": [
-                "dark_theme_cb",
                 "disable_on_startup_l", "disable_downscaling_startup_cb", "disable_delete_startup_cb",
                 "no_sorting_cb",
                 "quality_prec_snap_cb",
@@ -349,9 +345,6 @@ class SettingsTab(QWidget):
         enabled = self.play_sound_on_finish_cb.isChecked()
         self.play_sound_on_finish_vol_l.setEnabled(enabled)
         self.play_sound_on_finish_vol_sb.setEnabled(enabled)
-
-    def setDarkModeEnabled(self, enabled):
-        setTheme("dark" if enabled else "light")
 
     def toggleLogging(self):
         if self.logging_manager.isLoggingToFile():
@@ -423,7 +416,6 @@ class SettingsTab(QWidget):
         self.exiftool_custom_te.setText("")
 
     def resetToDefault(self):
-        self.dark_theme_cb.setChecked(True)
         self.no_sorting_cb.setChecked(False)
         self.disable_downscaling_startup_cb.setChecked(True)
         self.disable_delete_startup_cb.setChecked(True)

@@ -47,7 +47,6 @@ TOOLTIPS = {
     # Settings tab
     "disable_delete_startup": "Disables \"delete original\" (output tab) when you launch the application.",
     "disable_downscaling_startup": "Disables \"downscaling\" (modify tab) when you launch the application.",
-    "dark_theme": "The intended look of XL Converter.",
     "quality_prec_snap": "Enabled - snaps to individual values.\n\nDisabled - snaps to intervals of every 5 points.",
     "sorting": "Disables file list sorting (input tab), has no impact on performance.",
     "play_sound_on_finish": "Plays a sound when conversion finishes.",

@@ -35,10 +35,6 @@ PySide6
 - License: GNU Lesser General Public License (LGPL) version 3
 - URL: https://doc.qt.io/qtforpython/licenses.html
 
-pyqtdarktheme
-- License: MIT License
-- URL: https://github.com/5yutan5/PyQtDarkTheme/blob/main/LICENSE.txt
-
 // Packaging and Distribution Tools
 
 PyInstaller
