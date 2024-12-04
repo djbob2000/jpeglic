@@ -281,7 +281,6 @@ def setTheme(theme="Ralsei"):
 
                 border-top: none;       /* without this the border does not change */
                 border: 1px solid {border};
-                min-height: 45px;
             }}
 
             QComboBox::down-arrow {{
