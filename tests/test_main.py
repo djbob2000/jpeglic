@@ -40,6 +40,7 @@ class MockOutputTab(MockTab):
         self.isClearAfterConvChecked = MagicMock()
         self.smIsFormatPoolEmpty = MagicMock()
         self.getUsedThreadCount = MagicMock()
+        self.onAVIFEncoderChanged = MagicMock()
 
 class MockModifyTab(MockTab):
     def __init__(self, *args, **kwargs):

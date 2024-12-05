@@ -21,6 +21,7 @@ def app(qtbot):
                 "jpg_encoder": "JPEGLI",
                 "jxl_lossy_modular": False,
                 "jxl_int_effort": False,
+                "avif_encoder": "AOM AV1",
             }
         )
         qtbot.addWidget(tab)
@@ -188,8 +189,8 @@ def test_onFormatChange_visibility(app, file_format, visible_widgets):
     assert app.chroma_subsampling_l.isVisibleTo(app) == chroma_subsampling
     assert (
         app.chroma_subsampling_jpegli_cmb.isVisibleTo(app) == chroma_subsampling or
-        app.chroma_subsampling_avif_cmb.isVisibleTo(app) == chroma_subsampling or
-        app.chroma_subsampling_jpg_cmb.isVisibleTo(app) == chroma_subsampling
+        app.chroma_subsampling_jpg_cmb.isVisibleTo(app) == chroma_subsampling or
+        file_format == "AVIF"   # Tested in test_AVIF_chroma_subsampling_visibility
     )
 
     smallest_lossless = "smallest_lossless" in visible_widgets
@@ -202,6 +203,16 @@ def test_onFormatChange_visibility(app, file_format, visible_widgets):
     assert app.jxl_verify_cb.isVisibleTo(app) == ("jxl_verify" in visible_widgets)
     assert app.jxl_normalize_enable_cb.isVisibleTo(app) == ("jxl_normalize" in visible_widgets)
     assert app.jxl_normalize_when_cmb.isVisibleTo(app) == ("jxl_normalize" in visible_widgets)
+
+@pytest.mark.parametrize("encoder", [
+    ("AOM AV1"),
+    ("SVT-AV1-PSY"),
+])
+def test_AVIF_chroma_subsampling_visibility(encoder, app):
+    app.format_cmb.setCurrentIndex(app.format_cmb.findText("AVIF"))
+    app.onAVIFEncoderChanged(encoder)
+    assert app.chroma_subsampling_svt_av1_psy_cmb.isVisibleTo(app) == (encoder == "SVT-AV1-PSY")
+    assert app.chroma_subsampling_aom_av1_cmb.isVisibleTo(app) == (encoder == "AOM AV1")
 
 @pytest.mark.parametrize("widget_name, variable_name", [
     ("int_effort_cb", "jxl_int_effort_visible"),
@@ -332,3 +343,20 @@ def test__onJXLNormalizeClicked_var_present(app):
     mock_getVar.assert_called_once_with("jxl_normalize_checksum_msg_seen")
     mock_notify.assert_not_called()
     mock_setVar.assert_not_called()
+
+@pytest.mark.parametrize("encoder", ("AOM AV1", "SVT-AV1-PSY"))
+def test_onAVIFEncoderChanged_happy_path(encoder, app):
+    app.format_cmb.setCurrentIndex(app.format_cmb.findText("AVIF"))
+
+    app.onAVIFEncoderChanged(encoder)
+
+    assert app.chroma_subsampling_svt_av1_psy_cmb.isVisibleTo(app) == (encoder == "SVT-AV1-PSY")
+    assert app.chroma_subsampling_aom_av1_cmb.isVisibleTo(app) == (encoder == "AOM AV1")
+
+def test_onAVIFEncoderChanged_other_format(app):
+    app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))
+
+    app.onAVIFEncoderChanged("AOM AV1")
+
+    assert not app.chroma_subsampling_svt_av1_psy_cmb.isVisibleTo(app)
+    assert not app.chroma_subsampling_aom_av1_cmb.isVisibleTo(app)

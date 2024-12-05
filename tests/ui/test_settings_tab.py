@@ -1,7 +1,7 @@
 from unittest.mock import patch, call
 
 import pytest
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox
 from PySide6.QtCore import Qt
 
 from ui.settings_tab import SettingsTab
@@ -29,6 +29,7 @@ def test_changeCategory_visibility(category, app, qtbot):
             "jxl_lossy_modular_cb",
             "jxl_lossless_jpeg_cb",
             "jpg_encoder_l", "jpg_encoder_cmb",
+            "avif_encoder_l", "avif_encoder_cmb",
             "disable_progressive_jpegli_cb",
             "keep_if_larger_cb",
             "copy_if_larger_cb",
@@ -67,11 +68,19 @@ def test_changeCategory_visibility(category, app, qtbot):
     ("custom_resampling_toggled", "custom_resampling_cb"),
     ("sorting_toggled", "no_sorting_cb"),
     ("jxl_effort_10_toggled", "jxl_effort_10_cb"),
+    ("avif_encoder_changed", "avif_encoder_cmb"),
 ])
-def test_signals(app, qtbot, signal_attr, widget_attr):
-    with qtbot.waitSignal(getattr(app.signals, signal_attr)) as blocker:
-        qtbot.mouseClick(getattr(app, widget_attr), Qt.LeftButton)
+def test_signals(signal_attr, widget_attr, qtbot, app):
+    with qtbot.waitSignal(getattr(app.signals, signal_attr), timeout=1000) as blocker:
+        widget = getattr(app, widget_attr, None)
+        if widget is None:
+            pytest.fail(f"Widget does not exist ({widget_attr})")
+        if isinstance(widget, QCheckBox):
+            widget.setChecked(not widget.isChecked())
+        elif isinstance(widget, QComboBox):
+            widget.setCurrentIndex((widget.currentIndex() - 1) % widget.count())
     assert blocker.signal_triggered
+
 
 def test_getSettings_no_key_error(app):
     app.getSettings()

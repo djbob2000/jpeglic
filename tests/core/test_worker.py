@@ -36,7 +36,7 @@ def worker():
             "jxl_verify": False,
             "jxl_normalize_enable": False,
             "jxl_normalize_when": "On Fail",
-            "avif_chroma_subsampling": "Default",
+            "aom_av1_chroma_subsampling": "Default",
             "jpegli_chroma_subsampling": "Default",
             "jxl_png_fallback": False,
             "downscaling": {
@@ -72,6 +72,7 @@ def worker():
                 "ExifTool - Wipe": "-all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original",
                 "ExifTool - Preserve": "-tagsFromFile $src $dst -overwrite_original",
             },
+            "avif_encoder": "AOM AV1",
         },
         4,
         mutex,
@@ -332,16 +333,21 @@ def test_convert_args_jpeg_xl(
     assert mocks["runBinary"].call_args[0][1] == expected_args
     assert worker.lossless_jpeg == expected_jpg_to_jxl_lossless
 
-@pytest.mark.parametrize("quality, speed, chroma_subsampling, expected_args", [
-    (80, 6, "Default", ["-q 80", "-s 6", "-j 4"]),
-    (90, 5, "4:4:4", ["-q 90", "-s 5", "-j 4", "-y 444"]),
+@pytest.mark.parametrize("encoder, quality, speed, chroma_subsampling, expected_args", [
+    ("AOM AV1", 80, 6, "Default", ["-q 80", "-s 6", "-j 4", "-c aom"]),
+    ("AOM AV1", 80, 6, "4:4:4", ["-q 80", "-s 6", "-j 4", "-c aom", "-y 444"]),
+    ("AOM AV1", 80, 6, "4:2:2", ["-q 80", "-s 6", "-j 4", "-c aom", "-y 422"]),
+    ("AOM AV1", 80, 6, "4:2:0", ["-q 80", "-s 6", "-j 4", "-c aom", "-y 420"]),
+    ("SVT-AV1-PSY", 90, 5, "4:4:4", ["-q 90", "-s 5", "-j 4", "-c svt", "-y 420", "-a tune=4"]),
 ])
-def test_convert_args_avif(quality, speed, chroma_subsampling, expected_args, worker_convert_patches):
+def test_convert_args_avif(encoder, quality, speed, chroma_subsampling, expected_args, worker_convert_patches):
     worker, mocks = worker_convert_patches
+
+    worker.settings["avif_encoder"] = encoder
     worker.params["format"] = "AVIF"
     worker.params["quality"] = quality
     worker.params["effort"] = speed
-    worker.params["avif_chroma_subsampling"] = chroma_subsampling
+    worker.params["aom_av1_chroma_subsampling"] = chroma_subsampling
 
     worker.convert()
     

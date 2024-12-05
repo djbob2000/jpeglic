@@ -271,10 +271,19 @@ class Worker(QRunnable):
                 args = [
                     f"-q {self.params['quality']}",
                     f"-s {self.params['effort']}",
-                    f"-j {self.available_threads}"
+                    f"-j {self.available_threads}",
                 ]
-                if self.params["avif_chroma_subsampling"] != "Default":
-                    args.append(f"-y {self.params['avif_chroma_subsampling'].replace(':', '')}")
+                match self.settings["avif_encoder"]:
+                    case "AOM AV1":
+                        args.append("-c aom")
+                        if self.params["aom_av1_chroma_subsampling"] != "Default":
+                            args.append(f"-y {self.params['aom_av1_chroma_subsampling'].replace(':', '')}")
+                    case "SVT-AV1-PSY":             # Assuming SVT-AV1 was swapped before compilation
+                        args.append("-c svt")
+                        args.append("-y 420")       # SVT-AV1 only supports YUV:4:2:0
+                        args.append("-a tune=4")    # Still image tuning
+                    case _:
+                        raise GenericException("C4", "Unrecognized AVIF encoder.")
 
                 encoder = AVIFENC_PATH
             case "JPEG":

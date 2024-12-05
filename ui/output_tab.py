@@ -47,6 +47,7 @@ class OutputTab(QWidget):
         self.enable_jxl_effort_10 = settings["enable_jxl_effort_10"]
         self.jxl_lossy_modular_visible = settings["jxl_lossy_modular"]
         self.jxl_int_effort_visible = settings["jxl_int_effort"]
+        self.avif_encoder = settings["avif_encoder"]
 
         # Setup
         self._setupWidgets()
@@ -119,12 +120,14 @@ class OutputTab(QWidget):
         self.smallest_lossless_png_cb = self.wm.addWidget("smallest_lossless_png_cb", QCheckBox("PNG"), "format_pool")
         self.smallest_lossless_webp_cb = self.wm.addWidget("smallest_lossless_webp_cb", QCheckBox("WebP"), "format_pool")
         self.smallest_lossless_jxl_cb = self.wm.addWidget("smallest_lossless_jxl_cb", QCheckBox("JPEG XL"), "format_pool")
-        self.chroma_subsampling_l = self.wm.addWidget("chroma_subsampling_l", QLabel("Chroma Subsampling", self), "chroma_subsampling")
-        self.chroma_subsampling_jpegli_cmb = self.wm.addWidget("chroma_subsampling_jpegli_cmb", ComboBox(self), "chroma_subsampling")
+        self.chroma_subsampling_l = self.wm.addWidget("chroma_subsampling_l", QLabel("Chroma Subsampling", ), "chroma_subsampling")
+        self.chroma_subsampling_jpegli_cmb = self.wm.addWidget("chroma_subsampling_jpegli_cmb", ComboBox(), "chroma_subsampling")
         self.chroma_subsampling_jpegli_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
-        self.chroma_subsampling_avif_cmb = self.wm.addWidget("chroma_subsampling_avif_cmb", ComboBox(self), "chroma_subsampling")
-        self.chroma_subsampling_avif_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0", "4:0:0",))
-        self.chroma_subsampling_jpg_cmb = self.wm.addWidget("chroma_subsampling_jpg_cmb", ComboBox(self), "chroma_subsampling")
+        self.chroma_subsampling_aom_av1_cmb = self.wm.addWidget("chroma_subsampling_aom_av1_cmb", ComboBox(), "chroma_subsampling")
+        self.chroma_subsampling_aom_av1_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0", "4:0:0",))
+        self.chroma_subsampling_svt_av1_psy_cmb = self.wm.addWidget("chroma_subsampling_svt_av1_psy_cmb", ComboBox())
+        self.chroma_subsampling_svt_av1_psy_cmb.addItem("4:2:0")
+        self.chroma_subsampling_jpg_cmb = self.wm.addWidget("chroma_subsampling_jpg_cmb", ComboBox(), "chroma_subsampling")
         self.chroma_subsampling_jpg_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
         self.jxl_png_fallback_cb = self.wm.addWidget("jxl_png_fallback_cb", QCheckBox("PNG Fallback"))
         self.jxl_verify_cb = self.wm.addWidget("jxl_verify_cb", QCheckBox("Verify"))
@@ -165,7 +168,7 @@ class OutputTab(QWidget):
         self.format_grp_lt.addLayout(createQHBoxLayout(self.lossless_cb, self.jxl_modular_cb))
         self.format_grp_lt.addLayout(createQHBoxLayout(self.smallest_lossless_png_cb, self.smallest_lossless_webp_cb, self.smallest_lossless_jxl_cb))
         self.format_grp_lt.addWidget(self.max_compression_cb)
-        self.format_grp_lt.addLayout(createQHBoxLayout(self.chroma_subsampling_l, self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_avif_cmb, self.chroma_subsampling_jpg_cmb))
+        self.format_grp_lt.addLayout(createQHBoxLayout(self.chroma_subsampling_l, self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_aom_av1_cmb, self.chroma_subsampling_jpg_cmb, self.chroma_subsampling_svt_av1_psy_cmb))
         self.format_grp_lt.addWidget(self.jxl_png_fallback_cb)
         self.format_grp_lt.addLayout(createQHBoxLayout(self.jxl_normalize_enable_cb, self.jxl_normalize_when_cmb))
         self.format_grp_lt.addWidget(self.jxl_verify_cb)
@@ -221,7 +224,8 @@ class OutputTab(QWidget):
         setToolTip(TOOLTIPS["jxl_normalize_when"], self.jxl_normalize_when_cmb)
         setToolTip(TOOLTIPS["int_effort"], self.int_effort_cb)
         setToolTip(TOOLTIPS["chroma_subsampling_jpeg"], self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_jpg_cmb)
-        setToolTip(TOOLTIPS["chroma_subsampling_avif"], self.chroma_subsampling_avif_cmb)
+        setToolTip(TOOLTIPS["chroma_subsampling_aom_av1"], self.chroma_subsampling_aom_av1_cmb)
+        setToolTip(TOOLTIPS["chroma_subsampling_svt_av1_psy"], self.chroma_subsampling_svt_av1_psy_cmb)
         setToolTip(TOOLTIPS["smallest_lossless_png"], self.smallest_lossless_png_cb)
         setToolTip(TOOLTIPS["smallest_lossless_webp"], self.smallest_lossless_webp_cb)
         setToolTip(TOOLTIPS["smallest_lossless_jpeg_xl"], self.smallest_lossless_jxl_cb)
@@ -275,7 +279,7 @@ class OutputTab(QWidget):
             "jxl_verify": self.jxl_verify_cb.isChecked(),
             "jxl_normalize_enable": self.jxl_normalize_enable_cb.isChecked(),
             "jxl_normalize_when": self.jxl_normalize_when_cmb.currentText(),
-            "avif_chroma_subsampling": self.chroma_subsampling_avif_cmb.currentText(),
+            "aom_av1_chroma_subsampling": self.chroma_subsampling_aom_av1_cmb.currentText(),
             "jpegli_chroma_subsampling": self.chroma_subsampling_jpegli_cmb.currentText(),
             "jpg_chroma_subsampling": self.chroma_subsampling_jpg_cmb.currentText(),
             "if_file_exists": self.duplicates_cmb.currentText(),
@@ -334,7 +338,8 @@ class OutputTab(QWidget):
         self.chroma_subsampling_l.setVisible(cur_format in ("JPEG", "AVIF"))
         self.chroma_subsampling_jpg_cmb.setVisible(cur_format == "JPEG" and self.jpg_encoder == "libjpeg")
         self.chroma_subsampling_jpegli_cmb.setVisible(cur_format == "JPEG" and self.jpg_encoder == "JPEGLI")
-        self.chroma_subsampling_avif_cmb.setVisible(cur_format == "AVIF")
+        self.chroma_subsampling_aom_av1_cmb.setVisible(cur_format == "AVIF" and self.avif_encoder == "AOM AV1")
+        self.chroma_subsampling_svt_av1_psy_cmb.setVisible(cur_format == "AVIF" and self.avif_encoder == "SVT-AV1-PSY")
         self.jxl_png_fallback_cb.setVisible(cur_format == "JPEG Reconstruction")
         self.jxl_verify_cb.setVisible(cur_format == "Lossless JPEG Transcoding")
         self.jxl_normalize_enable_cb.setVisible(cur_format == "Lossless JPEG Transcoding")
@@ -396,7 +401,8 @@ class OutputTab(QWidget):
 
     def onJXLEffort10Enabled(self, enabled: bool) -> None:
         self.enable_jxl_effort_10 = enabled
-        if self.format_cmb.currentText() == "JPEG XL":
+        cur_format = self.format_cmb.currentText()
+        if cur_format in ("JPEG XL", "Lossless JPEG Transcoding"):
             self.effort_sb.setRange(1, 10 if self.enable_jxl_effort_10 else 9)
 
     def onQualityPrecisionSnappingEnabled(self, enabled: bool) -> None:
@@ -412,6 +418,12 @@ class OutputTab(QWidget):
         if self.format_cmb.currentText() == "JPEG XL":
             self.int_effort_cb.setVisible(visible)
         self._onEffortToggled()
+
+    def onAVIFEncoderChanged(self, encoder: str) -> None:
+        self.avif_encoder = encoder
+        if self.format_cmb.currentText() == "AVIF":
+            self.chroma_subsampling_svt_av1_psy_cmb.setVisible(encoder == "SVT-AV1-PSY")
+            self.chroma_subsampling_aom_av1_cmb.setVisible(encoder == "AOM AV1")
 
     # //////////////////////////////////////////////////////////
     # /                   Actions / Utils
@@ -453,7 +465,8 @@ class OutputTab(QWidget):
         self.duplicates_cmb.setCurrentIndex(0)
         
         self.chroma_subsampling_jpegli_cmb.setCurrentIndex(0)
-        self.chroma_subsampling_avif_cmb.setCurrentIndex(0)
+        self.chroma_subsampling_aom_av1_cmb.setCurrentIndex(0)
+        self.chroma_subsampling_svt_av1_psy_cmb.setCurrentIndex(0)
         self.chroma_subsampling_jpg_cmb.setCurrentIndex(0)
 
         # Lossless

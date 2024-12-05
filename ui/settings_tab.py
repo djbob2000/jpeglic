@@ -42,6 +42,7 @@ class Signals(QObject):
     jpeg_encoder_changed = Signal(str)
     jxl_lossy_modular_toggled = Signal(bool)
     jxl_int_effort_toggled = Signal(bool)
+    avif_encoder_changed = Signal(str)
 
 class SettingsTab(QWidget):
     def __init__(self):
@@ -114,6 +115,9 @@ class SettingsTab(QWidget):
         self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", ComboBox())
         self.jpg_encoder_cmb.addItems(("JPEGLI", "libjpeg"))
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
+        self.avif_encoder_l = self.wm.addWidget("avif_encoder_l", QLabel("AVIF Encoder"))
+        self.avif_encoder_cmb = self.wm.addWidget("avif_encoder_cmb", ComboBox())
+        self.avif_encoder_cmb.addItems(("AOM AV1", "SVT-AV1-PSY"))
         self.keep_if_larger_cb = self.wm.addWidget("keep_if_larger_cb", QCheckBox("Do Not Delete Original When Result is Larger"))
         self.copy_if_larger_cb = self.wm.addWidget("copy_if_larger_cb", QCheckBox("Copy Original When Result is Larger"))
 
@@ -187,6 +191,9 @@ class SettingsTab(QWidget):
         self.settings_lt.addLayout(self.jpg_encoder_hb)
         self.jpg_encoder_hb.addStretch()
         self.settings_lt.addWidget(self.disable_progressive_jpegli_cb)
+        self.avif_encoder_hb = createQHBoxLayout(self.avif_encoder_l, self.avif_encoder_cmb)
+        self.avif_encoder_hb.addStretch()
+        self.settings_lt.addLayout(self.avif_encoder_hb)
         self.settings_lt.addWidget(self.keep_if_larger_cb)
         self.settings_lt.addWidget(self.copy_if_larger_cb)
 
@@ -214,6 +221,7 @@ class SettingsTab(QWidget):
     def setSizes(self):
         label_width = 90
         text_edit_height = 50
+        combo_box_width = 150
 
         self.play_sound_on_finish_vol_hb.setAlignment(Qt.AlignLeft)
         self.play_sound_on_finish_vol_sb.setMinimumWidth(150)
@@ -236,13 +244,14 @@ class SettingsTab(QWidget):
         self.exiftool_unsafe_wipe_te.setMaximumHeight(text_edit_height)
         self.exiftool_custom_te.setMaximumHeight(text_edit_height)
 
-        self.jpg_encoder_cmb.setMinimumWidth(150)
+        self.jpg_encoder_cmb.setMinimumWidth(combo_box_width)
+        self.avif_encoder_cmb.setMinimumWidth(combo_box_width)
 
     def setupSignals(self):
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
         self.play_sound_on_finish_cb.toggled.connect(self.onPlaySoundOnFinishVolumeToggled)
         self.no_sorting_cb.toggled.connect(self.signals.sorting_toggled)
-        self.jxl_effort_10_cb.clicked.connect(self.signals.jxl_effort_10_toggled)
+        self.jxl_effort_10_cb.toggled.connect(self.signals.jxl_effort_10_toggled)
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling_toggled.emit)
         self.quality_prec_snap_cb.toggled.connect(self.signals.quality_prec_snap_toggled)
         self.jpg_encoder_cmb.currentTextChanged.connect(self.signals.jpeg_encoder_changed)
@@ -252,6 +261,7 @@ class SettingsTab(QWidget):
         self.wipe_log_dir_btn.clicked.connect(self.wipeLogsDir)
         self.jxl_lossy_modular_cb.toggled.connect(self.signals.jxl_lossy_modular_toggled)
         self.jxl_int_effort_cb.toggled.connect(self.signals.jxl_int_effort_toggled)
+        self.avif_encoder_cmb.currentTextChanged.connect(self.signals.avif_encoder_changed)
 
         self.general_btn.clicked.connect(lambda: self.changeCategory("General"))
         self.conversion_btn.clicked.connect(lambda: self.changeCategory("Conversion"))
@@ -277,6 +287,7 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["jxl_optimizer"], self.jxl_optimizer_cb)
         setToolTip(TOOLTIPS["jxl_int_effort"], self.jxl_int_effort_cb)
         setToolTip(TOOLTIPS["jxl_lossy_modular"], self.jxl_lossy_modular_cb)
+        setToolTip(TOOLTIPS["avif_encoder"], self.avif_encoder_cmb)
 
     def changeCategory(self, category):
         # Category buttons
@@ -298,6 +309,7 @@ class SettingsTab(QWidget):
                 "jxl_optimizer_cb",
                 "jpg_encoder_l", "jpg_encoder_cmb",
                 "disable_progressive_jpegli_cb",
+                "avif_encoder_l", "avif_encoder_cmb",
                 "keep_if_larger_cb",
                 "copy_if_larger_cb",
             ],
@@ -370,13 +382,6 @@ class SettingsTab(QWidget):
 
         self.notifications.notify("File Message", self.logging_manager.wipeLogsDir())
 
-    def createQHBoxLayout(self, *widgets) -> QHBoxLayout:
-        """Creates and returns a QHBoxLayout containing the specified widgets."""
-        layout = QHBoxLayout()
-        for w in widgets:
-            layout.addWidget(w)
-        return layout
-
     def getSettings(self):
         return {
             "custom_resampling": self.custom_resampling_cb.isChecked(),
@@ -407,6 +412,7 @@ class SettingsTab(QWidget):
                 "ExifTool - Unsafe Wipe": self.exiftool_unsafe_wipe_te.toPlainText(),
                 "ExifTool - Custom": self.exiftool_custom_te.toPlainText(),
             },
+            "avif_encoder": self.avif_encoder_cmb.currentText(),
         }
     
     def resetExifTool(self):
@@ -431,6 +437,7 @@ class SettingsTab(QWidget):
         self.custom_resampling_cb.setChecked(False)
         self.disable_progressive_jpegli_cb.setChecked(False)
         self.jpg_encoder_cmb.setCurrentIndex(0)
+        self.avif_encoder_cmb.setCurrentIndex(0)
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
 

@@ -5,15 +5,6 @@ from PySide6.QtWidgets import QApplication
 
 from ui.combobox import ComboBox
 
-@pytest.fixture(scope="session")
-def app():
-    os.environ["QT_QPA_PLATFORM"] = "offscreen" # Headless
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    yield app
-    app.quit()
-
 @pytest.fixture
 def combo_box(app):
     return ComboBox()

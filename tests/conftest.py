@@ -1,7 +1,20 @@
+import os
 import cProfile
 import pstats
 from contextlib import contextmanager
 from pathlib import Path
+
+import pytest
+from PySide6.QtWidgets import QApplication
+
+@pytest.fixture(scope="session")
+def app():
+    os.environ["QT_QPA_PLATFORM"] = "offscreen" # Headless
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+    yield app
+    app.quit()
 
 @contextmanager
 def profile_test(sort_by: str = "cumulative"):
