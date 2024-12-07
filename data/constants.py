@@ -5,9 +5,9 @@ import logging
 
 from data.utils import removeDuplicatesHashable, listToFilter
 
-VERSION = "1.0.2"
+VERSION = "1.1.0"
 UPDATE_CHECKER_VER_FILE_URL = "https://codepoems.eu/downloads/xl-converter/version.json"   # Used by UpdateChecker; example in misc/version.json
-UPDATE_CHECKER_ENABLED = False
+UPDATE_CHECKER_ENABLED = True
 
 # Filled below
 CONFIG_LOCATION = ""
