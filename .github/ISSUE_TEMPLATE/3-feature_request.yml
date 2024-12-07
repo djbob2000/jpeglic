@@ -13,7 +13,7 @@ body:
     id: how-it-works
     attributes:
       label: Technical Details
-      description: Describe how this feature would work. Include any relevant technical details.
+      description: Describe how this feature would work in technical details or add more context.
     validations:
       required: true
     
@@ -21,6 +21,6 @@ body:
     id: existing-implementations
     attributes:
       label: Existing Implementations
-      description: List at least one program with that feature. Provide examples.
+      description: List at least one program with that feature included.
     validations:
       required: true

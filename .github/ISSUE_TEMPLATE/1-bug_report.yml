@@ -7,13 +7,17 @@ body:
         #### Before You Start
 
         Make sure to look through [the docs](https://xl-docs.codepoems.eu) first.
+        
+        Write `N/A` if a field is unrelated to the problem.
+
+        Well-described issues have a higher chance of being fixed.
 
   - type: input
     id: version
     attributes:
       label: Version
       description: What version are you using? You will find it in the About tab. You should be using the latest version.
-      placeholder: 1.0.0
+      placeholder: 1.1.0
     validations:
       required: true
 
@@ -92,13 +96,15 @@ body:
       value: |
         #### Attachments (Optional)
 
-        You can share files (such as logs) alongside your issue.
+        You can share files (such as logs or images) alongside your issue.
         
         Logs can be generated in the settings -- Settings -> Advanced (at the very bottom) -> Start Logging.
 
-        Sharing files:
+        You can share files by uploading them to the "Additional Information" section above. However, this will make them publicly accessible.
 
-        1. Upload your files to [Disroot Lufi](https://upload.disroot.org/) or a similar service.
+        Alternatively, send them to my email. This is much more private.
+
+        1. Upload your files to a file sharing service of your choice.
         2. Send me an email using the following template:
 
         ```txt
@@ -108,5 +114,3 @@ body:
         ```
 
         Email: contact@codepoems.eu
-
-        Sharing files is done this way to avoid web scrapers.
