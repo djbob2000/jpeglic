@@ -11,30 +11,31 @@ Available for Windows and Linux.
 Read the [Manual](https://xl-docs.codepoems.eu)
 </div>
 
-## Supported Formats
-
-Encode to **JPEG XL, AVIF, WebP, and JPEG**.
-
 ## Features
+
 #### JPEGLI
 
-Generate fully compatible JPEGs with up to [35% better compression ratio](https://opensource.googleblog.com/2024/04/introducing-jpegli-new-jpeg-coding-library.html).
+Generate fully compatible JPEG images with up to [35% better compression ratio](https://opensource.googleblog.com/2024/04/introducing-jpegli-new-jpeg-coding-library.html).
 
-#### JPEG XL and AVIF
+#### Format Support
 
-Achieve exceptional quality at a modest size with JPEG XL and AVIF.
+Maximize image compression with **JPEG XL** and **AVIF**. Older formats (**WebP**, **JPEG**, and **PNG**) are also available.
 
 #### Parallel Encoding
 
-Encode images in parallel to speed up the process. Control how many threads to use for encoding.
+Encode images in parallel to speed up the process. Control how many threads to dedicate to encoding.
 
 #### Lossless JPEG Transcoding
 
-Losslessly transcode JPEG to JPEG XL, and reverse the process when needed.
+Reduce the file size of your JPEG images by 16% - 22% with Lossless JPEG Transcoding. This process is reversible.
 
 #### Downscaling
 
-Scale down images to resolution, percent, shortest (and longest) side, megapixels, or even file size.
+Scale down images to resolution, percent, shortest (and longest) side, and megapixels.
+
+## Download
+
+[Official website](https://codepoems.eu/xl-converter)
 
 ## Building from Source
 
@@ -66,17 +67,50 @@ pip install -r requirements.txt
 
 Install [redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
-Run the application
+Run the application.
 
 ```cmd
 python main.py
 ```
 
-You can also build it.
+You can also bundle the application.
 
 ```cmd
 python build.py
+``` 
+
+#### VirusTotal False Positives
+
+Some "AI" Anti-Viruses on VirusTotal have extremely high false positive rates. Recompiling the bootloader decreases them.
+
+Install MSYS2 and launch MINGW64.
+
+```bash
+pacman -Syu
+pacman -S --needed git cmake mingw-w64-x86_64-gcc
 ```
+
+Close the MSYS2 terminal and launch CMD inside project's root directory.
+
+Clone PyInstaller.
+
+```cmd
+env_build\Scripts\activate
+git clone -b v6.1.0 --depth 1 https://github.com/pyinstaller/pyinstaller.git misc\pyinstaller
+```
+
+Recompile the bootloader.
+
+```cmd
+cd misc\pyinstaller\bootloader
+set PATH=C:\msys64\mingw64\bin;%PATH%
+python waf all --gcc
+cd ..
+pip install .
+cd ..\..\..
+```
+
+Now, build it as usual.
 
 ### Linux (Ubuntu-based)
 
@@ -84,7 +118,7 @@ Install packages.
 
 ```bash
 sudo apt update
-sudo apt install git make curl fuse p7z-full
+sudo apt install git make curl fuse p7zip-full
 ```
 
 Install [xcb QPA](https://doc.qt.io/qt-6/linux-requirements.html) dependencies.
@@ -101,11 +135,11 @@ Install Python build packages.
 sudo apt install wget build-essential libreadline-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev liblzma-dev
 ```
 
-Build and setup Python `3.11.9`.
+Build and setup Python `3.11.10`.
 
 ```bash
-pyenv install 3.11.9
-pyenv global 3.11.9
+pyenv install 3.11.10
+pyenv global 3.11.10
 ```
 
 Clone and set up the repo.
@@ -152,47 +186,68 @@ To build XL Converter, you need to provide various binaries. This can be quite c
 
 Libraries:
 - [libjxl](https://github.com/libjxl/libjxl) `v0.10.2`
-- [libavif](https://github.com/AOMediaCodec/libavif) `v1.1.1` (AOM `3.9.1`)
+- [libavif](https://github.com/AOMediaCodec/libavif) `v1.1.1` (AOM `3.10.0` and [SVT-AV1-PSY](https://github.com/gianni-rosato/svt-av1-psy.git) `2.3.0`)
 - [imagemagick](https://imagemagick.org/) `7.* Q16-HDRI`
 - [exiftool](https://exiftool.org/) `12.92`
+- [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) `3.0.4`
 - [oxipng](https://github.com/shssoichiro/oxipng) `v0.9.2`
+
+Below you'll find references on how to arrange the binaries. You may also need to include their dependencies.
 
 #### Linux (x86_64)
 
-The following static binaries are required:
-- libjxl - cjxl, djxl, jxlinfo, cjpegli
-- libavif - avifenc, avifdec
-- imagemagick - magick (AppImage)
-- oxipng - oxipng
-
-Move them to `xl-converter/bin/linux`.
+```bash
+./xl-converter/bin/linux/
+├── avifdec
+├── avifenc
+├── cjpegli
+├── cjxl
+├── djxl
+├── imagemagick
+│   └── magick
+├── jpegtran
+├── jxlinfo
+└── oxipng
+```
 
 #### Windows (x86_64)
 
-The following static binaries are required:
-- libjxl - cjxl.exe, djxl.exe, jxlinfo.exe, cjpegli.exe
-- libavif - avifenc.exe, avifdec.exe
-- imagemagick - magick.exe
-- oxipng - oxipng.exe
-- ExifTool - folder named `exiftool\` with `exiftool.exe` and `exiftool_files\`
+```bash
+./xl-converter/bin/win/
+├── avifdec.exe
+├── avifenc.exe
+├── cjpegli.exe
+├── cjxl.exe
+├── djxl.exe
+├── exiftool
+│   ├── exiftool.exe
+│   └── exiftool_files
+├── imagemagick
+│   ├── magick.exe
+├── jpegtran
+│   ├── jpegtran.exe
+├── jxlinfo.exe
+├── libavif
+│   ├── avifdec.exe
+│   ├── avifenc.exe
+├── oxipng.exe
+```
 
-Move them to `xl-converter\bin\win`.
+On Windows, I recommend using MSYS2 MINGW64 for building.
 
 > [!NOTE]
-> `libjxl` does not feature UTF-8 support on Windows.
-> To enable it, embed [this manifest](https://github.com/AOMediaCodec/libavif/blob/3ec01cefd1ddd266a622d5e114a0888581b68f4a/apps/utf8.manifest) into each EXE with `mt.exe` from Visual Studio.
+> `libjxl` and `libjpeg-turbo` do not support UTF-8 in arguments on Windows.
+> To patch it in, embed [this manifest](https://github.com/AOMediaCodec/libavif/blob/3ec01cefd1ddd266a622d5e114a0888581b68f4a/apps/utf8.manifest) into each EXE with `mt.exe` from Visual Studio.
+
+> [!TIP]
+> Use `ldd` in MSYS2 to check which DLLs need bundling alongside the executables.
 
 ## Info
 
-> [!IMPORTANT]
-> This project runs on Python `3.11`. Other versions are not supported.
+> [!TIP]
+> To manage multiple Python versions on Windows, you can use: `py` launcher, pyenv-win, Scoop or Chocolatey.
 
-> [!NOTE]
-> Don't forget `--depth 1` when running `git clone` to avoid large files.
-
-## Unit Testing
-
-### Running
+## Testing
 
 [Setup repo](#building-from-source).
 
@@ -201,22 +256,30 @@ Create a test environment.
 ```bash
 python -m venv env_dev
 source env_dev/bin/activate
-pip install -r requirements.txt
-pip install -r requirements_test.txt
+pip install -r requirements.txt -r requirements_test.txt
 ```
 
-Run tests
+### Unit Tests
 
 ```cmd
 python test.py
 ```
 
-You can control which tests to run. Learn more with `python test.py --help`.
+You can control which tests to run. Run `python test.py --help` to learn more.
 
-### Deprecated
+### Functional Tests
 
-`test_old.py` is a deprecated, but still accessible test suite focusing on conversion results.
+`test_convert.py` is a separate test suite focusing on validating program's output.
+
+#### Linux
 
 ```bash
-python test_old.py
+sudo apt install xvfb
+make test-convert
+```
+
+#### Windows
+
+```bash
+python test_convert.py
 ```
