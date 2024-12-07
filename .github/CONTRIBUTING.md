@@ -1,5 +1,7 @@
-## Contributions
+## Pull Requests
 
 Pull requests are ignored to avoid licensing issues when reusing the code.
 
-Feel free to make bug reports as contributions.
+## Contributing
+
+You can contribute by filing detailed and well-written bug reports.
