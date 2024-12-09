@@ -13,11 +13,11 @@ libavif: AV1 Image File Format Library
 
 AOM AV1: AV1 Codec Library
 - License: BSD 2 Clause License
-- URL: https://aomedia.googlesource.com/aom/
+- URL: https://aomedia.googlesource.com/aom/+/refs/heads/main/LICENSE
 
 SVT-AV1-PSY
 - License: BSD 3-Clause Clear License
-- URL: https://github.com/gianni-rosato/svt-av1-psy.git 
+- URL: https://github.com/gianni-rosato/svt-av1-psy/blob/master/LICENSE.md
 
 ImageMagick
 - License: ImageMagick License
