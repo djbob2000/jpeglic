@@ -1,3 +1,56 @@
+## 1.1.0 - 2024-12-09
+
+### Added
+
+- Add "Verify" feature to Lossless JPEG Transcoding.
+- Add "Normalize" feature to Lossless JPEG Transcoding.
+- Add new AVIF encoder: `SVT-AV1-PSY` (#70).
+- Add instant cancellation.
+- Release a portable build for Windows.
+- Add "Optimize RAM Usage" option to JPEG XL (#57).
+- Add downscaling to megapixels (#67).
+- Add image type filters to "Add Files" (#58).
+- Add options to disable width or height when downscaling to resolution.
+- File dialogs now remember their last used directory (#66).
+- Add new theme.
+
+### Changed
+
+- Change default file dialog location to the home directory.
+- Terminate encoder processes when application is closed during processing.
+- Show `stderr` in exceptions for accurate errors.
+- Improve estimated time left accuracy.
+- Improve path assignment system to prevent rare path conflicts.
+- Adjust UI naming, tooltips and defaults.
+- Reduce ExifTool calls required for validation.
+- Save widget states to disk more often.
+- Anchor progress dialog to the main window.
+- Replace "Multithreading" modes with "JPEG XL - Optimize RAM Usage".
+- Disable drag and drop during conversion.
+- Disable ExifTool for all lossless_jpeg operations.
+- Hide the JPEG XL lossy modular mode behind a flag.
+- Adjust logs verbosity to lower log file size.
+- Update ImageMagick to `7.1.1-41`.
+- Update `libavif` to `v1.1.1`.
+- Update `AOM AV1` to `v3.10.0`.
+
+### Fixed
+
+- Fix opening URLs on KDE Plasma (#54).
+- Fix "Copy Original When Result is Larger" when combined with "Replace" (#60).
+- Fix wiping logs stopping log files from being generated until log handler is reloaded (Windows).
+- Fix estimated time left counting skipped items as completed (#69).
+
+### Deprecated
+
+- Deprecate "Intelligent Effort" and hide it behind a flag.
+
+### Removed
+
+- Remove the requirement to have `vc_redist` installed.
+- Remove `pyqtdarktheme` theme module due to being abandoned.
+- Remove HEIC/HEIF support due to licensing issues.
+
 ## 1.0.2 - 2024-08-07
 
 - Added tooltips
