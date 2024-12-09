@@ -107,10 +107,17 @@ set PATH=C:\msys64\mingw64\bin;%PATH%
 python waf all --gcc
 cd ..
 pip install .
-cd ..\..\..
+cd ..\..
 ```
 
-Now, build it as usual.
+Reload the environment to avoid the `ModuleNotFoundError` error.
+
+```cmd
+deactivate
+env_build\Scripts\activate
+```
+
+Now, build it with `build.py` as usual.
 
 ### Linux (Ubuntu-based)
 
