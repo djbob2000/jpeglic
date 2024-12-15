@@ -206,8 +206,9 @@ def test__downscaleManualModes_no_imagemagick_jxl_int_e_e9(params_fixture, side_
 @patch("core.downscale.downscale")
 def test_decodeAndDownscale_imagemagick(mock_downscale, params_fixture):
     with patch("core.downscale.getDecoder", return_value=IMAGE_MAGICK_PATH):
-        downscale.decodeAndDownscale(params_fixture, "png", "Encoder - Wipe", QMutex())
-        mock_downscale.assert_called_once_with(params_fixture)
+        mutex = QMutex()
+        downscale.decodeAndDownscale(params_fixture, "png", "Encoder - Wipe", mutex)
+        mock_downscale.assert_called_once_with(params_fixture, mutex)
 
 @patch("core.downscale.getDecoder", return_value="path/to/other/decoder")
 @patch("core.downscale.metadata.getArgs", return_value=[])

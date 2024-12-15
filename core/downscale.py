@@ -287,7 +287,7 @@ def decodeAndDownscale(params, ext, metadata_mode, mutex):
     params["args"] = metadata.getArgs(params["enc"], metadata_mode)
 
     if params["enc"] == IMAGE_MAGICK_PATH:
-        downscale(params)
+        downscale(params, mutex)
     else:
         # Generate proxy
         with QMutexLocker(mutex):
