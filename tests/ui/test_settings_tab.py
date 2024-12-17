@@ -1,4 +1,6 @@
 from unittest.mock import patch, call
+from contextlib import ExitStack
+import logging
 
 import pytest
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox
@@ -30,6 +32,7 @@ def test_changeCategory_visibility(category, app, qtbot):
             "jxl_lossless_jpeg_cb",
             "jpg_encoder_l", "jpg_encoder_cmb",
             "avif_encoder_l", "avif_encoder_cmb",
+            "avif_bit_depth_l", "avif_bit_depth_cmb",
             "disable_progressive_jpegli_cb",
             "keep_if_larger_cb",
             "copy_if_larger_cb",
@@ -81,6 +84,55 @@ def test_signals(signal_attr, widget_attr, qtbot, app):
             widget.setCurrentIndex((widget.currentIndex() - 1) % widget.count())
     assert blocker.signal_triggered
 
+@pytest.fixture
+def onAVIFBitDepthChanged_patches(app):
+    patches = {
+        "avif_encoder_cmb.currentText": patch.object(app.avif_encoder_cmb, "currentText"),
+        "avif_bit_depth_cmb.currentText": patch.object(app.avif_bit_depth_cmb, "currentText"),
+        "wm.getVar": patch.object(app.wm, "getVar", return_value="8"),
+        "avif_bit_depth_cmb.setCurrentText": patch.object(app.avif_bit_depth_cmb, "setCurrentText"),
+        "avif_bit_depth_cmb.clear": patch.object(app.avif_bit_depth_cmb, "clear"),
+        "blockSignals": patch("ui.settings_tab.blockSignals"),
+    }
+
+    with ExitStack() as stack:
+        _mocks = {name: stack.enter_context(patcher) for name, patcher in patches.items()}
+        yield app, _mocks
+
+@pytest.mark.parametrize("encoder, var_name", [
+    ("AOM AV1", "aom_av1_bit_depth"),
+    ("SVT-AV1-PSY", "svt_av1_psy_bit_depth"),
+])
+def test_onAVIFBitDepthChanged_happy_path(encoder, var_name, onAVIFBitDepthChanged_patches):
+    app, mocks = onAVIFBitDepthChanged_patches
+    mocks["avif_encoder_cmb.currentText"].return_value = encoder
+    mocks["avif_bit_depth_cmb.currentText"].return_value = var_name
+
+    app.onAVIFEncoderChanged()
+
+    mocks["blockSignals"].assert_called_once_with(app.avif_bit_depth_cmb)
+    mocks["avif_bit_depth_cmb.clear"].assert_called_once()
+    mocks["wm.getVar"].assert_called_once_with(var_name)
+    mocks["avif_bit_depth_cmb.setCurrentText"].assert_called_once_with(mocks["wm.getVar"].return_value)
+
+def test_onAVIFBitDepthChanged_unknown_encoder(caplog, onAVIFBitDepthChanged_patches):
+    app, mocks = onAVIFBitDepthChanged_patches
+    mocks["avif_encoder_cmb.currentText"].return_value = "new_enc"
+    caplog.set_level(logging.ERROR)
+
+    app.onAVIFEncoderChanged()
+
+    caplog.records[0].message = "Unknown encoder"
+    mocks["wm.getVar"].assert_not_called()
+
+def test_onAVIFBitDepthChanged_var_not_found(onAVIFBitDepthChanged_patches):
+    app, mocks = onAVIFBitDepthChanged_patches
+    mocks["wm.getVar"].return_value = None
+    mocks["avif_encoder_cmb.currentText"].return_value = "AOM AV1"
+
+    app.onAVIFEncoderChanged()
+
+    mocks["avif_bit_depth_cmb.setCurrentText"].assert_called_once_with("Auto")
 
 def test_getSettings_no_key_error(app):
     app.getSettings()

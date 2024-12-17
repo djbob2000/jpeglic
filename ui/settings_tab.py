@@ -31,7 +31,7 @@ from ui.spinbox import SpinBox
 from ui.combobox import ComboBox
 from data.logging_manager import LoggingManager
 from ui.notifications import Notifications
-from ui.utils import setToolTip, openLocalUrl, createQHBoxLayout
+from ui.utils import setToolTip, openLocalUrl, createQHBoxLayout, blockSignals
 from data.tooltips import TOOLTIPS
 
 class Signals(QObject):
@@ -69,6 +69,7 @@ class SettingsTab(QWidget):
         # Refresh states
         self.onCustomArgsToggled()
         self.onPlaySoundOnFinishVolumeToggled()
+        self.onAVIFEncoderChanged()
 
         # Apply Settings
         setTheme()
@@ -114,6 +115,8 @@ class SettingsTab(QWidget):
         self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("JPEG Encoder"))
         self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", ComboBox(("JPEGLI", "libjpeg")))
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
+        self.avif_bit_depth_l = self.wm.addWidget("avif_bit_depth_l", QLabel("AVIF - Bit Depth"))
+        self.avif_bit_depth_cmb = self.wm.addWidget("avif_bit_depth_cmb", ComboBox(("Auto", "12", "10", "8")))
         self.avif_encoder_l = self.wm.addWidget("avif_encoder_l", QLabel("AVIF Encoder"))
         self.avif_encoder_cmb = self.wm.addWidget("avif_encoder_cmb", ComboBox(("AOM AV1", "SVT-AV1-PSY")))
         self.keep_if_larger_cb = self.wm.addWidget("keep_if_larger_cb", QCheckBox("Do Not Delete Original When Result is Larger"))
@@ -187,10 +190,10 @@ class SettingsTab(QWidget):
         self.settings_lt.addWidget(self.jxl_lossless_jpeg_cb)
         self.jpg_encoder_hb = createQHBoxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
         self.settings_lt.addLayout(self.jpg_encoder_hb)
-        self.jpg_encoder_hb.addStretch()
         self.settings_lt.addWidget(self.disable_progressive_jpegli_cb)
+        self.avif_bit_depth_hb = createQHBoxLayout(self.avif_bit_depth_l, self.avif_bit_depth_cmb)
+        self.settings_lt.addLayout(self.avif_bit_depth_hb)
         self.avif_encoder_hb = createQHBoxLayout(self.avif_encoder_l, self.avif_encoder_cmb)
-        self.avif_encoder_hb.addStretch()
         self.settings_lt.addLayout(self.avif_encoder_hb)
         self.settings_lt.addWidget(self.keep_if_larger_cb)
         self.settings_lt.addWidget(self.copy_if_larger_cb)
@@ -217,33 +220,46 @@ class SettingsTab(QWidget):
         self.settings_lt.addStretch()
 
     def setSizes(self):
-        label_width = 90
-        text_edit_height = 50
-        combo_box_width = 150
-
-        self.play_sound_on_finish_vol_hb.setAlignment(Qt.AlignLeft)
         self.play_sound_on_finish_vol_sb.setMinimumWidth(150)
 
-        self.avifenc_args_l.setMinimumWidth(label_width)
-        self.cjpegli_args_l.setMinimumWidth(label_width)
-        self.cjxl_args_l.setMinimumWidth(label_width)
-        self.im_args_l.setMinimumWidth(label_width)
-        self.avifenc_args_te.setMaximumHeight(text_edit_height)
-        self.cjpegli_args_te.setMaximumHeight(text_edit_height)
-        self.cjxl_args_te.setMaximumHeight(text_edit_height)
-        self.im_args_te.setMaximumHeight(text_edit_height)
+        for te in (
+            self.exiftool_wipe_te,
+            self.exiftool_preserve_te,
+            self.exiftool_unsafe_wipe_te,
+            self.exiftool_custom_te,
+            self.avifenc_args_te,
+            self.cjpegli_args_te,
+            self.cjxl_args_te,
+            self.im_args_te,
+        ):
+            te.setMaximumHeight(50)
 
-        self.exiftool_wipe_l.setMinimumWidth(label_width)
-        self.exiftool_preserve_l.setMinimumWidth(label_width)
-        self.exiftool_unsafe_wipe_l.setMinimumWidth(label_width)
-        self.exiftool_custom_l.setMinimumWidth(label_width)
-        self.exiftool_wipe_te.setMaximumHeight(text_edit_height)
-        self.exiftool_preserve_te.setMaximumHeight(text_edit_height)
-        self.exiftool_unsafe_wipe_te.setMaximumHeight(text_edit_height)
-        self.exiftool_custom_te.setMaximumHeight(text_edit_height)
+        for label in (
+            self.exiftool_wipe_l,
+            self.exiftool_preserve_l,
+            self.exiftool_unsafe_wipe_l,
+            self.exiftool_custom_l,
+            self.avifenc_args_l,
+            self.cjpegli_args_l,
+            self.cjxl_args_l,
+            self.im_args_l,
+        ):
+            label.setMinimumWidth(90)
 
-        self.jpg_encoder_cmb.setMinimumWidth(combo_box_width)
-        self.avif_encoder_cmb.setMinimumWidth(combo_box_width)
+        for hbox in (
+            self.jpg_encoder_hb,
+            self.avif_encoder_hb,
+            self.avif_bit_depth_hb,
+            self.play_sound_on_finish_vol_hb,
+        ):
+            hbox.setAlignment(Qt.AlignLeft)
+        
+        for cmb in (
+            self.jpg_encoder_cmb,
+            self.avif_encoder_cmb,
+            self.avif_bit_depth_cmb,
+        ):
+            cmb.setMinimumWidth(150)
 
     def setupSignals(self):
         self.custom_args_cb.toggled.connect(self.onCustomArgsToggled)
@@ -260,6 +276,8 @@ class SettingsTab(QWidget):
         self.jxl_lossy_modular_cb.toggled.connect(self.signals.jxl_lossy_modular_toggled)
         self.jxl_int_effort_cb.toggled.connect(self.signals.jxl_int_effort_toggled)
         self.avif_encoder_cmb.currentTextChanged.connect(self.signals.avif_encoder_changed)
+        self.avif_encoder_cmb.currentTextChanged.connect(self.onAVIFEncoderChanged)
+        self.avif_bit_depth_cmb.currentTextChanged.connect(self.onAVIFBitDepthChanged)
 
         self.general_btn.clicked.connect(lambda: self.changeCategory("General"))
         self.conversion_btn.clicked.connect(lambda: self.changeCategory("Conversion"))
@@ -286,6 +304,7 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["jxl_int_effort"], self.jxl_int_effort_cb)
         setToolTip(TOOLTIPS["jxl_lossy_modular"], self.jxl_lossy_modular_cb)
         setToolTip(TOOLTIPS["avif_encoder"], self.avif_encoder_cmb)
+        setToolTip(TOOLTIPS["avif_bit_depth"], self.avif_bit_depth_cmb)
 
     def changeCategory(self, category):
         # Category buttons
@@ -308,6 +327,7 @@ class SettingsTab(QWidget):
                 "jpg_encoder_l", "jpg_encoder_cmb",
                 "disable_progressive_jpegli_cb",
                 "avif_encoder_l", "avif_encoder_cmb",
+                "avif_bit_depth_l", "avif_bit_depth_cmb",
                 "keep_if_larger_cb",
                 "copy_if_larger_cb",
             ],
@@ -355,6 +375,30 @@ class SettingsTab(QWidget):
         enabled = self.play_sound_on_finish_cb.isChecked()
         self.play_sound_on_finish_vol_l.setEnabled(enabled)
         self.play_sound_on_finish_vol_sb.setEnabled(enabled)
+
+    def onAVIFBitDepthChanged(self) -> None:
+        match self.avif_encoder_cmb.currentText():
+            case "AOM AV1":
+                self.wm.setVar("aom_av1_bit_depth", self.avif_bit_depth_cmb.currentText())
+            case "SVT-AV1-PSY":
+                self.wm.setVar("svt_av1_psy_bit_depth", self.avif_bit_depth_cmb.currentText())
+
+    def onAVIFEncoderChanged(self) -> None:
+        """Adjusts encoder settings based on which one is selected."""
+        avif_enc = self.avif_encoder_cmb.currentText()
+        with blockSignals(self.avif_bit_depth_cmb):
+            self.avif_bit_depth_cmb.clear()
+            match avif_enc:
+                case "AOM AV1":
+                    self.avif_bit_depth_cmb.addItems(("Auto", "12", "10", "8"))
+                    loaded_var = self.wm.getVar("aom_av1_bit_depth")
+                case "SVT-AV1-PSY":
+                    self.avif_bit_depth_cmb.addItems(("Auto", "10", "8"))
+                    loaded_var = self.wm.getVar("svt_av1_psy_bit_depth")
+                case _:
+                    logging.error(f"[onAVIFEncoderChanged] Unknown encoder ({avif_enc})")
+                    return
+            self.avif_bit_depth_cmb.setCurrentText(loaded_var or "Auto")
 
     def toggleLogging(self):
         if self.logging_manager.isLoggingToFile():
@@ -411,6 +455,7 @@ class SettingsTab(QWidget):
                 "ExifTool - Custom": self.exiftool_custom_te.toPlainText(),
             },
             "avif_encoder": self.avif_encoder_cmb.currentText(),
+            "avif_bit_depth": self.avif_bit_depth_cmb.currentText(),
         }
     
     def resetExifTool(self):
@@ -436,6 +481,7 @@ class SettingsTab(QWidget):
         self.disable_progressive_jpegli_cb.setChecked(False)
         self.jpg_encoder_cmb.setCurrentIndex(0)
         self.avif_encoder_cmb.setCurrentIndex(0)
+        self.avif_bit_depth_cmb.setCurrentIndex(0)
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
 
@@ -449,5 +495,8 @@ class SettingsTab(QWidget):
     
     def saveState(self, new_states: Optional[Dict] = None) -> None:
         if new_states is None or new_states != self.cached_states:
+            self.wm.disableAutoSaving(
+                "avif_bit_depth_cmb",
+            )
             self.wm.saveState()
             self.cached_states = deepcopy(new_states)

@@ -285,6 +285,9 @@ class Worker(QRunnable):
                     case _:
                         raise GenericException("C4", "Unrecognized AVIF encoder.")
 
+                if self.settings["avif_bit_depth"] != "Auto":
+                    args.append(f"-d {self.settings['avif_bit_depth']}")
+
                 encoder = AVIFENC_PATH
             case "JPEG":
                 if self.settings["jpg_encoder"] == "JPEGLI":

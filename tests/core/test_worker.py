@@ -73,6 +73,7 @@ def worker():
                 "ExifTool - Preserve": "-tagsFromFile $src $dst -overwrite_original",
             },
             "avif_encoder": "AOM AV1",
+            "avif_bit_depth": "Auto",
         },
         4,
         mutex,
@@ -352,6 +353,25 @@ def test_convert_args_avif(encoder, quality, speed, chroma_subsampling, expected
     worker.convert()
     
     assert mocks["runBinary"].call_args[0][1] == expected_args
+
+def test_avif_bit_depth_auto(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    worker.params["format"] = "AVIF"
+    worker.settings["avif_bit_depth"] = "Auto"
+
+    worker.convert()
+
+    for arg in mocks["runBinary"].call_args[0][1]:
+        assert arg[:3] != "-d "
+
+def test_avif_bit_depth_specified(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    worker.params["format"] = "AVIF"
+    worker.settings["avif_bit_depth"] = "8"
+
+    worker.convert()
+
+    assert "-d 8" in mocks["runBinary"].call_args[0][1]
 
 @pytest.mark.parametrize("quality, encoder, chroma_subsampling, disable_progressive_jpegli, expected_args", [
     (80, "JPEGLI", "Default", False, ["-q 80"]),
