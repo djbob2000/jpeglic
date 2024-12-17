@@ -1,7 +1,12 @@
 from PySide6.QtGui import QWheelEvent
-from PySide6.QtWidgets import QComboBox
+from PySide6.QtWidgets import QComboBox, QWidget
 
 class ComboBox(QComboBox):
+    def __init__(self, items: tuple[str] | None = None, parent: QWidget | None = None):
+        super().__init__(parent)
+        if items:
+            self.addItems(items)
+
     def wheelEvent(self, e: QWheelEvent) -> None:
         e.ignore()
     

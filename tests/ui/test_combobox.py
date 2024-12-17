@@ -19,3 +19,14 @@ def test_showPopup_populated(combo_box):
     assert combo_box.count() == 10
     assert combo_box.view() is not None
     assert combo_box.view().minimumHeight() > 0
+
+def test_constructor_no_items(app):
+    cmb = ComboBox()
+    assert cmb.count() == 0
+
+def test_constructor_add_items(app):
+    items = ("item0", "item1", "item2")
+    cmb = ComboBox(items)
+    assert cmb.count() == len(items)
+    for i in range(cmb.count()):
+        assert cmb.itemText(i) == items[i]
