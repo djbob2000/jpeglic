@@ -61,13 +61,6 @@ def blake2(path):
 
 def sleep(ms):
     QTest.qWait(ms)
-
-def cmb_set_text(cmb, text):
-    idx = cmb.findText(text)
-    if idx != -1:
-        cmb.setCurrentIndex(idx)
-    else:
-        print(f"[Error - cmb_set_text()] Could not find \"{text}\"")
     
 def test_dict(data):
     """Recursively verify dictionary's integrity"""
@@ -219,16 +212,16 @@ class Interact:
         self.main_window.output_tab.effort_sb.setValue(effort)
     
     def set_duplicate_handling(self, mode):
-        cmb_set_text(self.main_window.output_tab.duplicates_cmb, mode)
+        self.main_window.output_tab.duplicates_cmb.setCurrentText(mode)
     
     def set_format(self, _format):
-        cmb_set_text(self.main_window.output_tab.format_cmb, _format)
+        self.main_window.output_tab.format_cmb.setCurrentText(_format)
 
     def set_preserve_attributes(self, enabled):
         self.main_window.modify_tab.date_time_cb.setChecked(enabled)
     
     def set_jpg_encoder(self, encoder: str):
-        cmb_set_text(self.main_window.settings_tab.jpg_encoder_cmb, encoder)
+        self.main_window.settings_tab.jpg_encoder_cmb.setCurrentText(encoder)
 
     def drag_and_drop(self, urls):
         mime_data = QMimeData()
@@ -251,7 +244,7 @@ class Interact:
                 return self.main_window.settings_tab.getSettings()
     
     def set_metadata_mode(self, mode):
-        cmb_set_text(self.main_window.modify_tab.metadata_cmb, mode)
+        self.main_window.modify_tab.metadata_cmb.setCurrentText(mode)
     
     def set_downscaling_mode(self,
             mode,
@@ -264,7 +257,7 @@ class Interact:
         ):
 
         self.main_window.modify_tab.downscale_cb.setChecked(True)
-        cmb_set_text(self.main_window.modify_tab.mode_cmb, mode)
+        self.main_window.modify_tab.mode_cmb.setCurrentText(mode)
 
         def set_value(widget, value):
             if value is not None:

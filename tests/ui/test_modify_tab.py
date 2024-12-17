@@ -82,14 +82,14 @@ def test__returnDownscalingEnabled_disabled(app):
     assert not app._returnDownscalingEnabled()
 
 def test__returnDownscalingEnabled_resolution_options_disabled(app):
-    app.mode_cmb.setCurrentIndex(app.mode_cmb.findText("Resolution"))
+    app.mode_cmb.setCurrentText("Resolution")
     app.pixel_w_cb.setChecked(False)
     app.pixel_h_cb.setChecked(False)
 
     assert not app._returnDownscalingEnabled()
 
 def test__returnDownscalingEnabled_disabled(app):
-    app.mode_cmb.setCurrentIndex(app.mode_cmb.findText("Resolution"))
+    app.mode_cmb.setCurrentText("Resolution")
     app.pixel_w_cb.setChecked(True)
     app.downscale_cb.setChecked(True)
 
@@ -107,7 +107,7 @@ def test_getSettings_no_key_error(app):
     ("Megapixels"),
 ])
 def test_onModeChanged_visibility(mode_title, app):
-    app.mode_cmb.setCurrentIndex(app.mode_cmb.findText(mode_title))
+    app.mode_cmb.setCurrentText(mode_title)
     assert app.pixel_h_cb.isVisibleTo(app) == (mode_title == "Resolution")
     assert app.pixel_h_sb.isVisibleTo(app) == (mode_title == "Resolution")
     assert app.pixel_w_cb.isVisibleTo(app) == (mode_title == "Resolution")

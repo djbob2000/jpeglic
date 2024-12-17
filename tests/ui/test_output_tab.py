@@ -133,7 +133,7 @@ def test_onJXLIntEffortVisibleToggled(visible, app):
         mock__onEffortToggled.assert_called_once()
 
 def test_onFormatChange_int_e_toggle(app):
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))
+    app.format_cmb.setCurrentText("JPEG XL")
     app.onJXLIntEffortVisibleToggled(True)
     app.int_effort_cb.setChecked(True)
 
@@ -163,7 +163,7 @@ def test_onFormatChange_lossless_toggled(app):
     ("Smallest Lossless", ["smallest_lossless"]),
 ])
 def test_onFormatChange_visibility(app, file_format, visible_widgets):
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText(file_format))
+    app.format_cmb.setCurrentText(file_format)
     assert app.format_cmb.currentText() == file_format
     
     # Effort
@@ -209,7 +209,7 @@ def test_onFormatChange_visibility(app, file_format, visible_widgets):
     ("SVT-AV1-PSY"),
 ])
 def test_AVIF_chroma_subsampling_visibility(encoder, app):
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("AVIF"))
+    app.format_cmb.setCurrentText("AVIF")
     app.onAVIFEncoderChanged(encoder)
     assert app.chroma_subsampling_svt_av1_psy_cmb.isVisibleTo(app) == (encoder == "SVT-AV1-PSY")
     assert app.chroma_subsampling_aom_av1_cmb.isVisibleTo(app) == (encoder == "AOM AV1")
@@ -234,24 +234,24 @@ def test_onFormatChange_lossless_glitch(app):
     app.onJXLIntEffortVisibleToggled(True)
     assert not app.quality_sl.isEnabled()
 
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("WebP"))
+    app.format_cmb.setCurrentText("WebP")
     assert app.quality_sl.isEnabled()
 
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))
+    app.format_cmb.setCurrentText("JPEG XL")
     
 def test_onFormatChange_int_e_glitch(app):
     app.int_effort_cb.setChecked(True)
     app.onJXLIntEffortVisibleToggled(True)
     assert not app.effort_sb.isEnabled()
 
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("AVIF"))
+    app.format_cmb.setCurrentText("AVIF")
     assert app.effort_sb.isEnabled()
 
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))
+    app.format_cmb.setCurrentText("JPEG XL")
     assert not app.effort_sb.isEnabled()
 
 def test_jpeg_xl_effort_10(app):
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))
+    app.format_cmb.setCurrentText("JPEG XL")
     
     assert app.effort_sb.maximum() == 9
     app.onJXLEffort10Enabled(True)
@@ -262,7 +262,7 @@ def test_jpeg_xl_effort_10(app):
     ("AVIF", 0, 10),
 ])
 def test_effort_ranges(app, file_format, min_val, max_val):
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText(file_format))
+    app.format_cmb.setCurrentText(file_format)
     
     assert app.effort_sb.minimum() == min_val
     assert app.effort_sb.maximum() == max_val
@@ -346,7 +346,7 @@ def test__onJXLNormalizeClicked_var_present(app):
 
 @pytest.mark.parametrize("encoder", ("AOM AV1", "SVT-AV1-PSY"))
 def test_onAVIFEncoderChanged_happy_path(encoder, app):
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("AVIF"))
+    app.format_cmb.setCurrentText("AVIF")
 
     app.onAVIFEncoderChanged(encoder)
 
@@ -354,7 +354,7 @@ def test_onAVIFEncoderChanged_happy_path(encoder, app):
     assert app.chroma_subsampling_aom_av1_cmb.isVisibleTo(app) == (encoder == "AOM AV1")
 
 def test_onAVIFEncoderChanged_other_format(app):
-    app.format_cmb.setCurrentIndex(app.format_cmb.findText("JPEG XL"))
+    app.format_cmb.setCurrentText("JPEG XL")
 
     app.onAVIFEncoderChanged("AOM AV1")
 
