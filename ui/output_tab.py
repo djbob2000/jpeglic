@@ -79,14 +79,12 @@ class OutputTab(QWidget):
         self.threads_sl.setRange(1, self.MAX_THREAD_COUNT)
         self.threads_sb.setRange(1, self.MAX_THREAD_COUNT)
         self.threads_sl.setTickInterval(1)
-        self.duplicates_cmb = self.wm.addWidget("duplicates_cmb", ComboBox())
-        self.duplicates_cmb.addItems(("Rename", "Replace", "Skip"))
+        self.duplicates_cmb = self.wm.addWidget("duplicates_cmb", ComboBox(("Rename", "Replace", "Skip")))
 
         # After Conversion
         self.clear_after_conv_cb = self.wm.addWidget("clear_after_conv_cb", QCheckBox("Clear File List"))
         self.delete_original_cb = self.wm.addWidget("delete_original_cb", QCheckBox("Delete Original"))
-        self.delete_original_cmb = self.wm.addWidget("delete_original_cmb", ComboBox())
-        self.delete_original_cmb.addItems(("To Trash", "Permanently"))
+        self.delete_original_cmb = self.wm.addWidget("delete_original_cmb", ComboBox(("To Trash", "Permanently")))
 
         # Output
         self.choose_output_src_rb = self.wm.addWidget("choose_output_src_rb", QRadioButton("Source Folder"))
@@ -97,8 +95,7 @@ class OutputTab(QWidget):
         self.choose_output_ct_btn.setMaximumWidth(25)
 
         # Format
-        self.format_cmb = self.wm.addWidget("format_cmb", ComboBox())
-        self.format_cmb.addItems((
+        self.format_cmb = self.wm.addWidget("format_cmb", ComboBox((
             "JPEG XL",
             "AVIF",
             "WebP",
@@ -107,7 +104,7 @@ class OutputTab(QWidget):
             "Lossless JPEG Transcoding",
             "JPEG Reconstruction",
             "Smallest Lossless",
-        ))
+        )))
         self.effort_l = self.wm.addWidget("effort_l", QLabel("Effort"), "effort")
         self.effort_sb = self.wm.addWidget("effort_sb", SpinBox(), "effort")
         self.int_effort_cb = self.wm.addWidget("int_effort_cb", QCheckBox("Intelligent"))
@@ -121,19 +118,14 @@ class OutputTab(QWidget):
         self.smallest_lossless_webp_cb = self.wm.addWidget("smallest_lossless_webp_cb", QCheckBox("WebP"), "format_pool")
         self.smallest_lossless_jxl_cb = self.wm.addWidget("smallest_lossless_jxl_cb", QCheckBox("JPEG XL"), "format_pool")
         self.chroma_subsampling_l = self.wm.addWidget("chroma_subsampling_l", QLabel("Chroma Subsampling", ), "chroma_subsampling")
-        self.chroma_subsampling_jpegli_cmb = self.wm.addWidget("chroma_subsampling_jpegli_cmb", ComboBox(), "chroma_subsampling")
-        self.chroma_subsampling_jpegli_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
-        self.chroma_subsampling_aom_av1_cmb = self.wm.addWidget("chroma_subsampling_aom_av1_cmb", ComboBox(), "chroma_subsampling")
-        self.chroma_subsampling_aom_av1_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0", "4:0:0",))
-        self.chroma_subsampling_svt_av1_psy_cmb = self.wm.addWidget("chroma_subsampling_svt_av1_psy_cmb", ComboBox())
-        self.chroma_subsampling_svt_av1_psy_cmb.addItem("4:2:0")
-        self.chroma_subsampling_jpg_cmb = self.wm.addWidget("chroma_subsampling_jpg_cmb", ComboBox(), "chroma_subsampling")
-        self.chroma_subsampling_jpg_cmb.addItems(("Default", "4:4:4", "4:2:2", "4:2:0",))
+        self.chroma_subsampling_jpegli_cmb = self.wm.addWidget("chroma_subsampling_jpegli_cmb", ComboBox(("Default", "4:4:4", "4:2:2", "4:2:0",)), "chroma_subsampling")
+        self.chroma_subsampling_aom_av1_cmb = self.wm.addWidget("chroma_subsampling_aom_av1_cmb", ComboBox(("Default", "4:4:4", "4:2:2", "4:2:0", "4:0:0",)), "chroma_subsampling")
+        self.chroma_subsampling_svt_av1_psy_cmb = self.wm.addWidget("chroma_subsampling_svt_av1_psy_cmb", ComboBox(("4:2:0",)))
+        self.chroma_subsampling_jpg_cmb = self.wm.addWidget("chroma_subsampling_jpg_cmb", ComboBox(("Default", "4:4:4", "4:2:2", "4:2:0",)), "chroma_subsampling")
         self.jxl_png_fallback_cb = self.wm.addWidget("jxl_png_fallback_cb", QCheckBox("PNG Fallback"))
         self.jxl_verify_cb = self.wm.addWidget("jxl_verify_cb", QCheckBox("Verify"))
         self.jxl_normalize_enable_cb = self.wm.addWidget("jxl_normalize_enable_cb", QCheckBox("Normalize"))
-        self.jxl_normalize_when_cmb = self.wm.addWidget("jxl_normalize_when_cmb", ComboBox())
-        self.jxl_normalize_when_cmb.addItems(("On Fail", "Always"))
+        self.jxl_normalize_when_cmb = self.wm.addWidget("jxl_normalize_when_cmb", ComboBox(("On Fail", "Always")))
 
         # Buttons
         self.reset_to_default_btn = QPushButton("Reset to Default")

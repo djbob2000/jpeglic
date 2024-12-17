@@ -62,15 +62,14 @@ class ModifyTab(QWidget):
     
     def _setupWidgets(self):
         self.downscale_cb = self.wm.addWidget("downscale_cb", QCheckBox("Downscale"))
-        self.mode_cmb = self.wm.addWidget("mode_cmb", ComboBox())
-        self.mode_cmb.addItems((
+        self.mode_cmb = self.wm.addWidget("mode_cmb", ComboBox((
             "Resolution",
             "Percent",
             "Shortest Side",
             "Longest Side",
             "Megapixels",
             "File Size",
-        ))
+        )))
         self.mode_l = self.wm.addWidget("mode_l", QLabel("Scale to"))
         self.percent_l = self.wm.addWidget("percent_l", QLabel("Percent"))
         self.percent_sb = self.wm.addWidget("percent_sb", SpinBox())
@@ -102,20 +101,20 @@ class ModifyTab(QWidget):
         self.megapixels_sb.setDecimals(2)
         self.megapixels_sb.setSuffix(" MP")
         self.resample_l = self.wm.addWidget("resample_l", QLabel("Resample"))
-        self.resample_cmb = self.wm.addWidget("resample_cmb", ComboBox())
-        self.resample_cmb.addItem(("Default"))
-        self.resample_cmb.addItems(ALLOWED_RESAMPLING)
+        self.resample_cmb = self.wm.addWidget("resample_cmb", ComboBox((
+            "Default",
+            *ALLOWED_RESAMPLING
+        )))
         self.date_time_cb = self.wm.addWidget("date_time_cb", QCheckBox("Preserve Date && Time"))
         self.metadata_l = self.wm.addWidget("metadata_l", QLabel("Metadata"))
-        self.metadata_cmb = self.wm.addWidget("metadata_cmb", ComboBox())
-        self.metadata_cmb.addItems((
-                "Encoder - Wipe",
-                "Encoder - Preserve",
-                "ExifTool - Wipe",
-                "ExifTool - Preserve",
-                "ExifTool - Unsafe Wipe",
-                "ExifTool - Custom"
-        ))
+        self.metadata_cmb = self.wm.addWidget("metadata_cmb", ComboBox((
+            "Encoder - Wipe",
+            "Encoder - Preserve",
+            "ExifTool - Wipe",
+            "ExifTool - Preserve",
+            "ExifTool - Unsafe Wipe",
+            "ExifTool - Custom"
+        )))
         self.default_btn = QPushButton("Reset to Default")
         self.convert_btn = QPushButton("Convert")
 
