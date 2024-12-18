@@ -36,6 +36,18 @@ def replaceLine(path, pattern, new_line):
     with open(path, "w") as file:
         file.writelines(content)
 
+def removeReadOnly(path: str) -> None:
+    """Removes "Read-only" attribute from files and folders recursively. Windows-only."""
+    if platform.system() != "Windows":
+        raise Exception("[removeReadOnly] Wrong OS")
+
+    for file_path in Path(path).rglob("*"):
+        if file_path.is_file():
+            try:
+                file_path.chmod(stat.S_IWRITE)
+            except Exception as e:
+                raise OSError(f"[removeReadOnly] Failed to remove \"Read-only\" attribute. {e}")
+
 def copy(src, dst):
     src = os.path.normpath(src)
     dst = os.path.normpath(dst)
@@ -255,7 +267,13 @@ class Builder():
             self._appendUpdateFile()
 
     def _prepare(self):
-        rmTree(self.dst_dir)
+        if platform.system() == "Windows":
+            # On Windows some ExifTool files may get a read-only attribute when unpacking from a 7z.
+            removeReadOnly(self.dst_dir)
+            # Remove read-only in ./bin/win as it can be problematic later on.
+            removeReadOnly(self.bin_dir["Windows"])
+        
+        rmTree(self.dst_dir)    # Delete ./dist 
 
         # Prevent conflicts If the same folder is used on multiple systems
         if os.path.isdir("build"):  
