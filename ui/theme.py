@@ -458,6 +458,23 @@ def setTheme(theme="Ralsei"):
             QTableView::item:selected {{
                 background-color: {background_selected};
             }}
+
+            /* Sets fixed height to 26px; Regular height does not work and there is some weird discrepancy. */
+            QPushButton, QSpinBox, QDoubleSpinBox {{
+                min-height: 14px;
+                max-height: 14px;
+            }}
+
+            QComboBox, QLineEdit {{
+                min-height: 16px;
+                max-height: 16px;
+            }}
+
+            QSpinBox, QDoubleSpinBox {{
+                min-height: 14px;
+                min-width: 20px;
+            }}
+
             """
             app = QApplication.instance()
             app.setStyle("Fusion")  # Solves a lot of crossplatform issues. A common baseline.

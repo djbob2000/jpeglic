@@ -125,7 +125,7 @@ class OutputTab(QWidget):
         self.jxl_png_fallback_cb = self.wm.addWidget("jxl_png_fallback_cb", QCheckBox("PNG Fallback"))
         self.jxl_verify_cb = self.wm.addWidget("jxl_verify_cb", QCheckBox("Verify"))
         self.jxl_normalize_enable_cb = self.wm.addWidget("jxl_normalize_enable_cb", QCheckBox("Normalize"))
-        self.jxl_normalize_when_cmb = self.wm.addWidget("jxl_normalize_when_cmb", ComboBox(("On Fail", "Always")))
+        self.jxl_normalize_when_cmb = self.wm.addWidget("jxl_normalize_when_cmb", ComboBox(("On Fail", "Always")))  # There is a quirk / bug in Qt which causes the popup opened by this specific widget in this particular layout combination on Windows to shrink. Overriding `showPopup` fixed it in Qt 6.6 but Qt 6.8 broke it.
 
         # Buttons
         self.reset_to_default_btn = QPushButton("Reset to Default")

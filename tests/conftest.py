@@ -29,3 +29,10 @@ def profile_test(sort_by: str = "cumulative"):
             stats = pstats.Stats(profiler, stream=f)
             stats.sort_stats(sort_by)
             stats.print_stats()
+
+def pytest_configure(config):
+    # Suppress warnings caused by upgrade from Qt 6.6 to 6.8.
+    config.addinivalue_line(
+        "filterwarnings",
+        "ignore:Failed to disconnect.*from signal:RuntimeWarning",
+    )
