@@ -107,6 +107,18 @@ def setTheme(theme="Ralsei"):
                 border: none;
             }}
 
+            QRadioButton:disabled {{
+                color: {font_disabled};
+            }}
+
+            QRadioButton::indicator:disabled {{
+                border: 2px solid {font_disabled};
+            }}
+
+            QRadioButton::indicator:checked:disabled {{
+                background-color: {font_disabled};
+            }}
+
             QLineEdit {{
                 padding: 4px;
                 color: {font};
@@ -125,6 +137,10 @@ def setTheme(theme="Ralsei"):
                 margin-right: 10px;
             }}
 
+            QTabBar::tab:disabled {{
+                color: {font_disabled};
+            }}
+
             QTabBar::tab:first {{
                 margin-left: 12px;
             }}
@@ -136,6 +152,11 @@ def setTheme(theme="Ralsei"):
             QTabBar::tab:selected {{
                 color: {accent_big};
                 border-bottom: 2px solid {accent_small};
+            }}
+
+            QTabBar::tab:selected:disabled {{
+                color: {font_disabled};
+                border-bottom: 2px solid {font_disabled};
             }}
 
             QCheckBox {{
@@ -233,6 +254,10 @@ def setTheme(theme="Ralsei"):
 
             QTreeView QHeaderView::section:horizontal:!last {{
                 border-right: 1px solid {canvas};
+            }}
+
+            QTreeView::item:disabled {{
+                color: {font_disabled};
             }}
 
             QTreeView, QTableView {{
