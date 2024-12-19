@@ -115,12 +115,12 @@ class ExceptionView(QDialog):
 
                 # Row data
                 writer.writerow(("Exceptions",))
-                writer.writerow(("ID", "Exception", "Extension"))
+                writer.writerow(("ID", "Exception", "Filename"))
                 for row in range(self.table.rowCount()):
                     row_data = (
                         self.table.item(row, 0).text(),
                         self.table.item(row, 1).text(),
-                        Path(self.table.item(row, 2).text()).suffix,
+                        self.table.item(row, 2).text(),
                     )
                     writer.writerow(row_data)
         except OSError as err:
