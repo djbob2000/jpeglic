@@ -260,18 +260,13 @@ def setTheme(theme="Ralsei"):
                 color: {font_disabled};
             }}
 
-            QTreeView, QTableView {{
+            QTableView {{
                 /*
-                    Do not remove this line!! This is a workaround to remove the **focus rectangle** outline. Qt does not offer a direct way of styling it.
+                    This line removes the **focus rectangle** outline. It uses a workaround since Qt does not offer a direct way of styling it.
 
                     https://forum.qt.io/topic/18888/how-to-remove-focus-rectangle-on-qlistview-and-similar-using-qstyleditemdelegate-with-style-sheets/11
 
-                    What I found so far:
-                    - Its selector is kind of `QTreeView::item:focus` but it does not work.
-                    - `selection-background-color` affects it (both background and outline), but it does not remove the outline (even if transparent).
-                    - `self.setFocusPolicy(Qt.NoFocus)` removes the focus rectangle, but it also disables keyboard navigation.
-                    - You can remove the focus rectangle by removing either border or outline from QTreeView. The downside is you won't have a border over the QTreeView widget. The focus rectangle inherits this property.
-
+                    This method does not work for QTreeView. A custom delegate is used there.
                 */
 
                 outline: 0;

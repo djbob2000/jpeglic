@@ -7,6 +7,8 @@ from PySide6.QtWidgets import(
     QTreeWidget,
     QAbstractItemView,
     QTreeWidgetItem,
+    QStyledItemDelegate,
+    QStyle,
 )
 from PySide6.QtCore import(
     Qt,
@@ -17,8 +19,13 @@ from PySide6.QtCore import(
 from core.utils import scanDir
 from data.constants import ALLOWED_INPUT
 
+class ItemDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        option.state &= ~QStyle.State_HasFocus      # Removes the focus rectangle. It is not possible in QSS.
+        super().paint(painter, option, index)
+
 class FileView(QTreeWidget):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super(FileView, self).__init__(parent)
 
         self.setColumnCount(3)
@@ -29,6 +36,7 @@ class FileView(QTreeWidget):
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.sortByColumn(1, Qt.SortOrder.DescendingOrder)
+        self.setItemDelegate(ItemDelegate())
         
         # Flags
         self.setting_sorting_disabled = False

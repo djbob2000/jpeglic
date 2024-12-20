@@ -2,17 +2,18 @@ from unittest.mock import patch, MagicMock
 from pathlib import Path
 
 import pytest
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt, QMimeData, QUrl
+from PySide6.QtWidgets import QApplication, QStyle, QStyleOptionViewItem
+from PySide6.QtCore import Qt, QMimeData, QUrl, QModelIndex
+from PySide6.QtGui import QPainter
 
-from ui.file_view import FileView
+import ui.file_view as file_view
 
 @pytest.fixture
 def app(qtbot):
     app = QApplication.instance()
     if not app:
         app = QApplication([])
-    tab = FileView(None)
+    tab = file_view.FileView()
     qtbot.addWidget(tab)
     return tab
 
@@ -288,3 +289,22 @@ def test_shift_intersect(app):
     assert_selected(False, True, False)
     app.selectShiftDown()
     assert_selected(False, True, True)
+
+def test_paint_remove_focus_rectangle(app):
+    option = QStyleOptionViewItem()
+    option.state = option.state | QStyle.State_HasFocus | QStyle.State_Enabled | QStyle.State_Selected
+    original_state = option.state
+
+    delegate = file_view.ItemDelegate()
+    delegate.paint(QPainter(), option, QModelIndex())
+
+    assert option.state == (original_state & ~QStyle.State_HasFocus)
+
+def test_paint_default(app):
+    option = QStyleOptionViewItem()
+    option.state = QStyle.State_Enabled
+
+    delegate = file_view.ItemDelegate()
+    delegate.paint(QPainter(), option, QModelIndex())
+
+    assert option.state == QStyle.State_Enabled
