@@ -15,7 +15,6 @@ from PySide6.QtCore import(
 import data.constants as constants
 from ui.update_checker import UpdateChecker
 from ui.utils import openRemoteUrl, openUrl
-from data import fonts
 
 class AboutTab(QWidget):
     def __init__(self):
@@ -30,14 +29,15 @@ class AboutTab(QWidget):
         # Labels
         self.title_l = QLabel(f"XL Converter")
         self.version_l = QLabel(f"Version {constants.VERSION}")
+        link_style = "color: #00ff76; text-decoration: none;"   # a href inside a QLabel cannot be styled directly in QSS
         self.credits_l = QLabel(f"""
             <div style='line-height: 120%;'>
-                <a href=\"https://codepoems.eu\" style=\"color: #00ff76;\">website</a>
+                <a href=\"https://codepoems.eu\" style=\"{link_style}\">website</a>
                 <br>
-                <a href=\"mailto:contact@codepoems.eu\" style=\"color: #00ff76;\">contact@codepoems.eu</a>
+                <a href=\"mailto:contact@codepoems.eu\" style=\"{link_style}\">contact@codepoems.eu</a>
                 <br>
-                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_PATH).toString()}\" style=\"color: #00ff76;\">license</a> / 
-                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_3RD_PARTY_PATH).toString()}\" style=\"color: #00ff76;\">3rd party</a>
+                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_PATH).toString()}\" style=\"{link_style}\">license</a> / 
+                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_3RD_PARTY_PATH).toString()}\" style=\"{link_style}\">3rd party</a>
             </div>
         """)
         self.credits_l.linkActivated.connect(lambda qurl: openUrl(qurl))
@@ -58,6 +58,8 @@ class AboutTab(QWidget):
         labels_vb.addWidget(self.title_l)
         labels_vb.addWidget(self.version_l)
         labels_vb.addWidget(self.credits_l)
+        self.title_l.setObjectName("title_l")
+        self.version_l.setObjectName("version_l")
 
         # Buttons
         buttons_vb = QVBoxLayout()
@@ -84,10 +86,6 @@ class AboutTab(QWidget):
 
     def setupStyles(self):
         ## Labels
-        self.title_l.setFont(fonts.ABOUT_TITLE)
-        self.version_l.setFont(fonts.ABOUT_VERSION)
-        self.credits_l.setFont(fonts.ABOUT_DESC)
-
         self.title_l.setStyleSheet("padding-bottom: 3px;")
         self.version_l.setStyleSheet("padding-bottom: 5px;")
 

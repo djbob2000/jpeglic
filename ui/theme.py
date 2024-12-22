@@ -65,11 +65,16 @@ def setTheme(theme="Ralsei"):
             down_arrow_disabled_svg_url = _getIconPath("down_arrow_disabled.svg")
             
             stylesheet = f"""
+            * {{
+                font-family: "Open Sans";
+                font-size: 12px;
+                font-weight: 500;
+            }}
+
             QWidget {{
                 color: {font};
                 background-color: {canvas};
                 border: none;
-                font-family: "Ubuntu";
                 selection-color: {font};
                 selection-background-color: {background_selected};
             }}
@@ -135,6 +140,8 @@ def setTheme(theme="Ralsei"):
                 background-color: transparent;
                 padding: 7px;
                 margin-right: 10px;
+                font-size: 14px;
+                font-weight: 400;
             }}
 
             QTabBar::tab:disabled {{
@@ -175,7 +182,6 @@ def setTheme(theme="Ralsei"):
                 background-color: {accent_big};
                 border: 2px solid transparent;          /* Keeps text from moving. */
                 image: url("{checkmark_dark_svg_url}");
-
             }}
 
             QCheckBox::indicator::unchecked:disabled {{
@@ -244,9 +250,16 @@ def setTheme(theme="Ralsei"):
                 show-decoration-selected: 0;
             }}
 
+            QTreeView::item {{
+                font-size: 9px;
+                padding-top: 1px;
+                padding-bottom: 1px;
+            }}
+
             QTreeView>QHeaderView::section {{
                 color: {font};
                 background-color: {border};
+                font-weight: 600;
                 text-align: left;
                 border: none;
                 padding: 3px 3px 3px 13px;
@@ -361,7 +374,6 @@ def setTheme(theme="Ralsei"):
             }}
 
             QToolTip {{
-                font-size: 12px;
                 color: {font};
                 background-color: {canvas};
                 padding: 10px;
@@ -381,6 +393,8 @@ def setTheme(theme="Ralsei"):
                 border: 1px solid {border};
                 padding: 3px;
                 margin-top: 7px;
+                font-weight: 500;
+                color: {font_disabled};
             }}
 
             QGroupBox::title {{
@@ -479,22 +493,33 @@ def setTheme(theme="Ralsei"):
                 background-color: {background_selected};
             }}
 
-            /* Sets fixed height to 26px; Regular height does not work and there is some weird discrepancy. */
+            /* Set fixed height to 25px */
             QPushButton, QSpinBox, QDoubleSpinBox {{
-                min-height: 14px;
-                max-height: 14px;
+                min-height: 15px;
+                max-height: 15px;
             }}
 
-            QComboBox, QLineEdit {{
-                min-height: 16px;
-                max-height: 16px;
+            QLineEdit, QComboBox {{
+                min-height: 17px;
+                max-height: 17px;
             }}
 
             QSpinBox, QDoubleSpinBox {{
-                min-height: 14px;
                 min-width: 20px;
             }}
 
+            /* About tab */
+            #title_l {{
+                font-family: "Open Sans";
+                font-weight: 300;
+                font-size: 30px;
+            }}
+
+            #version_l {{
+                font-family: "Open Sans";
+                font-weight: 700;
+                font-size: 13px;
+            }}
             """
             app = QApplication.instance()
             app.setStyle("Fusion")  # Solves a lot of crossplatform issues. A common baseline.

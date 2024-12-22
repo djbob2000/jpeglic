@@ -34,7 +34,7 @@ from ui import (
 )
 
 from core.utils import clip
-from data import fonts
+import data.font_loader as font_loader
 import data.task_status as task_status
 from data.sounds import finished_sound
 from data.logging_manager import LoggingManager
@@ -64,7 +64,6 @@ class MainWindow(QMainWindow):
 
     def setupWidgets(self) -> None:
         self.tabs = QTabWidget(self)
-        self.tabs.setFont(fonts.MAIN_TABS)
         self.settings_tab = SettingsTab()
         settings = self.settings_tab.getSettings()
         self.input_tab = InputTab(settings)
@@ -211,10 +210,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    font_loader.init()
     main_window = MainWindow()
-    
-    fonts.loadFonts()
-    app.setFont(fonts.DEFAULT)
-    
     main_window.show()
     sys.exit(app.exec())

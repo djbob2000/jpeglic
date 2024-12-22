@@ -15,10 +15,10 @@ PROGRAM_FOLDER = sys._MEIPASS if getattr(sys, "frozen", False) else os.path.dirn
 LICENSE_PATH = os.path.join(PROGRAM_FOLDER, "LICENSE.txt")
 LICENSE_3RD_PARTY_PATH = os.path.join(PROGRAM_FOLDER, "LICENSE_3RD_PARTY.txt")
 ICON_SVG = os.path.join(PROGRAM_FOLDER, "icons/logo.svg")
-FONTS_DIR = os.path.join(PROGRAM_FOLDER, "fonts")
 FINISHED_SOUND_PATH = os.path.join(PROGRAM_FOLDER, "assets", "sounds", "finished.wav")
 LOGS_DIR = ""
 ASSETS_ICONS_DIR = os.path.join(PROGRAM_FOLDER, "assets", "icons")
+ASSETS_FONTS_DIR = os.path.join(PROGRAM_FOLDER, "assets", "fonts")
 
 CJXL_PATH = "cjxl"
 DJXL_PATH = "djxl"
