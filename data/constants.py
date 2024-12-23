@@ -66,7 +66,7 @@ LOGS_DIR = os.path.join(CONFIG_LOCATION, "logs")
 # Proper usage is "if 'extension'.lower() in ALLOWED_INPUT:"
 JPEG_ALIASES = ["jpg", "jpeg", "jfif", "jif", "jpe"]
 ALLOWED_INPUT_DJXL = ["jxl"]
-ALLOWED_INPUT_CJXL = JPEG_ALIASES + ["png", "apng", "gif", "jxl"]
+ALLOWED_INPUT_CJXL = JPEG_ALIASES + ["png", "gif", "jxl"]
 ALLOWED_INPUT_CJPEGLI = JPEG_ALIASES + ["png", "jxl"]
 ALLOWED_INPUT_IMAGE_MAGICK = JPEG_ALIASES + ["png", "gif", "webp", "jp2", "bmp", "ico", "tiff", "tif"]
 ALLOWED_INPUT_AVIFENC = JPEG_ALIASES + ["png"]
@@ -79,7 +79,7 @@ ALLOWED_INPUT_FILTERS = [
     listToFilter("Supported Images", ALLOWED_INPUT),
     listToFilter("AVIF", ["avif"]),
     listToFilter("BMP", ["bmp"]),
-    listToFilter("GIF / APNG", ["gif", "apng"]),
+    listToFilter("GIF", ["gif"]),
     listToFilter("ICO", ["ico"]),
     listToFilter("JPEG", JPEG_ALIASES),
     listToFilter("JPEG XL", ["jxl"]),

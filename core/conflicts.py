@@ -15,22 +15,16 @@ def checkForConflicts(ext: str, file_format: str, downscaling=False) -> None:
     - file_format - target format (uppercase)
     - downscaling - is downscaling on
     """
-    if ext in ("gif", "apng"):
+    if ext == "gif":
         conflict = True
 
         # Animation
-        match ext:
-            case "gif":
-                if file_format in ("JPEG XL", "WebP"):
-                    conflict = False
-            case "apng":
-                if file_format in ("JPEG XL"):
-                    conflict = False
+        if file_format in ("JPEG XL", "WebP"):
+            conflict = False
         
         if conflict:
             raise GenericException("CF0", f"{ext.upper()} -> {file_format} conversion is not supported")
 
-        # Downscaling
         if downscaling:
             raise GenericException("CF1", f"Downscaling is not supported for animation")
 

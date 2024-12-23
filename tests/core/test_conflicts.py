@@ -16,15 +16,7 @@ def test_checkForConflicts_gif_unsupported():
 
 def test_checkForConflicts_gif_supported():
     assert not conflicts.checkForConflicts("gif", "JPEG XL")
-
-def test_checkForConflicts_apng_unsupported():
-    with pytest.raises(GenericException) as excinfo:
-        conflicts.checkForConflicts("apng", "WebP")
-
-    assert "APNG -> WebP conversion is not supported" == excinfo.value.msg
-
-def test_checkForConflicts_apng_supported():
-    assert not conflicts.checkForConflicts("apng", "JPEG XL")
+    assert not conflicts.checkForConflicts("gif", "WebP")
 
 def test_checkForConflicts_downscaling():
     with pytest.raises(GenericException) as excinfo:
