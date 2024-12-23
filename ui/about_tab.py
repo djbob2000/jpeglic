@@ -15,6 +15,7 @@ from PySide6.QtCore import(
 import data.constants as constants
 from ui.update_checker import UpdateChecker
 from ui.utils import openRemoteUrl, openUrl
+from ui.label import StyledLabel
 
 class AboutTab(QWidget):
     def __init__(self):
@@ -29,15 +30,14 @@ class AboutTab(QWidget):
         # Labels
         self.title_l = QLabel(f"XL Converter")
         self.version_l = QLabel(f"Version {constants.VERSION}")
-        link_style = "color: #00ff76; text-decoration: none;"   # a href inside a QLabel cannot be styled directly in QSS
-        self.credits_l = QLabel(f"""
+        self.credits_l = StyledLabel(f"""
             <div style='line-height: 120%;'>
-                <a href=\"https://codepoems.eu\" style=\"{link_style}\">website</a>
+                <a href=\"https://codepoems.eu\" >website</a>
                 <br>
-                <a href=\"mailto:contact@codepoems.eu\" style=\"{link_style}\">contact@codepoems.eu</a>
+                <a href=\"mailto:contact@codepoems.eu\">contact@codepoems.eu</a>
                 <br>
-                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_PATH).toString()}\" style=\"{link_style}\">license</a> / 
-                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_3RD_PARTY_PATH).toString()}\" style=\"{link_style}\">3rd party</a>
+                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_PATH).toString()}\">license</a> / 
+                <a href=\"{QUrl.fromLocalFile(constants.LICENSE_3RD_PARTY_PATH).toString()}\">3rd party</a>
             </div>
         """)
         self.credits_l.linkActivated.connect(lambda qurl: openUrl(qurl))

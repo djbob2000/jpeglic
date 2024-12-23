@@ -134,6 +134,14 @@ def test_onAVIFBitDepthChanged_var_not_found(onAVIFBitDepthChanged_patches):
 
     mocks["avif_bit_depth_cmb.setCurrentText"].assert_called_once_with("Auto")
 
+def test_onThemeChanged(app):
+    with (
+        patch.object(app.theme_cmb, "currentText", return_value="theme") as mock_currentText,
+        patch("ui.settings_tab.setTheme") as mock_setTheme,
+    ):
+        app.onThemeChanged()
+        mock_setTheme.assert_called_once_with(mock_currentText.return_value)
+
 def test_getSettings_no_key_error(app):
     app.getSettings()
 

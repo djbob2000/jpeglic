@@ -7,6 +7,11 @@ import pytest
 
 import data.constants as constants
 
+@pytest.fixture(autouse=True)
+def reload_constants():
+    yield
+    reload(constants)
+
 @pytest.mark.parametrize("mock_os", ["Windows", "Linux"])
 def test_vars_filled(mock_os):
     assert constants.VERSION != ""

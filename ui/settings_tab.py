@@ -59,20 +59,24 @@ class SettingsTab(QWidget):
         self.setupLayouts()
         self.setupSignals()
         self.setSizes()
+        self.setToolTips()
 
         # Init states
         self.changeCategory("General")
-        self.resetToDefault()
-        self.wm.loadState()
-        self.setToolTips()
+        with blockSignals(  # States refreshed below.
+            self.custom_args_cb,
+            self.play_sound_on_finish_cb,
+            self.avif_encoder_cmb,
+            self.theme_cmb,
+        ):
+            self.resetToDefault()
+            self.wm.loadState()
 
         # Refresh states
         self.onCustomArgsToggled()
         self.onPlaySoundOnFinishVolumeToggled()
         self.onAVIFEncoderChanged()
-
-        # Apply Settings
-        setTheme()
+        self.onThemeChanged()
 
         # Vars
         self.cached_states = {}
@@ -98,9 +102,11 @@ class SettingsTab(QWidget):
     def setupWidgets(self):
         # General
         self.disable_on_startup_l = QLabel("Disable on Startup")
-        self.disable_downscaling_startup_cb = self.wm.addWidget("disable_downscaling_startup_cb", QCheckBox("Downscaling", self))
-        self.disable_delete_startup_cb = self.wm.addWidget("disable_delete_startup_cb", QCheckBox("Delete Original", self))
-        self.no_sorting_cb = self.wm.addWidget("no_sorting_cb", QCheckBox("Input - Disable Sorting", self))
+        self.disable_downscaling_startup_cb = self.wm.addWidget("disable_downscaling_startup_cb", QCheckBox("Downscaling"))
+        self.disable_delete_startup_cb = self.wm.addWidget("disable_delete_startup_cb", QCheckBox("Delete Original"))
+        self.theme_l = self.wm.addWidget("theme_l", QLabel("Theme"))
+        self.theme_cmb = self.wm.addWidget("theme_cmb", ComboBox(("Ralsei", "Dark Amber", "Light Amber")))
+        self.no_sorting_cb = self.wm.addWidget("no_sorting_cb", QCheckBox("Input - Disable Sorting"))
         self.quality_prec_snap_cb = self.wm.addWidget("quality_prec_snap_cb", QCheckBox("Quality Slider - Snap to Individual Values"))
         self.play_sound_on_finish_cb = self.wm.addWidget("play_sound_on_finish_cb", QCheckBox("Play Sound When Conversion Finishes"))
         self.play_sound_on_finish_vol_l = self.wm.addWidget("play_sound_on_finish_vol_l", QLabel("Volume"))
@@ -179,6 +185,8 @@ class SettingsTab(QWidget):
         ## General
         self.settings_lt.addLayout(createQHBoxLayout(self.disable_on_startup_l, self.disable_delete_startup_cb, self.disable_downscaling_startup_cb))
         self.settings_lt.addWidget(self.quality_prec_snap_cb)
+        self.theme_hb = createQHBoxLayout(self.theme_l, self.theme_cmb)
+        self.settings_lt.addLayout(self.theme_hb)
         self.settings_lt.addWidget(self.no_sorting_cb)
         self.settings_lt.addWidget(self.play_sound_on_finish_cb)
         self.play_sound_on_finish_vol_hb = createQHBoxLayout(self.play_sound_on_finish_vol_l, self.play_sound_on_finish_vol_sb)
@@ -251,6 +259,7 @@ class SettingsTab(QWidget):
             self.avif_encoder_hb,
             self.avif_bit_depth_hb,
             self.play_sound_on_finish_vol_hb,
+            self.theme_hb,
         ):
             hbox.setAlignment(Qt.AlignLeft)
         
@@ -258,6 +267,7 @@ class SettingsTab(QWidget):
             self.jpg_encoder_cmb,
             self.avif_encoder_cmb,
             self.avif_bit_depth_cmb,
+            self.theme_cmb,
         ):
             cmb.setMinimumWidth(150)
 
@@ -278,6 +288,7 @@ class SettingsTab(QWidget):
         self.avif_encoder_cmb.currentTextChanged.connect(self.signals.avif_encoder_changed)
         self.avif_encoder_cmb.currentTextChanged.connect(self.onAVIFEncoderChanged)
         self.avif_bit_depth_cmb.currentTextChanged.connect(self.onAVIFBitDepthChanged)
+        self.theme_cmb.currentTextChanged.connect(self.onThemeChanged)
 
         self.general_btn.clicked.connect(lambda: self.changeCategory("General"))
         self.conversion_btn.clicked.connect(lambda: self.changeCategory("Conversion"))
@@ -316,6 +327,7 @@ class SettingsTab(QWidget):
         visibility = {
             "General": [
                 "disable_on_startup_l", "disable_downscaling_startup_cb", "disable_delete_startup_cb",
+                "theme_l", "theme_cmb",
                 "no_sorting_cb",
                 "quality_prec_snap_cb",
                 "play_sound_on_finish_cb", "play_sound_on_finish_vol_l", "play_sound_on_finish_vol_sb",
@@ -400,6 +412,9 @@ class SettingsTab(QWidget):
                     return
             self.avif_bit_depth_cmb.setCurrentText(loaded_var or "Auto")
 
+    def onThemeChanged(self) -> None:
+        setTheme(self.theme_cmb.currentText())
+
     def toggleLogging(self):
         if self.logging_manager.isLoggingToFile():
             self.logging_manager.stopLoggingToFile()
@@ -468,6 +483,7 @@ class SettingsTab(QWidget):
         self.no_sorting_cb.setChecked(False)
         self.disable_downscaling_startup_cb.setChecked(True)
         self.disable_delete_startup_cb.setChecked(True)
+        self.theme_cmb.setCurrentIndex(0)
         self.no_exceptions_cb.setChecked(False)
         self.quality_prec_snap_cb.setChecked(False)
         self.jxl_lossless_jpeg_cb.setChecked(False)
