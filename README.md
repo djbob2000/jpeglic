@@ -1,12 +1,12 @@
 <div align="center">
-    <img src="icons/logo.svg" width="20%">
+    <img src="assets/icons/logo.svg" width="20%">
 <h3 align="center">XL Converter</h3>
 
 Easy-to-use image converter for modern formats. Supports multithreading, drag 'n drop, and downscaling.
 
 Available for Windows and Linux.
 
-![](misc/screenshots/screenshot_0.png)
+![](misc/images/screenshot_0.png)
 
 Read the [Manual](https://xl-docs.codepoems.eu)
 </div>

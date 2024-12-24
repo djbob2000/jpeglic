@@ -189,7 +189,6 @@ class Builder():
         )
 
         # Assets
-        self.icon_svg_path = "icons/logo.svg"
         self.fonts_path = "fonts"
 
         # Linux
@@ -336,11 +335,7 @@ class Builder():
                 shutil.copytree(Path(i), Path(self.internal_dir, Path(i).name))
             elif os.path.isfile(Path(i)):
                 copy(i, self.internal_dir)
-        
-        # Icons
-        makedirs(f"{self.internal_dir}/icons")
-        copy(self.icon_svg_path, f"{self.internal_dir}/icons/{os.path.basename(self.icon_svg_path)}")
-    
+
     def _appendUpdateFile(self):
         print("[Building] Appending an update file (to place on a server)")
         copy(self.version_file_path, self.dst_dir)
@@ -366,16 +361,20 @@ class Builder():
 
         replaceLine(dsk_ent_p, "Icon=", "Icon=/logo\n")
         replaceLine(dsk_ent_p, "Path=", "")
-        replaceLine(dsk_ent_p, "Exec=", "Exec=AppRun\n")
+        replaceLine(dsk_ent_p, "Exec=", "Exec=/AppRun\n")
         
         makedirs(f"{appdir}/usr/bin")
-        copy(self.icon_svg_path, appdir)
         move(dsk_ent_p, f"{appdir}/{dsk_ent_f}")
         with open(f"{appdir}/AppRun", "w") as f:
             f.write("#!/bin/bash\n\n")
             f.write(f"exec ${{APPDIR}}/usr/bin/{self.project_name}/{self.project_name} $@")
         addExecPerm(f"{appdir}/AppRun")
 
+        # Add Icon
+        # makedirs(f"{appdir}/usr/share/icons/hicolor/scalable/apps")   # The icon does not work on some distros if placed in a deeply-nested directory.
+        copy(f"./assets/icons/logo.svg", appdir)
+
+        # Build
         move(f"{self.dst_dir}/{self.project_name}", f"{appdir}/usr/bin")    # Move the whole project folder
         subprocess.run((self.appimagetool_path, appdir, f"{self.dst_dir}/{self.build_appimage_name}"))
 
