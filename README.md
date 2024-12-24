@@ -73,15 +73,9 @@ Run the application.
 python main.py
 ```
 
-You can also bundle the application.
+#### Building
 
-```cmd
-python build.py
-``` 
-
-#### VirusTotal False Positives
-
-Some "AI" Anti-Viruses on VirusTotal have extremely high false positive rates. Recompiling the bootloader decreases them.
+Bundling requires recompiling the bootloader to prevent Windows from deleting the EXE (due to [false positives](https://github.com/pyinstaller/pyinstaller/blob/master/.github/ISSUE_TEMPLATE/antivirus.md)).
 
 Install MSYS2 and launch MINGW64.
 
@@ -96,7 +90,7 @@ Clone PyInstaller.
 
 ```cmd
 env_build\Scripts\activate
-git clone -b v6.1.0 --depth 1 https://github.com/pyinstaller/pyinstaller.git misc\pyinstaller
+git clone -b v6.11.1 --depth 1 https://github.com/pyinstaller/pyinstaller.git misc\pyinstaller
 ```
 
 Recompile the bootloader.
@@ -117,7 +111,11 @@ deactivate
 env_build\Scripts\activate
 ```
 
-Now, build it with `build.py` as usual.
+Bundle:
+
+```cmd
+python build.py
+```
 
 ### Linux (Ubuntu-based)
 
@@ -178,7 +176,30 @@ Now, you can run it.
 python main.py
 ```
 
-or build it.
+#### Building
+
+Make sure GCC is installed (`build-essential`).
+
+Recompile the bootloader:
+
+```bash
+source env_build/bin/activate
+git clone -b v6.11.1 --depth 1 https://github.com/pyinstaller/pyinstaller.git misc/pyinstaller
+cd misc/pyinstaller/bootloader
+python waf all --gcc
+cd ..
+pip install .
+cd ../..
+```
+
+Reload the environment to avoid the `ModuleNotFoundError` error.
+
+```bash
+deactivate
+source env_build/bin/activate
+```
+
+Build:
 
 ```bash
 python build.py
