@@ -34,14 +34,14 @@ JPEGTRAN_PATH = "jpegtran"
 if platform.system() == "Windows":
     BASE_PATH = os.path.join(PROGRAM_FOLDER, "bin", "win")
 
-    CJXL_PATH = os.path.join(BASE_PATH, "cjxl.exe")
-    DJXL_PATH = os.path.join(BASE_PATH, "djxl.exe")
-    JXLINFO_PATH = os.path.join(BASE_PATH, "jxlinfo.exe")
-    CJPEGLI_PATH = os.path.join(BASE_PATH, "cjpegli.exe")
+    CJXL_PATH = os.path.join(BASE_PATH, "libjxl", "cjxl.exe")
+    DJXL_PATH = os.path.join(BASE_PATH, "libjxl", "djxl.exe")
+    JXLINFO_PATH = os.path.join(BASE_PATH, "libjxl", "jxlinfo.exe")
+    CJPEGLI_PATH = os.path.join(BASE_PATH, "libjxl", "cjpegli.exe")
     IMAGE_MAGICK_PATH = os.path.join(BASE_PATH, "imagemagick", "magick.exe")
     AVIFENC_PATH = os.path.join(BASE_PATH, "libavif", "avifenc.exe")
     AVIFDEC_PATH = os.path.join(BASE_PATH, "libavif", "avifdec.exe")
-    OXIPNG_PATH = os.path.join(BASE_PATH, "oxipng.exe")
+    OXIPNG_PATH = os.path.join(BASE_PATH, "oxipng", "oxipng.exe")
     EXIFTOOL_PATH = os.path.join(BASE_PATH, "exiftool", "exiftool.exe")
     JPEGTRAN_PATH = os.path.join(BASE_PATH, "jpegtran", "jpegtran.exe")
 

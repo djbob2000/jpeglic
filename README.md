@@ -213,14 +213,14 @@ To build XL Converter, you need to provide various binaries. This can be quite c
 > Use [the official builds](https://github.com/JacobDev1/xl-converter/releases) as a reference.
 
 Libraries:
-- [libjxl](https://github.com/libjxl/libjxl) `v0.10.2`
-- [libavif](https://github.com/AOMediaCodec/libavif) `v1.1.1` (AOM `3.10.0` and [SVT-AV1-PSY](https://github.com/gianni-rosato/svt-av1-psy.git) `2.3.0`)
+- [libjxl](https://github.com/libjxl/libjxl) `v0.11.1`
+- [libavif](https://github.com/AOMediaCodec/libavif) `v1.1.1` (AOM `v3.11.0` and [SVT-AV1-PSY](https://github.com/gianni-rosato/svt-av1-psy.git) `v2.3.0-A`)
 - [imagemagick](https://imagemagick.org/) `7.* Q16-HDRI`
 - [exiftool](https://exiftool.org/) `12.92`
 - [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) `3.0.4`
 - [oxipng](https://github.com/shssoichiro/oxipng) `v0.9.2`
 
-Below you'll find references on how to arrange the binaries. You may also need to include their dependencies.
+Below you'll find references on how to arrange the binaries. You will also need to add dependencies alongside them.
 
 #### Linux (x86_64)
 
@@ -242,29 +242,29 @@ Below you'll find references on how to arrange the binaries. You may also need t
 
 ```bash
 ./xl-converter/bin/win/
-├── avifdec.exe
-├── avifenc.exe
-├── cjpegli.exe
-├── cjxl.exe
-├── djxl.exe
 ├── exiftool
 │   ├── exiftool.exe
 │   └── exiftool_files
 ├── imagemagick
-│   ├── magick.exe
+│   └── magick.exe
 ├── jpegtran
-│   ├── jpegtran.exe
-├── jxlinfo.exe
+│   └── jpegtran.exe
 ├── libavif
 │   ├── avifdec.exe
-│   ├── avifenc.exe
-├── oxipng.exe
+│   └── avifenc.exe
+├── libjxl
+│   ├── cjpegli.exe
+│   ├── cjxl.exe
+│   ├── djxl.exe
+│   └── jxlinfo.exe
+└── oxipng
+    └── oxipng.exe
 ```
 
 On Windows, I recommend using MSYS2 MINGW64 for building.
 
 > [!NOTE]
-> `libjxl` and `libjpeg-turbo` do not support UTF-8 in arguments on Windows.
+> `libjpeg-turbo` do not support UTF-8 in arguments on Windows.
 > To patch it in, embed [this manifest](https://github.com/AOMediaCodec/libavif/blob/3ec01cefd1ddd266a622d5e114a0888581b68f4a/apps/utf8.manifest) into each EXE with `mt.exe` from Visual Studio.
 
 > [!TIP]
