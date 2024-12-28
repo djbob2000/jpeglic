@@ -29,4 +29,4 @@ class StyledLabel(QLabel):
             {StyledLabel._style}
         </style>
         {text}
-    """)
+        """)
