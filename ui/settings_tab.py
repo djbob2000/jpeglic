@@ -16,6 +16,7 @@ from PySide6.QtWidgets import(
     QSpacerItem,
     QTextEdit,
     QComboBox,
+    QPlainTextEdit,
 )
 from PySide6.QtCore import(
     Signal,
@@ -29,7 +30,7 @@ from ui.widget_manager import WidgetManager
 from ui.scroll_area import ScrollArea
 from ui.spinbox import SpinBox
 from ui.combobox import ComboBox
-from data.logging_manager import LoggingManager
+from data.logging_manager import LoggingManager, QPlainTextEditLogger
 from ui.notifications import Notifications
 from ui.utils import setToolTip, openLocalUrl, createQHBoxLayout, blockSignals
 from data.tooltips import TOOLTIPS
@@ -80,6 +81,7 @@ class SettingsTab(QWidget):
 
         # Vars
         self.cached_states = {}
+        self.log_handler_added = False
 
     def setupUI(self):
         self.main_lt = QGridLayout()
@@ -165,13 +167,19 @@ class SettingsTab(QWidget):
         self.wipe_log_dir_btn = self.wm.addWidget("wipe_log_dir_btn", QPushButton("Wipe Logs Folder"))
         self.start_logging_btn.setCheckable(True)
 
+        # Debug
+        self.logs_pte = QPlainTextEdit()
+        
+
         # Categories
-        self.general_btn = QPushButton("General", self)
-        self.conversion_btn = QPushButton("Conversion", self)
-        self.advanced_btn = QPushButton("Advanced", self)
+        self.general_btn = QPushButton("General")
+        self.conversion_btn = QPushButton("Conversion")
+        self.advanced_btn = QPushButton("Advanced")
+        self.debug_btn = QPushButton("Debug")
         self.general_btn.setCheckable(True)
         self.conversion_btn.setCheckable(True)
         self.advanced_btn.setCheckable(True)
+        self.debug_btn.setCheckable(True)
         self.restore_defaults_btn = QPushButton("Reset to Default", self)
 
     def setupLayouts(self):
@@ -179,6 +187,7 @@ class SettingsTab(QWidget):
         self.categories_lt.addWidget(self.general_btn)
         self.categories_lt.addWidget(self.conversion_btn)
         self.categories_lt.addWidget(self.advanced_btn)
+        self.categories_lt.addWidget(self.debug_btn)
         self.categories_lt.addItem(QSpacerItem(10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.categories_lt.addWidget(self.restore_defaults_btn)
 
@@ -222,6 +231,10 @@ class SettingsTab(QWidget):
         self.settings_lt.addLayout(createQHBoxLayout(self.avifenc_args_l, self.avifenc_args_te))
         self.settings_lt.addLayout(createQHBoxLayout(self.cjpegli_args_l, self.cjpegli_args_te))
         self.settings_lt.addLayout(createQHBoxLayout(self.im_args_l, self.im_args_te))
+
+        # Debug
+        self.settings_lt.addWidget(self.logs_pte)
+        self.settings_lt.addWidget(self.logs_pte, stretch=1)
         self.settings_lt.addLayout(createQHBoxLayout(self.start_logging_btn, self.open_log_dir_btn, self.wipe_log_dir_btn))
 
         ## All
@@ -281,6 +294,7 @@ class SettingsTab(QWidget):
         self.general_btn.clicked.connect(lambda: self.changeCategory("General"))
         self.conversion_btn.clicked.connect(lambda: self.changeCategory("Conversion"))
         self.advanced_btn.clicked.connect(lambda: self.changeCategory("Advanced"))
+        self.debug_btn.clicked.connect(lambda: self.changeCategory("Debug"))
         self.restore_defaults_btn.clicked.connect(self.resetToDefault)
 
     def setToolTips(self):
@@ -305,11 +319,12 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["avif_encoder"], self.avif_encoder_cmb)
         setToolTip(TOOLTIPS["avif_bit_depth"], self.avif_bit_depth_cmb)
 
-    def changeCategory(self, category):
+    def changeCategory(self, category: str) -> None:
         # Category buttons
         self.general_btn.setChecked(category == "General")
         self.conversion_btn.setChecked(category == "Conversion")
         self.advanced_btn.setChecked(category == "Advanced")
+        self.debug_btn.setChecked(category == "Debug")
 
         # Settings
         visibility = {
@@ -347,8 +362,11 @@ class SettingsTab(QWidget):
                 "cjxl_args_l", "cjxl_args_te",
                 "cjpegli_args_l", "cjpegli_args_te",
                 "im_args_l", "im_args_te",
-                "start_logging_btn", "open_log_dir_btn", "wipe_log_dir_btn",
             ],
+            "Debug": [
+                "logs_pte",
+                "start_logging_btn", "open_log_dir_btn", "wipe_log_dir_btn",
+            ]
         }
 
         for v_category in visibility:
@@ -408,6 +426,9 @@ class SettingsTab(QWidget):
             self.logging_manager.stopLoggingToFile()
             self.start_logging_btn.setText("Start Logging")
         else:
+            if self.log_handler_added == False:
+                self.logging_manager.addHandler(QPlainTextEditLogger(self.logs_pte))
+                self.log_handler_added = True
             self.logging_manager.startLoggingToFile("INFO")
             self.start_logging_btn.setText("Stop Logging")
 
@@ -420,6 +441,7 @@ class SettingsTab(QWidget):
     
     def wipeLogsDir(self):
         logging_to_file = self.logging_manager.isLoggingToFile()
+        self.logs_pte.clear()
         if logging_to_file:
             self.logging_manager.stopLoggingToFile()
             self.start_logging_btn.setText("Start Logging")

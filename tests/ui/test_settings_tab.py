@@ -17,7 +17,7 @@ def app(qtbot):
         qtbot.addWidget(tab)
         return tab
 
-@pytest.mark.parametrize("category", ["general", "conversion", "advanced"])
+@pytest.mark.parametrize("category", ["general", "conversion", "advanced", "debug"])
 def test_changeCategory_visibility(category, app, qtbot):
     visibility = {
         "general": [
@@ -53,6 +53,9 @@ def test_changeCategory_visibility(category, app, qtbot):
             "cjxl_args_l", "cjxl_args_te",
             "cjpegli_args_l", "cjpegli_args_te",
             "im_args_l", "im_args_te",
+        ],
+        "debug": [
+            "logs_pte",
             "start_logging_btn", "open_log_dir_btn", "wipe_log_dir_btn",
         ],
     }

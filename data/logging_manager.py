@@ -2,11 +2,23 @@ import logging
 import os
 import shutil
 
+from PySide6.QtGui import QTextCursor
+
 from data.constants import LOGS_DIR
 
 # Config
 LOGS_PATH = os.path.join(LOGS_DIR, "logs.txt")
 DEFAULT_LEVEL = logging.WARNING      # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+class QPlainTextEditLogger(logging.Handler):
+    def __init__(self, widget):
+        super().__init__()
+        self.widget = widget
+        self.widget.setReadOnly(True)
+    
+    def emit(self, record):
+        self.widget.appendPlainText(self.format(record))
+        self.widget.moveCursor(QTextCursor.End)
 
 class LoggingManager:   # Singleton
     _instance = None
@@ -68,6 +80,10 @@ class LoggingManager:   # Singleton
             return False
         else:
             return True
+
+    def addHandler(self, handler):
+        if self.file_handler not in self.root_logger.handlers:
+            self.root_logger.addHandler(handler)
 
     def wipeLogsDir(self) -> str:
         """Wipes logs directory, returns a message."""
