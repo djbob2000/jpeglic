@@ -230,18 +230,6 @@ class SettingsTab(QWidget):
     def setSizes(self):
         self.play_sound_on_finish_vol_sb.setStyleSheet("min-width: 90px;")   # In the newer Qt 6.8 vs 6.6, setting size of this widget does not work unless done this way.
 
-        for te in (
-            self.exiftool_wipe_te,
-            self.exiftool_preserve_te,
-            self.exiftool_unsafe_wipe_te,
-            self.exiftool_custom_te,
-            self.avifenc_args_te,
-            self.cjpegli_args_te,
-            self.cjxl_args_te,
-            self.im_args_te,
-        ):
-            te.setMaximumHeight(50)
-
         for label in (
             self.exiftool_wipe_l,
             self.exiftool_preserve_l,

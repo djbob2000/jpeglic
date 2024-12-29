@@ -64,6 +64,8 @@ def _createTheme(
     # Derived
     background_hover = hexToRGBA(accent_big, 20)
     background_selected = hexToRGBA(accent_big, 40)
+    border_faded = hexToRGBA(border, 150)
+    canvas_faded = hexToRGBA(canvas, 180)
     
     return f"""
     * {{
@@ -78,6 +80,29 @@ def _createTheme(
         border: none;
         selection-color: {font};
         selection-background-color: {background_selected};
+    }}
+
+    QScrollBar:vertical {{
+        border: none;
+        width: 16px;
+        background-color: {canvas};
+        margin: 2px;
+    }}
+
+    QScrollBar::handle:vertical {{
+        border: none;
+        background: {border_faded};
+        min-height: 50px;
+    }}
+
+    QScrollBar::handle:vertical:hover {{
+        background: {border};
+    }}
+
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+        border: none;
+        width: 0;
+        height: 0;
     }}
 
     QPushButton {{
@@ -414,42 +439,7 @@ def _createTheme(
     }}
 
     QScrollArea QScrollBar:vertical {{
-        background-color: transparent;
-        width: 20px;
-        margin: 16px 0 16px 0;
-    }}
-
-    QScrollArea QScrollBar::handle:vertical {{
-        background-color: {border};
-        min-height: 20px;
-        margin: 0 2px 0 2px;
-    }}
-
-    QScrollArea QScrollBar::handle:vertical {{
-        background-color: {border};
-        border: none;
-    }}
-
-    QScrollArea QScrollBar::add-line:vertical {{
-        height: 12px;
-        width: 6px;
-        background-color: {border};
-        subcontrol-position: bottom;
-        subcontrol-origin: margin;
-        margin: 0 1px 4px 0;
-        padding: 2px;
-        image: url("{down_arrow_svg_url}");
-    }}
-
-    QScrollArea QScrollBar::sub-line:vertical {{
-        height: 12px;
-        width: 6px;
-        background-color: {border};
-        subcontrol-position: top;
-        subcontrol-origin: margin;
-        margin: 4px 1px 0 0;
-        padding: 2px;
-        image: url("{up_arrow_svg_url}");
+        width: 18px;
     }}
 
     #settingsScrollArea QWidget {{
@@ -507,6 +497,23 @@ def _createTheme(
 
     QSpinBox, QDoubleSpinBox {{
         min-width: 20px;
+    }}
+
+    QTextEdit {{
+        max-height: 45px;
+    }}
+
+    QTextEdit QScrollBar:vertical {{
+        background-color: {border};
+    }}
+
+    QTextEdit QScrollBar::handle:vertical {{
+        background-color: {canvas_faded};
+        min-height: 3px;
+    }}
+
+    QTextEdit QScrollBar::handle:vertical:hover {{
+        background-color: {canvas};
     }}
 
     /* About tab */
