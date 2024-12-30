@@ -548,7 +548,6 @@ def setTheme(theme="Ralsei") -> None:
             )
             accent_big = "#00ff76"
         case "Dark Amber":
-
             stylesheet = _createTheme(
                 accent_big = "#F18000",
                 accent_small = "#F18000",
@@ -561,8 +560,8 @@ def setTheme(theme="Ralsei") -> None:
             accent_big = "#F18000"
         case "Light Amber":
             stylesheet = _createTheme(
-                accent_big = "#F18000",
-                accent_small = "#F18000",
+                accent_big = "#F17400",
+                accent_small = "#F17400",
                 font = "#404040",
                 font_disabled = "#9198A3",
                 canvas = "#F8F9FA",
@@ -573,7 +572,7 @@ def setTheme(theme="Ralsei") -> None:
                 up_arrow_svg_url = _getIconPath("up_arrow_light.svg"),
                 down_arrow_svg_url = _getIconPath("down_arrow_light.svg"),
             )
-            accent_big = "#F18000"
+            accent_big = "#F17400"
         case _:
             logging.error(f"[setTheme] Unrecognized theme ({theme})")
             return
