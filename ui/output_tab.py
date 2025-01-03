@@ -388,7 +388,7 @@ class OutputTab(QWidget):
     def _onJXLNormalizeClicked(self) -> None:
         """On user's action."""
         if self.wm.getVar("jxl_normalize_checksum_msg_seen") is None:
-            self.notifications.notify("Checksum Info", "Although \"Normalize\" does not alter quality and preserves metadata, it does change the checksum. Please keep this in mind when enabling this feature.")
+            self.notifications.notify("Checksum Info", "Please keep in mind, \"Normalize\" changes the checksum, and increases file size once reconstructed slightly.")
             self.wm.setVar("jxl_normalize_checksum_msg_seen", True)
 
     def onJXLEffort10Enabled(self, enabled: bool) -> None:
