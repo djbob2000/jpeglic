@@ -516,10 +516,6 @@ def _createTheme(
         background-color: {canvas};
     }}
 
-    QPlainTextEdit {{
-        border: 1px solid {border};
-    }}
-
     /* About tab */
     #title_l {{
         font-family: "Open Sans";
