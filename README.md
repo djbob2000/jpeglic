@@ -2,7 +2,7 @@
     <img src="assets/icons/logo.svg" width="20%">
 <h3 align="center">XL Converter</h3>
 
-Easy-to-use image converter for modern formats. Supports multithreading, drag 'n drop, and downscaling.
+Easy-to-use image converter for modern formats.
 
 Available for Windows and Linux.
 
@@ -19,11 +19,11 @@ Generate fully compatible JPEG images with up to [35% better compression ratio](
 
 #### Format Support
 
-Maximize image compression with **JPEG XL** and **AVIF**. Older formats (**WebP**, **JPEG**, and **PNG**) are also available.
+Maximize image compression with **JPEG XL** and **AVIF**. Also available: **WebP**, **JPEG**, and **PNG**.
 
 #### Parallel Encoding
 
-Encode images in parallel to speed up the process. Control how many threads to dedicate to encoding.
+Run encoders in parallel for increased throughput.
 
 #### Lossless JPEG Transcoding
 
