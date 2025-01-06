@@ -197,31 +197,7 @@ class Builder():
         self.appimagetool_path = "misc/appimagetool"
 
         # Windows
-        # self.redist_path = ".\\misc.\\VC_redist.x64.exe"   # Obsolete
         self.win_7z_path = "C:\\Program Files\\7-Zip\\7z.exe"
-
-        # Binary tools
-        self.tools_win = [
-            "cjxl.exe",
-            "djxl.exe",
-            "jxlinfo.exe",
-            "cjpegli.exe",
-            "avifenc.exe",
-            "avifdec.exe",
-            "exiftool",
-            "imagemagick",
-            "jpegtran",
-        ]
-        self.tools_linux = [
-            "cjxl",
-            "djxl",
-            "jxlinfo",
-            "cjpegli",
-            "avifenc",
-            "avifdec",
-            "imagemagick",
-            "jpegtran",
-        ]
         
         # Build Names
         self.version_sanitized = re.sub(r"[ \n]", "-", VERSION)   # No whitespaces or newline characters
@@ -237,7 +213,6 @@ class Builder():
         if build_type is not None and build_type not in ("sh", "appimage", "innosetup", "portable"):
             raise Exception("build_type incorrect")
 
-        self._verifyTools()
         self._prepare()
         self._buildBinaries()
         self._copyDependencies()
@@ -409,19 +384,6 @@ class Builder():
             f"{self.build_win_portable_name}.7z",
             self.build_win_portable_name,
         ], cwd=self.dst_dir)
-
-    def _verifyTools(self):
-        match platform.system():
-            case "Windows":
-                for i in self.tools_win:
-                    if not os.path.exists(os.path.join(PROGRAM_FOLDER, "bin", "win", i)):
-                        print(f"[Error] /bin/win/{i} is missing")
-            case "Linux":
-                for i in self.tools_linux:
-                    if not os.path.exists(os.path.join(PROGRAM_FOLDER, "bin", "linux", i)):
-                        print(f"[Error] /bin/linux/{i} is missing")
-            case _:
-                raise Exception("Unrecognized platform (_verifyTools)")
 
 if __name__ == '__main__':
     try:
