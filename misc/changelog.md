@@ -1,3 +1,32 @@
+## 1.1.1 - 2025-01-06
+
+### Added
+
+- Add AVIF bit depth selector.
+- Add classic themes.
+- Publish new documentation (rewritten in Sphinx).
+
+### Changed
+
+- Update `libjxl` to `v0.11.1`.
+- Update `libaom` to `v3.11.0`.
+- Update `SVT-AV1-PSY` to `2.3.0-A`.
+- Update Python to `3.13`.
+- Update Qt to `6.8`.
+- Improve default theme.
+- Change save data in exception view.
+- Rework fonts.
+
+### Fixed
+
+- Fix error when downscaling to PNG with PNG as input.
+- Fix glitching font on Windows.
+
+### Removed
+
+- Remove `fuse` requirement from the Linux installer.
+- Remove APNG as allowed input.
+
 ## 1.1.0 - 2024-12-09
 
 ### Added
