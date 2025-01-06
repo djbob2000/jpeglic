@@ -264,8 +264,7 @@ Below you'll find references on how to arrange the binaries. You will also need 
 On Windows, I recommend using MSYS2 MINGW64 for building.
 
 > [!NOTE]
-> `libjpeg-turbo` do not support UTF-8 in arguments on Windows.
-> To patch it in, embed [this manifest](https://github.com/AOMediaCodec/libavif/blob/3ec01cefd1ddd266a622d5e114a0888581b68f4a/apps/utf8.manifest) into each EXE with `mt.exe` from Visual Studio.
+> When building `libjpeg-turbo`, embed [this manifest](https://github.com/AOMediaCodec/libavif/blob/3ec01cefd1ddd266a622d5e114a0888581b68f4a/apps/utf8.manifest) into `jpegtran.exe` with `mt.exe` from Visual Studio. This enables a UTF-8 support in arguments.
 
 > [!TIP]
 > Use `ldd` in MSYS2 to check which DLLs need bundling alongside the executables.
