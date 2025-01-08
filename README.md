@@ -218,7 +218,7 @@ Libraries:
 - [imagemagick](https://imagemagick.org/) `7.* Q16-HDRI`
 - [exiftool](https://exiftool.org/) `12.92`
 - [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) `3.0.4`
-- [oxipng](https://github.com/shssoichiro/oxipng) `v0.9.2`
+- [oxipng](https://github.com/shssoichiro/oxipng) `v9.1.2`
 
 Below you'll find references on how to arrange the binaries. You will also need to add dependencies alongside them.
 
