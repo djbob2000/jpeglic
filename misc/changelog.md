@@ -1,3 +1,17 @@
+## TBA
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Fix delete original edge case (#81).
+
+### Removed
+
+### Deprecated
+
 ## 1.1.1 - 2025-01-06
 
 ### Added

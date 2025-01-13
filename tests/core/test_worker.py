@@ -101,16 +101,7 @@ def finishConversion_patches():
     ):
         yield mock_remove, mock_rename, mock_getsize, mock_isfile, mock_getUniqueFilePath 
 
-@pytest.fixture
-def postConversionRoutines_patches():
-    with (
-        patch("core.worker.os.path.isfile", return_value=True) as mock_isfile,
-        patch("core.worker.metadata.runExifTool", return_value=[]) as mock_runExifTool,
-        patch("core.worker.shutil.copystat") as mock_copystat,
-        patch("core.worker.os.remove") as mock_remove,
-        patch("core.worker.send2trash") as mock_send2trash,
-    ):
-        yield mock_isfile, mock_runExifTool, mock_copystat, mock_remove, mock_send2trash
+
 
 def test_logException(worker):
     worker.item_abs_path = str(Path("/test/path/image.png"))
@@ -571,16 +562,6 @@ def test_finishConversion_replace(finishConversion_patches, worker):
     mock_remove.assert_called_once_with("final/path/img.jpg")
     mock_rename.assert_called_once_with("temp/path/img.jpg", "final/path/img.jpg")
 
-
-def test_postConversionRoutines_no_output(postConversionRoutines_patches, worker):
-    mock_isfile, *_ = postConversionRoutines_patches
-    mock_isfile.return_value = False
-
-    with pytest.raises(FileException) as exc:
-        worker.postConversionRoutines()
-
-    assert "Output not found" in exc.value.msg
-
 @pytest.fixture
 def mock_exiftool_env(worker):
     worker.params["format"] = "JPEG XL"
@@ -648,6 +629,27 @@ def test_runExifTool_args_empty(mock_exiftool_env):
     
     mocks["logException"].assert_called_once()
     assert "Argument list for \"ExifTool - Wipe\" is empty." in mocks["logException"].call_args[0][1]
+
+@pytest.fixture
+def postConversionRoutines_patches():
+    with (
+        patch("core.worker.os.path.isfile", return_value=True) as mock_isfile,
+        patch("core.worker.metadata.runExifTool", return_value=[]) as mock_runExifTool,
+        patch("core.worker.shutil.copystat") as mock_copystat,
+        patch("core.worker.os.remove") as mock_remove,
+        patch("core.worker.send2trash") as mock_send2trash,
+        patch("core.worker.os.path.samefile", return_value=False),
+    ):
+        yield mock_isfile, mock_runExifTool, mock_copystat, mock_remove, mock_send2trash
+
+def test_postConversionRoutines_no_output(postConversionRoutines_patches, worker):
+    mock_isfile, *_ = postConversionRoutines_patches
+    mock_isfile.return_value = False
+
+    with pytest.raises(FileException) as exc:
+        worker.postConversionRoutines()
+
+    assert "Output not found" in exc.value.msg
 
 @pytest.mark.parametrize("attributes", [True, False])
 def test_postConversionRoutines_attributes(attributes, postConversionRoutines_patches, worker):

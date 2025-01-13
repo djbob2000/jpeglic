@@ -478,7 +478,11 @@ class Worker(QRunnable):
             raise FileException("P0", f"Failed to apply attributes. {err}")
 
         # Delete original
-        if not self.settings["keep_if_larger"] or os.path.getsize(self.org_item_abs_path) > os.path.getsize(self.final_output):
+        if (
+            (not self.settings["keep_if_larger"] or 
+            os.path.getsize(self.org_item_abs_path) > os.path.getsize(self.final_output)) and
+            not os.path.samefile(self.org_item_abs_path, self.final_output)
+        ):
             try:
                 if self.params["delete_original"]:
                     if self.params["delete_original_mode"] == "To Trash":
