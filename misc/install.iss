@@ -39,7 +39,7 @@ Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Files]
-Source: "xl-converter\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "xl-converter\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs overwritereadonly uninsremovereadonly
 
 [Code]
 

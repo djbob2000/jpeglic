@@ -7,6 +7,7 @@
 ### Fixed
 
 - Fix delete original edge case (#81).
+- Handle read-only files in the Windows installer automatically (#85).
 
 ### Removed
 
