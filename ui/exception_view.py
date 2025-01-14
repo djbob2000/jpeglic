@@ -68,7 +68,7 @@ class ExceptionView(QDialog):
         self.main_lt.addLayout(btm_lt)
         self.setLayout(self.main_lt)
 
-        self.setWindowTitle("Exceptions Occured")
+        self.setWindowTitle("Exceptions Occurred")
         self.setWindowIcon(QIcon(ICON_SVG))
         self.resize(650,300)
 
