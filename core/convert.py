@@ -158,7 +158,7 @@ def getImageResMp(image_path: str) -> (int, int):
         logging.error(f"[getImageResMp] Failed to parse resolution. {out}")
         return (-1, -1)
 
-    if width < 0 or height < 0:
+    if min(width, height) < 0:
         return (-1, -1)
 
     return (width, height)

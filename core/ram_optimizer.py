@@ -55,53 +55,44 @@ class RAMOptimizer:
     def setOptimizationRules(cls, rules: list[OptimizationRule]) -> None:
         cls.rules = rules
 
-    # @staticmethod
-    # def parseOptimizationRules(rules: str) -> list[OptimizationRule]:
-    #     pass
-
-    @classmethod
-    def setOptimizationRulesStr(cls, rules_str: str) -> None:
-        """Parses a string into a list of optimization rules and sets it.
-        
-        Example:
-        ("all", 4, "1/2") equivalent to OptimizationRule("all", 4, "1/2")
-        
-        """
-        re_matches = re.finditer(r'\("([^"]+)",\s*(\d+\.\d+),\s*"([1-9]+\/[1-9]+|1)"\)', rules_str)
+    @staticmethod
+    def parseOptimizationRules(rules_str: str) -> list[OptimizationRule]:
+        VALID_APPLIES_TO = {"all", "JPEG XL", "SVT-AV1-PSY"}
         rules = []
 
-        for re_match in re_matches:
+        for re_match in re.finditer(r'\("([^"]+)",\s*(\d+\.\d+),\s*"([1-9]+\/[1-9]+|1)"\)', rules_str):
             try:
                 # Get
-                applies_to = re_match.group(1)
-                threshold_mp = float(re_match.group(2))
-                thread_count = re_match.group(3)
+                applies_to, threshold_mp, thread_count = re_match.groups()
+                threshold_mp = float(threshold_mp)
 
                 # Validate
-                if applies_to not in ("all", "JPEG XL", "SVT-AV1-PSY"):
-                    raise Exception("Unknown applies_to field. Available: all, JPEG XL, SVT-AV1-PSY")
+                if applies_to not in VALID_APPLIES_TO:
+                    raise ValueError(f"Unknown applies_to field. Available: {', '.join(VALID_APPLIES_TO)}")
 
                 if threshold_mp < 0:
-                    raise Exception("Invalid threshold_mp field. Cannot be lower than 0.")
+                    raise ValueError("Invalid threshold_mp field. Cannot be lower than 0.")
 
                 if "/" in thread_count:
                     num, den = map(int, thread_count.split("/"))
-
-                    if num < 1 or den < 1:
-                        raise Exception("Invalid thread_count field. Numerator and denominator must be 1 or higher.")
+                    if min(num, den) < 1:
+                        raise ValueError("Invalid thread_count field. Numerator and denominator must be 1 or higher.")
                 elif thread_count != "1":
-                    raise Exception("Invalid thread_count field. Must be either 1 or a fraction (string).")
+                    raise ValueError("Invalid thread_count field. Must be either 1 or a fraction (string).")
 
                 # Append
-                rules.append(OptimizationRule(
-                    applies_to,
-                    threshold_mp,
-                    thread_count,
-                ))
+                rules.append(OptimizationRule(applies_to, threshold_mp, thread_count))
             except Exception as e:
                 logging.error(f"[RAM Optimizer] Failed to parse optimization rule. {re_match.group(0)}. {e}")
                 continue
         
+        return rules
+
+    @classmethod
+    def setOptimizationRulesStr(cls, rules_str: str) -> None:
+        """Parses a string into a list of optimization rules and sets it."""
+        rules = cls.parseOptimizationRules(rules_str)
+
         if rules:
             logging.info(f"[RAM Optimizer] Successfully parsed {len(rules)} rules.")
         else:
@@ -179,7 +170,7 @@ class RAMOptimizer:
         # Get resolution
         width, height = convert.getImageResMp(src_image_path)
         
-        if width < 0 or height < 0:     # Invalid
+        if min(width, height) < 0:     # Invalid
             cls.threadpool.setMaxThreadCount(cls.used_thread_count)
             return 1
 
