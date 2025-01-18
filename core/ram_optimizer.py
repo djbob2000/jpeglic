@@ -101,17 +101,36 @@ class RAMOptimizer:
         
         cls.setOptimizationRules(rules)
 
+    @staticmethod
+    def _doesRuleApply(rule: OptimizationRule, file_format: str, avif_encoder: str) -> bool:
+        is_jpeg_xl = file_format == "JPEG XL"
+        is_svt_av1_psy = file_format == "AVIF" and avif_encoder == "SVT-AV1-PSY"
+
+        if rule.applies_to == "all":
+            return is_jpeg_xl or is_svt_av1_psy
+        elif rule.applies_to == "JPEG XL":
+            return is_jpeg_xl
+        elif rule.applies_to == "SVT-AV1-PSY":
+            return is_svt_av1_psy
+
+        return False
+
+    @classmethod
+    def applicableRuleExists(cls, file_format: str, avif_encoder: str) -> bool:
+        for rule in cls.rules:
+            if cls._doesRuleApply(rule, file_format, avif_encoder):
+                return True
+    
+        logging.info(f"[RAM Optimizer] No applicable rules found.")
+        return False
+
     @classmethod
     def _getOptimizedThreadCount(cls, current_res_mp: float, file_format: str, avif_encoder: str) -> int:
         """Interprets rules and returns new per-worker thread count."""
         for rule in sorted(cls.rules, key=lambda x: x.threshold_mp, reverse=True):
             if (
                 current_res_mp >= rule.threshold_mp and
-                (
-                    rule.applies_to == "all" or
-                    (rule.applies_to == "JPEG XL" and file_format == "JPEG XL") or
-                    (rule.applies_to == "SVT-AV1-PSY" and file_format == "AVIF")
-                )
+                cls._doesRuleApply(rule, file_format, avif_encoder)
             ):
                 if rule.thread_count == "1":
                     return 1
@@ -144,29 +163,19 @@ class RAMOptimizer:
     ) -> int:
         """Sets maximum thread count in the global QThreadPool instance and returns recalculated thread_count_per_worker. Not thread safe."""
         # Check if can run
-        if not cls.enabled:
+        if cls.enabled == False:
             logging.error("[RAM Optimizer - run] Cannot run while disabled.")
             return thread_count_per_worker
 
         if cls.used_thread_count is None:
             logging.error("[RAM Optimizer - run] used_thread_count not set.")
+            cls.setEnabled(False)
             return thread_count_per_worker
         
         if not cls.rules:
             cls.setEnabled(False)
             return thread_count_per_worker
         
-        # Check if applicable
-        if not cls.isNecessary(
-            file_format,
-            avif_encoder,
-            jpeg_xl_effort,
-            jpeg_xl_lossy_modular,
-            jpeg_xl_lossless,
-            jpeg_xl_intelligent_effort
-        ):
-            return thread_count_per_worker
-
         # Get resolution
         width, height = convert.getImageResMp(src_image_path)
         

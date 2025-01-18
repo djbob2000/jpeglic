@@ -24,27 +24,31 @@ class ThreadManager:
         jpeg_xl_intelligent_effort: bool,
     ) -> None:
 
+        single_worker_mode = False
+        RAMOptimizer().setEnabled(False)
+
         # Setup RAM optimimzer
-        if RAMOptimizer().isNecessary(
-            dst_file_format, avif_encoder, jpeg_xl_effort, jpeg_xl_lossy_modular, jpeg_xl_lossless, jpeg_xl_intelligent_effort
+        if RAMOptimizer.isNecessary(
+            dst_file_format,
+            avif_encoder,
+            jpeg_xl_effort,
+            jpeg_xl_lossy_modular,
+            jpeg_xl_lossless,
+            jpeg_xl_intelligent_effort
         ):
             match ram_optimizer_mode:
                 case "Static":
                     single_worker_mode = True
-                    RAMOptimizer().setEnabled(False)
                 case "Dynamic":
-                    single_worker_mode = True   # RAM Optimizer can assign more in the worker.
-                    RAMOptimizer().setEnabled(True)
-                    RAMOptimizer.setUsedThreadCount(used_thread_count)
-                    RAMOptimizer().setOptimizationRulesStr(ram_optimizer_rules)
+                    RAMOptimizer.setOptimizationRulesStr(ram_optimizer_rules)
+                    if RAMOptimizer.applicableRuleExists(dst_file_format, avif_encoder):
+                        single_worker_mode = True   # RAM Optimizer can assign more in the worker.
+                        RAMOptimizer.setEnabled(True)
+                        RAMOptimizer.setUsedThreadCount(used_thread_count)
                 case "Disabled":
-                    single_worker_mode = False
-                    RAMOptimizer().setEnabled(False)
+                    pass
                 case _:
                     logging.error(f"[ThreadManager - configure] Unrecognized ram_optimizer_mode ({ram_optimizer_mode})")
-            
-        else:
-            single_worker_mode = False
         
         # Setup thread count
         if single_worker_mode:
