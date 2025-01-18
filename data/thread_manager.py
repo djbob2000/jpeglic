@@ -15,6 +15,7 @@ class ThreadManager:
         item_count: int,
         used_thread_count: int,
         ram_optimizer_mode: str,
+        ram_optimizer_rules: str,
         dst_file_format: str,
         avif_encoder: str,
         jpeg_xl_effort: int,
@@ -40,9 +41,11 @@ class ThreadManager:
                     RAMOptimizer().setEnabled(False)
                 case _:
                     logging.error(f"[ThreadManager - configure] Unrecognized ram_optimizer_mode ({ram_optimizer_mode})")
+            
+            RAMOptimizer().setOptimizationRulesStr(ram_optimizer_rules)
         else:
             single_worker_mode = False
-
+        
         # Setup thread count
         if single_worker_mode:
             self.burst_threadpool = []

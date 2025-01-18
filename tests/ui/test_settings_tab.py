@@ -38,9 +38,11 @@ def test_changeCategory_visibility(category, app, qtbot):
         ],
         "advanced": [
             "ram_optimizer_l", "ram_optimizer_cmb",
-            "jxl_effort_10_cb",
-            "jxl_int_effort_cb",
+            "ram_optimizer_rules_l", "ram_optimizer_rules_te",
+            "ram_optimizer_rules_reset_btn",
             "no_exceptions_cb",
+            "jxl_int_effort_cb",
+            "jxl_effort_10_cb",
             "custom_resampling_cb",
             "exiftool_l",
             "exiftool_reset_btn",

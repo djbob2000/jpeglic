@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from typing import Literal, Optional
 import os
+import re
 
 from PySide6.QtCore import (
     QThreadPool,
@@ -29,11 +30,13 @@ class RAMOptimizer:
 
     def __init__(self) -> None:
         RAMOptimizer.threadpool = QThreadPool.globalInstance()
-        # Target: max ~1 GB per 1 thread
-        RAMOptimizer.rules = [
-            OptimizationRule("all", 6.0, "1/2"),
-            OptimizationRule("all", 11.0, "1"),
-        ]
+        # Target: under 1 GB per 1 thread
+        # RAMOptimizer.rules = [
+        #     OptimizationRule("all", 3.5, "3/4"),
+        #     OptimizationRule("all", 7.5, "2/4"),
+        #     OptimizationRule("all", 11.0, "1/4"),
+        #     OptimizationRule("all", 14.0, "1"),
+        # ]
     
     @classmethod
     def setEnabled(cls, enabled: bool) -> None:
@@ -52,6 +55,61 @@ class RAMOptimizer:
     def setOptimizationRules(cls, rules: list[OptimizationRule]) -> None:
         cls.rules = rules
 
+    # @staticmethod
+    # def parseOptimizationRules(rules: str) -> list[OptimizationRule]:
+    #     pass
+
+    @classmethod
+    def setOptimizationRulesStr(cls, rules_str: str) -> None:
+        """Parses a string into a list of optimization rules and sets it.
+        
+        Example:
+        ("all", 4, "1/2") equivalent to OptimizationRule("all", 4, "1/2")
+        
+        """
+        re_matches = re.finditer(r'\("([^"]+)",\s*(\d+\.\d+),\s*"([1-9]+\/[1-9]+|1)"\)', rules_str)
+        rules = []
+
+        for re_match in re_matches:
+            try:
+                # Get
+                applies_to = re_match.group(1)
+                threshold_mp = float(re_match.group(2))
+                thread_count = re_match.group(3)
+
+                # Validate
+                if applies_to not in ("all", "JPEG XL", "SVT-AV1-PSY"):
+                    raise Exception("Unknown applies_to field. Available: all, JPEG XL, SVT-AV1-PSY")
+
+                if threshold_mp < 0:
+                    raise Exception("Invalid threshold_mp field. Cannot be lower than 0.")
+
+                if "/" in thread_count:
+                    num, den = map(int, thread_count.split("/"))
+
+                    if num < 1 or den < 1:
+                        raise Exception("Invalid thread_count field. Numerator and denominator must be 1 or higher.")
+                elif thread_count != "1":
+                    raise Exception("Invalid thread_count field. Must be either 1 or a fraction (string).")
+
+                # Append
+                rules.append(OptimizationRule(
+                    applies_to,
+                    threshold_mp,
+                    thread_count,
+                ))
+            except Exception as e:
+                logging.error(f"[RAM Optimizer] Failed to parse optimization rule. {re_match.group(0)}. {e}")
+                continue
+        
+        if rules:
+            logging.info(f"[RAM Optimizer] Successfully parsed {len(rules)} rules.")
+        else:
+            logging.info(f"[RAM Optimizer] No rules found, disabling optimizer.")
+            cls.setEnabled(False)
+        
+        cls.setOptimizationRules(rules)
+
     @classmethod
     def _getOptimizedThreadCount(cls, current_res_mp: float, file_format: str, avif_encoder: str) -> int:
         """Interprets rules and returns new per-worker thread count."""
@@ -60,8 +118,8 @@ class RAMOptimizer:
                 current_res_mp >= rule.threshold_mp and
                 (
                     rule.applies_to == "all" or
-                    (rule.applies_to == file_format) or     # JPEG XL
-                    (rule.applies_to == "AVIF" and avif_encoder == "SVT-AV1-PSY")
+                    (rule.applies_to == "JPEG XL" and file_format == "JPEG XL") or
+                    (rule.applies_to == "SVT-AV1-PSY" and file_format == "AVIF")
                 )
             ):
                 if rule.thread_count == "1":
@@ -101,6 +159,10 @@ class RAMOptimizer:
 
         if cls.used_thread_count is None:
             logging.error("[RAM Optimizer - run] used_thread_count not set.")
+            return thread_count_per_worker
+        
+        if not cls.rules:
+            cls.setEnabled(False)
             return thread_count_per_worker
         
         # Check if applicable

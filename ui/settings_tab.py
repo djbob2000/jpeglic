@@ -77,6 +77,7 @@ class SettingsTab(QWidget):
         self.onPlaySoundOnFinishVolumeToggled()
         self.onAVIFEncoderChanged()
         self.onThemeChanged()
+        self.onRamOptimizerChanged()
 
         # Vars
         self.cached_states = {}
@@ -130,6 +131,9 @@ class SettingsTab(QWidget):
         # Advanced
         self.ram_optimizer_l = self.wm.addWidget("ram_optimizer_l", QLabel("RAM Optimizer"))
         self.ram_optimizer_cmb = self.wm.addWidget("ram_optimizer_cmb", ComboBox(("Static", "Dynamic", "Disabled")))
+        self.ram_optimizer_rules_l = self.wm.addWidget("ram_optimizer_rules_l", QLabel("Optimization Rules"))
+        self.ram_optimizer_rules_te = self.wm.addWidget("ram_optimizer_rules_te", QTextEdit())
+        self.ram_optimizer_rules_reset_btn = self.wm.addWidget("ram_optimizer_rules_reset_btn", QPushButton("Reset"))
         self.jxl_effort_10_cb = self.wm.addWidget("jxl_effort_10_cb", QCheckBox("JPEG XL - Enable Effort 10", self))
         self.jxl_int_effort_cb = self.wm.addWidget("jxl_int_effort_cb", QCheckBox("JPEG XL - Allow Intelligent Effort (Deprecated)"))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
@@ -209,6 +213,9 @@ class SettingsTab(QWidget):
         ## Advanced
         self.ram_optimizer_hb = createQHBoxLayout(self.ram_optimizer_l, self.ram_optimizer_cmb)
         self.settings_lt.addLayout(self.ram_optimizer_hb)
+        self.settings_lt.addWidget(self.ram_optimizer_rules_l)
+        self.settings_lt.addWidget(self.ram_optimizer_rules_te)
+        self.settings_lt.addWidget(self.ram_optimizer_rules_reset_btn)
         self.settings_lt.addWidget(self.jxl_effort_10_cb)
         self.settings_lt.addWidget(self.jxl_int_effort_cb)
         self.settings_lt.addWidget(self.custom_resampling_cb)
@@ -281,6 +288,8 @@ class SettingsTab(QWidget):
         self.avif_encoder_cmb.currentTextChanged.connect(self.onAVIFEncoderChanged)
         self.avif_bit_depth_cmb.currentTextChanged.connect(self.onAVIFBitDepthChanged)
         self.theme_cmb.currentTextChanged.connect(self.onThemeChanged)
+        self.ram_optimizer_rules_reset_btn.clicked.connect(self.resetOptimizationRules)
+        self.ram_optimizer_cmb.currentTextChanged.connect(self.onRamOptimizerChanged)
 
         self.general_btn.clicked.connect(lambda: self.changeCategory("General"))
         self.conversion_btn.clicked.connect(lambda: self.changeCategory("Conversion"))
@@ -308,6 +317,7 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["avif_encoder"], self.avif_encoder_cmb)
         setToolTip(TOOLTIPS["avif_bit_depth"], self.avif_bit_depth_cmb)
         setToolTip(TOOLTIPS["ram_optimizer"], self.ram_optimizer_cmb)
+        setToolTip(TOOLTIPS["ram_optimizer_rules"], self.ram_optimizer_rules_te)
 
     def changeCategory(self, category):
         # Category buttons
@@ -336,6 +346,8 @@ class SettingsTab(QWidget):
             ],
             "Advanced": [
                 "ram_optimizer_l", "ram_optimizer_cmb",
+                "ram_optimizer_rules_l", "ram_optimizer_rules_te",
+                "ram_optimizer_rules_reset_btn",
                 "no_exceptions_cb",
                 "jxl_int_effort_cb",
                 "jxl_effort_10_cb",
@@ -407,6 +419,12 @@ class SettingsTab(QWidget):
     def onThemeChanged(self) -> None:
         setTheme(self.theme_cmb.currentText())
 
+    def onRamOptimizerChanged(self) -> None:
+        dynamic_ram_optimizer = self.ram_optimizer_cmb.currentText() == "Dynamic"
+        self.ram_optimizer_rules_te.setEnabled(dynamic_ram_optimizer)
+        self.ram_optimizer_rules_l.setEnabled(dynamic_ram_optimizer)
+        self.ram_optimizer_rules_reset_btn.setEnabled(dynamic_ram_optimizer)
+
     def toggleLogging(self):
         if self.logging_manager.isLoggingToFile():
             self.logging_manager.stopLoggingToFile()
@@ -449,6 +467,7 @@ class SettingsTab(QWidget):
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
             "jxl_lossless_jpeg": self.jxl_lossless_jpeg_cb.isChecked(),
             "ram_optimizer": self.ram_optimizer_cmb.currentText(),
+            "ram_optimizer_rules": self.ram_optimizer_rules_te.toPlainText(),
             "jxl_lossy_modular": self.jxl_lossy_modular_cb.isChecked(),
             "jxl_int_effort": self.jxl_int_effort_cb.isChecked(),
             "play_sound_on_finish": self.play_sound_on_finish_cb.isChecked(),
@@ -470,6 +489,9 @@ class SettingsTab(QWidget):
         self.exiftool_preserve_te.setText("-tagsFromFile $src $dst -overwrite_original")
         self.exiftool_unsafe_wipe_te.setText("-all= $dst -overwrite_original")
         self.exiftool_custom_te.setText("")
+
+    def resetOptimizationRules(self):
+        self.ram_optimizer_rules_te.setText("""("all", 3.5, "3/4"), ("all", 7.5, "2/4"), ("all", 11.0, "1/4"), ("all", 14.0, "1")""")
 
     def resetToDefault(self):
         self.no_sorting_cb.setChecked(False)
@@ -493,6 +515,7 @@ class SettingsTab(QWidget):
         self.copy_if_larger_cb.setChecked(False)
 
         self.ram_optimizer_cmb.setCurrentIndex(0)
+        self.resetOptimizationRules()
         self.jxl_int_effort_cb.setChecked(False)
         self.resetExifTool()
         self.custom_args_cb.setChecked(False)

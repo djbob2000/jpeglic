@@ -156,6 +156,7 @@ class Controller(QObject):
             self.items.getItemCount(),
             used_thread_count,
             settings_tab_settings["ram_optimizer"],
+            settings_tab_settings["ram_optimizer_rules"],
             output_tab_settings["format"],
             settings_tab_settings["avif_encoder"],
             output_tab_settings["effort"],
