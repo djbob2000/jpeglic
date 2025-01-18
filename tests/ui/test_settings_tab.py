@@ -27,7 +27,6 @@ def test_changeCategory_visibility(category, app, qtbot):
             "play_sound_on_finish_cb", "play_sound_on_finish_vol_l", "play_sound_on_finish_vol_sb",
         ],
         "conversion": [
-            "jxl_optimizer_cb",
             "jxl_lossy_modular_cb",
             "jxl_lossless_jpeg_cb",
             "jpg_encoder_l", "jpg_encoder_cmb",
@@ -38,6 +37,7 @@ def test_changeCategory_visibility(category, app, qtbot):
             "copy_if_larger_cb",
         ],
         "advanced": [
+            "ram_optimizer_l", "ram_optimizer_cmb",
             "jxl_effort_10_cb",
             "jxl_int_effort_cb",
             "no_exceptions_cb",
@@ -153,7 +153,6 @@ def test_resetToDefault(app):
     assert app.disable_delete_startup_cb.isChecked() == True
     assert app.no_exceptions_cb.isChecked() == False
     
-    assert app.jxl_optimizer_cb.isChecked() == True
     assert app.jxl_effort_10_cb.isChecked() == False
     assert app.jxl_lossy_modular_cb.isChecked() == False
     assert app.custom_resampling_cb.isChecked() == False

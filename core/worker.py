@@ -36,6 +36,7 @@ import core.conflicts as conflicts
 from core.utils import getFreeSpaceLeft, remove
 from core.process import runProcessOutput
 import core.lossless_jpeg as lossless_jpeg
+from core.ram_optimizer import RAMOptimizer
 
 class Signals(QObject):
     started = Signal(int)
@@ -109,6 +110,8 @@ class Worker(QRunnable):
                 self.signals.completed.emit(self.n, True)
                 return
             
+            self.runDynamicRamOptimizer()
+
             match self.params["format"]:
                 case "Lossless JPEG Transcoding":
                     self.losslesslyTranscodeJPEG()
@@ -491,6 +494,22 @@ class Worker(QRunnable):
                         os.remove(self.org_item_abs_path)
             except OSError as err:
                 raise FileException("P1", f"Failed to delete original file. {err}")
+
+    def runDynamicRamOptimizer(self) -> None:
+        with QMutexLocker(self.mutex):
+            if not RAMOptimizer.isEnabled():
+                return
+
+            self.available_threads = RAMOptimizer.run(
+                self.available_threads,
+                self.org_item_abs_path,
+                self.params["format"],
+                self.settings["avif_encoder"],
+                self.params["effort"],
+                self.params["jxl_modular"],
+                self.params["lossless"],
+                self.params["intelligent_effort"],
+            )
 
     def smallestLossless(self):
         # Populate path pool

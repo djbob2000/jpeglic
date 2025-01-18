@@ -1,5 +1,6 @@
 import logging
 from typing import Literal
+import re
 
 from data.constants import (
     ALLOWED_INPUT_IMAGE_MAGICK,
@@ -140,3 +141,24 @@ def log(msg, n=None):
         logging.info(f"[Convert] {msg}")
     else:
         logging.info(f"[Worker #{n} - Convert] {msg}")
+
+def getImageResMp(image_path: str) -> (int, int):
+    """Returns resolution of an image or (-1, -1) if one cannot be determined."""
+    out, err = runBinary(IMAGE_MAGICK_PATH, ["identify", "-ping", "-format", "%wx%h"], image_path)
+    res_match = re.match(r"^(\d+)[x](\d+)$", out)
+
+    if not res_match:
+        logging.error(f"[getImageResMp] Cannot determine resolution. {err}")
+        return (-1, -1)
+
+    try:
+        width = int(res_match.group(1))
+        height = int(res_match.group(2))
+    except (AttributeError, ValueError):
+        logging.error(f"[getImageResMp] Failed to parse resolution. {out}")
+        return (-1, -1)
+
+    if width < 0 or height < 0:
+        return (-1, -1)
+
+    return (width, height)

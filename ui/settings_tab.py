@@ -115,7 +115,6 @@ class SettingsTab(QWidget):
         self.play_sound_on_finish_vol_sb.setSuffix("%")
 
         # Conversion
-        self.jxl_optimizer_cb = self.wm.addWidget("jxl_optimizer_cb", QCheckBox("JPEG XL - Optimize RAM Usage"))
         self.jxl_lossy_modular_cb = self.wm.addWidget("jxl_lossy_modular_cb", QCheckBox("JPEG XL - Allow Lossy Modular"))
         self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Transcoding"))
         self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("JPEG Encoder"))
@@ -129,6 +128,8 @@ class SettingsTab(QWidget):
         self.copy_if_larger_cb = self.wm.addWidget("copy_if_larger_cb", QCheckBox("Copy Original When Result is Larger"))
 
         # Advanced
+        self.ram_optimizer_l = self.wm.addWidget("ram_optimizer_l", QLabel("RAM Optimizer"))
+        self.ram_optimizer_cmb = self.wm.addWidget("ram_optimizer_cmb", ComboBox(("Static", "Dynamic", "Disabled")))
         self.jxl_effort_10_cb = self.wm.addWidget("jxl_effort_10_cb", QCheckBox("JPEG XL - Enable Effort 10", self))
         self.jxl_int_effort_cb = self.wm.addWidget("jxl_int_effort_cb", QCheckBox("JPEG XL - Allow Intelligent Effort (Deprecated)"))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
@@ -193,7 +194,6 @@ class SettingsTab(QWidget):
         self.settings_lt.addLayout(self.play_sound_on_finish_vol_hb)
 
         ## Conversion
-        self.settings_lt.addWidget(self.jxl_optimizer_cb)
         self.settings_lt.addWidget(self.jxl_lossy_modular_cb)
         self.settings_lt.addWidget(self.jxl_lossless_jpeg_cb)
         self.jpg_encoder_hb = createQHBoxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
@@ -207,6 +207,8 @@ class SettingsTab(QWidget):
         self.settings_lt.addWidget(self.copy_if_larger_cb)
 
         ## Advanced
+        self.ram_optimizer_hb = createQHBoxLayout(self.ram_optimizer_l, self.ram_optimizer_cmb)
+        self.settings_lt.addLayout(self.ram_optimizer_hb)
         self.settings_lt.addWidget(self.jxl_effort_10_cb)
         self.settings_lt.addWidget(self.jxl_int_effort_cb)
         self.settings_lt.addWidget(self.custom_resampling_cb)
@@ -248,6 +250,7 @@ class SettingsTab(QWidget):
             self.avif_bit_depth_hb,
             self.play_sound_on_finish_vol_hb,
             self.theme_hb,
+            self.ram_optimizer_hb,
         ):
             hbox.setAlignment(Qt.AlignLeft)
         
@@ -256,6 +259,7 @@ class SettingsTab(QWidget):
             self.avif_encoder_cmb,
             self.avif_bit_depth_cmb,
             self.theme_cmb,
+            self.ram_optimizer_cmb,
         ):
             cmb.setMinimumWidth(150)
 
@@ -299,11 +303,11 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["no_exceptions"], self.no_exceptions_cb)
         setToolTip(TOOLTIPS["exiftool_args"], self.exiftool_wipe_te, self.exiftool_custom_te, self.exiftool_preserve_te, self.exiftool_unsafe_wipe_te)
         setToolTip(TOOLTIPS["encoder_args"], self.avifenc_args_te, self.cjpegli_args_te, self.cjxl_args_te, self.im_args_te)
-        setToolTip(TOOLTIPS["jxl_optimizer"], self.jxl_optimizer_cb)
         setToolTip(TOOLTIPS["jxl_int_effort"], self.jxl_int_effort_cb)
         setToolTip(TOOLTIPS["jxl_lossy_modular"], self.jxl_lossy_modular_cb)
         setToolTip(TOOLTIPS["avif_encoder"], self.avif_encoder_cmb)
         setToolTip(TOOLTIPS["avif_bit_depth"], self.avif_bit_depth_cmb)
+        setToolTip(TOOLTIPS["ram_optimizer"], self.ram_optimizer_cmb)
 
     def changeCategory(self, category):
         # Category buttons
@@ -323,7 +327,6 @@ class SettingsTab(QWidget):
             "Conversion": [
                 "jxl_lossless_jpeg_cb",
                 "jxl_lossy_modular_cb",
-                "jxl_optimizer_cb",
                 "jpg_encoder_l", "jpg_encoder_cmb",
                 "disable_progressive_jpegli_cb",
                 "avif_encoder_l", "avif_encoder_cmb",
@@ -332,6 +335,7 @@ class SettingsTab(QWidget):
                 "copy_if_larger_cb",
             ],
             "Advanced": [
+                "ram_optimizer_l", "ram_optimizer_cmb",
                 "no_exceptions_cb",
                 "jxl_int_effort_cb",
                 "jxl_effort_10_cb",
@@ -444,7 +448,7 @@ class SettingsTab(QWidget):
             "enable_quality_precision_snapping": self.quality_prec_snap_cb.isChecked(),
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
             "jxl_lossless_jpeg": self.jxl_lossless_jpeg_cb.isChecked(),
-            "jxl_optimizer": self.jxl_optimizer_cb.isChecked(),
+            "ram_optimizer": self.ram_optimizer_cmb.currentText(),
             "jxl_lossy_modular": self.jxl_lossy_modular_cb.isChecked(),
             "jxl_int_effort": self.jxl_int_effort_cb.isChecked(),
             "play_sound_on_finish": self.play_sound_on_finish_cb.isChecked(),
@@ -478,7 +482,6 @@ class SettingsTab(QWidget):
         self.play_sound_on_finish_cb.setChecked(False)
         self.play_sound_on_finish_vol_sb.setValue(60)
 
-        self.jxl_optimizer_cb.setChecked(True)
         self.jxl_lossy_modular_cb.setChecked(False)
         self.jxl_effort_10_cb.setChecked(False)
         self.custom_resampling_cb.setChecked(False)
@@ -489,6 +492,7 @@ class SettingsTab(QWidget):
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
 
+        self.ram_optimizer_cmb.setCurrentIndex(0)
         self.jxl_int_effort_cb.setChecked(False)
         self.resetExifTool()
         self.custom_args_cb.setChecked(False)

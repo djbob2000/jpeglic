@@ -152,19 +152,16 @@ class Controller(QObject):
         """Starts the conversion."""
 
         # Setup
-        enable_parallel = self.thread_manager.isParallelRecommended(
-            output_tab_settings["format"],
-            settings_tab_settings['jxl_optimizer'],
-            output_tab_settings['effort'],
-            output_tab_settings['jxl_modular'],
-            output_tab_settings['lossless'],
-            output_tab_settings['intelligent_effort'],
-        )
         self.thread_manager.configure(
-            output_tab_settings["format"],
             self.items.getItemCount(),
             used_thread_count,
-            enable_parallel,
+            settings_tab_settings["ram_optimizer"],
+            output_tab_settings["format"],
+            settings_tab_settings["avif_encoder"],
+            output_tab_settings["effort"],
+            output_tab_settings["jxl_modular"],
+            output_tab_settings["lossless"],
+            output_tab_settings["intelligent_effort"],
         )
         task_status.reset()
         ProcessManager.clear()

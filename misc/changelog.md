@@ -2,14 +2,20 @@
 
 ### Added
 
+- Add static RAM optimizer (#57).
+- Add dynamic RAM optimizer based on resolution (#57).
+
 ### Changed
 
 ### Fixed
 
+- Optimize RAM usage of SVT-AV1-PSY (#83).
 - Fix delete original edge case (#81).
 - Handle read-only files in the Windows installer automatically (#85).
 
 ### Removed
+
+- Remove "JPEG XL - Optimize RAM Usage" option.
 
 ### Deprecated
 

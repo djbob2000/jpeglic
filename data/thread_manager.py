@@ -2,6 +2,8 @@ import logging
 
 from PySide6.QtCore import QThreadPool
 
+from core.ram_optimizer import RAMOptimizer
+
 class ThreadManager:
     def __init__(self, threadpool: QThreadPool) -> None:
         self.threadpool = threadpool
@@ -9,17 +11,49 @@ class ThreadManager:
         self.threads_per_worker = 1
         self.burst_threadpool = []
     
-    def configure(self, format: str, item_count: int, used_thread_count: int, parallel=True) -> None:
-        if parallel:
+    def configure(self,
+        item_count: int,
+        used_thread_count: int,
+        ram_optimizer_mode: str,
+        dst_file_format: str,
+        avif_encoder: str,
+        jpeg_xl_effort: int,
+        jpeg_xl_lossy_modular: bool,
+        jpeg_xl_lossless: bool,
+        jpeg_xl_intelligent_effort: bool,
+    ) -> None:
+
+        # Setup RAM optimimzer
+        if RAMOptimizer().isNecessary(
+            dst_file_format, avif_encoder, jpeg_xl_effort, jpeg_xl_lossy_modular, jpeg_xl_lossless, jpeg_xl_intelligent_effort
+        ):
+            match ram_optimizer_mode:
+                case "Static":
+                    single_worker_mode = True
+                    RAMOptimizer().setEnabled(False)
+                case "Dynamic":
+                    single_worker_mode = True   # RAM Optimizer can assign more in the worker.
+                    RAMOptimizer().setEnabled(True)
+                    RAMOptimizer.setUsedThreadCount(used_thread_count)
+                case "Disabled":
+                    single_worker_mode = False
+                    RAMOptimizer().setEnabled(False)
+                case _:
+                    logging.error(f"[ThreadManager - configure] Unrecognized ram_optimizer_mode ({ram_optimizer_mode})")
+        else:
+            single_worker_mode = False
+
+        # Setup thread count
+        if single_worker_mode:
+            self.burst_threadpool = []
+            self.threads_per_worker = used_thread_count
+            self.threadpool.setMaxThreadCount(1)
+        else:
             self.burst_threadpool = self._getBurstThreadPool(
                 item_count,
                 used_thread_count,
             )
-            self.threadpool.setMaxThreadCount(used_thread_count)  
-        else:
-            self.burst_threadpool = []
-            self.threads_per_worker = used_thread_count
-            self.threadpool.setMaxThreadCount(1)
+            self.threadpool.setMaxThreadCount(used_thread_count)
 
     def getAvailableThreads(self, index: int) -> int:
         if self.burst_threadpool:
@@ -61,28 +95,3 @@ class ThreadManager:
             thread_pool[i] += 1
         
         return thread_pool
-    
-    def isParallelRecommended(self,
-        mode: str,
-        jxl_optimizer: bool,
-        effort: int,
-        jxl_modular: bool,
-        lossless: bool,
-        intelligent_effort: bool
-    ) -> bool:
-        if mode != "JPEG XL":
-            return True
-
-        if not jxl_optimizer:
-            return True
-        
-        if jxl_modular:
-            return False
-        
-        if effort <= 7 and not intelligent_effort and not lossless:
-            return True
-
-        if 10 > effort and lossless:
-            return True
-        
-        return False
