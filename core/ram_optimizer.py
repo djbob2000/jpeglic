@@ -52,7 +52,7 @@ class RAMOptimizer:
     def parseOptimizationRules(rules_str: str) -> list[OptimizationRule]:
         VALID_SCOPES = {"all", "JPEG XL", "SVT-AV1-PSY"}
         rules = []
-        for re_match in re.finditer(r'\("([^"]+)",\s*(\d+\.\d+),\s*"([1-9]+\/[1-9]+|1)"\)', rules_str):
+        for re_match in re.finditer(r'\("([^"]+)",\s*(\d+(?:\.\d+)?),\s*"([1-9]+\/[1-9]+|1)"\)', rules_str):
             try:
                 # Get
                 scope, threshold, target = re_match.groups()
