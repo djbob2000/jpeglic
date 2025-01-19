@@ -12,9 +12,9 @@ import core.convert as convert
 
 @dataclass
 class OptimizationRule:
-    applies_to: Literal["all", "JPEG XL", "SVT-AV1-PSY"]
-    threshold_mp: float     # Threshold in megapixels
-    thread_count: str       # "1" for single-worker; "1/2" for half of max threads
+    scope: Literal["all", "JPEG XL", "SVT-AV1-PSY"]     # Acivation scope. "all" means all applicable (after being filtered by RAMOptimizer.isNecessary)...
+    threshold: float                                    # Activation threshold in megapixels.
+    target: str                                         # The amount of concurrent encoders. Either 1 or a fraction. 
 
 class RAMOptimizer:
     """Singleton for optimizing RAM. Not thread safe."""
@@ -30,13 +30,6 @@ class RAMOptimizer:
 
     def __init__(self) -> None:
         RAMOptimizer.threadpool = QThreadPool.globalInstance()
-        # Target: under 1 GB per 1 thread
-        # RAMOptimizer.rules = [
-        #     OptimizationRule("all", 3.5, "3/4"),
-        #     OptimizationRule("all", 7.5, "2/4"),
-        #     OptimizationRule("all", 11.0, "1/4"),
-        #     OptimizationRule("all", 14.0, "1"),
-        # ]
     
     @classmethod
     def setEnabled(cls, enabled: bool) -> None:
@@ -57,31 +50,30 @@ class RAMOptimizer:
 
     @staticmethod
     def parseOptimizationRules(rules_str: str) -> list[OptimizationRule]:
-        VALID_APPLIES_TO = {"all", "JPEG XL", "SVT-AV1-PSY"}
+        VALID_SCOPES = {"all", "JPEG XL", "SVT-AV1-PSY"}
         rules = []
-
         for re_match in re.finditer(r'\("([^"]+)",\s*(\d+\.\d+),\s*"([1-9]+\/[1-9]+|1)"\)', rules_str):
             try:
                 # Get
-                applies_to, threshold_mp, thread_count = re_match.groups()
-                threshold_mp = float(threshold_mp)
+                scope, threshold, target = re_match.groups()
+                threshold = float(threshold)
 
                 # Validate
-                if applies_to not in VALID_APPLIES_TO:
-                    raise ValueError(f"Unknown applies_to field. Available: {', '.join(VALID_APPLIES_TO)}")
+                if scope not in VALID_SCOPES:
+                    raise ValueError(f"Unknown scope field. Available: {', '.join(VALID_SCOPES)}")
 
-                if threshold_mp < 0:
-                    raise ValueError("Invalid threshold_mp field. Cannot be lower than 0.")
+                if threshold < 0:
+                    raise ValueError("Invalid threshold field. Cannot be lower than 0.")
 
-                if "/" in thread_count:
-                    num, den = map(int, thread_count.split("/"))
+                if "/" in target:
+                    num, den = map(int, target.split("/"))
                     if min(num, den) < 1:
-                        raise ValueError("Invalid thread_count field. Numerator and denominator must be 1 or higher.")
-                elif thread_count != "1":
-                    raise ValueError("Invalid thread_count field. Must be either 1 or a fraction (string).")
+                        raise ValueError("Invalid target field. Numerator and denominator must be 1 or higher.")
+                elif target != "1":
+                    raise ValueError("Invalid target field. Must be either 1 or a fraction (string).")
 
                 # Append
-                rules.append(OptimizationRule(applies_to, threshold_mp, thread_count))
+                rules.append(OptimizationRule(scope, threshold, target))
             except Exception as e:
                 logging.error(f"[RAM Optimizer] Failed to parse optimization rule. {re_match.group(0)}. {e}")
                 continue
@@ -106,11 +98,11 @@ class RAMOptimizer:
         is_jpeg_xl = file_format == "JPEG XL"
         is_svt_av1_psy = file_format == "AVIF" and avif_encoder == "SVT-AV1-PSY"
 
-        if rule.applies_to == "all":
+        if rule.scope == "all":
             return is_jpeg_xl or is_svt_av1_psy
-        elif rule.applies_to == "JPEG XL":
+        elif rule.scope == "JPEG XL":
             return is_jpeg_xl
-        elif rule.applies_to == "SVT-AV1-PSY":
+        elif rule.scope == "SVT-AV1-PSY":
             return is_svt_av1_psy
 
         return False
@@ -127,15 +119,15 @@ class RAMOptimizer:
     @classmethod
     def _getOptimizedThreadCount(cls, current_res_mp: float, file_format: str, avif_encoder: str) -> int:
         """Interprets rules and returns new per-worker thread count."""
-        for rule in sorted(cls.rules, key=lambda x: x.threshold_mp, reverse=True):
+        for rule in sorted(cls.rules, key=lambda x: x.threshold, reverse=True):
             if (
-                current_res_mp >= rule.threshold_mp and
+                current_res_mp >= rule.threshold and
                 cls._doesRuleApply(rule, file_format, avif_encoder)
             ):
-                if rule.thread_count == "1":
+                if rule.target == "1":
                     return 1
                 else:
-                    num, den = rule.thread_count.split("/")
+                    num, den = rule.target.split("/")
                     try:
                         num = int(num)
                         den = int(den)
@@ -144,7 +136,7 @@ class RAMOptimizer:
                             optimized_thread_count = 1
                         return optimized_thread_count
                     except Exception:
-                        logging.error(f"[RAM Optimizer - _getOptimizedThreadCount] Applying rule failed. ({rule.thread_count})")
+                        logging.error(f"[RAM Optimizer - _getOptimizedThreadCount] Applying rule failed. ({rule.target})")
                         return cls.used_thread_count
         
         # No rules applied
