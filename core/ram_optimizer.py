@@ -169,13 +169,11 @@ class RAMOptimizer:
             return thread_count_per_worker
         
         # Get resolution
-        width, height = convert.getImageResMp(src_image_path)
-        
-        if min(width, height) < 0:     # Invalid
+        res_in_mp = convert.getImageResMp(src_image_path)
+
+        if res_in_mp < 0:     # Invalid
             cls.threadpool.setMaxThreadCount(cls.used_thread_count)
             return 1
-
-        res_in_mp = (width * height) / 1_000_000
 
         # Interpret and apply rules
         optimized_thread_count = cls._getOptimizedThreadCount(res_in_mp, file_format, avif_encoder)

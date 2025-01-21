@@ -142,10 +142,10 @@ def log(msg, n=None):
     else:
         logging.info(f"[Worker #{n} - Convert] {msg}")
 
-def getImageResMp(image_path: str) -> (int, int):
+def getImageRes(image_path: str) -> (int, int):
     """Returns resolution of an image or (-1, -1) if one cannot be determined."""
     out, err = runBinary(IMAGE_MAGICK_PATH, ["identify", "-ping", "-format", "%wx%h"], image_path)
-    res_match = re.match(r"^(\d+)[x](\d+)$", out)
+    res_match = re.fullmatch(r"(\d+)x(\d+)", out)
 
     if not res_match:
         logging.error(f"[getImageResMp] Cannot determine resolution. {err}")
@@ -158,7 +158,17 @@ def getImageResMp(image_path: str) -> (int, int):
         logging.error(f"[getImageResMp] Failed to parse resolution. {out}")
         return (-1, -1)
 
-    if min(width, height) < 0:
+    if min(width, height) < 1:
+        logging.error(f"[getImageResMp] Cannot determine resolution. {err}")
         return (-1, -1)
 
     return (width, height)
+
+def getImageResMp(image_path: str) -> float:
+    """Returns resolution of an image or -1 if one cannot be determined. This is a wrapper around getImageRes."""
+    width, height = getImageRes(image_path)
+
+    if min(width, height) < 1:  # Prevent div by zero
+        return -1
+    else:
+        return width * height / 1_000_000
