@@ -7,7 +7,6 @@ from core.ram_optimizer import RAMOptimizer
 class ThreadManager:
     def __init__(self, threadpool: QThreadPool) -> None:
         self.threadpool = threadpool
-    
         self.threads_per_worker = 1
         self.burst_threadpool = []
     
@@ -42,7 +41,7 @@ class ThreadManager:
                 case "Dynamic":
                     RAMOptimizer.setOptimizationRulesStr(ram_optimizer_rules)
                     if RAMOptimizer.applicableRuleExists(dst_file_format, avif_encoder):
-                        single_worker_mode = True   # RAM Optimizer can assign more in the worker.
+                        single_worker_mode = True   # Cold start to avoid a RAM spike. RAM Optimizer can assign more in the worker.
                         RAMOptimizer.setEnabled(True)
                         RAMOptimizer.setUsedThreadCount(used_thread_count)
                 case "Disabled":
@@ -50,7 +49,7 @@ class ThreadManager:
                 case _:
                     logging.error(f"[ThreadManager - configure] Unrecognized ram_optimizer_mode ({ram_optimizer_mode})")
         
-        # Setup thread count
+        # Setup workers
         if single_worker_mode:
             self.burst_threadpool = []
             self.threads_per_worker = used_thread_count
@@ -63,18 +62,13 @@ class ThreadManager:
             self.threadpool.setMaxThreadCount(used_thread_count)
 
     def getAvailableThreads(self, index: int) -> int:
-        if self.burst_threadpool:
-            try:
-                available_threads = self.burst_threadpool[index]
-            except IndexError:
-                logging.error("[ThreadManager] getAvailableThreads - IndexError")
-                available_threads = self.threads_per_worker
-        else:
-            available_threads = self.threads_per_worker
+        if self.burst_threadpool and index < len(self.burst_threadpool):
+            return self.burst_threadpool[index]
         
-        return available_threads
+        return self.threads_per_worker
 
-    def _getBurstThreadPool(self, workers: int, cores: int) -> list:
+    @staticmethod
+    def _getBurstThreadPool(workers: int, cores: int) -> list:
         """
         Distributes cores among workers to fully utilize the available cores.
 
@@ -91,7 +85,7 @@ class ThreadManager:
 
             If workers >= cores outputs an empty list 
         """
-        if workers >= cores or cores <= 0 or workers <= 0:
+        if workers >= cores or min(cores, workers) < 1:
             return []
         
         base_threads = cores // workers
