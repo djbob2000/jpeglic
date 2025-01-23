@@ -24,7 +24,7 @@ def test_singleton_instance():
 def run_patches():
     mocks = {
         "setEnabled": patch("core.ram_optimizer.RAMOptimizer.setEnabled"),
-        "_getOptimizedThreadCount": patch("core.ram_optimizer.RAMOptimizer._getOptimizedThreadCount", return_value=4),
+        "_getMaxWorkerCount": patch("core.ram_optimizer.RAMOptimizer._getMaxWorkerCount", return_value=4),
         "convert.getImageResMp": patch("core.ram_optimizer.convert.getImageResMp", return_value=10.0),
     }
 
@@ -77,7 +77,7 @@ def test_run_happy_path(run_patches, caplog):
     RAMOptimizer.enabled = True
     RAMOptimizer.used_thread_count = used_thread_count
     RAMOptimizer.rules = ["stub"]
-    mocks["_getOptimizedThreadCount"].return_value = optimized_thread_count
+    mocks["_getMaxWorkerCount"].return_value = optimized_thread_count
     mocks["convert.getImageResMp"].return_value = image_res
 
     assert RAMOptimizer.run(
@@ -93,7 +93,7 @@ def test_run_happy_path(run_patches, caplog):
 
     mocks["setEnabled"].assert_not_called()
     mocks["convert.getImageResMp"].assert_called_once_with(src_image_path)
-    mocks["_getOptimizedThreadCount"].assert_called_once_with(image_res, dst_file_format, avif_encoder)
+    mocks["_getMaxWorkerCount"].assert_called_once_with(image_res, dst_file_format, avif_encoder)
     RAMOptimizer.threadpool.setMaxThreadCount.assert_called_once_with(optimized_thread_count)
     assert "Max concurrent workers" in caplog.records[0].message
 
@@ -119,7 +119,7 @@ def test_run_invalid_res(run_patches):
     ) == 1
 
     mocks["convert.getImageResMp"].assert_called_once()
-    mocks["_getOptimizedThreadCount"].assert_not_called()
+    mocks["_getMaxWorkerCount"].assert_not_called()
     RAMOptimizer.threadpool.setMaxThreadCount.assert_called_once_with(used_thread_count)
 
 @pytest.mark.parametrize("high_ram_usage", [

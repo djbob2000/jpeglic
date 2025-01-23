@@ -120,8 +120,8 @@ class RAMOptimizer:
         return False
 
     @classmethod
-    def _getOptimizedThreadCount(cls, current_res_mp: float, file_format: str, avif_encoder: str) -> int:
-        """Interprets rules and returns new per-worker thread count."""
+    def _getMaxWorkerCount(cls, current_res_mp: float, file_format: str, avif_encoder: str) -> int:
+        """Interprets rules and returns new maximum concurrent worker count."""
         for rule in sorted(cls.rules, key=lambda x: x.threshold, reverse=True):
             if (
                 current_res_mp >= rule.threshold and
@@ -134,12 +134,12 @@ class RAMOptimizer:
                     try:
                         num = int(num)
                         den = int(den)
-                        optimized_thread_count = int(cls.used_thread_count * num / den)
-                        if optimized_thread_count < 1:
-                            optimized_thread_count = 1
-                        return optimized_thread_count
+                        optimized_worker_count = int(cls.used_thread_count * num / den)
+                        if optimized_worker_count < 1:
+                            return 1
+                        return optimized_worker_count
                     except Exception:
-                        logging.error(f"[RAM Optimizer - _getOptimizedThreadCount] Applying rule failed. ({rule.target})")
+                        logging.error(f"[RAM Optimizer] Applying rule failed. ({rule.target})")
                         return cls.used_thread_count
         
         # No rules applied
@@ -179,12 +179,12 @@ class RAMOptimizer:
             return 1
 
         # Interpret and apply rules
-        optimized_thread_count = cls._getOptimizedThreadCount(res_in_mp, dst_file_format, avif_encoder)
-        new_thread_count_per_worker = cls.used_thread_count // optimized_thread_count
-        cls.threadpool.setMaxThreadCount(optimized_thread_count)
+        max_worker_count = cls._getMaxWorkerCount(res_in_mp, dst_file_format, avif_encoder)
+        new_thread_count_per_worker = cls.used_thread_count // max_worker_count
+        cls.threadpool.setMaxThreadCount(max_worker_count)
 
         # Return
-        logging.info(f"[RAM Optimizer] Max concurrent workers: {optimized_thread_count}; threads per worker: {new_thread_count_per_worker}; src: {os.path.basename(src_image_path)}; res: {round(res_in_mp, 2)} MP")
+        logging.info(f"[RAM Optimizer] Max concurrent workers: {max_worker_count}; threads per worker: {new_thread_count_per_worker}; src: {os.path.basename(src_image_path)}; res: {round(res_in_mp, 2)} MP")
 
         return new_thread_count_per_worker
     
