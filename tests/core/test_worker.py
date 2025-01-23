@@ -1103,3 +1103,33 @@ def test_reconstructJPEG_sad_path(worker_reconstructJPEG_patched):
         worker.available_threads,
     )
     assert worker.lossless_jpeg
+
+def test_runDynamicRamOptimizer_enabled(worker):
+    org_available_threads = 4
+    new_available_threads = 5
+    worker.available_threads = org_available_threads
+
+    with (
+        patch("core.worker.RAMOptimizer.isEnabled", return_value=True),
+        patch("core.worker.RAMOptimizer.run", return_value=new_available_threads) as mock_run,
+    ):
+        worker.runDynamicRamOptimizer()
+        mock_run.assert_called_once_with(
+            org_available_threads,
+            worker.org_item_abs_path,
+            worker.params["format"],
+            worker.settings["avif_encoder"],
+            worker.params["effort"],
+            worker.params["jxl_modular"],
+            worker.params["lossless"],
+            worker.params["intelligent_effort"],
+        )
+        assert worker.available_threads == new_available_threads
+
+def test_runDynamicRamOptimizer_disabled(worker):
+    with (
+        patch("core.worker.RAMOptimizer.isEnabled", return_value=False),
+        patch("core.worker.RAMOptimizer.run") as mock_run,
+    ):
+        worker.runDynamicRamOptimizer()
+        mock_run.assert_not_called()
