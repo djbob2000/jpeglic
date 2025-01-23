@@ -87,14 +87,12 @@ class RAMOptimizer:
     def setOptimizationRulesStr(cls, rules_str: str) -> None:
         """Parses a string into a list of optimization rules and sets it."""
         rules = cls.parseOptimizationRules(rules_str)
+        cls.setOptimizationRules(rules)
 
         if rules:
             logging.info(f"[RAM Optimizer] Successfully parsed {len(rules)} rules.")
         else:
-            logging.info(f"[RAM Optimizer] No rules found, disabling optimizer.")
-            cls.setEnabled(False)
-        
-        cls.setOptimizationRules(rules)
+            logging.info(f"[RAM Optimizer] No rules found.")
 
     @staticmethod
     def _doesRuleApply(rule: OptimizationRule, file_format: str, avif_encoder: str) -> bool:
@@ -134,7 +132,7 @@ class RAMOptimizer:
                     try:
                         num = int(num)
                         den = int(den)
-                        optimized_worker_count = int(cls.used_thread_count * num / den)
+                        optimized_worker_count = int(cls.used_thread_count * num // den)
                         if optimized_worker_count < 1:
                             return 1
                         return optimized_worker_count
