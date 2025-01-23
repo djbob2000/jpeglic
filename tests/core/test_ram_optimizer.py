@@ -14,8 +14,9 @@ def reset_singleton():
     RAMOptimizer.enabled = False
     RAMOptimizer.used_thread_count = None
     RAMOptimizer.rules = []
-    QThreadPool.globalInstance = MagicMock(return_value=MagicMock(spec=QThreadPool))
-    RAMOptimizer()  # Init
+    with patch.object(QThreadPool, 'globalInstance', MagicMock(return_value=MagicMock(spec=QThreadPool))):
+        RAMOptimizer()  # Init
+        yield
 
 def test_singleton_instance():
     assert RAMOptimizer() == RAMOptimizer()
