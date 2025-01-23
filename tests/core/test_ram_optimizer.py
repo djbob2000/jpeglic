@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtCore import QThreadPool
 
 import core.ram_optimizer as ram_optimizer
-from core.ram_optimizer import RAMOptimizer
+from core.ram_optimizer import RAMOptimizer, OptimizationRule
 
 @pytest.fixture(autouse=True)
 def reset_singleton():
@@ -19,6 +19,156 @@ def reset_singleton():
 
 def test_singleton_instance():
     assert RAMOptimizer() == RAMOptimizer()
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_isEnabled(enabled):
+    RAMOptimizer.setEnabled(enabled)
+    assert RAMOptimizer.enabled == enabled
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_isEnabled(enabled):
+    RAMOptimizer.enabled = enabled
+    assert RAMOptimizer.isEnabled() == enabled
+
+def test_setUsedThreadCount_valid(caplog):
+    RAMOptimizer.used_thread_count = 1
+    RAMOptimizer.setUsedThreadCount(16)
+    assert RAMOptimizer.used_thread_count == 16
+
+def test_setUsedThreadCount_invalid(caplog):
+    caplog.set_level(logging.ERROR)
+    RAMOptimizer.used_thread_count = 1
+    RAMOptimizer.setUsedThreadCount(-1)
+    assert "Expected used_thread_count >= 1" in caplog.text
+    assert RAMOptimizer.used_thread_count == 1
+
+def test_setOptimizationRules():
+    rules = [OptimizationRule("all", 10, "1/2")]
+    RAMOptimizer.setOptimizationRules(rules)
+    assert RAMOptimizer.rules == rules
+
+@pytest.mark.parametrize("rules_str, expected_dataclasses", [
+    ('("all", 10, "1/2")', [OptimizationRule("all", 10.0, "1/2")]),
+    ('("all", 8.0, "3/4")', [OptimizationRule("all", 8.0, "3/4")]),
+    ('("all", 3.5, "3/4"), ("all", 7.5, "2/4"), ("all", 11, "1/4"), ("all", 14, "1")', [OptimizationRule("all", 3.5, "3/4"), OptimizationRule("all", 7.5, "2/4"), OptimizationRule("all", 7.5, "2/4"), OptimizationRule("all", 14.0, "1")]),
+    ('("all", b, "1/2")', []),
+    ('("all", -10, "1/2")', []),
+    ('("all", 10, "1/0")', []),
+    ('("all", 10, "0/1")', []),
+    ('("all", 10, "0")', []),
+    ('("unsupported", 10, "1/2")', []),
+])
+def test_parseOptimizationRules_results(rules_str, expected_dataclasses):
+    parsed_rules = RAMOptimizer.parseOptimizationRules(rules_str)
+    for rule in expected_dataclasses:
+        assert rule in parsed_rules
+
+def test_setOptimizationRulesStr_rules_parsed(caplog):
+    caplog.set_level(logging.INFO)
+    rules = '("all", 10.0, "1/2")'
+    rules_native = [OptimizationRule("all", 10.0, "1/2") for _ in range(3)]
+
+    with (
+        patch("core.ram_optimizer.RAMOptimizer.parseOptimizationRules", return_value=rules_native) as mock_parseOptimizationRules,
+        patch("core.ram_optimizer.RAMOptimizer.setOptimizationRules") as mock_setOptimizationRules,
+    ):
+        RAMOptimizer.setOptimizationRulesStr(rules)
+        mock_setOptimizationRules(rules_native)
+        mock_parseOptimizationRules.assert_called_once_with(rules)
+        assert "Successfully parsed 3 rules" in caplog.text
+
+def test_setOptimizationRulesStr_no_rules(caplog):
+    caplog.set_level(logging.INFO)
+
+    with (
+        patch("core.ram_optimizer.RAMOptimizer.parseOptimizationRules", return_value=[]) as mock_parseOptimizationRules,
+        patch("core.ram_optimizer.RAMOptimizer.setOptimizationRules") as mock_setOptimizationRules,
+    ):
+        RAMOptimizer.setOptimizationRulesStr('')
+        assert "No rules found" in caplog.text
+
+@pytest.mark.parametrize("rule_scope, file_format, avif_encoder, expected_to_apply", [
+    ("all", "JPEG XL", "", True),
+    ("JPEG XL", "JPEG XL", "", True),
+    ("SVT-AV1-PSY", "JPEG XL", "", False),
+    ("JPEG XL", "AVIF", "SVT-AV1-PSY", False),
+    ("SVT-AV1-PSY", "AVIF", "SVT-AV1-PSY", True),
+    ("all", "AVIF", "SVT-AV1-PSY", True),
+    ("SVT-AV1-PSY", "AVIF", "AOM AV1", False),
+])
+def test__doesRuleApply(rule_scope, file_format, avif_encoder, expected_to_apply):
+    assert RAMOptimizer._doesRuleApply(
+        OptimizationRule(rule_scope, 10.0, "1"),
+        file_format,
+        avif_encoder
+    ) == expected_to_apply
+
+def test_applicableRuleExists_exists():
+    RAMOptimizer.rules = [
+        OptimizationRule("all", 10.0, "1/2"),
+        OptimizationRule("all", 14.0, "1")
+    ]
+
+    with patch("core.ram_optimizer.RAMOptimizer._doesRuleApply", side_effect=(False, True)) as mock__doesRuleApply:
+        assert RAMOptimizer.applicableRuleExists("", "") == True
+        mock__doesRuleApply.call_count == 2
+        assert str(mock__doesRuleApply.call_args_list[0][0][0]) == str(RAMOptimizer.rules[0])
+        assert str(mock__doesRuleApply.call_args_list[1][0][0]) == str(RAMOptimizer.rules[1])
+
+def test_applicableRuleExists_no_rules(caplog):
+    RAMOptimizer.rules = []
+    caplog.set_level(logging.INFO)
+
+    with patch("core.ram_optimizer.RAMOptimizer._doesRuleApply") as mock__doesRuleApply:
+        assert RAMOptimizer.applicableRuleExists("", "") == False
+        mock__doesRuleApply.assert_not_called()
+        assert "No applicable rules found" in caplog.text
+
+def test__getMaxWorkerCount_apply_rule_1():
+    RAMOptimizer.rules = [
+        OptimizationRule("all", 10.0, "1/2"),
+        OptimizationRule("all", 14.0, "1")
+    ]
+    RAMOptimizer.used_thread_count = 16
+
+    with patch("core.ram_optimizer.RAMOptimizer._doesRuleApply", side_effect=(False, True)):
+        RAMOptimizer._getMaxWorkerCount(10.0, "JPEG XL", "") == 1
+
+def test__getMaxWorkerCount_apply_rule_fraction():
+    RAMOptimizer.rules = [
+        OptimizationRule("all", 8.0, "3/4"),
+        OptimizationRule("all", 10.0, "1/2"),
+        OptimizationRule("all", 14.0, "1")
+    ]
+    RAMOptimizer.used_thread_count = 16
+
+    with patch("core.ram_optimizer.RAMOptimizer._doesRuleApply", side_effect=(False, False, True)):
+        RAMOptimizer._getMaxWorkerCount(10.0, "JPEG XL", "") == 16 * 3 // 4
+
+def test__getMaxWorkerCount_invalid_worker_count():
+    RAMOptimizer.rules = [
+        OptimizationRule("all", 8.0, "1/2")
+    ]
+    RAMOptimizer.used_thread_count = -1
+
+    with patch("core.ram_optimizer.RAMOptimizer._doesRuleApply", return_value=True):
+        RAMOptimizer._getMaxWorkerCount(10.0, "JPEG XL", "") == 1
+
+def test__getMaxWorkerCount_div_error(caplog):
+    RAMOptimizer.rules = [
+        OptimizationRule("all", 8.0, "1/0")
+    ]
+    RAMOptimizer.used_thread_count = 1
+
+    with patch("core.ram_optimizer.RAMOptimizer._doesRuleApply", return_value=True):
+        RAMOptimizer._getMaxWorkerCount(10.0, "JPEG XL", "") == 1
+        assert "Applying rule failed" in caplog.records[0].message
+
+def test__getMaxWorkerCount_no_rules():
+    RAMOptimizer.rules = []
+    RAMOptimizer.used_thread_count = 4
+
+    assert RAMOptimizer._getMaxWorkerCount(10.0, "JPEG XL", "") == 4
 
 @pytest.fixture
 def run_patches():
