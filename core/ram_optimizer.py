@@ -42,6 +42,9 @@ class RAMOptimizer:
     @classmethod
     def setUsedThreadCount(cls, used_thread_count: int) -> None:
         """Set before using the optimizer."""
+        if used_thread_count < 1:
+            logging.error("[RAM Optimizer - setUsedThreadCount] Expected used_thread_count >= 1.")
+            return
         cls.used_thread_count = used_thread_count
 
     @classmethod
@@ -146,7 +149,7 @@ class RAMOptimizer:
     def run(cls,
         thread_count_per_worker: int,
         src_image_path: str,
-        file_format: str,
+        dst_file_format: str,
         avif_encoder: str,
         jpeg_xl_effort: int,
         jpeg_xl_lossy_modular: bool,
@@ -176,16 +179,9 @@ class RAMOptimizer:
             return 1
 
         # Interpret and apply rules
-        optimized_thread_count = cls._getOptimizedThreadCount(res_in_mp, file_format, avif_encoder)
+        optimized_thread_count = cls._getOptimizedThreadCount(res_in_mp, dst_file_format, avif_encoder)
+        new_thread_count_per_worker = cls.used_thread_count // optimized_thread_count
         cls.threadpool.setMaxThreadCount(optimized_thread_count)
-
-        # Available_threads per worker
-        try:
-            new_thread_count_per_worker = cls.used_thread_count // optimized_thread_count
-            if new_thread_count_per_worker <= 0:
-                return 1
-        except Exception:
-            return 1
 
         # Return
         logging.info(f"[RAM Optimizer] Max concurrent workers: {optimized_thread_count}; threads per worker: {new_thread_count_per_worker}; src: {os.path.basename(src_image_path)}; res: {round(res_in_mp, 2)} MP")
