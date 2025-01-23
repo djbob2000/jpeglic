@@ -45,7 +45,10 @@ def modify_tab_settings():
 @pytest.fixture
 def settings_tab_settings():
     return {
+        "ram_optimizer": "Static",
+        "ram_optimizer_rules": '("all", 14, "1")',
         "jxl_optimizer": False,
+        "avif_encoder": "AOM AV1",
     }
 
 @pytest.fixture
@@ -138,10 +141,9 @@ def test_parseData(controller):
 
 def test_startProcessing(controller, output_tab_settings, modify_tab_settings, settings_tab_settings):
     processing_started_spy = QSignalSpy(controller.processing_started)
-    update_progress_line1_spy = QSignalSpy(controller.update_progress_line1 )
+    update_progress_line1_spy = QSignalSpy(controller.update_progress_line1)
 
     with (
-        patch.object(controller.thread_manager, "isParallelRecommended", return_value=True) as mock_isParallelRecommended,
         patch.object(controller.thread_manager, "configure") as mock_configure,
         patch.object(controller.thread_manager, "getAvailableThreads", return_value=4),
         patch("core.controller.task_status.reset") as mock_task_status_reset,
@@ -162,19 +164,17 @@ def test_startProcessing(controller, output_tab_settings, modify_tab_settings, s
 
         controller.startProcessing(output_tab_settings, modify_tab_settings, settings_tab_settings, 4)
 
-        mock_isParallelRecommended.assert_called_once_with(
+        mock_configure.assert_called_once_with(
+            mock_getItemCount.return_value,
+            4,
+            settings_tab_settings["ram_optimizer"],
+            settings_tab_settings["ram_optimizer_rules"],
             output_tab_settings["format"],
-            settings_tab_settings['jxl_optimizer'],
+            settings_tab_settings["avif_encoder"],
             output_tab_settings['effort'],
             output_tab_settings['jxl_modular'],
             output_tab_settings['lossless'],
             output_tab_settings['intelligent_effort'],
-        )
-        mock_configure.assert_called_once_with(
-            output_tab_settings["format"],
-            mock_getItemCount.return_value,
-            4,
-            mock_isParallelRecommended.return_value,
         )
         mock_task_status_reset.assert_called_once()
         mock_ProcessManager_clear.assert_called_once()
