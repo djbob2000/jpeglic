@@ -16,6 +16,7 @@ def runProcess2(*cmd: str, cwd: str | None = None) -> (str, str):
     ProcessManager.addProcess(process)
     process.wait()
     stdout, stderr = process.communicate()
+    ProcessManager.removeProcess(process)
 
     try:
         if stdout:
@@ -47,6 +48,7 @@ def runProcess(*cmd, cwd=None):
     ProcessManager.addProcess(process)
     process.wait()
     stdout, stderr = process.communicate()
+    ProcessManager.removeProcess(process)
 
     try:
         if stdout:

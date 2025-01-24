@@ -67,7 +67,9 @@ class MainWindow(QMainWindow):
         self.settings_tab = SettingsTab()
         settings = self.settings_tab.getSettings()
         self.input_tab = InputTab(settings)
-        self.output_tab = OutputTab(self.threadpool.maxThreadCount(), settings)
+        system_threads = self.threadpool.maxThreadCount()
+        available_threads = system_threads - 1 if system_threads > 1 else 1   # Leave 1 thread free for other processes to avoid instability.
+        self.output_tab = OutputTab(available_threads, settings)
         self.modify_tab = ModifyTab(settings)
         self.about_tab = AboutTab()
 

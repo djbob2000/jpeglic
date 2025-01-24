@@ -7,9 +7,12 @@
 
 ### Changed
 
+- Limit max threads to avoid system instability.
+
 ### Fixed
 
 - Optimize RAM usage of SVT-AV1-PSY (#83).
+- Fix RAM leak (#86).
 - Fix delete original edge case (#81).
 - Handle read-only files in the Windows installer automatically (#85).
 

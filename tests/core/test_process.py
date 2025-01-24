@@ -29,6 +29,7 @@ def test_runProcess():
         patch("core.process.subprocess.Popen", autospec=True) as mock_popen,
         patch("core.process.logging.info") as mock_logging_info,
         patch("data.process_manager.ProcessManager.addProcess") as mock_addProcess,
+        patch("data.process_manager.ProcessManager.removeProcess") as mock_removeProcess,
     ):
         mock_process = mock_popen.return_value
         mock_process.communicate.return_value = (expected_stdout, expected_stderr)
@@ -38,6 +39,7 @@ def test_runProcess():
 
         mock_popen.assert_called_once_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=ANY, cwd=None)
         mock_addProcess.assert_called_once_with(mock_process)
+        mock_removeProcess.assert_called_once_with(mock_process)
         mock_process.wait.assert_called_once()
         mock_process.communicate.assert_called_once()
         assert len(mock_logging_info.call_args_list) == 2
@@ -62,6 +64,7 @@ def test_runProcess2_happy_path():
         patch("core.process.subprocess.Popen", autospec=True) as mock_popen,
         patch("core.process.logging.info") as mock_logging_info,
         patch("data.process_manager.ProcessManager.addProcess") as mock_addProcess,
+        patch("data.process_manager.ProcessManager.removeProcess") as mock_removeProcess,
     ):
         mock_process = mock_popen.return_value
         mock_process.communicate.return_value = (stdout, stderr)
@@ -71,6 +74,7 @@ def test_runProcess2_happy_path():
 
         mock_popen.assert_called_once_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=ANY, cwd=None)
         mock_addProcess.assert_called_once_with(mock_process)
+        mock_removeProcess.assert_called_once_with(mock_process)
         mock_process.wait.assert_called_once()
         mock_process.communicate.assert_called_once()
         assert len(mock_logging_info.call_args_list) == 2
@@ -82,6 +86,7 @@ def test_runProcess2_no_output():
         patch("core.process.subprocess.Popen", autospec=True) as mock_popen,
         patch("core.process.logging.info"),
         patch("data.process_manager.ProcessManager.addProcess"),
+        patch("data.process_manager.ProcessManager.removeProcess"),
     ):
         mock_popen.return_value.communicate.return_value = (None, None)
 
