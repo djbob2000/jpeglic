@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Limit max threads to avoid system instability.
+
 ### Fixed
 
 - Fix delete original edge case (#81).

@@ -1,7 +1,7 @@
 TOOLTIPS = {
     # Output tab
     "duplicates": "What to do when an output image of the same name already exists.",
-    "threads": "How many CPU threads to use for conversion.\n\nHigher means faster, but leaves less resources for other processes.\n\nLeave at least one unused or more if you're actively using your computer.",
+    "threads": "How many CPU threads to use for conversion.\n\nHigher means faster, but leaves less resources for other processes.",
     "output_src": "Save the resulting image next to the one you are converting from.",
     "output_ct": """Save the resulting image in the specified location. There are 2 types of paths:\n\n1. Absolute path (e.g. C:/Images/Converted)\n\n2. Relative path (e.g. Converted). Choosing it will save output to a folder located next to the source image.""",
     "keep_dir_struct": "Preserves folder hierarchy when saving images.",

@@ -46,7 +46,7 @@ def test_initial_state(app):
 
     # Conv.
     assert settings["if_file_exists"] == "Rename"
-    assert app.getUsedThreadCount() == 3
+    assert app.getUsedThreadCount() == 4
     
     # After conv.
     assert not app.isClearAfterConvChecked()
