@@ -3,6 +3,7 @@ from threading import RLock
 import configparser
 from pathlib import Path
 import sys
+from typing import Any
 
 # _internal
 # Create new one instead of using constants.py to avoid circular imports.
@@ -22,7 +23,8 @@ class ConfigManager:
         return cls._instance
 
     @classmethod
-    def _initialize(cls):
+    def _initialize(cls) -> None:
+        """Reads config file if exists."""
         with cls._lock:
             if cls._config_location.is_file():
                 try:
@@ -31,16 +33,18 @@ class ConfigManager:
                     logging.error(f"[ConfigManager] {e}")
     
     @classmethod
-    def get(cls, section, option, fallback=None):
+    def get(cls, section: str, option: str, fallback=None) -> Any:
+        """Returns value or fallback if not found."""
         with cls._lock:
             try:
                 return cls._config.get(section, option, fallback=fallback)
-            except configparser.Error:
+            except configparser.Error as e:
                 logging.error(f"[ConfigManager] {e}")
                 return fallback
 
     @classmethod
     def reload(cls) -> None:
+        """Wipes the current config variables and re-reads the config file."""
         with cls._lock:
             cls._config.clear()
             cls._initialize()
