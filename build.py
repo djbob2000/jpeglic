@@ -235,6 +235,7 @@ class Builder():
                     case "innosetup":
                         self._appendInstaller()
                     case "portable":
+                        self._appendConfig(portable=True)
                         self._buildPortableWin()
        
         if self.args.getArg("update_file"):
@@ -321,6 +322,14 @@ class Builder():
             last_built_on.write(f"{platform.system()}_{platform.architecture()}")
 
         print(f"[Building] Finished (built to {self.dst_dir}/{self.project_name})")
+
+    def _appendConfig(self, portable=True):
+        config = "[General]\n"
+
+        if portable:    config += "portable_user_data = True\n"
+
+        with open(Path(self.internal_dir, "config.ini"), "w") as f:
+            f.write(config)
 
     # _build methods transform the directory!
     def _buildAppImage(self):
