@@ -216,7 +216,7 @@ Libraries:
 - [libjxl](https://github.com/libjxl/libjxl) `v0.11.1`
 - [libavif](https://github.com/AOMediaCodec/libavif) `v1.1.1` (AOM `v3.11.0` and [SVT-AV1-PSY](https://github.com/gianni-rosato/svt-av1-psy.git) `v2.3.0-A`)
 - [imagemagick](https://imagemagick.org/) `7.* Q16-HDRI`
-- [exiftool](https://exiftool.org/) `12.92`
+- [exiftool](https://exiftool.org/) `13.*`
 - [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) `3.0.4`
 - [oxipng](https://github.com/shssoichiro/oxipng) `v9.1.2`
 

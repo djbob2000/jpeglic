@@ -4,10 +4,12 @@
 
 - Add static RAM optimizer (#57).
 - Add dynamic RAM optimizer based on resolution (#57).
+- Add support for portable user data (#82).
 
 ### Changed
 
 - Limit max threads to avoid system instability.
+- Update ExifTool to `13.16` (Windows).
 
 ### Fixed
 
