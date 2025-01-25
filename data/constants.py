@@ -46,7 +46,7 @@ if platform.system() == "Windows":
     EXIFTOOL_PATH = os.path.join(BASE_PATH, "exiftool", "exiftool.exe")
     JPEGTRAN_PATH = os.path.join(BASE_PATH, "jpegtran", "jpegtran.exe")
 
-    if ConfigManager().get("General", "portable_user_data", False):
+    if ConfigManager().getboolean("General", "portable_user_data", False):
         CONFIG_LOCATION = os.path.join(PROGRAM_FOLDER, "user_data")
     else:
         CONFIG_LOCATION = os.path.normpath(os.path.expanduser("~/AppData/Local/xl-converter"))
@@ -63,7 +63,7 @@ elif platform.system() == "Linux":
     OXIPNG_PATH = f"{BASE_PATH}/oxipng"
     JPEGTRAN_PATH = os.path.join(BASE_PATH, "jpegtran")
 
-    if ConfigManager().get("General", "portable_user_data", False):
+    if ConfigManager().getboolean("General", "portable_user_data", False):
         CONFIG_LOCATION = os.path.join(PROGRAM_FOLDER, "user_data")
     else:
         CONFIG_LOCATION = os.path.expanduser('~/.config/xl-converter')

@@ -89,6 +89,35 @@ def test_get_exception(caplog):
         assert section in caplog.text
         assert option in caplog.text
 
+def test_getboolean_value_exists():
+    section, option, fallback, expected_value = "Default", "value", False, True
+    with (
+        patch.object(ConfigManager._config, "getboolean", return_value=expected_value) as mock_getboolean,
+    ):
+        assert ConfigManager.getboolean(section, option, fallback) == expected_value
+        mock_getboolean.assert_called_once_with(section, option, fallback=fallback)
+
+def test_getboolean_fallback():
+    section, option, fallback, expected_value = "Default", "value", False, True
+    with (
+        patch.object(ConfigManager._config, "getboolean", return_value=fallback) as mock_getboolean,
+    ):
+        assert ConfigManager.getboolean(section, option, fallback) == fallback
+        mock_getboolean.assert_called_once_with(section, option, fallback=fallback)
+
+def test_getboolean_exception(caplog):
+    section, option, fallback, expected_value = "Default", "value", False, True
+    mock_erorr = configparser.NoOptionError(option, section)
+    caplog.set_level(logging.ERROR)
+
+    with (
+        patch.object(ConfigManager._config, "getboolean", side_effect=mock_erorr) as mock_getboolean,
+    ):
+        assert ConfigManager.getboolean(section, option, fallback) == fallback
+        mock_getboolean.assert_called_once_with(section, option, fallback=fallback)
+        assert section in caplog.text
+        assert option in caplog.text
+
 def test_reload():
     with (
         patch.object(ConfigManager._config, "clear") as mock_clear,

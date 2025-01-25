@@ -41,6 +41,16 @@ class ConfigManager:
             except configparser.Error as e:
                 logging.error(f"[ConfigManager] {e}")
                 return fallback
+    
+    @classmethod
+    def getboolean(cls, section: str, option: str, fallback=False) -> bool:
+        """Returns a boolean value or fallback if not found."""
+        with cls._lock:
+            try:
+                return cls._config.getboolean(section, option, fallback=fallback)
+            except configparser.Error as e:
+                logging.error(f"[ConfigManager] {e}")
+                return fallback
 
     @classmethod
     def reload(cls) -> None:
