@@ -1,6 +1,7 @@
 import logging
 from typing import Literal
 import re
+import os
 
 from data.constants import (
     ALLOWED_INPUT_IMAGE_MAGICK,
@@ -21,6 +22,7 @@ def runBinary(
     src_path: str,
     dst_path: str | None = None,
     args_after_input: bool = False,
+    delete_if_canceled: list[str] = [],
 ) -> (str, str):
     """Replacement for convert().
 
@@ -30,6 +32,7 @@ def runBinary(
         src_path: the absolute path to the source file
         dst_path: an absolute path to the destination file
         args_after_input: insert args after input instead of before
+        delete_if_canceled: a list of files to delete if a task is canceled
     
     Returns:
         (stdout, stderr)
@@ -49,6 +52,14 @@ def runBinary(
     stdout, stderr = runProcess2(*cmd)
 
     if task_status.wasCanceled():
+        for file in delete_if_canceled:
+            if not os.path.isfile(file):
+                continue
+            
+            try:
+                os.remove(file)
+            except OSError as e:
+                logging.error(f"[runBinary] {e}")
         raise CancellationException()
 
     return (stdout, stderr)

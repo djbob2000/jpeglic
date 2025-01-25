@@ -68,6 +68,7 @@ class OutputTab(QWidget):
         self._onDeleteOriginalChanged()
         self._onJXLNormalizeToggled()
         self._onOutputToggled()
+        self._onSmLBitDepthChanged()
 
         # Variables
         self.cached_states = self.getSettings()
@@ -112,11 +113,12 @@ class OutputTab(QWidget):
         self.quality_sb = self.wm.addWidget("quality_sb", SpinBox(), "quality", "quality_all")
         self.quality_sl = self.wm.addWidget("quality_sl", Slider(), "quality", "quality_all")
         self.lossless_cb = self.wm.addWidget("lossless_cb", QCheckBox("Lossless"), "lossless")
-        self.max_compression_cb = self.wm.addWidget("max_compression_cb", QCheckBox("Max Compression"))
         self.jxl_modular_cb = self.wm.addWidget("jxl_modular_cb", QCheckBox("Lossy Modular"), "jxl_losssy_modular")
-        self.smallest_lossless_png_cb = self.wm.addWidget("smallest_lossless_png_cb", QCheckBox("PNG"), "format_pool")
-        self.smallest_lossless_webp_cb = self.wm.addWidget("smallest_lossless_webp_cb", QCheckBox("WebP"), "format_pool")
-        self.smallest_lossless_jxl_cb = self.wm.addWidget("smallest_lossless_jxl_cb", QCheckBox("JPEG XL"), "format_pool")
+        self.smallest_lossless_png_cb = self.wm.addWidget("smallest_lossless_png_cb", QCheckBox("PNG (Oxipng)"), "format_pool", "smallest_lossless")
+        self.smallest_lossless_webp_cb = self.wm.addWidget("smallest_lossless_webp_cb", QCheckBox("WebP"), "format_pool", "smallest_lossless")
+        self.smallest_lossless_jxl_cb = self.wm.addWidget("smallest_lossless_jxl_cb", QCheckBox("JPEG XL"), "format_pool", "smallest_lossless")
+        self.max_compression_cb = self.wm.addWidget("max_compression_cb", QCheckBox("Max Compression"), "smallest_lossless")
+        self.smallest_lossless_bit_depth_l = self.wm.addWidget("smallest_lossless_bit_depth_l", QLabel("Max Bit Depth:"), "smallest_lossless")
         self.chroma_subsampling_l = self.wm.addWidget("chroma_subsampling_l", QLabel("Chroma Subsampling", ), "chroma_subsampling")
         self.chroma_subsampling_jpegli_cmb = self.wm.addWidget("chroma_subsampling_jpegli_cmb", ComboBox(("Default", "4:4:4", "4:2:2", "4:2:0",)), "chroma_subsampling")
         self.chroma_subsampling_aom_av1_cmb = self.wm.addWidget("chroma_subsampling_aom_av1_cmb", ComboBox(("Default", "4:4:4", "4:2:2", "4:2:0", "4:0:0",)), "chroma_subsampling")
@@ -160,10 +162,13 @@ class OutputTab(QWidget):
         self.format_grp_lt.addLayout(createQHBoxLayout(self.lossless_cb, self.jxl_modular_cb))
         self.format_grp_lt.addLayout(createQHBoxLayout(self.smallest_lossless_png_cb, self.smallest_lossless_webp_cb, self.smallest_lossless_jxl_cb))
         self.format_grp_lt.addWidget(self.max_compression_cb)
+        self.format_grp_lt.addWidget(self.smallest_lossless_bit_depth_l)
         self.format_grp_lt.addLayout(createQHBoxLayout(self.chroma_subsampling_l, self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_aom_av1_cmb, self.chroma_subsampling_jpg_cmb, self.chroma_subsampling_svt_av1_psy_cmb))
         self.format_grp_lt.addWidget(self.jxl_png_fallback_cb)
         self.format_grp_lt.addLayout(createQHBoxLayout(self.jxl_normalize_enable_cb, self.jxl_normalize_when_cmb))
         self.format_grp_lt.addWidget(self.jxl_verify_cb)
+
+        self.smallest_lossless_bit_depth_l.setMaximumHeight(13)
 
         # Main
         self.main_lt = QGridLayout(self)
@@ -198,6 +203,7 @@ class OutputTab(QWidget):
         self.convert_btn.clicked.connect(self.convert.emit)
         self.jxl_normalize_enable_cb.toggled.connect(self._onJXLNormalizeToggled)
         self.jxl_normalize_enable_cb.clicked.connect(self._onJXLNormalizeClicked)
+        self.smallest_lossless_webp_cb.toggled.connect(self._onSmLBitDepthChanged)
 
     def _setToolTipsStatic(self):
         """Sets tooltips at once at startup."""
@@ -325,8 +331,7 @@ class OutputTab(QWidget):
         self.wm.setVisibleByTag("effort", cur_format in ("JPEG XL", "AVIF", "WebP", "Lossless JPEG Transcoding"))
         self.wm.setVisibleByTag("jxl_losssy_modular", cur_format == "JPEG XL" and self.jxl_lossy_modular_visible)
         self.wm.setVisibleByTag("lossless", cur_format in ("JPEG XL", "WebP"))
-        self.wm.setVisibleByTag("format_pool", cur_format == "Smallest Lossless")
-        self.max_compression_cb.setVisible(cur_format == "Smallest Lossless")
+        self.wm.setVisibleByTag("smallest_lossless", cur_format == "Smallest Lossless")
         self.chroma_subsampling_l.setVisible(cur_format in ("JPEG", "AVIF"))
         self.chroma_subsampling_jpg_cmb.setVisible(cur_format == "JPEG" and self.jpg_encoder == "libjpeg")
         self.chroma_subsampling_jpegli_cmb.setVisible(cur_format == "JPEG" and self.jpg_encoder == "JPEGLI")
@@ -390,6 +395,12 @@ class OutputTab(QWidget):
         if self.wm.getVar("jxl_normalize_checksum_msg_seen") is None:
             self.notifications.notify("Usage Info", "After \"Normalize\" is applied, JPEG images will have a different checksum, and get slightly larger once reconstructed. Learn more in the manual.")
             self.wm.setVar("jxl_normalize_checksum_msg_seen", True)
+
+    def _onSmLBitDepthChanged(self) -> None:
+        if self.smallest_lossless_webp_cb.isChecked():
+            self.smallest_lossless_bit_depth_l.setText("Max Bit Depth: 8-bit")
+        else:
+            self.smallest_lossless_bit_depth_l.setText("Max Bit Depth: 16-bit")
 
     def onJXLEffort10Enabled(self, enabled: bool) -> None:
         self.enable_jxl_effort_10 = enabled

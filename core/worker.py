@@ -526,7 +526,7 @@ class Worker(QRunnable):
         args = {
             "png": [
                 "-o 4" if self.params["max_compression"] else "-o 2",
-                f"-t {self.available_threads}"
+                f"-t {self.available_threads}",
                 ],
             "webp": [
                 f"-define webp:thread-level={1 if self.available_threads > 1 else 0}",
@@ -540,6 +540,10 @@ class Worker(QRunnable):
             ]
         }
 
+        if "webp" in self.params:
+            args["jxl"].append("--override_bitdepth=8")
+            args["png"].append("--nb")
+
         # Handle metadata
         if self.settings["jxl_lossless_jpeg"]:
             self.lossless_jpeg = self.item_ext in JPEG_ALIASES
@@ -550,22 +554,22 @@ class Worker(QRunnable):
         args["jxl"].extend(metadata.getArgs(CJXL_PATH, self.params["misc"]["keep_metadata"], self.lossless_jpeg))
 
         # Generate files
-        for key in path_pool:
-            match key:
-                case "png":
-                    try:
-                        shutil.copy(self.item_abs_path, path_pool["png"])
-                    except OSError as err:
-                        raise FileException("SL1", f"Failed to copy file. {err}")
-                    optimize(OXIPNG_PATH, path_pool["png"], args["png"], self.n)
-                case "webp":
-                    convert(IMAGE_MAGICK_PATH, self.item_abs_path, path_pool["webp"], args["webp"], self.n)
-                case "jxl":
-                    if self.lossless_jpeg:
-                        src = self.org_item_abs_path
-                    else:
-                        src = self.item_abs_path
-                    convert(CJXL_PATH, src, path_pool["jxl"], args["jxl"], self.n)
+        delete_if_canceled = list(path_pool.values())
+        delete_if_canceled.append(self.item_abs_path)   # Points to proxy
+
+        if "png" in path_pool:
+            try:
+                shutil.copy(self.item_abs_path, path_pool["png"])
+            except OSError as err:
+                raise FileException("SL1", f"Failed to copy file. {err}")
+            runBinary(OXIPNG_PATH, args["png"], path_pool["png"], delete_if_canceled=delete_if_canceled)
+        
+        if "webp" in path_pool:
+            runBinary(IMAGE_MAGICK_PATH, args["webp"], self.item_abs_path, path_pool["webp"], args_after_input=True, delete_if_canceled=delete_if_canceled)
+
+        if "jxl" in path_pool:
+            src = self.org_item_abs_path if self.lossless_jpeg else self.item_abs_path
+            runBinary(CJXL_PATH, args["jxl"], src, path_pool["jxl"], delete_if_canceled=delete_if_canceled)
 
         # Get file sizes
         file_sizes = {}
