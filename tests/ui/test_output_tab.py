@@ -13,7 +13,6 @@ def app(qtbot):
         patch("ui.output_tab.WidgetManager.saveState"),
     ):
         tab = OutputTab(
-            4,
             {
                 "disable_delete_startup": False,
                 "enable_jxl_effort_10": False,
@@ -46,7 +45,6 @@ def test_initial_state(app):
 
     # Conv.
     assert settings["if_file_exists"] == "Rename"
-    assert app.getUsedThreadCount() == 4
     
     # After conv.
     assert not app.isClearAfterConvChecked()

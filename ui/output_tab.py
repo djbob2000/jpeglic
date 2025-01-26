@@ -1,5 +1,6 @@
 from typing import Optional, Dict
 from copy import deepcopy
+import os
 
 from PySide6.QtWidgets import(
     QWidget,
@@ -33,7 +34,7 @@ from data.tooltips import TOOLTIPS
 class OutputTab(QWidget):
     convert = Signal()
     
-    def __init__(self, max_threads, settings):
+    def __init__(self, settings):
         super(OutputTab, self).__init__()
 
         # Components
@@ -42,7 +43,7 @@ class OutputTab(QWidget):
 
         # Variables
         self.prev_format = None
-        self.MAX_THREAD_COUNT = max_threads
+        self.MAX_THREAD_COUNT = max((os.cpu_count() or 1) - 1, 1)
         self.jpg_encoder = settings["jpg_encoder"]
         self.enable_jxl_effort_10 = settings["enable_jxl_effort_10"]
         self.jxl_lossy_modular_visible = settings["jxl_lossy_modular"]
