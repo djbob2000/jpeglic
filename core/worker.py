@@ -496,6 +496,9 @@ class Worker(QRunnable):
                 raise FileException("P1", f"Failed to delete original file. {err}")
 
     def runDynamicRamOptimizer(self) -> None:
+        if self.settings["ram_optimizer"] != "Dynamic":
+            return
+
         with QMutexLocker(self.mutex):
             if not RAMOptimizer.isEnabled():
                 return
