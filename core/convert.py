@@ -59,7 +59,7 @@ def runBinary(
             try:
                 os.remove(file)
             except OSError as e:
-                logging.error(f"[runBinary] {e}")
+                logging.error(f"[runBinary] Failed to remove tmp file. {e}")
         raise CancellationException()
 
     return (stdout, stderr)
@@ -90,7 +90,7 @@ def runJPEGtran(
     return (stdout, stderr)
 
 def convert(encoder_path, src, dst, args = [], n = None):
-    """Universal method for all encoders."""
+    """Universal method for all encoders. Deprecated."""
     cmd = []
     if encoder_path == AVIFENC_PATH:
         cmd = (encoder_path, *parseArgs(args), src, dst)
@@ -103,7 +103,7 @@ def convert(encoder_path, src, dst, args = [], n = None):
         log(cmd, n)
 
 def optimize(bin_path, src, args = [], n = None):
-    """Run a binary targeting a source."""
+    """Run a binary targeting a source. Deprecated."""
     runProcess(bin_path, *parseArgs(args), src)
     if n != None:
         log((bin_path, *parseArgs(args), src), n)
@@ -148,6 +148,7 @@ def getDecoderArgs(decoder_path: str, threads: int) -> list:
         return []
 
 def log(msg, n=None):
+    """Deprecated logging method."""
     if n == None:
         logging.info(f"[Convert] {msg}")
     else:

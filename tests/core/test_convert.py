@@ -82,6 +82,48 @@ def test_runBinary_args_after_input():
         assert mock_runProcess2.call_args_list[1][0][2] == "-arg1"
         assert mock_runProcess2.call_args_list[1][0][3] == "-arg2"
 
+def test_runBinary_delete_if_canceled_not_empty():
+    tmp_files = ["/tmp/file1.jpg", "/tmp/file2.jpg", "/tmp/file3.jpg"]
+    with (
+        patch("core.convert.task_status.wasCanceled", return_value=True),
+        patch("core.convert.runProcess2", return_value=("", "")) as mock_runProcess2,
+        patch("core.convert.os.path.isfile", side_effect=(False, True, True)) as mock_isfile,
+        patch("core.convert.os.remove") as mock_remove,
+    ):
+        with pytest.raises(CancellationException):
+            convert.runBinary(
+                "path/bin",
+                ["-arg1", "-arg2"],
+                "path/src.png",
+                "path/dst.jxl",
+                args_after_input=False,
+                delete_if_canceled=tmp_files,
+            )
+    
+        assert mock_isfile.call_count == 3
+        assert mock_remove.call_count == 2
+        assert mock_remove.call_args_list[0][0][0] == tmp_files[1]
+        assert mock_remove.call_args_list[1][0][0] == tmp_files[2]
+
+def test_runBinary_delete_if_canceled_empty():
+    with (
+        patch("core.convert.task_status.wasCanceled", return_value=True),
+        patch("core.convert.runProcess2", return_value=("", "")) as mock_runProcess2,
+        patch("core.convert.os.path.isfile", return_value=False) as mock_isfile,
+        patch("core.convert.os.remove") as mock_remove,
+    ):
+        with pytest.raises(CancellationException):
+            convert.runBinary(
+                "path/bin",
+                ["-arg1", "-arg2"],
+                "path/src.png",
+                "path/dst.jxl",
+                args_after_input=False,
+                delete_if_canceled=[],
+            )
+        mock_isfile.assert_not_called()
+        mock_remove.assert_not_called()
+
 def test_runJPEGtran_happy_path():
     stdout, stderr = "completed", "test"
     with (
