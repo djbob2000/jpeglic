@@ -64,7 +64,6 @@ TOOLTIPS = {
     "jxl_effort_10": "Raises Effort limit from 9 to 10. Effort 10 is experimental and very slow.\n\n- Lossy: provides a very small visual improvement.\n\n- Lossless: lowers file size.\n\n- Lossless JPEG Transcoding: has a tendency to increase file size. Not recommended.",
     "resample": "Enables resampling mode selection in the modify tab.\n\nThe default (Lanczos) is usually the best. Make sure you know what you're doing.",
     "jxl_int_effort": "Shows or hides the JPEG XL Intelligent Effort option in the Output tab.\n\nThis functionality picks Effort based on context.\n\nIt aimed at providing lower file size but made only a marginal difference.\n\nThis feature will be removed in the future.",
-    "no_exceptions": "The pop-up displaying exceptions encountered during conversion will no longer appear.",
     "exiftool_args": "Arguments used for handling metadata, correspond to the options is the modify tab.\n\nSupported variables:\n\n$src - source image path.\n\n$dst - destination image path.\n\nRemember to add \"-overwrite_original\" to avoid leftover files.",
     "encoder_args": "Additional arguments for the encoders.\n\nMake sure all arguments you add are valid; otherwise, the encoder will stop working.",
 }

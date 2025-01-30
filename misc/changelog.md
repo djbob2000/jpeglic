@@ -22,6 +22,7 @@
 ### Removed
 
 - Remove "JPEG XL - Optimize RAM Usage" option.
+- Remove "Disable Exception Popups" option.
 
 ### Deprecated
 

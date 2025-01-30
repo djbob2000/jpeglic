@@ -98,7 +98,6 @@ def main_window_patched(main_window):
         "settings_tab_getSettings": patch.object(main_window.settings_tab, "getSettings", return_value={
             "play_sound_on_finish": False,
             "play_sound_on_finish_vol": 50,
-            "no_exceptions": False,
         }),
         "finished_sound_play": patch("main.finished_sound.play"),
         "exception_view_isEmpty": patch.object(main_window.exception_view, "isEmpty", return_value=True),
@@ -155,22 +154,22 @@ def test_finishProcessing_play_sound(play_sound_on_finish, main_window_patched):
     else:
         mocks["finished_sound_play"].assert_not_called()
 
-@pytest.mark.parametrize("exception_view_empty, no_exceptions, was_canceled, expected_run", [
-    (False, False, False, True),
-    (True, False, False, False),
-    (False, True, False, False),
-    (False, False, True, False),
-    (False, True, True, False),
+@pytest.mark.parametrize("exception_view_empty, was_canceled, expected_run", [
+    (False, False, True),
+    (True, False, False),
+    (False, False, False),
+    (False, True, False),
+    (False, True, False),
 ])
-def test_finishProcessing_exception_view(exception_view_empty, no_exceptions, was_canceled, expected_run, main_window_patched):
+def test_finishProcessing_exception_view(exception_view_empty, was_canceled, expected_run, main_window_patched):
     main_window, mocks, *_ = main_window_patched
     mocks["exception_view_isEmpty"].return_value = exception_view_empty
     mocks["task_status_wasCanceled"].return_value = was_canceled
-    mocks["settings_tab_getSettings"].return_value = mocks["settings_tab_getSettings"].return_value | {"no_exceptions": no_exceptions}
+    mocks["settings_tab_getSettings"].return_value = mocks["settings_tab_getSettings"].return_value
 
     main_window.finishProcessing()
 
-    if not exception_view_empty and not no_exceptions and not was_canceled:
+    if not exception_view_empty and not was_canceled:
         mocks["exception_view_show"].assert_called_once()
         mocks["exception_view_resizeToContent"].assert_called_once()
     else:

@@ -40,7 +40,6 @@ def test_changeCategory_visibility(category, app, qtbot):
             "ram_optimizer_l", "ram_optimizer_cmb",
             "ram_optimizer_rules_l", "ram_optimizer_rules_te",
             "ram_optimizer_rules_reset_btn",
-            "no_exceptions_cb",
             "jxl_int_effort_cb",
             "jxl_effort_10_cb",
             "custom_resampling_cb",
@@ -153,7 +152,6 @@ def test_resetToDefault(app):
     assert app.no_sorting_cb.isChecked() == False
     assert app.disable_downscaling_startup_cb.isChecked() == True
     assert app.disable_delete_startup_cb.isChecked() == True
-    assert app.no_exceptions_cb.isChecked() == False
     
     assert app.jxl_effort_10_cb.isChecked() == False
     assert app.jxl_lossy_modular_cb.isChecked() == False

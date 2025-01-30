@@ -129,7 +129,7 @@ class MainWindow(QMainWindow):
         if settings["play_sound_on_finish"]:
             finished_sound.play(volume=settings["play_sound_on_finish_vol"])
 
-        if not self.exception_view.isEmpty() and not settings["no_exceptions"] and not task_status.wasCanceled():
+        if not self.exception_view.isEmpty() and not task_status.wasCanceled():
             self.exception_view.resizeToContent()
             self.exception_view.show()
         

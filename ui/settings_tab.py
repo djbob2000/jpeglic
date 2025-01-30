@@ -137,7 +137,6 @@ class SettingsTab(QWidget):
         self.jxl_effort_10_cb = self.wm.addWidget("jxl_effort_10_cb", QCheckBox("JPEG XL - Enable Effort 10", self))
         self.jxl_int_effort_cb = self.wm.addWidget("jxl_int_effort_cb", QCheckBox("JPEG XL - Allow Intelligent Effort (Deprecated)"))
         self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
-        self.no_exceptions_cb = self.wm.addWidget("no_exceptions_cb", QCheckBox("Disable Exception Popups", self))
         self.exiftool_l = QLabel("ExifTool Arguments")
         self.exiftool_wipe_l = QLabel("Wipe")
         self.exiftool_wipe_te = self.wm.addWidget("exiftool_wipe_te", QTextEdit())
@@ -219,7 +218,6 @@ class SettingsTab(QWidget):
         self.settings_lt.addWidget(self.jxl_effort_10_cb)
         self.settings_lt.addWidget(self.jxl_int_effort_cb)
         self.settings_lt.addWidget(self.custom_resampling_cb)
-        self.settings_lt.addWidget(self.no_exceptions_cb)
         self.settings_lt.addWidget(self.exiftool_l)
         self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_wipe_l, self.exiftool_wipe_te))
         self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_preserve_l, self.exiftool_preserve_te))
@@ -309,7 +307,6 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["keep_if_larger"], self.keep_if_larger_cb)
         setToolTip(TOOLTIPS["jxl_effort_10"], self.jxl_effort_10_cb)
         setToolTip(TOOLTIPS["resample"], self.custom_resampling_cb)
-        setToolTip(TOOLTIPS["no_exceptions"], self.no_exceptions_cb)
         setToolTip(TOOLTIPS["exiftool_args"], self.exiftool_wipe_te, self.exiftool_custom_te, self.exiftool_preserve_te, self.exiftool_unsafe_wipe_te)
         setToolTip(TOOLTIPS["encoder_args"], self.avifenc_args_te, self.cjpegli_args_te, self.cjxl_args_te, self.im_args_te)
         setToolTip(TOOLTIPS["jxl_int_effort"], self.jxl_int_effort_cb)
@@ -348,7 +345,6 @@ class SettingsTab(QWidget):
                 "ram_optimizer_l", "ram_optimizer_cmb",
                 "ram_optimizer_rules_l", "ram_optimizer_rules_te",
                 "ram_optimizer_rules_reset_btn",
-                "no_exceptions_cb",
                 "jxl_int_effort_cb",
                 "jxl_effort_10_cb",
                 "custom_resampling_cb",
@@ -455,7 +451,6 @@ class SettingsTab(QWidget):
             "sorting_disabled": self.no_sorting_cb.isChecked(),
             "disable_downscaling_startup": self.disable_downscaling_startup_cb.isChecked(),
             "disable_delete_startup": self.disable_delete_startup_cb.isChecked(),
-            "no_exceptions": self.no_exceptions_cb.isChecked(),
             "enable_jxl_effort_10": self.jxl_effort_10_cb.isChecked(),
             "disable_progressive_jpegli": self.disable_progressive_jpegli_cb.isChecked(),
             "enable_custom_args": self.custom_args_cb.isChecked(),
@@ -498,7 +493,6 @@ class SettingsTab(QWidget):
         self.disable_downscaling_startup_cb.setChecked(True)
         self.disable_delete_startup_cb.setChecked(True)
         self.theme_cmb.setCurrentIndex(0)
-        self.no_exceptions_cb.setChecked(False)
         self.quality_prec_snap_cb.setChecked(False)
         self.jxl_lossless_jpeg_cb.setChecked(False)
         self.play_sound_on_finish_cb.setChecked(False)
