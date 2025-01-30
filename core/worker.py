@@ -240,10 +240,9 @@ class Worker(QRunnable):
     def convert(self):
         args = []
         encoder = None
-        format = self.params["format"]
 
         # Prepare args
-        match format:
+        match self.params["format"]:
             case "JPEG XL":
                 args = ["" for i in range(4)]   # Legacy
 
@@ -351,29 +350,21 @@ class Worker(QRunnable):
             self.scl_params["args"] = args
             self.scl_params["jxl_int_e"] = self.params["intelligent_effort"]
 
-            if format == "PNG":
+            if self.params["format"] == "PNG":
                 decodeAndDownscale(self.scl_params, self.item_ext, self.params["misc"]["keep_metadata"], self.mutex)
             else:
                 downscale(self.scl_params, self.mutex)
         else:   # No downscaling
-            if format == "JPEG XL" and self.params["intelligent_effort"]:
+            if self.params["format"] == "JPEG XL" and self.params["intelligent_effort"]:
                 with QMutexLocker(self.mutex):
                     path_e7 = getUniqueTmpFilePath(self.output_dir, "jxl")
                     path_e9 = getUniqueTmpFilePath(self.output_dir, "jxl")
                 
                 args[1] = "-e 7"
-                convert(encoder, self.item_abs_path, path_e7, args, self.n)
-
-                if task_status.wasCanceled():
-                    try:
-                        os.remove(path_e7)
-                    except OSError as err:
-                        raise FileException("C1", err)
-                    
-                    raise CancellationException()
+                runBinary(encoder, args, self.item_abs_path, path_e7, delete_if_canceled=[path_e7])
 
                 args[1] = "-e 9"
-                convert(encoder, self.item_abs_path, path_e9, args, self.n)
+                runBinary(encoder, args, self.item_abs_path, path_e9, delete_if_canceled=[path_e7, path_e9])
 
                 try:
                     if os.path.getsize(path_e9) < os.path.getsize(path_e7):
@@ -496,9 +487,6 @@ class Worker(QRunnable):
                 raise FileException("P1", f"Failed to delete original file. {err}")
 
     def runDynamicRamOptimizer(self) -> None:
-        if self.settings["ram_optimizer"] != "Dynamic":
-            return
-
         with QMutexLocker(self.mutex):
             if not RAMOptimizer.isEnabled():
                 return
