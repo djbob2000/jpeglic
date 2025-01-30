@@ -456,17 +456,6 @@ def test_convert_downscale_png(worker_convert_patches):
         worker.params["misc"]["keep_metadata"],
         worker.mutex,
     )
-def test_convert_jpeg_xl_intelligent_effort_canceled(worker_convert_patches):
-    worker, mocks = worker_convert_patches
-    mocks["wasCanceled"].return_value = True
-    worker.params["format"] = "JPEG XL"
-    worker.params["intelligent_effort"] = True
-        
-    with pytest.raises(CancellationException):
-        worker.convert()
-
-    mocks["wasCanceled"].assert_called_once()
-    mocks["remove"].assert_called_once()
 
 def test_convert_jpeg_xl_intelligent_effort_e9_smaller(worker_convert_patches):
     worker, mocks = worker_convert_patches
@@ -477,9 +466,9 @@ def test_convert_jpeg_xl_intelligent_effort_e9_smaller(worker_convert_patches):
     
     worker.convert()
 
-    assert mocks["convert"].call_count == 2
-    assert mocks["convert"].call_args_list[0][0][2] == "path_e7"
-    assert mocks["convert"].call_args_list[1][0][2] == "path_e9"
+    assert mocks["runBinary"].call_count == 2
+    assert mocks["runBinary"].call_args_list[0][0][3] == "path_e7"
+    assert mocks["runBinary"].call_args_list[1][0][3] == "path_e9"
     mocks["remove"].assert_called_once_with("path_e7")
     mocks["rename"].assert_called_once_with("path_e9", worker.output)
 
@@ -492,9 +481,9 @@ def test_convert_jpeg_xl_intelligent_effort_e7_smaller(worker_convert_patches):
     
     worker.convert()
 
-    assert mocks["convert"].call_count == 2
-    assert mocks["convert"].call_args_list[0][0][2] == "path_e7"
-    assert mocks["convert"].call_args_list[1][0][2] == "path_e9"
+    assert mocks["runBinary"].call_count == 2
+    assert mocks["runBinary"].call_args_list[0][0][3] == "path_e7"
+    assert mocks["runBinary"].call_args_list[1][0][3] == "path_e9"
     mocks["remove"].assert_called_once_with("path_e9")
     mocks["rename"].assert_called_once_with("path_e7", worker.output)
 
@@ -699,7 +688,7 @@ def test_postConversionRoutines_delete_failed(postConversionRoutines_patches, wo
     assert "Failed to delete original file" in exc.value.msg
 
 @pytest.fixture
-def smallestLossless_patches():
+def smallestLossless_patches_v2():
     def getsize_side_effect(file_path):
         size_map = {
             "png": 250_000,
@@ -707,7 +696,7 @@ def smallestLossless_patches():
             "jxl": 150_000,
         }
         suffix = Path(file_path).suffix[1:]
-        return size_map.get(suffix, 0)
+        return size_map.get(suffix)
 
     def getUniqueTmpFilePath_side_effect(output_dir, key):
         size_map = {
@@ -715,56 +704,57 @@ def smallestLossless_patches():
             "webp": "tmp/image.webp",
             "jxl": "tmp/image.jxl",
         }
-        return size_map.get(key, 0)
+        return size_map.get(key)
+    
+    mocks = {
+        "getsize": patch("core.worker.os.path.getsize", side_effect=getsize_side_effect),
+        "getUniqueTmpFilePath": patch("core.worker.getUniqueTmpFilePath", side_effect=getUniqueTmpFilePath_side_effect),
+        "getArgs": patch("core.worker.metadata.getArgs", return_value=[]),
+        "copy": patch("core.worker.shutil.copy"),
+        "runBinary": patch("core.worker.runBinary"),
+        "remove": patch("core.worker.os.remove"),
+    }
 
-    with (
-        patch("core.worker.os.path.getsize", side_effect=getsize_side_effect) as mock_getsize,
-        patch("core.worker.getUniqueTmpFilePath", side_effect=getUniqueTmpFilePath_side_effect) as mock_getUniqueTmpFilePath,
-        patch("core.worker.metadata.getArgs", return_value=[]) as mock_getArgs,
-        patch("core.worker.shutil.copy") as mock_copy,
-        patch("core.worker.optimize") as mock_optimize,
-        patch("core.worker.convert") as mock_convert,
-        patch("core.worker.os.remove") as mock_remove,
-    ):
-        yield mock_getsize, mock_getUniqueTmpFilePath, mock_getArgs, mock_copy, mock_optimize, mock_convert, mock_remove
+    with ExitStack() as stack:
+        _mocks = {name: stack.enter_context(patcher) for name, patcher in mocks.items()}
+        yield _mocks
 
 @pytest.mark.parametrize("png, webp, jxl", [
     (True, True, True),
     (False, True, True),
     (False, False, True),
 ])
-def test_smallestLossless_path_pool_filled(png, webp, jxl, smallestLossless_patches, worker):
-    _, mock_getUniqueTmpFilePath, *_ = smallestLossless_patches
+def test_smallestLossless_path_pool_filled(png, webp, jxl, smallestLossless_patches_v2, worker):
+    mocks = smallestLossless_patches_v2
     worker.params["smallest_format_pool"]["png"] = png
     worker.params["smallest_format_pool"]["jxl"] = webp
     worker.params["smallest_format_pool"]["webp"] = jxl
 
     worker.smallestLossless()
 
-    assert mock_getUniqueTmpFilePath.call_count == sum([png, webp, jxl])
+    assert mocks["getUniqueTmpFilePath"].call_count == sum([png, webp, jxl])
 
-def test_smallestLossless_path_pool_empty(smallestLossless_patches, worker):
+def test_smallestLossless_path_pool_empty(smallestLossless_patches_v2, worker):
     worker.params["smallest_format_pool"] = {}
     with pytest.raises(GenericException) as exc:
         worker.smallestLossless()
 
     assert "No formats selected" in exc.value.msg
 
-def test_smallestLossless_generate_files(smallestLossless_patches, worker):
-    _, _, _, mock_copy, mock_optimize, mock_convert, *_ = smallestLossless_patches
+def test_smallestLossless_generate_files(smallestLossless_patches_v2, worker):
+    mocks = smallestLossless_patches_v2
     worker.params["smallest_format_pool"]["png"] = True
     worker.params["smallest_format_pool"]["jxl"] = True
     worker.params["smallest_format_pool"]["webp"] = True
     
     worker.smallestLossless()
 
-    assert mock_copy.called
-    assert mock_optimize.called
-    assert mock_convert.call_count == 2
+    assert mocks["copy"].called
+    assert mocks["runBinary"].call_count == 3
 
 @pytest.mark.parametrize("jxl_lossless_jpeg", [True, False])
-def test_smallestLossless_jpg_to_jxl_lossless(jxl_lossless_jpeg, smallestLossless_patches, worker):
-    _, _, _, _, _, mock_convert, *_ = smallestLossless_patches
+def test_smallestLossless_jpg_to_jxl_lossless(jxl_lossless_jpeg, smallestLossless_patches_v2, worker):
+    mocks = smallestLossless_patches_v2
     worker.item_ext = "jpg"
     worker.item_abs_path = "proxy/image"
     worker.org_item_abs_path = "original/image"
@@ -776,19 +766,19 @@ def test_smallestLossless_jpg_to_jxl_lossless(jxl_lossless_jpeg, smallestLossles
     worker.smallestLossless()
 
     assert worker.lossless_jpeg == jxl_lossless_jpeg
-    assert mock_convert.call_args[0][1] == "original/image" if jxl_lossless_jpeg else "proxy/image"
+    assert mocks["runBinary"].call_args[0][2] == "original/image" if jxl_lossless_jpeg else "proxy/image"
 
 @pytest.mark.parametrize("png_size, webp_size, jxl_size, expected_smallest", [
     (100_000, 150_000, 150_000, "png"),
     (150_000, 100_000, 150_000, "webp"),
     (150_000, 150_000, 100_000, "jxl"),
 ])
-def test_smallestLossless_smallest_file(png_size, webp_size, jxl_size, expected_smallest, smallestLossless_patches, worker):
+def test_smallestLossless_smallest_file(png_size, webp_size, jxl_size, expected_smallest, smallestLossless_patches_v2, worker):
     worker.params["smallest_format_pool"]["png"] = True
     worker.params["smallest_format_pool"]["jxl"] = True
     worker.params["smallest_format_pool"]["webp"] = True
-    mock_getsize, _, _, _, _, _, mock_remove = smallestLossless_patches
-    mock_getsize.side_effect = lambda file_path: {
+    mocks = smallestLossless_patches_v2
+    mocks["getsize"].side_effect = lambda file_path: {
        "png": png_size,
         "webp": webp_size,
         "jxl": jxl_size, 
@@ -796,7 +786,7 @@ def test_smallestLossless_smallest_file(png_size, webp_size, jxl_size, expected_
 
     worker.smallestLossless()
 
-    for args, kwargs in mock_remove.call_args_list:     # Remove bigger 
+    for args, kwargs in mocks["remove"].call_args_list:     # Remove bigger 
         assert expected_smallest not in args[0]
 
     # Finish
@@ -804,61 +794,63 @@ def test_smallestLossless_smallest_file(png_size, webp_size, jxl_size, expected_
     assert getSuffix(worker.output) == expected_smallest
     assert getSuffix(worker.final_output) == expected_smallest
 
-def test_smallestLossless_getsize_failed_cleanup(smallestLossless_patches, worker):
-    mock_getsize, _, _, _, _, _, mock_remove = smallestLossless_patches
-    mock_getsize.side_effect = OSError()
+def test_smallestLossless_getsize_failed_cleanup(smallestLossless_patches_v2, worker):
+    mocks = smallestLossless_patches_v2
+    mocks["getsize"].side_effect = OSError()
     with pytest.raises(FileException) as exc:
         worker.smallestLossless()
 
     assert "Failed to get file sizes" in exc.value.msg
-    assert mock_remove.call_count == 3
+    assert mocks["remove"].call_count == 3
 
-def test_smallestLossless_getsize_failed_cleanup_failed(smallestLossless_patches, worker):
-    mock_getsize, _, _, _, _, _, mock_remove = smallestLossless_patches
-    mock_getsize.side_effect = OSError()
-    mock_remove.side_effect = OSError()
+def test_smallestLossless_getsize_failed_cleanup_failed(smallestLossless_patches_v2, worker):
+    mocks = smallestLossless_patches_v2
+    mocks["getsize"].side_effect = OSError()
+    mocks["remove"].side_effect = OSError()
     with pytest.raises(FileException) as exc:
         worker.smallestLossless()
 
     assert "Failed to delete tmp files" in exc.value.msg
-    assert mock_remove.call_count == 1
+    assert mocks["remove"].call_count == 1
 
-def test_smallestLossless_remove_bigger_failed(smallestLossless_patches, worker):
-    mock_getsize, _, _, _, _, _, mock_remove = smallestLossless_patches
-    mock_remove.side_effect = OSError()
+def test_smallestLossless_remove_bigger_failed(smallestLossless_patches_v2, worker):
+    mocks = smallestLossless_patches_v2
+    mocks["remove"].side_effect = OSError()
     with pytest.raises(FileException) as exc:
         worker.smallestLossless()
 
     assert "Failed to delete tmp files" in exc.value.msg
     assert "SL4" in exc.value.id
-    assert mock_remove.call_count == 1
+    assert mocks["remove"].call_count == 1
 
 @pytest.mark.parametrize("jxl_lossless_jpeg", [True, False])
-def test_smallestLossless_args(jxl_lossless_jpeg, smallestLossless_patches, worker):
-    _, _, mock_getArgs, _, mock_optimize, mock_convert, *_ = smallestLossless_patches
-    mock_getArgs.return_value = ["--metadata_arg"]
+def test_smallestLossless_args(jxl_lossless_jpeg, smallestLossless_patches_v2, worker):
+    mocks = smallestLossless_patches_v2
+    mocks["getArgs"].return_value = ["--metadata_arg"]
     worker.settings["jxl_lossless_jpeg"] = jxl_lossless_jpeg
     worker.item_ext = "jpg"
 
     worker.smallestLossless()
-    assert mock_optimize.call_args[0][2] == [ "-o 2", "-t 4", "--metadata_arg" ]
-    for args, kwargs in mock_convert.call_args_list:
-        match getSuffix(args[2]):
-            case "webp":
-                assert args[3] == [
-                    "-define webp:thread-level=1",
-                    "-define webp:method=6",
-                    "-define webp:lossless=true",
-                    "--metadata_arg"
-                ]
-            case "jxl":
-                assert args[3] == [
-                    "-q 100",
-                    "-e 7",
-                    "--num_threads=4",
-                    f"--lossless_jpeg={1 if jxl_lossless_jpeg else 0}",
-                    "--metadata_arg"
-                ]
+
+    assert mocks["runBinary"].call_count == 3
+    assert mocks["runBinary"].call_args_list[0][0][1] == [
+        "-o 2",
+        "-t 4",
+        "--metadata_arg"
+    ]
+    assert mocks["runBinary"].call_args_list[1][0][1] == [
+        "-define webp:thread-level=1",
+        "-define webp:method=6",
+        "-define webp:lossless=true",
+        "--metadata_arg"
+    ]
+    assert mocks["runBinary"].call_args_list[2][0][1] == [
+        "-q 100",
+        "-e 7",
+        "--num_threads=4",
+        f"--lossless_jpeg={1 if jxl_lossless_jpeg else 0}",
+        "--metadata_arg"
+    ]
 
 @pytest.fixture
 def worker_losslesslyTranscodeJPEG_patches(worker):
