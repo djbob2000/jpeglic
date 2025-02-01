@@ -102,7 +102,7 @@ class ExceptionView(QDialog):
         self.setWindowIcon(QIcon(ICON_SVG))
         self.resize(700, 352)
 
-    def addItem(self, id_str: str, exception: str, source: str):
+    def addItem(self, id_str: str, exception: str, source: str) -> None:
         item = QTreeWidgetItem()
 
         item.setText(0, id_str)
@@ -112,10 +112,10 @@ class ExceptionView(QDialog):
 
         self.exceptions_t.addTopLevelItem(item)
 
-    def clear(self):
+    def clear(self) -> None:
         self.exceptions_t.clear()
 
-    def saveToFile(self):
+    def saveToFile(self) -> None:
         if self.isEmpty():
             self.notifications.notify("Empty List", "Exception list is empty, there is nothing to save.")
             return
@@ -147,8 +147,7 @@ class ExceptionView(QDialog):
 
         self._writeCsv(dlg.toLocalFile(), rows)
 
-    @staticmethod
-    def _writeCsv(file_path: str, rows: list[tuple[str, str, str]]) -> None:
+    def _writeCsv(self, file_path: str, rows: list[tuple[str, ...]]) -> None:
         """Internal methods for writing CSV file."""
         try:
             with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
@@ -157,13 +156,13 @@ class ExceptionView(QDialog):
         except OSError as e:
             self.notifications.notifyDetailed("Error", "Failed to save file", str(e))
 
-    def resizeToContent(self):
+    def resizeToContent(self) -> None:
         self.exceptions_t.resizeColumnToContents(0)
     
-    def isEmpty(self):
+    def isEmpty(self) -> bool:
         return self.exceptions_t.topLevelItemCount() == 0
     
-    def reset(self):
+    def reset(self) -> None:
         """Runs close() then clear()."""
         self.close()
         self.clear()
