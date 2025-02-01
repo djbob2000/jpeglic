@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
         self.modify_tab = ModifyTab(settings)
         self.about_tab = AboutTab()
 
-        self.exception_view = ExceptionView(settings, parent=self)
+        self.exception_view = ExceptionView(parent=self)
         self.notifications = Notifications(self)
         self.progress_dlg = ProgressDialog(parent=self, title="Converting...", cancelable=True)
 

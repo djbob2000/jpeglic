@@ -11,6 +11,7 @@
 - Limit max threads to avoid system instability.
 - Update ExifTool to `13.16` (Windows).
 - Rework smallest lossless mode.
+- Rework the Exception View.
 
 ### Fixed
 

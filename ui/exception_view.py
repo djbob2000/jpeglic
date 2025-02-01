@@ -1,140 +1,167 @@
 import csv
 import platform
-from pathlib import Path
+import os
 
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
     QHBoxLayout,
-    QCheckBox,
-    QTableWidget,
     QAbstractItemView,
     QPushButton,
-    QTableWidgetItem,
-    QHeaderView,
     QFileDialog,
     QSpacerItem,
     QSizePolicy,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QStyledItemDelegate,
+    QStyle,
 )
 from PySide6.QtCore import (
-    Signal,
     Qt,
     QUrl,
 )
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import (
+    QIcon,
+)
 
 from data.constants import ICON_SVG, VERSION
 from ui import Notifications
 
+class ItemDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        return None
+
+    def sizeHint(self, option, index):
+        size = super().sizeHint(option, index)
+        if widget := option.widget:
+            text = index.data()
+            metrics = widget.fontMetrics()
+            width = widget.columnWidth(index.column())
+            rect = metrics.boundingRect(
+                0, 0,
+                width, 1000,
+                Qt.TextWordWrap, str(text)
+            )
+            size.setHeight(rect.height() + 10)
+        return size
+
+    def paint(self, painter, option, index):
+        option.state &= ~QStyle.State_MouseOver
+        option.state &= ~QStyle.State_HasFocus
+        super().paint(painter, option, index)
+
 class ExceptionView(QDialog):
-    def __init__(self, settings, parent=None):
-        super(ExceptionView, self).__init__(parent)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
-        
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.parent = parent
+
+        self._setupWidgets()
+        self._setupSignals()
+        self._setupLayouts()
+    
+    def _setupWidgets(self):
         self.notifications = Notifications(self)
 
-        # Table
-        headers = [
-            "ID",
-            "Exception",
-            "Source",
-        ]
+        self.exceptions_t = QTreeWidget(self.parent)
+        self.exceptions_t.setRootIsDecorated(False)
+        self.exceptions_t.setHeaderLabels(("ID", "Exception", "Source",))
+        self.exceptions_t.setItemDelegate(ItemDelegate())
+        self.exceptions_t.setWordWrap(True)
+        self.exceptions_t.setUniformRowHeights(False)
+        self.exceptions_t.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        # self.exceptions_t.setColumnWidth(0, 75)
+        self.exceptions_t.setColumnWidth(1, 450)
 
-        self.table = QTableWidget(0, len(headers))
-        self.table.setHorizontalHeaderLabels(headers)
-        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.table.verticalHeader().setVisible(False)
-        self.table.setSortingEnabled(False)
-        self.table.setShowGrid(False)
-
-        # Bottom
-        btm_lt = QHBoxLayout()
         self.close_btn = QPushButton("Close")
-        self.close_btn.clicked.connect(self.close)
         self.save_to_file_btn = QPushButton("Save to File")
         self.save_to_file_btn.clicked.connect(self.saveToFile)
 
-        btm_lt.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
-        btm_lt.addWidget(self.save_to_file_btn)
-        btm_lt.addWidget(self.close_btn)
+    def _setupSignals(self):
+        self.close_btn.clicked.connect(self.close)
+    
+    def _setupLayouts(self):
+        # Bottom
+        self.buttons_hb = QHBoxLayout()
+        self.buttons_hb.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.buttons_hb.addWidget(self.save_to_file_btn)
+        self.buttons_hb.addWidget(self.close_btn)
 
-        btm_lt.setStretch(0, 2)
-        btm_lt.setStretch(1, 1)
-        btm_lt.setStretch(2, 2)
+        self.buttons_hb.setStretch(0, 2)
+        self.buttons_hb.setStretch(1, 1)
+        self.buttons_hb.setStretch(2, 2)
 
         # Layout
         self.main_lt = QVBoxLayout()
-        self.main_lt.addWidget(self.table)
-        self.main_lt.addLayout(btm_lt)
+        self.main_lt.addWidget(self.exceptions_t)
+        self.main_lt.addLayout(self.buttons_hb)
         self.setLayout(self.main_lt)
 
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
         self.setWindowTitle("Exceptions Occurred")
         self.setWindowIcon(QIcon(ICON_SVG))
-        self.resize(650,300)
+        self.resize(700, 352)
 
-    def addItem(self, _id, exception, source):
-        row_pos = self.table.rowCount()
-        self.table.insertRow(row_pos)
+    def addItem(self, id_str: str, exception: str, source: str):
+        item = QTreeWidgetItem()
 
-        self._setItem(row_pos, 0, _id, Qt.AlignCenter)
-        self._setItem(row_pos, 1, exception)
-        self._setItem(row_pos, 2, source, Qt.AlignCenter)
+        item.setText(0, id_str)
+        item.setTextAlignment(0, Qt.AlignCenter)
+        item.setText(1, exception)
+        item.setText(2, source)
 
-    def _setItem(self, row, col, value, align = Qt.AlignVCenter | Qt.AlignLeft):
-        item = QTableWidgetItem()
-        item.setTextAlignment(align)
-        item.setData(Qt.DisplayRole, value)
-        self.table.setItem(row, col, item)
+        self.exceptions_t.addTopLevelItem(item)
 
     def clear(self):
-        while self.table.rowCount() > 0:
-            self.table.removeRow(0)
+        self.exceptions_t.clear()
 
     def saveToFile(self):
-        if self.table.rowCount() == 0:
+        if self.isEmpty():
             self.notifications.notify("Empty List", "Exception list is empty, there is nothing to save.")
             return
 
         dlg, _ = QFileDialog.getSaveFileUrl(
-            self,
-            "Save Exceptions",
-            QUrl.fromLocalFile("xl_converter_exceptions.csv"),
-            "CSV (*.csv)"
+            parent=self,
+            caption="Save Exceptions",
+            dir=QUrl.fromLocalFile(os.path.expanduser("~/xl_converter_exceptions.csv")),
+            filter="CSV (*.csv)",
         )
 
         if not dlg.isValid():
             return
         
-        try:
-            with open(dlg.toLocalFile(), "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
-                
-                # Header
-                writer.writerow(("Version", VERSION))
-                writer.writerow(("OS", platform.system()))
+        rows = [
+            ("Version", VERSION),
+            ("OS", platform.system()),
+            ("Exceptions",),
+            ("ID", "Exception", "Filename"),
+        ]
 
-                # Row data
-                writer.writerow(("Exceptions",))
-                writer.writerow(("ID", "Exception", "Filename"))
-                for row in range(self.table.rowCount()):
-                    row_data = (
-                        self.table.item(row, 0).text(),
-                        self.table.item(row, 1).text(),
-                        self.table.item(row, 2).text(),
-                    )
-                    writer.writerow(row_data)
-        except OSError as err:
-            self.notifications.notifyDetailed("Error", "Failed to save file", str(err))
+        rows.extend([
+            (
+                self.exceptions_t.topLevelItem(i).text(0),
+                self.exceptions_t.topLevelItem(i).text(1),
+                self.exceptions_t.topLevelItem(i).text(2),
+            ) for i in range(self.exceptions_t.topLevelItemCount())
+        ])
+
+        self._writeCsv(dlg.toLocalFile(), rows)
+
+    @staticmethod
+    def _writeCsv(file_path: str, rows: list[tuple[str, str, str]]) -> None:
+        """Internal methods for writing CSV file."""
+        try:
+            with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
+                writer = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
+                writer.writerows(rows)
+        except OSError as e:
+            self.notifications.notifyDetailed("Error", "Failed to save file", str(e))
 
     def resizeToContent(self):
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.Stretch)
-        # self.table.setColumnWidth(1, 450)
-        self.table.resizeRowsToContents()
+        self.exceptions_t.resizeColumnToContents(0)
     
     def isEmpty(self):
-        return self.table.rowCount() == 0
+        return self.exceptions_t.topLevelItemCount() == 0
     
     def reset(self):
         """Runs close() then clear()."""

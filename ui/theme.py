@@ -95,14 +95,26 @@ def _createTheme(
         min-height: 50px;
     }}
 
-    QScrollBar::handle:vertical:hover {{
+    QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {{
         background: {border};
     }}
 
-    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical, QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
         border: none;
         width: 0;
         height: 0;
+    }}
+
+    QScrollBar:horizontal {{
+        border: none;
+        height: 16px;
+        background-color: {canvas};
+        margin: 2px;
+    }}
+
+    QScrollBar::handle:horizontal {{
+        border: none;
+        background: {border_faded};
     }}
 
     QPushButton {{
