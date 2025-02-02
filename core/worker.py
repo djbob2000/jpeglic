@@ -91,8 +91,8 @@ class Worker(QRunnable):
         self.scl_params = None
         self.anchor_path = anchor_path        # keep_dir_struct
     
-    def logException(self, id: str, msg: str):
-        self.signals.exception.emit(id, msg, str(Path(self.org_item_abs_path).name))
+    def logException(self, id_str: str, msg: str):
+        self.signals.exception.emit(id_str, msg, str(self.org_item_abs_path))
 
     @Slot()
     def run(self):

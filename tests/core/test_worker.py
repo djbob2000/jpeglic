@@ -104,13 +104,15 @@ def finishConversion_patches():
 
 
 def test_logException(worker):
-    worker.item_abs_path = str(Path("/test/path/image.png"))
-    spy = QSignalSpy(worker.signals.exception)
-    worker.logException("ID0", "Exception")
+    id_str, msg, source = "ID0", "Exception", str(Path("/test/path/image.png"))
 
-    assert spy.at(0)[0] == "ID0", "Exception"
-    assert spy.at(0)[1] == "Exception"
-    assert spy.at(0)[2] == "image.png"
+    worker.org_item_abs_path = source
+    spy = QSignalSpy(worker.signals.exception)
+    worker.logException(id_str, msg)
+
+    assert spy.at(0)[0] == id_str
+    assert spy.at(0)[1] == msg
+    assert spy.at(0)[2] == source
 
 @patch("core.worker.task_status.wasCanceled", return_value=True)
 def test_run_canceled(mock_wasCanceled, worker):
