@@ -68,7 +68,7 @@ class MainWindow(QMainWindow):
         settings = self.settings_tab.getSettings()
         self.input_tab = InputTab(settings)
         self.output_tab = OutputTab(settings)
-        self.modify_tab = ModifyTab(settings)
+        self.modify_tab = ModifyTab(settings, self.output_tab.getSettings())
         self.about_tab = AboutTab()
 
         self.exception_view = ExceptionView(parent=self)
@@ -101,6 +101,7 @@ class MainWindow(QMainWindow):
         
         self.input_tab.convert.connect(self.convert)
         self.output_tab.convert.connect(self.convert)
+        self.output_tab.file_format_changed.connect(self.modify_tab.onFileFormatChanged)
         self.modify_tab.convert.connect(self.convert)
         self.settings_tab.signals.sorting_toggled.connect(self.input_tab.disableSorting)
         self.settings_tab.signals.jxl_effort_10_toggled.connect(self.output_tab.onJXLEffort10Enabled)

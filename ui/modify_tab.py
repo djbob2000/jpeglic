@@ -34,9 +34,10 @@ MAX_FILE_SIZE = 1024**2   # KiB
 class ModifyTab(QWidget):
     convert = Signal()
 
-    def __init__(self, settings):
+    def __init__(self, settings, output_tab_settings):
         super(ModifyTab, self).__init__()
         self.wm = WidgetManager("ModifyTab")
+        self.file_format = output_tab_settings["format"]
 
         # General setup
         self._setupWidgets()
@@ -55,6 +56,7 @@ class ModifyTab(QWidget):
         if settings["disable_downscaling_startup"]:
             self.disableDownscaling()
         self.toggleCustomResampling(settings["custom_resampling"])
+        self._updateFileFormat()
 
         # Vars
         self.resample_visible = False
@@ -244,6 +246,15 @@ class ModifyTab(QWidget):
         self.wm.setVisibleByTag("shortest", index == "Shortest Side")
         self.wm.setVisibleByTag("longest", index == "Longest Side")
         self.wm.setVisibleByTag("megapixels", index == "Megapixels")
+
+    def onFileFormatChanged(self, new_file_format: str) -> None:
+        self.file_format = new_file_format
+        self._updateFileFormat()
+    
+    def _updateFileFormat(self) -> None:
+        enabled = self.file_format not in ("Lossless JPEG Transcoding", "JPEG Reconstruction")
+        self.metadata_cmb.setEnabled(enabled)
+        self.metadata_l.setEnabled(enabled)
 
     def _returnDownscalingEnabled(self) -> bool:
         if not self.downscale_cb.isChecked():

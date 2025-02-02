@@ -27,12 +27,13 @@ from core.utils import dictToList
 from ui.slider import Slider
 from ui.combobox import ComboBox
 from ui.spinbox import SpinBox
-from ui.utils import setToolTip, isPathValidStr, createQHBoxLayout
+from ui.utils import setToolTip, isPathValidStr, createQHBoxLayout, blockSignals
 from ui.notifications import Notifications
 from data.tooltips import TOOLTIPS
 
 class OutputTab(QWidget):
     convert = Signal()
+    file_format_changed = Signal(str)
     
     def __init__(self, settings):
         super(OutputTab, self).__init__()
@@ -57,8 +58,9 @@ class OutputTab(QWidget):
         self._setToolTipsStatic()
 
         # Load states
-        self.resetToDefault()
-        self.wm.loadState()
+        with blockSignals(self.format_cmb):
+            self.resetToDefault()
+            self.wm.loadState()
         
         # Update states
         if settings["disable_delete_startup"]:
@@ -196,6 +198,7 @@ class OutputTab(QWidget):
         self.choose_output_ct_btn.clicked.connect(self._chooseOutput)        
         self.choose_output_ct_rb.toggled.connect(self._onOutputToggled)
         self.format_cmb.currentIndexChanged.connect(self._onFormatChange)
+        self.format_cmb.currentTextChanged.connect(self.file_format_changed)
         self.int_effort_cb.toggled.connect(self._onEffortToggled)
         self.quality_sl.valueChanged.connect(lambda n: self.quality_sb.setValue(n))
         self.quality_sb.valueChanged.connect(lambda n: self.quality_sl.setValue(n))

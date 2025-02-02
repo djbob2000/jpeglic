@@ -12,6 +12,7 @@
 - Update ExifTool to `13.16` (Windows).
 - Rework smallest lossless mode.
 - Rework the Exception View.
+- Disable Metadata combo box when unavailable.
 
 ### Fixed
 

@@ -12,10 +12,15 @@ def app(qtbot):
         patch("ui.modify_tab.WidgetManager.loadState"),
         patch("ui.modify_tab.WidgetManager.saveState"),
     ):
-        tab = ModifyTab({
-            "disable_downscaling_startup": False,
-            "custom_resampling": False,
-        })
+        tab = ModifyTab(
+            {
+                "disable_downscaling_startup": False,
+                "custom_resampling": False,
+            },
+            {
+                "format": "JPEG XL"
+            }
+        )
         qtbot.addWidget(tab)
         return tab
 
@@ -122,6 +127,35 @@ def test_onModeChanged_visibility(mode_title, app):
     assert app.longest_sb.isVisibleTo(app) == (mode_title == "Longest Side")
     assert app.megapixels_sb.isVisibleTo(app) == (mode_title == "Megapixels")
     assert app.megapixels_l.isVisibleTo(app) == (mode_title == "Megapixels")
+
+def test_onFileFormatChanged(app):
+    file_format = "JPEG XL"
+    app.file_format = None
+
+    with (
+        patch.object(app, "_updateFileFormat") as mock__updateFileFormat,
+    ):
+        app.onFileFormatChanged(file_format)
+
+        mock__updateFileFormat.assert_called_once()
+        assert app.file_format == file_format
+
+@pytest.mark.parametrize("file_format, enabled", [
+    ("JPEG XL", True),
+    ("JPEG Reconstruction", False),
+    ("Lossless JPEG Transcoding", False),
+])
+def test__updateFileFormat(file_format, enabled, app):
+    app.file_format = file_format
+
+    with (
+        patch.object(app.metadata_cmb, "setEnabled") as mock_metadata_cmb_setEnabled,
+        patch.object(app.metadata_l, "setEnabled") as mock_metadata_l_setEnabled,
+    ):
+        app._updateFileFormat()
+
+        mock_metadata_cmb_setEnabled.assert_called_once_with(enabled)
+        mock_metadata_l_setEnabled.assert_called_once_with(enabled)
 
 @pytest.mark.parametrize("downscaling_cb, width_cb, height_cb, expected_width_sb_enabled, expected_height_sb_enabled", [
     (True, True, True, True, True),

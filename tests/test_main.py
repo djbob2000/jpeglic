@@ -41,12 +41,14 @@ class MockOutputTab(MockTab):
         self.smIsFormatPoolEmpty = MagicMock()
         self.getUsedThreadCount = MagicMock()
         self.onAVIFEncoderChanged = MagicMock()
+        self.file_format_changed = MagicMock()
 
 class MockModifyTab(MockTab):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.toggleCustomResampling = MagicMock()
         self.disableDownscaling = MagicMock()
+        self.onFileFormatChanged = MagicMock()
 
 class MockTabWidget(QTabWidget):
     def __init__(self, *args, **kwargs):
