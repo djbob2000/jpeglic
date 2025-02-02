@@ -69,9 +69,9 @@ test-no-cache:
 .PHONY: test-convert
 test-convert:
 	@if [ -n "$(name)" ]; then \
-		xvfb-run $(PYTHON) -m unittest test_convert.TestMainWindow.$(name); \
+		QT_QPA_PLATFORM=offscreen xvfb-run -a $(PYTHON) -m unittest test_convert.TestMainWindow.$(name); \
 	else \
-		xvfb-run $(PYTHON) test_convert.py; \
+		QT_QPA_PLATFORM=offscreen xvfb-run -a $(PYTHON) test_convert.py; \
 	fi
 
 .PHONY: coverage
