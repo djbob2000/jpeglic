@@ -178,8 +178,6 @@ python main.py
 
 #### Building
 
-Make sure GCC is installed (`build-essential`).
-
 Recompile the bootloader:
 
 ```bash
@@ -272,7 +270,7 @@ On Windows, I recommend using MSYS2 MINGW64 for building.
 ## Info
 
 > [!TIP]
-> To manage multiple Python versions on Windows, you can use: `py` launcher, pyenv-win, Scoop or Chocolatey.
+> To manage multiple Python versions on Windows, you can use: the `py` launcher or pyenv-win.
 
 ## Testing
 
@@ -310,3 +308,7 @@ make test-convert
 ```bash
 python test_convert.py
 ```
+
+## Contributing
+
+Before contributing to issues or sending pull requests, please review [CONTRIBUTING.md](./.github/CONTRIBUTING.md).
