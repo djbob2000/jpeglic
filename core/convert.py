@@ -184,3 +184,14 @@ def getImageResMp(image_path: str) -> float:
         return -1
     else:
         return width * height / 1_000_000
+
+def cleanUp(file_paths: list[str]) -> None:
+    """Deletes file(s). Does not raise an exception."""
+    for file_path in file_paths:
+        if not os.path.isfile(file_path):
+            continue
+        
+        try:
+            os.remove(file_path)
+        except OSError as e:
+            logging.error(f"[cleanUp] Failed to remove a file. {e}")

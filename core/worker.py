@@ -27,7 +27,7 @@ from data.constants import (
 
 from core.proxy import Proxy
 from core.pathing import getUniqueFilePath, getExtension, getOutputDir, getUniqueTmpFilePath
-from core.convert import convert, getDecoder, getDecoderArgs, getExtensionJxl, optimize, runBinary
+from core.convert import convert, getDecoder, getDecoderArgs, getExtensionJxl, optimize, runBinary, cleanUp
 from core.downscale import downscale, decodeAndDownscale
 import core.metadata as metadata
 import data.task_status as task_status
@@ -548,19 +548,25 @@ class Worker(QRunnable):
         delete_if_canceled = list(path_pool.values())
         delete_if_canceled.append(self.item_abs_path)   # Points to proxy
 
+        def _runBinary(encoder_path: str, args: str, src: str, dst: str | None = None, args_after_input=False, delete_if_canceled: list[str] = []) -> None:
+            out, err = runBinary(encoder_path, args, src, dst, args_after_input=args_after_input, delete_if_canceled=delete_if_canceled)
+            if dst is not None and not os.path.isfile(dst):
+                cleanUp(delete_if_canceled)
+                raise FileException("SL5", str(err))
+
         if "png" in path_pool:
             try:
                 shutil.copy(self.item_abs_path, path_pool["png"])
             except OSError as err:
                 raise FileException("SL1", f"Failed to copy file. {err}")
-            runBinary(OXIPNG_PATH, args["png"], path_pool["png"], delete_if_canceled=delete_if_canceled)
+            _runBinary(OXIPNG_PATH, args["png"], path_pool["png"], delete_if_canceled=delete_if_canceled)
         
         if "webp" in path_pool:
-            runBinary(IMAGE_MAGICK_PATH, args["webp"], self.item_abs_path, path_pool["webp"], args_after_input=True, delete_if_canceled=delete_if_canceled)
+            _runBinary(IMAGE_MAGICK_PATH, args["webp"], self.item_abs_path, path_pool["webp"], args_after_input=True, delete_if_canceled=delete_if_canceled)
 
         if "jxl" in path_pool:
             src = self.org_item_abs_path if self.lossless_jpeg else self.item_abs_path
-            runBinary(CJXL_PATH, args["jxl"], src, path_pool["jxl"], delete_if_canceled=delete_if_canceled)
+            _runBinary(CJXL_PATH, args["jxl"], src, path_pool["jxl"], delete_if_canceled=delete_if_canceled)
 
         # Get file sizes
         file_sizes = {}
@@ -568,13 +574,7 @@ class Worker(QRunnable):
             for key in path_pool:
                 file_sizes[key] = os.path.getsize(path_pool[key])
         except OSError as err:
-            # Clean-up and exit
-            try:
-                for key in path_pool:
-                    os.remove(path_pool[key])
-            except OSError as err:
-                raise FileException("SL3", f"Failed to delete tmp files. {err}")
-            
+            cleanUp(list(path_pool.values()))
             raise FileException("SL2", f"Failed to get file sizes. {err}")
 
         # Get the smallest file
