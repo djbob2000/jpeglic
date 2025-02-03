@@ -28,7 +28,7 @@ def test_changeCategory_visibility(category, app, qtbot):
         ],
         "conversion": [
             "jxl_lossy_modular_cb",
-            "jxl_lossless_jpeg_cb",
+            "jxl_auto_lossless_jpeg_cb",
             "jpg_encoder_l", "jpg_encoder_cmb",
             "avif_encoder_l", "avif_encoder_cmb",
             "avif_bit_depth_l", "avif_bit_depth_cmb",

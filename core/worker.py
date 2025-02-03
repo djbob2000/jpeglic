@@ -248,7 +248,7 @@ class Worker(QRunnable):
 
                 if self.params["lossless"]:
                     args[0] = "-q 100"
-                    if self.settings["jxl_lossless_jpeg"]:
+                    if self.settings["jxl_auto_lossless_jpeg"]:
                         args[2] = "--lossless_jpeg=1"
                         if self.item_ext in JPEG_ALIASES:
                             self.lossless_jpeg = True
@@ -536,7 +536,7 @@ class Worker(QRunnable):
             args["png"].append("--nb")
 
         # Handle metadata
-        if self.settings["jxl_lossless_jpeg"]:
+        if self.settings["jxl_auto_lossless_jpeg"]:
             self.lossless_jpeg = self.item_ext in JPEG_ALIASES
         args["jxl"].extend([f"--lossless_jpeg={1 if self.lossless_jpeg else 0}"])
 

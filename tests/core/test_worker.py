@@ -65,7 +65,7 @@ def worker():
             "cjpegli_args": "",
             "im_args": "",
             "jpg_encoder": "JPEGLI",
-            "jxl_lossless_jpeg": False,
+            "jxl_auto_lossless_jpeg": False,
             "copy_if_larger": False,
             "keep_if_larger": False,
             "exiftool_args": {
@@ -301,7 +301,7 @@ def worker_convert_patches(worker):
         _mocks = {name: stack.enter_context(patcher) for name, patcher in patches.items()}
         yield worker, _mocks
 
-@pytest.mark.parametrize("quality, effort, lossless, modular, intelligent_effort, jxl_lossless_jpeg, item_ext, expected_args, expected_jpg_to_jxl_lossless", [
+@pytest.mark.parametrize("quality, effort, lossless, modular, intelligent_effort, jxl_auto_lossless_jpeg, item_ext, expected_args, expected_jpg_to_jxl_lossless", [
     (80, 7, True, False, False, True, "png", ["-q 100", "-e 7", "--lossless_jpeg=1", "--num_threads=4"], False),
     (80, 7, False, False, False, False, "png", ["-q 80", "-e 7", "--lossless_jpeg=0", "--num_threads=4"], False),
     (80, 7, False, True, False, False, "png", ["-q 80", "-e 7", "--lossless_jpeg=0", "--num_threads=4", "--modular=1"], False),
@@ -310,7 +310,7 @@ def worker_convert_patches(worker):
     (80, 7, True, False, False, True, "jpg", ["-q 100", "-e 7", "--lossless_jpeg=1", "--num_threads=4"], True),
 ])
 def test_convert_args_jpeg_xl(
-    quality, effort, lossless, modular, intelligent_effort, jxl_lossless_jpeg, item_ext, expected_args, expected_jpg_to_jxl_lossless, worker_convert_patches
+    quality, effort, lossless, modular, intelligent_effort, jxl_auto_lossless_jpeg, item_ext, expected_args, expected_jpg_to_jxl_lossless, worker_convert_patches
 ):
     worker, mocks = worker_convert_patches
     worker.params["format"] = "JPEG XL"
@@ -319,7 +319,7 @@ def test_convert_args_jpeg_xl(
     worker.params["effort"] = effort
     worker.params["jxl_modular"] = modular
     worker.params["intelligent_effort"] = intelligent_effort
-    worker.settings["jxl_lossless_jpeg"] = jxl_lossless_jpeg
+    worker.settings["jxl_auto_lossless_jpeg"] = jxl_auto_lossless_jpeg
     worker.item_ext = item_ext
 
     worker.convert()
@@ -754,8 +754,8 @@ def test_smallestLossless_generate_files(smallestLossless_patches_v2, worker):
     assert mocks["copy"].called
     assert mocks["runBinary"].call_count == 3
 
-@pytest.mark.parametrize("jxl_lossless_jpeg", [True, False])
-def test_smallestLossless_jpg_to_jxl_lossless(jxl_lossless_jpeg, smallestLossless_patches_v2, worker):
+@pytest.mark.parametrize("jxl_auto_lossless_jpeg", [True, False])
+def test_smallestLossless_jpg_to_jxl_lossless(jxl_auto_lossless_jpeg, smallestLossless_patches_v2, worker):
     mocks = smallestLossless_patches_v2
     worker.item_ext = "jpg"
     worker.item_abs_path = "proxy/image"
@@ -763,12 +763,12 @@ def test_smallestLossless_jpg_to_jxl_lossless(jxl_lossless_jpeg, smallestLossles
     worker.params["smallest_format_pool"]["png"] = False
     worker.params["smallest_format_pool"]["jxl"] = True
     worker.params["smallest_format_pool"]["webp"] = False
-    worker.settings["jxl_lossless_jpeg"] = jxl_lossless_jpeg
+    worker.settings["jxl_auto_lossless_jpeg"] = jxl_auto_lossless_jpeg
 
     worker.smallestLossless()
 
-    assert worker.lossless_jpeg == jxl_lossless_jpeg
-    assert mocks["runBinary"].call_args[0][2] == "original/image" if jxl_lossless_jpeg else "proxy/image"
+    assert worker.lossless_jpeg == jxl_auto_lossless_jpeg
+    assert mocks["runBinary"].call_args[0][2] == "original/image" if jxl_auto_lossless_jpeg else "proxy/image"
 
 @pytest.mark.parametrize("png_size, webp_size, jxl_size, expected_smallest", [
     (100_000, 150_000, 150_000, "png"),
@@ -825,11 +825,11 @@ def test_smallestLossless_remove_bigger_failed(smallestLossless_patches_v2, work
     assert "SL4" in exc.value.id
     assert mocks["remove"].call_count == 1
 
-@pytest.mark.parametrize("jxl_lossless_jpeg", [True, False])
-def test_smallestLossless_args(jxl_lossless_jpeg, smallestLossless_patches_v2, worker):
+@pytest.mark.parametrize("jxl_auto_lossless_jpeg", [True, False])
+def test_smallestLossless_args(jxl_auto_lossless_jpeg, smallestLossless_patches_v2, worker):
     mocks = smallestLossless_patches_v2
     mocks["getArgs"].return_value = ["--metadata_arg"]
-    worker.settings["jxl_lossless_jpeg"] = jxl_lossless_jpeg
+    worker.settings["jxl_auto_lossless_jpeg"] = jxl_auto_lossless_jpeg
     worker.item_ext = "jpg"
 
     worker.smallestLossless()
@@ -850,7 +850,7 @@ def test_smallestLossless_args(jxl_lossless_jpeg, smallestLossless_patches_v2, w
         "-q 100",
         "-e 7",
         "--num_threads=4",
-        f"--lossless_jpeg={1 if jxl_lossless_jpeg else 0}",
+        f"--lossless_jpeg={1 if jxl_auto_lossless_jpeg else 0}",
         "--metadata_arg"
     ]
 

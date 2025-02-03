@@ -117,7 +117,7 @@ class SettingsTab(QWidget):
 
         # Conversion
         self.jxl_lossy_modular_cb = self.wm.addWidget("jxl_lossy_modular_cb", QCheckBox("JPEG XL - Allow Lossy Modular"))
-        self.jxl_lossless_jpeg_cb = self.wm.addWidget("jxl_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic JPEG Transcoding"))
+        self.jxl_auto_lossless_jpeg_cb = self.wm.addWidget("jxl_auto_lossless_jpeg_cb", QCheckBox("JPEG XL - Automatic Lossless JPEG Transcoding"))
         self.jpg_encoder_l = self.wm.addWidget("jpg_encoder_l", QLabel("JPEG Encoder"))
         self.jpg_encoder_cmb = self.wm.addWidget("jpg_encoder_cmb", ComboBox(("JPEGLI", "libjpeg")))
         self.disable_progressive_jpegli_cb = self.wm.addWidget("disable_progressive_jpegli_cb", QCheckBox("JPEGLI - Disable Progressive Scan", self))
@@ -198,7 +198,7 @@ class SettingsTab(QWidget):
 
         ## Conversion
         self.settings_lt.addWidget(self.jxl_lossy_modular_cb)
-        self.settings_lt.addWidget(self.jxl_lossless_jpeg_cb)
+        self.settings_lt.addWidget(self.jxl_auto_lossless_jpeg_cb)
         self.jpg_encoder_hb = createQHBoxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
         self.settings_lt.addLayout(self.jpg_encoder_hb)
         self.settings_lt.addWidget(self.disable_progressive_jpegli_cb)
@@ -300,7 +300,7 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["quality_prec_snap"], self.quality_prec_snap_cb)
         setToolTip(TOOLTIPS["sorting"], self.no_sorting_cb)
         setToolTip(TOOLTIPS["play_sound_on_finish"], self.play_sound_on_finish_cb)
-        setToolTip(TOOLTIPS["jxl_lossless_jpeg"], self.jxl_lossless_jpeg_cb)
+        setToolTip(TOOLTIPS["jxl_auto_lossless_jpeg"], self.jxl_auto_lossless_jpeg_cb)
         setToolTip(TOOLTIPS["jpeg_encoder"], self.jpg_encoder_cmb)
         setToolTip(TOOLTIPS["progressive_jpegli"], self.disable_progressive_jpegli_cb)
         setToolTip(TOOLTIPS["copy_if_larger"], self.copy_if_larger_cb)
@@ -332,7 +332,7 @@ class SettingsTab(QWidget):
                 "play_sound_on_finish_cb", "play_sound_on_finish_vol_l", "play_sound_on_finish_vol_sb",
             ],
             "Conversion": [
-                "jxl_lossless_jpeg_cb",
+                "jxl_auto_lossless_jpeg_cb",
                 "jxl_lossy_modular_cb",
                 "jpg_encoder_l", "jpg_encoder_cmb",
                 "disable_progressive_jpegli_cb",
@@ -460,7 +460,7 @@ class SettingsTab(QWidget):
             "im_args": self.im_args_te.toPlainText(),
             "enable_quality_precision_snapping": self.quality_prec_snap_cb.isChecked(),
             "jpg_encoder": self.jpg_encoder_cmb.currentText(),
-            "jxl_lossless_jpeg": self.jxl_lossless_jpeg_cb.isChecked(),
+            "jxl_auto_lossless_jpeg": self.jxl_auto_lossless_jpeg_cb.isChecked(),
             "ram_optimizer": self.ram_optimizer_cmb.currentText(),
             "ram_optimizer_rules": self.ram_optimizer_rules_te.toPlainText(),
             "jxl_lossy_modular": self.jxl_lossy_modular_cb.isChecked(),
@@ -494,7 +494,7 @@ class SettingsTab(QWidget):
         self.disable_delete_startup_cb.setChecked(True)
         self.theme_cmb.setCurrentIndex(0)
         self.quality_prec_snap_cb.setChecked(False)
-        self.jxl_lossless_jpeg_cb.setChecked(False)
+        self.jxl_auto_lossless_jpeg_cb.setChecked(False)
         self.play_sound_on_finish_cb.setChecked(False)
         self.play_sound_on_finish_vol_sb.setValue(60)
 
