@@ -9,6 +9,7 @@ class ProcessManager:
     def addProcess(cls, process: subprocess.Popen) -> None:
         if not isinstance(process, subprocess.Popen):
             raise TypeError("Process must be a subprocess.Popen object")
+        
         with cls.lock:
             cls.processes.append(process)
     
@@ -16,6 +17,7 @@ class ProcessManager:
     def removeProcess(cls, process: subprocess.Popen) -> None:
         if not isinstance(process, subprocess.Popen):
             raise TypeError("Process must be a subprocess.Popen object")
+        
         with cls.lock:
             try:
                 cls.processes.remove(process)
