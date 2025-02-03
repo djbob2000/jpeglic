@@ -713,8 +713,11 @@ def smallestLossless_patches_v2():
         "getUniqueTmpFilePath": patch("core.worker.getUniqueTmpFilePath", side_effect=getUniqueTmpFilePath_side_effect),
         "getArgs": patch("core.worker.metadata.getArgs", return_value=[]),
         "copy": patch("core.worker.shutil.copy"),
-        "runBinary": patch("core.worker.runBinary"),
+        "runBinary": patch("core.worker.runBinary", return_value=("", "")),
         "remove": patch("core.worker.os.remove"),
+        "os.path.isfile": patch("core.worker.os.path.isfile", return_value=True),
+        "os.path.isfile": patch("core.worker.os.path.isfile", return_value=True),
+        "cleanUp": patch("core.worker.cleanUp"),
     }
 
     with ExitStack() as stack:
@@ -753,6 +756,22 @@ def test_smallestLossless_generate_files(smallestLossless_patches_v2, worker):
 
     assert mocks["copy"].called
     assert mocks["runBinary"].call_count == 3
+
+def test_smallestLossless_generate_files_failed(smallestLossless_patches_v2, worker):
+    error_txt = "sample error"
+
+    mocks = smallestLossless_patches_v2
+    mocks["os.path.isfile"].return_value = False
+    mocks["runBinary"].return_value = ("", error_txt)
+    worker.params["smallest_format_pool"]["webp"] = True
+    worker.params["smallest_format_pool"]["png"] = False
+    worker.params["smallest_format_pool"]["jxl"] = False
+
+    with pytest.raises(FileException, match=error_txt):
+        worker.smallestLossless()
+
+    assert mocks["runBinary"].call_count == 1
+    mocks["cleanUp"].assert_called_once()
 
 @pytest.mark.parametrize("jxl_auto_lossless_jpeg", [True, False])
 def test_smallestLossless_jpg_to_jxl_lossless(jxl_auto_lossless_jpeg, smallestLossless_patches_v2, worker):
@@ -803,7 +822,9 @@ def test_smallestLossless_getsize_failed_cleanup(smallestLossless_patches_v2, wo
         worker.smallestLossless()
 
     assert "Failed to get file sizes" in exc.value.msg
-    assert mocks["remove"].call_count == 3
+    mocks["cleanUp"].assert_called_once()
+    for path in ["tmp/image.png", "tmp/image.webp","tmp/image.jxl"]:
+        assert path in mocks["cleanUp"].call_args_list[0][0][0]
 
 def test_smallestLossless_getsize_failed_cleanup_failed(smallestLossless_patches_v2, worker):
     mocks = smallestLossless_patches_v2
@@ -812,8 +833,9 @@ def test_smallestLossless_getsize_failed_cleanup_failed(smallestLossless_patches
     with pytest.raises(FileException) as exc:
         worker.smallestLossless()
 
-    assert "Failed to delete tmp files" in exc.value.msg
-    assert mocks["remove"].call_count == 1
+    mocks["cleanUp"].assert_called_once()
+    for path in ["tmp/image.png", "tmp/image.webp","tmp/image.jxl"]:
+        assert path in mocks["cleanUp"].call_args_list[0][0][0]
 
 def test_smallestLossless_remove_bigger_failed(smallestLossless_patches_v2, worker):
     mocks = smallestLossless_patches_v2

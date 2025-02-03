@@ -285,3 +285,25 @@ def test_getImageResMp_happy_path():
 def test_getImageResMp_sad_path():
     with patch("core.convert.getImageRes", return_value=(-1, -1)) as mock_getImageRes:
         assert convert.getImageResMp("/tmp/file.jpg") == -1
+
+def test_cleanUp_files_exist():
+    tmp_files = ["/tmp/file1.jpg", "/tmp/file2.jpg", "/tmp/file3.jpg"]
+    with (
+        patch("core.convert.os.path.isfile", side_effect=(False, True, True)) as mock_isfile,
+        patch("core.convert.os.remove") as mock_remove,
+    ):
+        convert.cleanUp(tmp_files)
+    
+        assert mock_isfile.call_count == 3
+        assert mock_remove.call_count == 2
+        assert mock_remove.call_args_list[0][0][0] == tmp_files[1]
+        assert mock_remove.call_args_list[1][0][0] == tmp_files[2]
+
+def test_cleanUp_empty():
+    with (
+        patch("core.convert.os.path.isfile", return_value=False) as mock_isfile,
+        patch("core.convert.os.remove") as mock_remove,
+    ):
+        convert.cleanUp([])
+        mock_isfile.assert_not_called()
+        mock_remove.assert_not_called()
