@@ -81,14 +81,15 @@ def test__createTheme_no_exceptions(caplog):
     with (
         caplog.at_level(logging.ERROR),
     ):
-        stylesheet = theme._createTheme(
-            accent_big = "#00ff76",
-            accent_small = "#ff0066",
-            font = "#e9e9e9",
-            font_disabled = "#9A9A9A",
-            canvas = "#141414",
-            border = "#404040",
-            progress_bar_text = "#ff0066",  
+        stylesheet=theme._createTheme(
+            accent_big="#00ff76",
+            accent_small="#ff0066",
+            font="#e9e9e9",
+            font_disabled="#9A9A9A",
+            canvas="#141414",
+            border="#404040",
+            progress_bar_text="#ff0066",
+            theme_name="Ralsei",
         )
         assert "color: #00ff76" in stylesheet
         assert "color: #ff0066" in stylesheet

@@ -50,6 +50,7 @@ def _createTheme(
     canvas,
     border,
     progress_bar_text,
+    theme_name,
 
     # SVG icon paths
     checkmark_svg_url = _getIconPath("checkmark.svg"),
@@ -66,6 +67,14 @@ def _createTheme(
     background_selected = hexToRGBA(accent_big, 40)
     border_faded = hexToRGBA(border, 150)
     canvas_faded = hexToRGBA(canvas, 180)
+    
+    # Theme-specific vars
+    if theme_name == "Light Amber":
+        scrollbar_handle = border
+        scrollbar_handle_hover = hexToRGBA(font, 65)
+    else:
+        scrollbar_handle = border_faded
+        scrollbar_handle_hover = border
     
     return f"""
     * {{
@@ -91,12 +100,12 @@ def _createTheme(
 
     QScrollBar::handle:vertical {{
         border: none;
-        background: {border_faded};
+        background: {scrollbar_handle};
         min-height: 50px;
     }}
 
     QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {{
-        background: {border};
+        background: {scrollbar_handle_hover};
     }}
 
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical, QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
@@ -114,7 +123,7 @@ def _createTheme(
 
     QScrollBar::handle:horizontal {{
         border: none;
-        background: {border_faded};
+        background: {scrollbar_handle};
     }}
 
     QPushButton {{
@@ -520,12 +529,12 @@ def _createTheme(
     }}
 
     QTextEdit QScrollBar::handle:vertical {{
-        background-color: {canvas_faded};
+        background-color: {scrollbar_handle};
         min-height: 3px;
     }}
 
     QTextEdit QScrollBar::handle:vertical:hover {{
-        background-color: {canvas};
+        background-color: {scrollbar_handle_hover};
     }}
 
     /* About tab */
@@ -545,46 +554,48 @@ def _createTheme(
 def setTheme(theme="Ralsei") -> None:
     match theme:
         case "Ralsei":
-            stylesheet = _createTheme(
-                accent_big = "#00ff76",
-                accent_small = "#ff0066",
-                font = "#e9e9e9",
-                font_disabled = "#9A9A9A",
-                canvas = "#141414",
-                border = "#404040",
-                progress_bar_text = "#ff0066",
+            stylesheet=_createTheme(
+                accent_big="#00ff76",
+                accent_small="#ff0066",
+                font="#e9e9e9",
+                font_disabled="#9A9A9A",
+                canvas="#141414",
+                border="#404040",
+                progress_bar_text="#ff0066",
+                theme_name=theme,
             )
-            accent_big = "#00ff76"
+            accent_big="#00ff76"
         case "Dark Amber":
-            stylesheet = _createTheme(
-                accent_big = "#F18000",
-                accent_small = "#F18000",
-                font = "#E4E7EB",
-                font_disabled = "#A1A1A1",
-                canvas = "#202124",
-                border = "#3F4042",
-                progress_bar_text = "#E4E7EB",
+            stylesheet=_createTheme(
+                accent_big="#F18000",
+                accent_small="#F18000",
+                font="#E4E7EB",
+                font_disabled="#A1A1A1",
+                canvas="#202124",
+                border="#3F4042",
+                progress_bar_text="#E4E7EB",
+                theme_name=theme,
             )
-            accent_big = "#F18000"
+            accent_big="#F18000"
         case "Light Amber":
-            stylesheet = _createTheme(
-                accent_big = "#F17400",
-                accent_small = "#F17400",
-                font = "#404040",
-                font_disabled = "#9198A3",
-                canvas = "#F8F9FA",
-                border = "#D8DADE",
-                progress_bar_text = "#404040",
-                checkmark_svg_url = _getIconPath("checkmark_light.svg"),
-                drop_down_arrow_svg_url = _getIconPath("drop_down_arrow_light.svg"),
-                up_arrow_svg_url = _getIconPath("up_arrow_light.svg"),
-                down_arrow_svg_url = _getIconPath("down_arrow_light.svg"),
+            stylesheet=_createTheme(
+                accent_big="#F17400",
+                accent_small="#F17400",
+                font="#404040",
+                font_disabled="#9198A3",
+                canvas="#F8F9FA",
+                border="#D8DADE",
+                progress_bar_text="#404040",
+                theme_name=theme,
+                checkmark_svg_url=_getIconPath("checkmark_light.svg"),
+                drop_down_arrow_svg_url=_getIconPath("drop_down_arrow_light.svg"),
+                up_arrow_svg_url=_getIconPath("up_arrow_light.svg"),
+                down_arrow_svg_url=_getIconPath("down_arrow_light.svg"),
             )
-            accent_big = "#F17400"
+            accent_big="#F17400"
         case _:
             logging.error(f"[setTheme] Unrecognized theme ({theme})")
             return
-
 
     app = QApplication.instance()
     app.setStyle("Fusion")  # Solves a lot of crossplatform issues. A common baseline.
