@@ -1,26 +1,12 @@
-from threading import Lock
-from functools import wraps
+import threading
 
-_lock = Lock()
+cancel_event = threading.Event()
 
-class Status:
-    canceled = False
+def wasCanceled() -> bool:
+    return cancel_event.is_set()
 
-def synchronized(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with _lock:
-            return func(*args, **kwargs)
-    return wrapper
+def cancel() -> None:
+    cancel_event.set()
 
-@synchronized
-def wasCanceled():
-    return Status.canceled
-
-@synchronized
-def cancel():
-    Status.canceled = True
-
-@synchronized
-def reset():
-    Status.canceled = False
+def reset() -> None:
+    cancel_event.clear()
