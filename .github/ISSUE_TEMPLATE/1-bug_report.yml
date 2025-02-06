@@ -77,9 +77,9 @@ body:
   - type: input
     id: output-format
     attributes:
-      label: Output Format
-      description: What image format are you converting to? It's the value from the format selector.
-      placeholder: JPEG XL or Lossless JPEG Transcoding 
+      label: Selected Format / Mode
+      description: The selected "Format / Mode" option, found in the Output tab.
+      placeholder: JPEG XL, Lossless JPEG Transcoding etc.
     validations:
       required: true
     
