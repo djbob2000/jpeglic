@@ -10,45 +10,55 @@ from ui.settings_tab import SettingsTab
 
 @pytest.fixture
 def app(qtbot):
-    with patch("ui.settings_tab.WidgetManager.loadState"), \
-        patch("ui.settings_tab.WidgetManager.saveState"), \
-        patch("ui.settings_tab.setTheme"):
+    with (
+        patch("ui.settings_tab.WidgetManager.loadState"),
+        patch("ui.settings_tab.WidgetManager.saveState"),
+        patch("ui.settings_tab.setTheme"),
+    ):
         tab = SettingsTab()
         qtbot.addWidget(tab)
         return tab
 
-@pytest.mark.parametrize("category", ["general", "conversion", "advanced"])
-def test_changeCategory_visibility(category, app, qtbot):
+@pytest.mark.parametrize("category, button", [
+    ("General", "general_btn"),
+    ("Conversion", "conversion_btn"),
+    ("ExifTool", "exiftool_btn"),
+    ("Advanced", "advanced_btn"),
+])
+def test_changeCategory_visibility(category, button, app):
     visibility = {
-        "general": [
+        "General": [
             "disable_on_startup_l", "disable_downscaling_startup_cb", "disable_delete_startup_cb",
+            "theme_l", "theme_cmb",
             "no_sorting_cb",
             "quality_prec_snap_cb",
             "play_sound_on_finish_cb", "play_sound_on_finish_vol_l", "play_sound_on_finish_vol_sb",
         ],
-        "conversion": [
-            "jxl_lossy_modular_cb",
+        "Conversion": [
             "jxl_auto_lossless_jpeg_cb",
+            "jxl_lossy_modular_cb",
             "jpg_encoder_l", "jpg_encoder_cmb",
+            "disable_progressive_jpegli_cb",
             "avif_encoder_l", "avif_encoder_cmb",
             "avif_bit_depth_l", "avif_bit_depth_cmb",
-            "disable_progressive_jpegli_cb",
             "keep_if_larger_cb",
             "copy_if_larger_cb",
         ],
-        "advanced": [
-            "ram_optimizer_l", "ram_optimizer_cmb",
-            "ram_optimizer_rules_l", "ram_optimizer_rules_te",
-            "ram_optimizer_rules_reset_btn",
-            "jxl_int_effort_cb",
-            "jxl_effort_10_cb",
-            "custom_resampling_cb",
+        "ExifTool": [
             "exiftool_l",
             "exiftool_reset_btn",
             "exiftool_wipe_l", "exiftool_wipe_te",
             "exiftool_preserve_l", "exiftool_preserve_te",
             "exiftool_unsafe_wipe_l", "exiftool_unsafe_wipe_te",
             "exiftool_custom_l", "exiftool_custom_te",
+        ],
+        "Advanced": [
+            "ram_optimizer_l", "ram_optimizer_cmb",
+            "ram_optimizer_rules_l", "ram_optimizer_rules_te",
+            "ram_optimizer_rules_reset_btn",
+            "jxl_int_effort_cb",
+            "jxl_effort_10_cb",
+            "custom_resampling_cb",
             "custom_args_cb",
             "avifenc_args_l", "avifenc_args_te",
             "cjxl_args_l", "cjxl_args_te",
@@ -57,10 +67,13 @@ def test_changeCategory_visibility(category, app, qtbot):
             "start_logging_btn", "open_log_dir_btn", "wipe_log_dir_btn",
         ],
     }
-
     tracked_widgets = [widget for widgets in visibility.values() for widget in widgets]
 
-    qtbot.mouseClick(getattr(app, category + "_btn"), Qt.LeftButton)
+    if (btn_ref := getattr(app, button, None)) is None:
+        assert False, f"Button \"{button}\" not found"
+
+    btn_ref.click()
+
     for widget_str in tracked_widgets:
         widget_p = getattr(app, widget_str, None)
         if widget_p is None:
