@@ -13,6 +13,7 @@
 - Rework smallest lossless mode.
 - Rework the Exception View.
 - Disable Metadata combo box when unavailable.
+- Move ExifTool settings to their own category.
 
 ### Fixed
 

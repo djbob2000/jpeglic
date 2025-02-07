@@ -128,15 +128,7 @@ class SettingsTab(QWidget):
         self.keep_if_larger_cb = self.wm.addWidget("keep_if_larger_cb", QCheckBox("Do Not Delete Original When Result is Larger"))
         self.copy_if_larger_cb = self.wm.addWidget("copy_if_larger_cb", QCheckBox("Copy Original When Result is Larger"))
 
-        # Advanced
-        self.ram_optimizer_l = self.wm.addWidget("ram_optimizer_l", QLabel("RAM Optimizer"))
-        self.ram_optimizer_cmb = self.wm.addWidget("ram_optimizer_cmb", ComboBox(("Static", "Dynamic", "Disabled")))
-        self.ram_optimizer_rules_l = self.wm.addWidget("ram_optimizer_rules_l", QLabel("Optimization Rules"))
-        self.ram_optimizer_rules_te = self.wm.addWidget("ram_optimizer_rules_te", QTextEdit())
-        self.ram_optimizer_rules_reset_btn = self.wm.addWidget("ram_optimizer_rules_reset_btn", QPushButton("Reset"))
-        self.jxl_effort_10_cb = self.wm.addWidget("jxl_effort_10_cb", QCheckBox("JPEG XL - Enable Effort 10", self))
-        self.jxl_int_effort_cb = self.wm.addWidget("jxl_int_effort_cb", QCheckBox("JPEG XL - Allow Intelligent Effort (Deprecated)"))
-        self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
+        # ExifTool
         self.exiftool_l = QLabel("ExifTool Arguments")
         self.exiftool_wipe_l = QLabel("Wipe")
         self.exiftool_wipe_te = self.wm.addWidget("exiftool_wipe_te", QTextEdit())
@@ -151,6 +143,16 @@ class SettingsTab(QWidget):
         self.exiftool_preserve_te.setAcceptRichText(False)
         self.exiftool_unsafe_wipe_te.setAcceptRichText(False)
         self.exiftool_custom_te.setAcceptRichText(False)
+
+        # Advanced
+        self.ram_optimizer_l = self.wm.addWidget("ram_optimizer_l", QLabel("RAM Optimizer"))
+        self.ram_optimizer_cmb = self.wm.addWidget("ram_optimizer_cmb", ComboBox(("Static", "Dynamic", "Disabled")))
+        self.ram_optimizer_rules_l = self.wm.addWidget("ram_optimizer_rules_l", QLabel("Optimization Rules"))
+        self.ram_optimizer_rules_te = self.wm.addWidget("ram_optimizer_rules_te", QTextEdit())
+        self.ram_optimizer_rules_reset_btn = self.wm.addWidget("ram_optimizer_rules_reset_btn", QPushButton("Reset"))
+        self.jxl_effort_10_cb = self.wm.addWidget("jxl_effort_10_cb", QCheckBox("JPEG XL - Enable Effort 10", self))
+        self.jxl_int_effort_cb = self.wm.addWidget("jxl_int_effort_cb", QCheckBox("JPEG XL - Allow Intelligent Effort (Deprecated)"))
+        self.custom_resampling_cb = self.wm.addWidget("custom_resampling_cb", QCheckBox("Downscaling - Custom Resampling", self))
         self.custom_args_cb = self.wm.addWidget("custom_args_cb", QCheckBox("Additional Encoder Arguments"))
         self.avifenc_args_l = QLabel("avifenc\nAVIF")
         self.avifenc_args_te = self.wm.addWidget("avifenc_args_te", QTextEdit())
@@ -170,23 +172,26 @@ class SettingsTab(QWidget):
         self.start_logging_btn.setCheckable(True)
 
         # Categories
-        self.general_btn = QPushButton("General", self)
-        self.conversion_btn = QPushButton("Conversion", self)
-        self.advanced_btn = QPushButton("Advanced", self)
+        self.general_btn = QPushButton("General")
+        self.conversion_btn = QPushButton("Conversion")
+        self.exiftool_btn = QPushButton("ExifTool")
+        self.advanced_btn = QPushButton("Advanced")
+        self.restore_defaults_btn = QPushButton("Reset to Default")
+        
         self.general_btn.setCheckable(True)
         self.conversion_btn.setCheckable(True)
         self.advanced_btn.setCheckable(True)
-        self.restore_defaults_btn = QPushButton("Reset to Default", self)
 
     def setupLayouts(self):
-        ## Categories
+        # Categories
         self.categories_lt.addWidget(self.general_btn)
         self.categories_lt.addWidget(self.conversion_btn)
+        self.categories_lt.addWidget(self.exiftool_btn)
         self.categories_lt.addWidget(self.advanced_btn)
         self.categories_lt.addItem(QSpacerItem(10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.categories_lt.addWidget(self.restore_defaults_btn)
 
-        ## General
+        # General
         self.settings_lt.addLayout(createQHBoxLayout(self.disable_on_startup_l, self.disable_delete_startup_cb, self.disable_downscaling_startup_cb))
         self.settings_lt.addWidget(self.quality_prec_snap_cb)
         self.theme_hb = createQHBoxLayout(self.theme_l, self.theme_cmb)
@@ -196,7 +201,7 @@ class SettingsTab(QWidget):
         self.play_sound_on_finish_vol_hb = createQHBoxLayout(self.play_sound_on_finish_vol_l, self.play_sound_on_finish_vol_sb)
         self.settings_lt.addLayout(self.play_sound_on_finish_vol_hb)
 
-        ## Conversion
+        # Conversion
         self.settings_lt.addWidget(self.jxl_lossy_modular_cb)
         self.settings_lt.addWidget(self.jxl_auto_lossless_jpeg_cb)
         self.jpg_encoder_hb = createQHBoxLayout(self.jpg_encoder_l, self.jpg_encoder_cmb)
@@ -209,7 +214,15 @@ class SettingsTab(QWidget):
         self.settings_lt.addWidget(self.keep_if_larger_cb)
         self.settings_lt.addWidget(self.copy_if_larger_cb)
 
-        ## Advanced
+        # ExifTool
+        self.settings_lt.addWidget(self.exiftool_l)
+        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_wipe_l, self.exiftool_wipe_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_preserve_l, self.exiftool_preserve_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_unsafe_wipe_l, self.exiftool_unsafe_wipe_te))
+        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_custom_l, self.exiftool_custom_te))
+        self.settings_lt.addWidget(self.exiftool_reset_btn)
+
+        # Advanced
         self.ram_optimizer_hb = createQHBoxLayout(self.ram_optimizer_l, self.ram_optimizer_cmb)
         self.settings_lt.addLayout(self.ram_optimizer_hb)
         self.settings_lt.addWidget(self.ram_optimizer_rules_l)
@@ -218,12 +231,6 @@ class SettingsTab(QWidget):
         self.settings_lt.addWidget(self.jxl_effort_10_cb)
         self.settings_lt.addWidget(self.jxl_int_effort_cb)
         self.settings_lt.addWidget(self.custom_resampling_cb)
-        self.settings_lt.addWidget(self.exiftool_l)
-        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_wipe_l, self.exiftool_wipe_te))
-        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_preserve_l, self.exiftool_preserve_te))
-        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_unsafe_wipe_l, self.exiftool_unsafe_wipe_te))
-        self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_custom_l, self.exiftool_custom_te))
-        self.settings_lt.addWidget(self.exiftool_reset_btn)
         self.settings_lt.addWidget(self.custom_args_cb)
         self.settings_lt.addLayout(createQHBoxLayout(self.cjxl_args_l, self.cjxl_args_te))
         self.settings_lt.addLayout(createQHBoxLayout(self.avifenc_args_l, self.avifenc_args_te))
@@ -231,7 +238,7 @@ class SettingsTab(QWidget):
         self.settings_lt.addLayout(createQHBoxLayout(self.im_args_l, self.im_args_te))
         self.settings_lt.addLayout(createQHBoxLayout(self.start_logging_btn, self.open_log_dir_btn, self.wipe_log_dir_btn))
 
-        ## All
+        # All
         self.settings_lt.addStretch()
 
     def setSizes(self):
@@ -290,6 +297,7 @@ class SettingsTab(QWidget):
         self.ram_optimizer_cmb.currentTextChanged.connect(self.onRamOptimizerChanged)
 
         self.general_btn.clicked.connect(lambda: self.changeCategory("General"))
+        self.exiftool_btn.clicked.connect(lambda: self.changeCategory("ExifTool"))
         self.conversion_btn.clicked.connect(lambda: self.changeCategory("Conversion"))
         self.advanced_btn.clicked.connect(lambda: self.changeCategory("Advanced"))
         self.restore_defaults_btn.clicked.connect(self.resetToDefault)
@@ -320,6 +328,7 @@ class SettingsTab(QWidget):
         # Category buttons
         self.general_btn.setChecked(category == "General")
         self.conversion_btn.setChecked(category == "Conversion")
+        self.exiftool_btn.setChecked(category == "ExifTool")
         self.advanced_btn.setChecked(category == "Advanced")
 
         # Settings
@@ -341,6 +350,14 @@ class SettingsTab(QWidget):
                 "keep_if_larger_cb",
                 "copy_if_larger_cb",
             ],
+            "ExifTool": [
+                "exiftool_l",
+                "exiftool_reset_btn",
+                "exiftool_wipe_l", "exiftool_wipe_te",
+                "exiftool_preserve_l", "exiftool_preserve_te",
+                "exiftool_unsafe_wipe_l", "exiftool_unsafe_wipe_te",
+                "exiftool_custom_l", "exiftool_custom_te",
+            ],
             "Advanced": [
                 "ram_optimizer_l", "ram_optimizer_cmb",
                 "ram_optimizer_rules_l", "ram_optimizer_rules_te",
@@ -348,12 +365,6 @@ class SettingsTab(QWidget):
                 "jxl_int_effort_cb",
                 "jxl_effort_10_cb",
                 "custom_resampling_cb",
-                "exiftool_l",
-                "exiftool_reset_btn",
-                "exiftool_wipe_l", "exiftool_wipe_te",
-                "exiftool_preserve_l", "exiftool_preserve_te",
-                "exiftool_unsafe_wipe_l", "exiftool_unsafe_wipe_te",
-                "exiftool_custom_l", "exiftool_custom_te",
                 "custom_args_cb",
                 "avifenc_args_l", "avifenc_args_te",
                 "cjxl_args_l", "cjxl_args_te",
