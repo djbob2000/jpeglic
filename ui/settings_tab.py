@@ -381,6 +381,8 @@ class SettingsTab(QWidget):
                     getattr(self, widget_str).setVisible(visible)
                 except AttributeError as e:
                     logging.error(f"[SettingsTab - changeCategory] {e}")
+        
+        self.settings_sa.verticalScrollBar().setValue(0)    # Move to top
 
     def onCustomArgsToggled(self):
         enabled = self.custom_args_cb.isChecked()
