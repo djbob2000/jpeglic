@@ -17,7 +17,7 @@ AOM AV1: AV1 Codec Library
 
 SVT-AV1-PSY
 - License: BSD 3-Clause Clear License
-- URL: https://github.com/gianni-rosato/svt-av1-psy/blob/master/LICENSE.md
+- URL: https://github.com/psy-ex/svt-av1-psy/blob/master/LICENSE.md
 
 ImageMagick
 - License: ImageMagick License
