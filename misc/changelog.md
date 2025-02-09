@@ -14,6 +14,7 @@
 - Rework the Exception View.
 - Disable Metadata combo box when unavailable.
 - Move ExifTool settings to their own category.
+- Exclude PNG from "Copy Original When Result is Larger".
 - Update SVT-AV1-PSY to `v2.3.0-B`.
 
 ### Fixed

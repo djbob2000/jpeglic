@@ -452,7 +452,7 @@ class Worker(QRunnable):
                 if (
                     self.settings["copy_if_larger"] and
                     os.path.getsize(self.org_item_abs_path) < os.path.getsize(self.final_output) and
-                    self.params["format"] not in ("Lossless JPEG Transcoding", "JPEG Reconstruction")
+                    self.params["format"] not in ("Lossless JPEG Transcoding", "JPEG Reconstruction", "PNG")
                 ):
                     os.remove(self.final_output)
                     self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.item_ext)
