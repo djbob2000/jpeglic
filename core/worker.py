@@ -656,11 +656,11 @@ class Worker(QRunnable):
             if normalized_jpeg_path is None and (self.params["jxl_normalize_enable"] and self.params["jxl_normalize_when"] == "On Fail"):   # Normalize == On Fail
                 normalized_jpeg_path = self.item_abs_path = _normalize()
                 success, stderr = _transcode()
-                failed, err_id, err_msg = not success, "lossless_jpeg_3", f"Transcoding failed (even after normalizing). It may be CMYK or of other unsupported type.\n {stderr}"
+                failed, err_id, err_msg = not success, "lossless_jpeg_3", f"Transcoding failed. Image may be CMYK or of other unsupported type.\n\n{stderr}"
             elif normalized_jpeg_path is not None:  # Normalize == Always
-                failed, err_id, err_msg = True, "lossless_jpeg_4", f"Transcoding failed (even after normalizing). It may be CMYK or of other unsupported type.\n {stderr}"
+                failed, err_id, err_msg = True, "lossless_jpeg_4", f"Transcoding failed. Image may be CMYK or of other unsupported type.\n\n{stderr}"
             else:                                   # Normalize off
-                failed, err_id, err_msg = True, "lossless_jpeg_5", f"Transcoding failed. {stderr}"
+                failed, err_id, err_msg = True, "lossless_jpeg_5", f"Transcoding failed most likely due to the limitations of Lossless JPEG Transcoding. Enabling \"Normalize\" may help; however you should review the documentation before doing so.\n\n{stderr}"
 
             if failed:
                 if normalized_jpeg_path:
