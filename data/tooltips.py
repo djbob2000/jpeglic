@@ -65,5 +65,5 @@ TOOLTIPS = {
     "resample": "Enables resampling mode selection in the modify tab.\n\nThe default (Lanczos) is usually the best. Make sure you know what you're doing.",
     "jxl_int_effort": "Shows or hides the JPEG XL Intelligent Effort option in the Output tab.\n\nThis functionality picks Effort based on context.\n\nIt aimed at providing lower file size but made only a marginal difference.\n\nThis feature will be removed in the future.",
     "exiftool_args": "Arguments used for handling metadata, correspond to the options is the modify tab.\n\nSupported variables:\n\n$src - source image path.\n\n$dst - destination image path.\n\nRemember to add \"-overwrite_original\" to avoid leftover files.",
-    "encoder_args": "Additional arguments for the encoders.\n\nMake sure all arguments you add are valid; otherwise, the encoder will stop working.",
+    "encoder_args": "Additional arguments for the encoders.\n\nAll arguments must be valid and can not conflict with already used ones. Inspect logs for more details.",
 }
