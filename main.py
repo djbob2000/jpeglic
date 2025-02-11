@@ -40,6 +40,7 @@ from data.sounds import finished_sound
 from data.logging_manager import LoggingManager
 from data.process_manager import ProcessManager
 from core.controller import Controller, CheckFlags
+import data.cli_args as cli_args
 
 class MainWindow(QMainWindow):
     moved = Signal()
@@ -214,4 +215,6 @@ if __name__ == "__main__":
     font_loader.init()
     main_window = MainWindow()
     main_window.show()
+    if res_evt := cli_args.getArgsLocalResQDropEvent():
+        main_window.dropEvent(res_evt)
     sys.exit(app.exec())

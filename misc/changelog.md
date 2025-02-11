@@ -5,6 +5,7 @@
 - Add static RAM optimizer (#57).
 - Add dynamic RAM optimizer based on resolution (#57).
 - Add support for portable user data (#82).
+- Add support for adding images via arguments.
 
 ### Changed
 
