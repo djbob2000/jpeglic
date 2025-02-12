@@ -31,7 +31,11 @@ def parseArgs() -> CliArgs:
     )
 
 def getArgsLocalResQDropEvent() -> QDropEvent | None:
-    """Returns a list of local resources passed as arguments to the application in a QDropEvent format or None if no arguments were passed."""
+    """
+    Returns a QDropEvent with mimeData containing URLs to local resources, or None. Requires QApplication to exist!
+
+    This function extracts local resources passed via command-line arguments and wraps them in a QDropEvent.
+    """
     if len(sys.argv) < 2:   # Avoid parsing when no additonal arguments are passed.
         return None
     
