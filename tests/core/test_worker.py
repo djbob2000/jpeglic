@@ -1051,7 +1051,7 @@ def test_losslesslyTranscodeJPEG_normalize_on_fail_sad_path(worker_losslesslyTra
         worker.losslesslyTranscodeJPEG()
 
     assert exc_info.value.id == "lossless_jpeg_3"
-    assert "Transcoding failed (even after normalizing)" in exc_info.value.msg
+    assert "Transcoding failed. Image may be CMYK or of other unsupported type." in exc_info.value.msg
     assert "stderr" in exc_info.value.msg
     mocks["normalizeJPEG"].assert_called_once()
     mocks["remove"].assert_called_once()
@@ -1067,7 +1067,7 @@ def test_losslesslyTranscodeJPEG_normalize_always_failed(worker_losslesslyTransc
         worker.losslesslyTranscodeJPEG()
 
     assert exc_info.value.id == "lossless_jpeg_4"
-    assert "Transcoding failed (even after normalizing)" in exc_info.value.msg
+    assert "Transcoding failed. Image may be CMYK or of other unsupported type." in exc_info.value.msg
     assert "stderr" in exc_info.value.msg
     mocks["transcodeJPEGtoJPEGXL"].assert_called_once()
     mocks["normalizeJPEG"].assert_called_once()
