@@ -44,7 +44,7 @@ class OutputTab(QWidget):
 
         # Variables
         self.prev_format = None
-        self.MAX_THREAD_COUNT = max((os.cpu_count() or 1) - 1, 1)
+        self.MAX_THREAD_COUNT = os.cpu_count() or 1
         self.jpg_encoder = settings["jpg_encoder"]
         self.enable_jxl_effort_10 = settings["enable_jxl_effort_10"]
         self.jxl_lossy_modular_visible = settings["jxl_lossy_modular"]
