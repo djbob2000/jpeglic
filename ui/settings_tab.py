@@ -499,7 +499,7 @@ class SettingsTab(QWidget):
         self.exiftool_custom_te.setText("")
 
     def resetOptimizationRules(self):
-        self.ram_optimizer_rules_te.setText("""("all", 3.5, "3/4"), ("all", 7.5, "2/4"), ("all", 11, "1/4"), ("all", 14, "1")""")
+        self.ram_optimizer_rules_te.setText("""("all", 3.5, "7/8"), ("all", 4.5, "6/8"), ("all", 5.5, "5/8"), ("all", 6.5, "4/8"), ("all", 7.5, "3/8"), ("all", 8.5, "2/8"), ("all", 9.5, "1/8"), ("all", 10.5, "1")""")
 
     def resetToDefault(self):
         self.no_sorting_cb.setChecked(False)
