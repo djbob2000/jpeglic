@@ -376,19 +376,39 @@ class Builder():
         subprocess.run(("7z", "a", "-snl" , f"{dst_direct}.7z", dst_direct), cwd=self.dst_dir)
     
     def _buildPortableWin(self) -> None:
-        _7z_present = os.path.isfile(self.win_7z_path)
-        if not _7z_present:
-            if "not recognized as an internal or external command" not in subprocess.run(["7z"], text=True).stderr:
-                self.win_7z_path = "7z"
-            else:
-                raise Exception("[Error] Install 7z.exe to continue. ")
+        # Scan for available 7zip installs
+        def is7zipWorking(path: str) -> bool:
+            try:
+                result = subprocess.run(
+                    [path, "--help"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                return "Add files to archive" in result.stdout
+            except Exception:
+                return False
+
+        win_7z_path_used = None
+
+        if os.path.isfile(self.win_7z_path) and is7zipWorking(self.win_7z_path):
+            win_7z_path_used = self.win_7z_path
+        elif is7zipWorking("7z"):
+            win_7z_path_used = "7z"
         
+        if win_7z_path_used is None:
+            raise Exception("Install 7zip to continue.")
+
+        # Pack
         try:
-            shutil.move(os.path.join(self.dst_dir, self.project_name), os.path.join(self.dst_dir, self.build_win_portable_name))
+            shutil.move(
+                os.path.join(self.dst_dir, self.project_name),
+                os.path.join(self.dst_dir, self.build_win_portable_name)
+            )
         except OSError as e:
-            raise OSError(f"[Error] failed to move file (_buildPortableWin) {e}")
+            raise OSError(f"Failed to move file (_buildPortableWin) {e}")
         subprocess.run([
-            self.win_7z_path,
+            win_7z_path_used,
             "a",
             f"{self.build_win_portable_name}.7z",
             self.build_win_portable_name,
