@@ -267,11 +267,11 @@ def test_run_invalid_res(run_patches):
         jpeg_xl_lossy_modular=False,
         jpeg_xl_lossless=False,
         jpeg_xl_intelligent_effort=False,
-    ) == 1
+    ) == 4
 
     mocks["convert.getImageResMp"].assert_called_once()
     mocks["_getMaxWorkerCount"].assert_not_called()
-    RAMOptimizer.threadpool.setMaxThreadCount.assert_called_once_with(used_thread_count)
+    RAMOptimizer.threadpool.setMaxThreadCount.assert_called_once_with(1)
 
 @pytest.mark.parametrize("high_ram_usage", [
     True, False

@@ -173,8 +173,8 @@ class RAMOptimizer:
         res_in_mp = convert.getImageResMp(src_image_path)
 
         if res_in_mp < 0:     # Invalid
-            cls.threadpool.setMaxThreadCount(cls.used_thread_count)
-            return 1
+            cls.threadpool.setMaxThreadCount(1)
+            return thread_count_per_worker
 
         # Interpret and apply rules
         max_worker_count = cls._getMaxWorkerCount(res_in_mp, dst_file_format, avif_encoder)
