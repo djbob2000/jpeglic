@@ -1,28 +1,29 @@
-## 1.2.0 - TBA
+## 1.2.0 - 2025-02-14
 
 ### Added
 
-- Add static RAM optimizer (#57).
-- Add dynamic RAM optimizer based on resolution (#57).
+- Add a static RAM optimizer (#57).
+- Add a dynamic RAM optimizer based on resolution (#57).
 - Add support for portable user data (#82).
 - Add support for adding images via arguments.
 
 ### Changed
 
-- Update ExifTool to `13.16` (Windows).
-- Rework smallest lossless mode.
 - Rework the Exception View.
-- Disable Metadata combo box when unavailable.
+- Rework the Smallest Lossless mode.
+- Disable the "Metadata" combo box when unavailable.
 - Move ExifTool settings to their own category.
 - Exclude PNG from "Copy Original When Result is Larger".
 - Update SVT-AV1-PSY to `v2.3.0-B`.
+- Update ExifTool to `13.16` (Windows).
 
 ### Fixed
 
 - Optimize RAM usage of SVT-AV1-PSY (#83).
-- Fix RAM leak (#86).
-- Fix delete original edge case (#81).
 - Handle read-only files in the Windows installer automatically (#85).
+- Fix RAM leak (#86).
+- Fix an edge case in "Delete Original" (#81).
+- Fix SVT-AV1-PSY crash (#84).
 
 ### Removed
 
