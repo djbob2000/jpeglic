@@ -521,7 +521,7 @@ class SettingsTab(QWidget):
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
 
-        self.ram_optimizer_cmb.setCurrentIndex(0)
+        self.ram_optimizer_cmb.setCurrentIndex(1)
         self.resetOptimizationRules()
         self.jxl_int_effort_cb.setChecked(False)
         self.resetExifTool()
