@@ -468,7 +468,7 @@ class OutputTab(QWidget):
         self.delete_original_cmb.setCurrentIndex(0)
         self.clear_after_conv_cb.setChecked(False)
         
-        self.threads_sl.setValue(self.MAX_THREAD_COUNT)
+        self.threads_sl.setValue(max(self.MAX_THREAD_COUNT - 1, 1))
         self.duplicates_cmb.setCurrentIndex(0)
         
         self.chroma_subsampling_jpegli_cmb.setCurrentIndex(0)
