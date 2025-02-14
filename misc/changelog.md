@@ -11,7 +11,7 @@
 
 - Rework the Exception View.
 - Rework the Smallest Lossless mode.
-- Disable the "Metadata" combo box when unavailable.
+- Disable the metadata options when unavailable.
 - Move ExifTool settings to their own category.
 - Exclude PNG from "Copy Original When Result is Larger".
 - Update SVT-AV1-PSY to `v2.3.0-B`.
@@ -23,7 +23,7 @@
 - Handle read-only files in the Windows installer automatically (#85).
 - Fix RAM leak (#86).
 - Fix an edge case in "Delete Original" (#81).
-- Fix SVT-AV1-PSY crash (#84).
+- Fix SVT-AV1-PSY crashes (#84).
 
 ### Removed
 
