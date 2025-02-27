@@ -30,7 +30,7 @@ TOOLTIPS = {
     "smallest_lossless_png": "Uses OxiPNG.\n\nSupported bit depth: 16",
     "smallest_lossless_webp": "Supported bit depth: 8",
     "smallest_lossless_jpeg_xl": "Supported bit depth: 16",
-    "smallest_lossless_max_comp": "Transcoding will be slower but may result in lower file size.",
+    "smallest_lossless_max_comp": "Results in a lower file size and slower transcoding.",
 
     # Modify tab
     "date_time": "Preserves date and time.",
