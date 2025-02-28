@@ -1,80 +1,21 @@
-from dataclasses import dataclass
-import logging
-from pathlib import Path
+from .models import Theme
+from .utils import hexToRGBA, getIconPath
 
-from PySide6.QtWidgets import QWidget, QApplication
-from PySide6.QtGui import QPalette
-
-import data.constants as constants
-from ui.label import StyledLabel
-
-def hexToRGBA(hex_color: str, alpha: int = 255) -> None:
-    """
-    Converts a hexadecimal color to RGB with alpha.
-
-    Args:
-        hex_color: hexadecimal color (example: #111111).
-        alpha: opacity. Range: 0 - 255.
-
-    Raises:
-        ValueError: if hex_color is invalid
-    """
-    hex_color = hex_color.lstrip("#")
-
-    if len(hex_color) != 6:
-        raise ValueError("Invalid hex_color length.")
-
-    int(hex_color, 16)  # Raises ValueError if invalid hex number
-
-    r = int(hex_color[0:2], 16)
-    g = int(hex_color[2:4], 16)
-    b = int(hex_color[4:6], 16)
-    
-    return f"rgba({r}, {g}, {b}, {alpha})"
-
-def _getIconPath(icon_name: str) -> str:
-    """Returns paths to the icon. If file not found, logs an error."""
-    path = Path(constants.ASSETS_ICONS_DIR, icon_name)
-    if not path.is_file():
-        logging.error(f"[ui.theme] Cannot find icon: {path}")
-        return ""
-
-    return path.as_posix()      # Must be `as_posix()`, otherwise the stylesheet will fail to parse on Windows.
-
-def _createTheme(
-    # Hex colors
-    accent_big,
-    accent_small,
-    font,
-    font_disabled,
-    canvas,
-    border,
-    progress_bar_text,
-    theme_name,
-
-    # SVG icon paths
-    checkmark_svg_url = _getIconPath("checkmark.svg"),
-    drop_down_arrow_svg_url = _getIconPath("drop_down_arrow.svg"),
-    drop_down_arrow_disabled_svg_url = _getIconPath("drop_down_arrow_disabled.svg"),
-    up_arrow_svg_url = _getIconPath("up_arrow.svg"),
-    up_arrow_disabled_svg_url = _getIconPath("up_arrow_disabled.svg"),
-    down_arrow_svg_url = _getIconPath("down_arrow.svg"),
-    down_arrow_disabled_svg_url = _getIconPath("down_arrow_disabled.svg"),
-) -> str:
+def getStyleSheet(theme: Theme) -> str:
     """Creates a stylesheet for QApplication."""
     # Derived
-    background_hover = hexToRGBA(accent_big, 20)
-    background_selected = hexToRGBA(accent_big, 40)
-    border_faded = hexToRGBA(border, 150)
-    canvas_faded = hexToRGBA(canvas, 180)
+    background_hover = hexToRGBA(theme.colors.accent_big, 20)
+    background_selected = hexToRGBA(theme.colors.accent_big, 40)
+    border_faded = hexToRGBA(theme.colors.border, 150)
+    canvas_faded = hexToRGBA(theme.colors.canvas, 180)
     
     # Theme-specific vars
-    if theme_name == "Light Amber":
-        scrollbar_handle = border
-        scrollbar_handle_hover = hexToRGBA(font, 65)
+    if theme.name == "Light Amber":
+        scrollbar_handle = theme.colors.border
+        scrollbar_handle_hover = hexToRGBA(theme.colors.font, 65)
     else:
         scrollbar_handle = border_faded
-        scrollbar_handle_hover = border
+        scrollbar_handle_hover = theme.colors.border
     
     return f"""
     * {{
@@ -84,17 +25,17 @@ def _createTheme(
     }}
 
     QWidget {{
-        color: {font};
-        background-color: {canvas};
+        color: {theme.colors.font};
+        background-color: {theme.colors.canvas};
         border: none;
-        selection-color: {font};
+        selection-color: {theme.colors.font};
         selection-background-color: {background_selected};
     }}
 
     QScrollBar:vertical {{
         border: none;
         width: 16px;
-        background-color: {canvas};
+        background-color: {theme.colors.canvas};
         margin: 2px;
     }}
 
@@ -117,7 +58,7 @@ def _createTheme(
     QScrollBar:horizontal {{
         border: none;
         height: 16px;
-        background-color: {canvas};
+        background-color: {theme.colors.canvas};
         margin: 2px;
     }}
 
@@ -127,9 +68,9 @@ def _createTheme(
     }}
 
     QPushButton {{
-        color: {accent_big};
+        color: {theme.colors.accent_big};
         padding: 4px;
-        border: 1px solid {border};
+        border: 1px solid {theme.colors.border};
         border-radius: 0px;
     }}
 
@@ -142,7 +83,7 @@ def _createTheme(
     }}
 
     QPushButton:disabled {{
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QPushButton:checked {{
@@ -151,36 +92,36 @@ def _createTheme(
 
     QRadioButton::indicator {{
         border-radius: 7px;
-        border: 2px solid {font};
+        border: 2px solid {theme.colors.font};
     }}
 
     QRadioButton::indicator:checked {{
-        background-color: {accent_big};
+        background-color: {theme.colors.accent_big};
         border: none;
     }}
 
     QRadioButton:disabled {{
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QRadioButton::indicator:disabled {{
-        border: 2px solid {font_disabled};
+        border: 2px solid {theme.colors.font_disabled};
     }}
 
     QRadioButton::indicator:checked:disabled {{
-        background-color: {font_disabled};
+        background-color: {theme.colors.font_disabled};
     }}
 
     QLineEdit {{
         padding: 4px;
-        color: {font};
-        background-color: {canvas};
+        color: {theme.colors.font};
+        background-color: {theme.colors.canvas};
         border-radius: 0px;
-        background-color: {border};
+        background-color: {theme.colors.border};
     }}
 
     QLineEdit:disabled {{
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QTabBar::tab {{
@@ -192,7 +133,7 @@ def _createTheme(
     }}
 
     QTabBar::tab:disabled {{
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QTabBar::tab:first {{
@@ -200,17 +141,17 @@ def _createTheme(
     }}
 
     QTabBar::tab:hover {{
-        background-color: {border};
+        background-color: {theme.colors.border};
     }}
 
     QTabBar::tab:selected {{
-        color: {accent_big};
-        border-bottom: 2px solid {accent_small};
+        color: {theme.colors.accent_big};
+        border-bottom: 2px solid {theme.colors.accent_small};
     }}
 
     QTabBar::tab:selected:disabled {{
-        color: {font_disabled};
-        border-bottom: 2px solid {font_disabled};
+        color: {theme.colors.font_disabled};
+        border-bottom: 2px solid {theme.colors.font_disabled};
     }}
 
     QCheckBox {{
@@ -221,26 +162,26 @@ def _createTheme(
         width: 12px;
         height: 12px;
         margin-right: 4px;
-        border: 2px solid {font};
+        border: 2px solid {theme.colors.font};
     }}
 
     QCheckBox::indicator:checked {{
         color: white;
-        background-color: {accent_big};
+        background-color: {theme.colors.accent_big};
         border: 2px solid transparent;          /* Keeps text from moving. */
-        image: url("{checkmark_svg_url}");
+        image: url("{theme.icons.checkmark_svg_url}");
     }}
 
     QCheckBox::indicator::unchecked:disabled {{
-        border: 2px solid {font_disabled};
+        border: 2px solid {theme.colors.font_disabled};
     }}
 
     QCheckBox::indicator::checked:disabled {{
-        background-color: {font_disabled};
+        background-color: {theme.colors.font_disabled};
     }}
 
     QCheckBox:disabled {{
-        color: {font_disabled}
+        color: {theme.colors.font_disabled}
     }}
 
     QSlider {{
@@ -248,7 +189,7 @@ def _createTheme(
     }}
 
     QSlider::handle:horizontal {{
-        background-color: {accent_big};
+        background-color: {theme.colors.accent_big};
         border-radius: 7px;
         width: 16px;
         height: 16px;
@@ -257,42 +198,42 @@ def _createTheme(
     }}
 
     QSlider::groove:horizontal {{
-        background-color: {border};
+        background-color: {theme.colors.border};
         height: 4px;
     }}
 
     QSlider::sub-page:horizontal {{
         height: 4px;
-        background-color: {accent_big};
+        background-color: {theme.colors.accent_big};
     }}
 
     QSlider::sub-page:horizontal:disabled {{
         height: 4px;
-        background-color: {border};
+        background-color: {theme.colors.border};
     }}
 
     QSlider::handle:disabled {{
-        background-color: {border};
+        background-color: {theme.colors.border};
     }}
 
     QLabel:disabled {{
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QTextEdit {{
         border-radius: 0px;
-        border: 1px solid {border};
-        background-color: {border};
+        border: 1px solid {theme.colors.border};
+        background-color: {theme.colors.border};
         padding: 2px;
     }}
 
     QTextEdit:disabled {{
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QTreeView {{
-        background-color: {canvas};
-        border: 1px solid {border};
+        background-color: {theme.colors.canvas};
+        border: 1px solid {theme.colors.border};
         border-radius: 0px;
         show-decoration-selected: 0;
     }}
@@ -304,8 +245,8 @@ def _createTheme(
     }}
 
     QTreeView>QHeaderView::section {{
-        color: {font};
-        background-color: {border};
+        color: {theme.colors.font};
+        background-color: {theme.colors.border};
         font-weight: 600;
         text-align: left;
         border: none;
@@ -313,11 +254,11 @@ def _createTheme(
     }}
 
     QTreeView QHeaderView::section:horizontal:!last {{
-        border-right: 1px solid {canvas};
+        border-right: 1px solid {theme.colors.canvas};
     }}
 
     QTreeView::item:disabled {{
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QTableView {{
@@ -333,7 +274,7 @@ def _createTheme(
     }}
 
     QTreeView::item:hover {{
-        background-color: {border};
+        background-color: {theme.colors.border};
     }}
 
     QTreeView::item:selected {{
@@ -341,15 +282,15 @@ def _createTheme(
     }}
 
     QComboBox {{
-        background-color: {border};
-        color: {font};
+        background-color: {theme.colors.border};
+        color: {theme.colors.font};
         border-radius: 0px;
         padding: 4px;
         padding-left: 6px;
     }}
 
     QComboBox:disabled {{
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QComboBox::drop-down {{
@@ -360,30 +301,30 @@ def _createTheme(
         /* The black bars on top and bottom are caused by adding `padding` to QComboBox. Is Qt supposed to work like this? */ https://stackoverflow.com/questions/78848355/pyqt6-combobox-weird-black-bars-on-top-and-bottom-sides */
 
         border-top: none;       /* without this the border does not change */
-        border: 1px solid {border};
+        border: 1px solid {theme.colors.border};
     }}
 
     QComboBox::down-arrow {{
         width: 12px;
         height: 12px;
         margin-right: 10px;
-        image: url("{drop_down_arrow_svg_url}");
+        image: url("{theme.icons.drop_down_arrow_svg_url}");
     }}
 
     QComboBox::down-arrow:disabled {{
-        image: url("{drop_down_arrow_disabled_svg_url}");
+        image: url("{theme.icons.drop_down_arrow_disabled_svg_url}");
     }}
 
     QSpinBox, QDoubleSpinBox {{
-        color: {font};
-        background-color: {border};
+        color: {theme.colors.font};
+        background-color: {theme.colors.border};
         padding: 4px;
-        border: 1px solid {border};
+        border: 1px solid {theme.colors.border};
         border-radius: 0px;
     }}
 
     QSpinBox:disabled, QDoubleSpinBox:disabled {{
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QSpinBox::up-button, QDoubleSpinBox:up-button {{
@@ -403,32 +344,32 @@ def _createTheme(
     }}
 
     QSpinBox::up-arrow, QDoubleSpinBox:up-arrow {{
-        image: url("{up_arrow_svg_url}");
+        image: url("{theme.icons.up_arrow_svg_url}");
         width: 7px;
     }}
 
     QSpinBox::up-arrow:disabled, QDoubleSpinBox::up-arrow:disabled {{
-        image: url("{up_arrow_disabled_svg_url}");
+        image: url("{theme.icons.up_arrow_disabled_svg_url}");
     }}
 
     QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
-        image: url("{down_arrow_svg_url}");
+        image: url("{theme.icons.down_arrow_svg_url}");
         width: 7px;
     }}
 
     QSpinBox::down-arrow:disabled, QDoubleSpinBox::down-arrow:disabled {{
-        image: url("{down_arrow_disabled_svg_url}");
+        image: url("{theme.icons.down_arrow_disabled_svg_url}");
     }}
 
     QToolTip {{
-        color: {font};
-        background-color: {canvas};
+        color: {theme.colors.font};
+        background-color: {theme.colors.canvas};
         padding: 10px;
-        border: 1px solid {border};
+        border: 1px solid {theme.colors.border};
     }}
 
     QTableWidget QWidget, QTableWidget, QHeaderView {{ 
-        background-color: {canvas};
+        background-color: {theme.colors.canvas};
     }}
 
     QTableWidget::item:focus {{
@@ -437,11 +378,11 @@ def _createTheme(
     }}
 
     QGroupBox {{
-        border: 1px solid {border};
+        border: 1px solid {theme.colors.border};
         padding: 3px;
         margin-top: 7px;
         font-weight: 500;
-        color: {font_disabled};
+        color: {theme.colors.font_disabled};
     }}
 
     QGroupBox::title {{
@@ -453,7 +394,7 @@ def _createTheme(
     }}
 
     #settingsScrollArea {{
-        border: 1px solid {border};
+        border: 1px solid {theme.colors.border};
         /* Align with buttons */
         margin-top: 1px;
         margin-bottom: 1px;
@@ -473,13 +414,13 @@ def _createTheme(
     }}
 
     QProgressBar {{
-        color: {progress_bar_text};
+        color: {theme.colors.progress_bar_text};
         text-align: center;
-        border: 1px solid {border};
+        border: 1px solid {theme.colors.border};
     }}
 
     QProgressBar::chunk {{
-        background-color: {accent_big};
+        background-color: {theme.colors.accent_big};
     }}
     
     QProgressDialog QPushButton {{
@@ -487,18 +428,18 @@ def _createTheme(
     }}
     
     QTableWidget {{
-        border: 1px solid {border};
+        border: 1px solid {theme.colors.border};
     }}
 
     QTableView QHeaderView::section {{
-        color: {font};
-        background-color: {border};
+        color: {theme.colors.font};
+        background-color: {theme.colors.border};
         border: none;
         padding: 3px 3px 3px 13px;
     }}
 
     QTableView QHeaderView::section:horizontal:!last {{
-        border-right: 1px solid {canvas};
+        border-right: 1px solid {theme.colors.canvas};
     }}
 
     QTableView::item:selected {{
@@ -525,7 +466,7 @@ def _createTheme(
     }}
 
     QTextEdit QScrollBar:vertical {{
-        background-color: {border};
+        background-color: {theme.colors.border};
     }}
 
     QTextEdit QScrollBar::handle:vertical {{
@@ -550,60 +491,3 @@ def _createTheme(
         font-size: 13px;
     }}
     """
-
-def setTheme(theme="Ralsei") -> None:
-    match theme:
-        case "Ralsei":
-            stylesheet=_createTheme(
-                accent_big="#00ff76",
-                accent_small="#ff0066",
-                font="#e9e9e9",
-                font_disabled="#9A9A9A",
-                canvas="#141414",
-                border="#404040",
-                progress_bar_text="#ff0066",
-                theme_name=theme,
-            )
-            accent_big="#00ff76"
-        case "Dark Amber":
-            stylesheet=_createTheme(
-                accent_big="#F18000",
-                accent_small="#F18000",
-                font="#E4E7EB",
-                font_disabled="#A1A1A1",
-                canvas="#202124",
-                border="#3F4042",
-                progress_bar_text="#E4E7EB",
-                theme_name=theme,
-            )
-            accent_big="#F18000"
-        case "Light Amber":
-            stylesheet=_createTheme(
-                accent_big="#F17400",
-                accent_small="#F17400",
-                font="#404040",
-                font_disabled="#9198A3",
-                canvas="#F8F9FA",
-                border="#D8DADE",
-                progress_bar_text="#404040",
-                theme_name=theme,
-                checkmark_svg_url=_getIconPath("checkmark_light.svg"),
-                drop_down_arrow_svg_url=_getIconPath("drop_down_arrow_light.svg"),
-                up_arrow_svg_url=_getIconPath("up_arrow_light.svg"),
-                down_arrow_svg_url=_getIconPath("down_arrow_light.svg"),
-            )
-            accent_big="#F17400"
-        case _:
-            logging.error(f"[setTheme] Unrecognized theme ({theme})")
-            return
-
-    app = QApplication.instance()
-    app.setStyle("Fusion")  # Solves a lot of crossplatform issues. A common baseline.
-    app.setStyleSheet(stylesheet)
-    # Workaround for limited styling support in QSS.
-    StyledLabel.updateStyleForAll(f"""
-    a {{
-        color: {accent_big};
-        text-decoration: none;
-    }}
-    """)
