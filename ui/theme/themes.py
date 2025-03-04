@@ -82,5 +82,5 @@ def getTheme(theme_name: str) -> Theme:
             return _getThemeLightAmber()
         
         case _:
-            logging.getLogger(__name__).error(f"Theme \"{theme_name}\"not found")
+            logging.getLogger(__name__).error(f"Theme \"{theme_name}\" not found")
             return _getThemeRalsei()
