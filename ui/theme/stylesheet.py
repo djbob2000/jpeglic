@@ -181,7 +181,7 @@ def getStyleSheet(theme: Theme) -> str:
     }}
 
     QCheckBox:disabled {{
-        color: {theme.colors.font_disabled}
+        color: {theme.colors.font_disabled};
     }}
 
     QSlider {{
