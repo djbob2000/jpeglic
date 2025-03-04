@@ -192,11 +192,9 @@ def test_getStyleSheet_syntax():
 
     # Check for missing semicolons
     def remove_comments(text: str) -> str:
-        def replacer(text_match):
-            return "\n" * text_match.group(0).count("\n")
+        replacer = lambda m: "\n" * m.group(0).count("\n")
         text = re.sub(r'/\*.*?\*/', replacer, text, flags=re.DOTALL)
-        text = re.sub(r'^[^\n]*\*/\s*$', replacer, text, flags=re.MULTILINE)
-        return text
+        return re.sub(r'^[^\n]*\*/\s*$', replacer, text, flags=re.MULTILINE)
 
     semicolon_errors = []
     pattern = re.compile(r'([^{]+)\{([^}]+)\}', re.DOTALL)
