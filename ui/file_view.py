@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Literal
 
 from PySide6.QtWidgets import(
     QTreeWidget,
@@ -189,6 +189,10 @@ class FileView(QTreeWidget):
                 self.selectItemsBelow()
             else:
                 self.moveIndexToBottom()
+        elif event.key() == Qt.Key_PageUp:
+            self.movePage("up", event.modifiers() == Qt.ShiftModifier)
+        elif event.key() == Qt.Key_PageDown:
+            self.movePage("down", event.modifiers() == Qt.ShiftModifier)
 
     def mousePressEvent(self, event):
         self.shift_start = None
@@ -274,6 +278,47 @@ class FileView(QTreeWidget):
             self.setCurrentIndex(new_idx)
         elif not cur_idx.isValid():
             self.setCurrentIndex(self.indexFromItem(self.topLevelItem(0)))
+
+    def movePage(self, direction: Literal["up", "down"], shift_modifier=False):
+        if direction not in ("up", "down"):
+            return
+        
+        cur_item = self.currentItem()
+        if not cur_item:
+            self.moveIndexToBottom()
+            return
+        
+        # Calc visible items
+        rect = self.visualRect(self.indexFromItem(cur_item))
+        if rect.height() <= 0:
+            items_per_page = 1
+        else:
+            items_per_page = max(1, int(self.viewport().height() / rect.height() * 0.8))
+
+        # Get target row
+        cur_row = self.indexFromItem(cur_item).row()
+        if direction == "down":
+            total_items = self.invisibleRootItem().childCount()
+            target_row = min(total_items - 1, cur_row + items_per_page)
+        elif direction == "up":
+            target_row = max(0, cur_row - items_per_page)
+
+        # Move
+        if target_item := self.topLevelItem(target_row):
+            self.setCurrentItem(target_item)
+            self.scrollToItem(target_item)
+
+            # Select
+            if shift_modifier:
+                if self.shift_start is None:
+                    self.shift_start = cur_item
+
+                start_index = self.indexFromItem(self.shift_start)
+                end_index = self.indexFromItem(self.currentItem())
+                selection = QItemSelection(start_index, end_index)
+                self.selectionModel().select(
+                    selection, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows
+                )
 
     def moveIndexToTop(self):
         self.setCurrentIndex(self.model().index(0, 0))
