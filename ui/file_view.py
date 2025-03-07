@@ -280,6 +280,10 @@ class FileView(QTreeWidget):
             self.setCurrentIndex(self.indexFromItem(self.topLevelItem(0)))
 
     def movePage(self, direction: Literal["up", "down"], shift_modifier=False):
+        # Config
+        SCROLL_AMOUNT = 0.95     # Fraction of the visible items that will change.
+        
+        # Checks
         if direction not in ("up", "down"):
             return
         
@@ -288,25 +292,38 @@ class FileView(QTreeWidget):
             self.moveIndexToBottom()
             return
         
-        # Calc visible items
-        rect = self.visualRect(self.indexFromItem(cur_item))
-        if rect.height() <= 0:
-            items_per_page = 1
+        # Compute visible items
+        cur_index = self.indexFromItem(cur_item)
+        item_rect = self.visualRect(cur_index)
+        
+        if item_rect.height() <= 0:
+            visible_items = 1
         else:
-            items_per_page = max(1, int(self.viewport().height() / rect.height() * 0.8))
+            visible_items = max(1, int(self.viewport().height() / item_rect.height()))
 
-        # Get target row
-        cur_row = self.indexFromItem(cur_item).row()
+        # Compute scroll amount
+        scroll_count = max(1 , int(visible_items * SCROLL_AMOUNT))
+        overlap_count = visible_items - scroll_count
+
+        total_items = self.invisibleRootItem().childCount()
+        cur_row = cur_index.row()
+
+        # Compute target items
         if direction == "down":
-            total_items = self.invisibleRootItem().childCount()
-            target_row = min(total_items - 1, cur_row + items_per_page)
+            target_row = min(total_items - 1, cur_row + scroll_count)
+            last_visible_row = min(total_items - 1, target_row + overlap_count)
         elif direction == "up":
-            target_row = max(0, cur_row - items_per_page)
+            target_row = max(0, cur_row - scroll_count)
+            last_visible_row = max(0, target_row - overlap_count)
 
-        # Move
+        # Apply
         if target_item := self.topLevelItem(target_row):
+            # Set cur. item
             self.setCurrentItem(target_item)
-            self.scrollToItem(target_item)
+            
+            # Scroll
+            if last_item := self.topLevelItem(last_visible_row):
+                self.scrollToItem(last_item)
 
             # Select
             if shift_modifier:
