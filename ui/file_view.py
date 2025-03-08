@@ -295,6 +295,9 @@ class FileView(QTreeWidget):
         if not cur_item:
             self.moveIndexToBottom()
             return
+    
+        if not shift_modifier:
+            self.shift_start = None
         
         # Compute visible items
         cur_index = self.indexFromItem(cur_item)
