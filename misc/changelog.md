@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add Page Up and Page Down navigation to file view.
+
 ### Changed
 
 ### Fixed
