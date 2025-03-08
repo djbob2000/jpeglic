@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from PySide6.QtWidgets import QApplication, QStyle, QStyleOptionViewItem
-from PySide6.QtCore import Qt, QMimeData, QUrl, QModelIndex
+from PySide6.QtCore import Qt, QMimeData, QUrl, QModelIndex, QItemSelectionModel
 from PySide6.QtGui import QPainter
 
 import ui.file_view
@@ -411,3 +411,18 @@ def test_movePage_zero_height(file_view_movePage_patched):
     
     file_view.setCurrentItem.assert_called_once_with(file_view.topLevelItem(6))
     file_view.scrollToItem.assert_called_once_with(file_view.topLevelItem(6))
+
+def test_movePage_select(file_view_movePage_patched):
+    file_view = file_view_movePage_patched
+    cur_item = file_view.topLevelItem(16)
+    file_view.currentItem = MagicMock(return_value=cur_item)
+    selection_model = MagicMock()
+    file_view.selectionModel = MagicMock(return_value=selection_model)
+    file_view.shift_start = None
+
+    file_view.movePage("down", True)
+    
+    selection_model.select.assert_called_once()
+    selection = selection_model.select.call_args[0][0]
+    assert selection.indexes() == [file_view.indexFromItem(cur_item)]
+    assert selection_model.select.call_args[0][1] == QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows
