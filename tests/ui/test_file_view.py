@@ -308,3 +308,106 @@ def test_paint_default(file_view):
     delegate.paint(QPainter(), option, QModelIndex())
 
     assert option.state == QStyle.State_Enabled
+
+def test_movePage_invalid_direction(file_view):
+    file_view.currentItem = MagicMock(return_value=MagicMock())
+
+    file_view.movePage("invalid")
+
+    file_view.currentItem.assert_not_called()
+
+@pytest.mark.parametrize("direction", ["up", "down"])
+def test_movePage_valid_directions(direction, file_view):
+    file_view.currentItem = MagicMock(return_value=None)
+    file_view.moveIndexToBottom = MagicMock()
+
+    file_view.movePage(direction)
+
+    file_view.moveIndexToBottom.assert_called()
+
+@pytest.mark.parametrize("direction", ["up", "down"])
+def test_movePage_no_current_item(direction, file_view):
+    file_view.currentItem = MagicMock(return_value=None)
+    file_view.moveIndexToBottom = MagicMock()
+    file_view.indexFromItem = MagicMock()
+
+    file_view.movePage("up")
+
+    file_view.moveIndexToBottom.assert_called()
+    file_view.indexFromItem.assert_not_called()
+
+@pytest.fixture
+def file_view_movePage_patched(file_view):
+    SCROLL_AMOUNT = 0.95
+    VIEWPORT_HEIGHT = 500
+    ITEM_RECT_HEIGHT = 50
+
+    file_view.addItems(get_sample_items(32))
+
+    viewport = MagicMock()
+    viewport.height.return_value = VIEWPORT_HEIGHT
+    file_view.viewport = MagicMock(return_value=viewport)
+
+    item_rect = MagicMock()
+    item_rect.height.return_value = ITEM_RECT_HEIGHT
+    file_view.visualRect = MagicMock(return_value=item_rect)
+
+    cur_item = file_view.topLevelItem(16)
+    file_view.currentItem = MagicMock(return_value=cur_item)
+    file_view.setCurrentItem = MagicMock()
+    file_view.scrollToItem = MagicMock()
+
+    return file_view
+
+def test_movePage_move_up(file_view_movePage_patched):
+    file_view = file_view_movePage_patched
+    cur_item = file_view.topLevelItem(16)
+    file_view.currentItem = MagicMock(return_value=cur_item)
+
+    file_view.movePage("up")
+    
+    file_view.setCurrentItem.assert_called_once_with(file_view.topLevelItem(16 - 9))
+    file_view.scrollToItem.assert_called_once_with(file_view.topLevelItem(16 - 10))
+
+def test_movePage_move_up_boundary(file_view_movePage_patched):
+    file_view = file_view_movePage_patched
+    cur_item = file_view.topLevelItem(1)
+    file_view.currentItem = MagicMock(return_value=cur_item)
+
+    file_view.movePage("up")
+    
+    file_view.setCurrentItem.assert_called_once_with(file_view.topLevelItem(0))
+    file_view.scrollToItem.assert_called_once_with(file_view.topLevelItem(0))
+
+def test_movePage_move_down(file_view_movePage_patched):
+    file_view = file_view_movePage_patched
+    cur_item = file_view.topLevelItem(16)
+    file_view.currentItem = MagicMock(return_value=cur_item)
+
+    file_view.movePage("down")
+    
+    file_view.setCurrentItem.assert_called_once_with(file_view.topLevelItem(16 + 9))
+    file_view.scrollToItem.assert_called_once_with(file_view.topLevelItem(16 + 10))
+
+def test_movePage_move_down_boundary(file_view_movePage_patched):
+    file_view = file_view_movePage_patched
+    cur_item = file_view.topLevelItem(31)
+    file_view.currentItem = MagicMock(return_value=cur_item)
+
+    file_view.movePage("down")
+    
+    file_view.setCurrentItem.assert_called_once_with(file_view.topLevelItem(31))
+    file_view.scrollToItem.assert_called_once_with(file_view.topLevelItem(31))
+
+def test_movePage_zero_height(file_view_movePage_patched):
+    file_view = file_view_movePage_patched
+    cur_item = file_view.topLevelItem(5)
+    file_view.currentItem = MagicMock(return_value=cur_item)
+    item_rect = MagicMock()
+    item_rect.height.return_value = 0
+    file_view.visualRect = MagicMock(return_value=item_rect)
+
+    file_view.movePage("down")
+    
+    file_view.setCurrentItem.assert_called_once_with(file_view.topLevelItem(6))
+    file_view.scrollToItem.assert_called_once_with(file_view.topLevelItem(6))
