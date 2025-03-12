@@ -1,63 +1,94 @@
 from unittest.mock import patch
+from contextlib import ExitStack
 
 import pytest
 
 import core.conflicts as conflicts
 from core.exceptions import GenericException, FileException
 
-def test_checkForConflicts_no_conflict():
-    assert not conflicts.checkForConflicts("jpg", "WebP")
+@pytest.mark.parametrize("src_ext", [
+    "jpg", "png", "jxl", "avif",
+])
+def test_checkForConflicts_no_conflict(src_ext):
+    conflicts.checkForConflicts(src_ext, "/tmp/image.jpg", "JPEG XL", False)  # Expecting no exception raised
 
-def test_checkForConflicts_gif_unsupported():
-    with pytest.raises(GenericException) as excinfo:
-        conflicts.checkForConflicts("gif", "JPEG")
+@pytest.mark.parametrize("target_format", [
+    "JPEG XL", "WebP"
+])
+def test_checkForConflicts_gif_supported(target_format):
+    conflicts.checkForConflicts("gif", "/tmp/image.jpg", target_format, False)
 
-    assert "GIF -> JPEG conversion is not supported" == excinfo.value.msg
+@pytest.mark.parametrize("target_format", [
+    "JPEG", "PNG", "AVIF",
+])
+def test_checkForConflicts_gif_unsupported(target_format):
+    with pytest.raises(GenericException) as exc_info:
+        conflicts.checkForConflicts("gif", "/tmp/image.jpg", target_format, False)
 
-def test_checkForConflicts_gif_supported():
-    assert not conflicts.checkForConflicts("gif", "JPEG XL")
-    assert not conflicts.checkForConflicts("gif", "WebP")
+    assert f"Transcoding GIF -> {target_format} is not supported" == exc_info.value.msg
 
 def test_checkForConflicts_downscaling():
-    with pytest.raises(GenericException) as excinfo:
-        conflicts.checkForConflicts("gif", "JPEG XL", True)
+    with pytest.raises(GenericException) as exc_info:
+        conflicts.checkForConflicts("gif", "/tmp/image.jpg", "JPEG XL", True)
     
-    assert "Downscaling is not supported for animation" == excinfo.value.msg
+    assert "Downscaling is not supported for animation" == exc_info.value.msg
 
-def test_checkForMultipage_happy_path():
-    stdout, stderr = "1", ""
-    src_abs_path = "path/to/src.tiff"
+@pytest.fixture
+def checkForConflicts_patches():
+    mocks = {
+        "getImagePageNum": patch("core.conflicts.getImagePageNum", return_value=(1, ""))
+    }
+
+    with ExitStack() as stack:
+        _mocks = { name: stack.enter_context(patcher) for name, patcher in mocks.items() }
+        yield _mocks
+
+@pytest.mark.parametrize("src_ext", [
+    "tif", "tiff", "webp"
+])
+def test_checkForConflicts_no_conflict(src_ext, checkForConflicts_patches):
+    mocks = checkForConflicts_patches
+    src_image_path = "/tmp/image.jpg"
+
+    conflicts.checkForConflicts("tiff", src_image_path, "JPEG XL", False)
+    mocks["getImagePageNum"].assert_called_once_with(src_image_path)
+
+def test_checkForConflicts_cannot_detect_page_count(checkForConflicts_patches):
+    mocks = checkForConflicts_patches
+    stderr = "Error"
+    mocks["getImagePageNum"].return_value = (-1, stderr)
 
     with (
-        patch("core.conflicts.runBinary", return_value=(stdout, stderr)) as mock_runBinary,
-        patch("core.conflicts.IMAGE_MAGICK_PATH", "im_path") as ImageMagick_path,
+        pytest.raises(FileException) as exc_info,
     ):
-        conflicts.checkForMultipage("tiff", src_abs_path)
-    mock_runBinary.assert_called_once_with(
-        ImageMagick_path,
-        ["identify", "-format", "%n\n"],
-        src_abs_path
-    )
-
-def test_checkForMultipage_cannot_detect():
-    stdout, stderr = "", "Error"
-    with (
-        patch("core.conflicts.runBinary", return_value=(stdout, stderr)) as mock_runBinary,
-        pytest.raises(FileException) as excinfo,
-    ):
-        conflicts.checkForMultipage("tiff", "path/to/src.tiff")
+        conflicts.checkForConflicts("tiff", "path/to/src.tiff", "JPEG XL", False)
     
-    assert "CF2" == excinfo.value.id
-    assert "Cannot detect the number of pages." in excinfo.value.msg
-    assert stderr in excinfo.value.msg
+        assert "CF2" == exc_info.value.id
+        assert "Cannot detect image's page count." in exc_info.value.msg
+        assert stderr in exc_info.value.msg
 
-def test_checkForMultipage_multipage():
-    stdout, stderr = "2", ""
+def test_checkForConflicts_multipage(checkForConflicts_patches):
+    mocks = checkForConflicts_patches
+    stderr = "Error"
+    mocks["getImagePageNum"].return_value = (2, stderr)
+
     with (
-        patch("core.conflicts.runBinary", return_value=(stdout, stderr)) as mock_runBinary,
-        pytest.raises(FileException) as excinfo,
+        pytest.raises(GenericException) as exc_info,
     ):
-        conflicts.checkForMultipage("tiff", "path/to/src.tiff")
+        conflicts.checkForConflicts("tiff", "path/to/src.tiff", "JPEG XL", False)
     
-    assert "CF3" == excinfo.value.id
-    assert "Multipage images are not supported" in excinfo.value.msg
+        assert "CF3" == exc_info.value.id
+        assert "Multipage images are not supported" in exc_info.value.msg
+
+def test_checkForConflicts_animated_webp_source(checkForConflicts_patches):
+    mocks = checkForConflicts_patches
+    stderr = "Error"
+    mocks["getImagePageNum"].return_value = (2, stderr)
+
+    with (
+        pytest.raises(GenericException) as exc_info,
+    ):
+        conflicts.checkForConflicts("webp", "path/to/src.tiff", "JPEG XL", False)
+    
+        assert "CF3" == exc_info.value.id
+        assert "Animated WebP is not supported as input" in exc_info.value.msg

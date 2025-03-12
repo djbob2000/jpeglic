@@ -139,7 +139,6 @@ def test_runChecks(mock_conflicts, mock_isfile, worker):
     worker.conflicts = MagicMock()
     worker.runChecks()
     mock_conflicts.checkForConflicts.assert_called_once()
-    mock_conflicts.checkForMultipage.assert_called_once()
 
 @pytest.fixture
 def setupConversion_patches():
