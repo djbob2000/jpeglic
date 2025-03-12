@@ -16,6 +16,8 @@ from core.process import runProcess, runProcessOutput, runProcess2
 from core.exceptions import GenericException, CancellationException
 import data.task_status as task_status
 
+logger = logging.getLogger(__name__)
+
 def runBinary(
     bin_path: str,
     args: list[str],
@@ -184,6 +186,26 @@ def getImageResMp(image_path: str) -> float:
         return -1
     else:
         return width * height / 1_000_000
+
+def getImagePageNum(image_path: str) -> (int, str):
+    """Returns page number and stderr. If page num. cannot be determined, returns -1 instead. Requires image_path to exist."""
+    out, err = runBinary(
+        IMAGE_MAGICK_PATH,
+        ["identify", "-ping", "-format", "%n\n"],
+        image_path    # Do not specify index (e.g. image.webp[0]). Otherwise, it will return 1 regardless of page count.
+    )
+    pages_m = re.search(r"\d+", out)
+    if not pages_m:
+        logger.error(f"[getImagePageNum] Cannot determine page number. {err}")
+        return (-1, err)
+    
+    try:
+        pages_int = int(pages_m.group(0))
+    except (ValueError, AttributeError) as e:
+        logger.error("[getImagePageNum] Parsing failed.")
+        return (-1, err)
+    
+    return (pages_int, err)
 
 def cleanUp(file_paths: list[str]) -> None:
     """Deletes file(s). Does not raise an exception."""

@@ -144,12 +144,9 @@ class Worker(QRunnable):
         # Compatibility
         conflicts.checkForConflicts(
             self.item_ext,
+            self.org_item_abs_path,
             self.params["format"],
             self.params["downscaling"]["enabled"],
-        )
-        conflicts.checkForMultipage(
-            self.item_ext,
-            self.org_item_abs_path,
         )
 
     def setupConversion(self):
