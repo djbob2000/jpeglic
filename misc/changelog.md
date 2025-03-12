@@ -8,6 +8,8 @@
 
 ### Fixed
 
+- Account for unsupported routine (#93).
+
 ### Removed
 
 ## 1.2.0 - 2025-02-14
