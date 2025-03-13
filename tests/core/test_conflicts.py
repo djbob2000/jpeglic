@@ -12,20 +12,25 @@ from core.exceptions import GenericException, FileException
 def test_checkForConflicts_no_conflict(src_ext):
     conflicts.checkForConflicts(src_ext, "/tmp/image.jpg", "JPEG XL", False)  # Expecting no exception raised
 
-@pytest.mark.parametrize("target_format", [
-    "JPEG XL", "WebP"
+@pytest.mark.parametrize("src_ext, target_format", [
+    ("gif", "JPEG XL"),
+    ("gif", "WebP"),
+    ("apng", "JPEG XL"),
 ])
-def test_checkForConflicts_gif_supported(target_format):
-    conflicts.checkForConflicts("gif", "/tmp/image.jpg", target_format, False)
+def test_checkForConflicts_supported(src_ext, target_format):
+    conflicts.checkForConflicts(src_ext, "/tmp/image.jpg", target_format, False)
 
-@pytest.mark.parametrize("target_format", [
-    "JPEG", "PNG", "AVIF",
+@pytest.mark.parametrize("src_ext, target_format", [
+    ("gif", "JPEG"),
+    ("gif", "PNG"),
+    ("gif", "AVIF"),
+    ("apng", "WebP"),
 ])
-def test_checkForConflicts_gif_unsupported(target_format):
+def test_checkForConflicts_unsupported(src_ext, target_format):
     with pytest.raises(GenericException) as exc_info:
-        conflicts.checkForConflicts("gif", "/tmp/image.jpg", target_format, False)
+        conflicts.checkForConflicts(src_ext, "/tmp/image.jpg", target_format, False)
 
-    assert f"Transcoding GIF -> {target_format} is not supported" == exc_info.value.msg
+    assert f"Transcoding {src_ext.upper()} -> {target_format} is not supported" == exc_info.value.msg
 
 def test_checkForConflicts_downscaling():
     with pytest.raises(GenericException) as exc_info:

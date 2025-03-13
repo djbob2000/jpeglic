@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Reintroduce limited APNG support.
+
 ### Fixed
 
 - Account for unsupported routine (#93).

@@ -21,15 +21,14 @@ def checkForConflicts(src_ext: str, src_image_path: str, target_format: str, dow
         - FileException - for file-related exceptions.
 
     """
-    conflict = True
-
-    if src_ext == "gif":
-
+    if src_ext in ("gif", "apng"):
         # Animation
-        if target_format in ("JPEG XL", "WebP"):
-            conflict = False
-        
-        if conflict:
+        valid_routines = {
+            "gif": ["JPEG XL", "WebP"],
+            "apng": ["JPEG XL"],
+        }
+
+        if target_format not in valid_routines[src_ext]:
             raise GenericException("CF0", f"Transcoding {src_ext.upper()} -> {target_format} is not supported")
 
         if downscaling:
