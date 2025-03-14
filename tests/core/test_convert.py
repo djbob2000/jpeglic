@@ -286,6 +286,51 @@ def test_getImageResMp_sad_path():
     with patch("core.convert.getImageRes", return_value=(-1, -1)) as mock_getImageRes:
         assert convert.getImageResMp("/tmp/file.jpg") == -1
 
+def test_getImageCount_happy_path(caplog):
+    image_path = "/tmp/image.jpg"
+
+    with (
+        patch("core.convert.runBinary", return_value=("5\n" * 5, "")) as mock_runBinary,      # typical IM output
+        patch("core.convert.IMAGE_MAGICK_PATH", "im_path") as var_IMAGE_MAGICK_PATH,
+    ):
+        assert convert.getImageCount(image_path) == (5, "")
+        mock_runBinary.assert_called_once_with(
+            var_IMAGE_MAGICK_PATH,
+            ["identify", "-ping", "-format", "%n\n"],
+            image_path
+        )
+        assert not caplog.records
+
+def test_getImageCount_image_count_not_available(caplog):
+    image_path = "/tmp/image.jpg"
+    stderr = "error"
+
+    with (
+        patch("core.convert.runBinary", return_value=("not found", stderr)) as mock_runBinary,
+        patch("core.convert.IMAGE_MAGICK_PATH", "im_path") as var_IMAGE_MAGICK_PATH,
+    ):
+        assert convert.getImageCount(image_path) == (-1, stderr)
+        mock_runBinary.assert_called_once_with(
+            var_IMAGE_MAGICK_PATH,
+            ["identify", "-ping", "-format", "%n\n"],
+            image_path
+        )
+        assert "Cannot determine image count" in caplog.records[0].message 
+        assert stderr in caplog.records[0].message 
+
+def test_getImageCount_parsing_failed(caplog):
+    mock_match = MagicMock()
+    mock_match.group.side_effect = ValueError("invalid literal for int()")
+
+    with (
+        patch("core.convert.runBinary", return_value=("5\n" * 5, "")) as mock_runBinary,
+        patch("core.convert.re.search", return_value=mock_match)
+    ):
+        assert convert.getImageCount("/tmp/image.jpg") == (-1, "")
+        mock_runBinary.assert_called_once()
+        assert "Parsing failed" in caplog.records[0].message 
+        assert "invalid literal for int()" in caplog.records[0].message
+
 def test_cleanUp_files_exist():
     tmp_files = ["/tmp/file1.jpg", "/tmp/file2.jpg", "/tmp/file3.jpg"]
     with (
