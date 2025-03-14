@@ -41,7 +41,7 @@ def test_checkForConflicts_downscaling():
 @pytest.fixture
 def checkForConflicts_patches():
     mocks = {
-        "getImagePageNum": patch("core.conflicts.getImagePageNum", return_value=(1, ""))
+        "getImageCount": patch("core.conflicts.getImageCount", return_value=(1, ""))
     }
 
     with ExitStack() as stack:
@@ -56,12 +56,12 @@ def test_checkForConflicts_no_conflict(src_ext, checkForConflicts_patches):
     src_image_path = "/tmp/image.jpg"
 
     conflicts.checkForConflicts("tiff", src_image_path, "JPEG XL", False)
-    mocks["getImagePageNum"].assert_called_once_with(src_image_path)
+    mocks["getImageCount"].assert_called_once_with(src_image_path)
 
 def test_checkForConflicts_cannot_detect_page_count(checkForConflicts_patches):
     mocks = checkForConflicts_patches
     stderr = "Error"
-    mocks["getImagePageNum"].return_value = (-1, stderr)
+    mocks["getImageCount"].return_value = (-1, stderr)
 
     with (
         pytest.raises(FileException) as exc_info,
@@ -75,7 +75,7 @@ def test_checkForConflicts_cannot_detect_page_count(checkForConflicts_patches):
 def test_checkForConflicts_multipage(checkForConflicts_patches):
     mocks = checkForConflicts_patches
     stderr = "Error"
-    mocks["getImagePageNum"].return_value = (2, stderr)
+    mocks["getImageCount"].return_value = (2, stderr)
 
     with (
         pytest.raises(GenericException) as exc_info,
@@ -88,7 +88,7 @@ def test_checkForConflicts_multipage(checkForConflicts_patches):
 def test_checkForConflicts_animated_webp_source(checkForConflicts_patches):
     mocks = checkForConflicts_patches
     stderr = "Error"
-    mocks["getImagePageNum"].return_value = (2, stderr)
+    mocks["getImageCount"].return_value = (2, stderr)
 
     with (
         pytest.raises(GenericException) as exc_info,

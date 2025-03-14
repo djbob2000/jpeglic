@@ -3,7 +3,7 @@ import re
 from data.constants import (
     IMAGE_MAGICK_PATH,
 )
-from core.convert import runBinary, getImagePageNum
+from core.convert import runBinary, getImageCount
 from core.exceptions import GenericException, FileException
 
 def checkForConflicts(src_ext: str, src_image_path: str, target_format: str, downscaling: bool = False) -> None:
@@ -36,7 +36,7 @@ def checkForConflicts(src_ext: str, src_image_path: str, target_format: str, dow
     elif src_ext in ("tif", "tiff", "webp"):
 
         # Multipage images
-        page_num, err = getImagePageNum(src_image_path)
+        page_num, err = getImageCount(src_image_path)
         if page_num < 1:
             raise FileException("CF2", f"Cannot detect image's page count. {err}")
 

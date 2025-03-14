@@ -187,8 +187,8 @@ def getImageResMp(image_path: str) -> float:
     else:
         return width * height / 1_000_000
 
-def getImagePageNum(image_path: str) -> (int, str):
-    """Returns page number and stderr. If page num. cannot be determined, returns -1 instead. Requires image_path to exist."""
+def getImageCount(image_path: str) -> (int, str):
+    """Returns image count (frame or page count) and stderr. If it cannot be determined, returns -1."""
     out, err = runBinary(
         IMAGE_MAGICK_PATH,
         ["identify", "-ping", "-format", "%n\n"],
@@ -196,13 +196,13 @@ def getImagePageNum(image_path: str) -> (int, str):
     )
     pages_m = re.search(r"\d+", out)
     if not pages_m:
-        logger.error(f"[getImagePageNum] Cannot determine page number. {err}")
+        logger.error(f"[getImageCount] Cannot determine image count. {err}")
         return (-1, err)
     
     try:
         pages_int = int(pages_m.group(0))
     except (ValueError, AttributeError) as e:
-        logger.error("[getImagePageNum] Parsing failed.")
+        logger.error("[getImageCount] Parsing failed.")
         return (-1, err)
     
     return (pages_int, err)
