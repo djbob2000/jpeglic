@@ -202,7 +202,7 @@ def getImageCount(image_path: str) -> (int, str):
     try:
         pages_int = int(pages_m.group(0))
     except (ValueError, AttributeError) as e:
-        logger.error("[getImageCount] Parsing failed.")
+        logger.error(f"[getImageCount] Parsing failed. {e}")
         return (-1, err)
     
     return (pages_int, err)
