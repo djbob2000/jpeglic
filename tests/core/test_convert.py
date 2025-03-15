@@ -175,11 +175,6 @@ def test_convert_other():
         convert.convert("encoder_path", "src.png", "dst.avif", ["-q", "50"])
         mock_runProcess.assert_called_once_with("encoder_path", "src.png","-q", "50", "dst.avif")
 
-def test_optimize():
-    with patch("core.convert.runProcess") as mock_runProcess:
-        convert.optimize("path/to/optimizer", "target.png", ["-o 4"])
-        mock_runProcess.assert_called_once_with("path/to/optimizer", "-o", "4", "target.png")
-
 def test_getExtensionJxl_jpg():
     with patch("core.convert.runProcessOutput", return_value=("JPEG bitstream reconstruction data available", "")):
         assert convert.getExtensionJxl("src.jxl") == "jpg"
@@ -207,16 +202,6 @@ def test_getDecoderArgs_known():
 
 def test_getDecoderArgs_unknown():
     assert convert.getDecoderArgs("unknown", 4) == []
-
-def test_log():
-    with patch("logging.info") as mock_logging:
-        convert.log("test")
-        mock_logging.assert_called_once_with("[Convert] test")
-
-def test_log_worker():
-    with patch("logging.info") as mock_logging:
-        convert.log("test", 3)
-        mock_logging.assert_called_once_with("[Worker #3 - Convert] test")
 
 @pytest.fixture
 def getImageRes_patches():

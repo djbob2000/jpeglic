@@ -53,7 +53,7 @@ def _extrapolateScale(sample_points, desired_size) -> int:
 #                           Helper
 # ------------------------------------------------------------
 
-def _downscaleToPercent(src, dst, amount=90, resample="Default", n=None):
+def _downscaleToPercent(src, dst, amount=90, resample="Default"):
     amount = clip(amount, 1, 100)
 
     args = []
@@ -61,7 +61,7 @@ def _downscaleToPercent(src, dst, amount=90, resample="Default", n=None):
         args.append(f"-filter {resample}")  # Needs to come first
     args.extend([f"-resize {amount}%"])
 
-    convert(IMAGE_MAGICK_PATH, src, dst, args, n)
+    convert(IMAGE_MAGICK_PATH, src, dst, args)
 
 def cancelCheck(*tmp_files):
     """Checks if the task was canceled and removes temporary files."""
@@ -89,8 +89,8 @@ def _downscaleToFileSize(params, mutex):
         params["args"][1] = "-e 7"
 
     # Sample 2 data points (evenly)
-    _downscaleToPercent(params["src"], proxy_src, 66, params["resample"], params["n"])
-    convert(params["enc"], proxy_src, params["dst"], params["args"], params["n"])
+    _downscaleToPercent(params["src"], proxy_src, 66, params["resample"])
+    convert(params["enc"], proxy_src, params["dst"], params["args"])
 
     try:
         size_samples.append([os.path.getsize(params["dst"]), 66])
@@ -112,8 +112,8 @@ def _downscaleToFileSize(params, mutex):
             raise FileException("D8", err)
         raise FileException("D9", f"Failed conversion check. {err}")
 
-    _downscaleToPercent(params["src"], proxy_src, 33, params["resample"], params["n"])
-    convert(params["enc"], proxy_src, params["dst"], params["args"], params["n"])
+    _downscaleToPercent(params["src"], proxy_src, 33, params["resample"])
+    convert(params["enc"], proxy_src, params["dst"], params["args"])
 
     try:
         size_samples.append([os.path.getsize(params["dst"]), 33])
@@ -143,7 +143,7 @@ def _downscaleToFileSize(params, mutex):
         raise GenericException("D14", f"Extrapolated scale cannot be negative ({extrapolated_scale})")
     elif extrapolated_scale >= 100:     # Non-downscaled conversion
         
-        convert(params["enc"], params["src"], params["dst"], params["args"], params["n"])
+        convert(params["enc"], params["src"], params["dst"], params["args"])
         try:
             os.remove(proxy_src)
         except OSError as err:
@@ -151,8 +151,8 @@ def _downscaleToFileSize(params, mutex):
         return True
     else:
         while True:
-            _downscaleToPercent(params["src"], proxy_src, extrapolated_scale, params["resample"], params["n"])
-            convert(params["enc"], proxy_src, params["dst"], params["args"], params["n"])
+            _downscaleToPercent(params["src"], proxy_src, extrapolated_scale, params["resample"])
+            convert(params["enc"], proxy_src, params["dst"], params["args"])
 
             extrapolated_scale -= 10
             
@@ -177,7 +177,7 @@ def _downscaleToFileSize(params, mutex):
             with QMutexLocker(mutex):
                 e9_tmp = getUniqueTmpFilePath(params["dst_dir"], "jxl")
 
-            convert(params["enc"], proxy_src, e9_tmp, params["args"], params["n"])
+            convert(params["enc"], proxy_src, e9_tmp, params["args"])
 
             try:
                 e7_size = os.path.getsize(params["dst"])
@@ -235,20 +235,20 @@ def _downscaleManualModes(params, mutex):
     # Downscale
     if params["enc"] == IMAGE_MAGICK_PATH:  # We can just add arguments If the encoder is ImageMagick, since it also handles downscaling
         args.extend(params["args"])
-        convert(IMAGE_MAGICK_PATH, params["src"], params["dst"], args, params["n"])
+        convert(IMAGE_MAGICK_PATH, params["src"], params["dst"], args)
     else:
         with QMutexLocker(mutex):
             downscaled_path = getUniqueTmpFilePath(params["dst_dir"], "png")
 
         # Downscale
         # Proxy was handled before in Worker.py
-        convert(IMAGE_MAGICK_PATH, params["src"], downscaled_path, args, params["n"])
+        convert(IMAGE_MAGICK_PATH, params["src"], downscaled_path, args)
         
         # Convert
         if params["format"] == "JPEG XL" and params["jxl_int_e"]: 
             params["args"][1] == "-e 7"
 
-        convert(params["enc"], downscaled_path, params["dst"], params["args"], params["n"])
+        convert(params["enc"], downscaled_path, params["dst"], params["args"])
 
         # Intelligent Effort
         if params["format"] == "JPEG XL" and params["jxl_int_e"]: 
@@ -256,7 +256,7 @@ def _downscaleManualModes(params, mutex):
 
             with QMutexLocker(mutex):
                 e9_tmp = getUniqueTmpFilePath(params["dst_dir"], "jxl")
-            convert(params["enc"], downscaled_path, e9_tmp, params["args"], params["n"])
+            convert(params["enc"], downscaled_path, e9_tmp, params["args"])
 
             try:
                 e7_size = os.path.getsize(params["dst"])
@@ -292,7 +292,7 @@ def decodeAndDownscale(params, ext, metadata_mode, mutex):
         # Generate proxy
         with QMutexLocker(mutex):
             proxy_path = getUniqueTmpFilePath(params["dst_dir"], "png")
-        convert(params["enc"], params["src"], proxy_path, [], params["n"])
+        convert(params["enc"], params["src"], proxy_path, [])
 
         # Downscale
         params["src"] = proxy_path

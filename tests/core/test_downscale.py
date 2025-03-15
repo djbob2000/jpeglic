@@ -37,13 +37,13 @@ def test__extrapolateScale():
 @patch("core.downscale.convert") 
 def test__downscaleToPercent_default(mock_convert):
     downscale._downscaleToPercent("src.png", "dst.png", 90, "Default")
-    mock_convert.assert_called_once_with(IMAGE_MAGICK_PATH, "src.png", "dst.png", ["-resize 90%"], None)
+    mock_convert.assert_called_once_with(IMAGE_MAGICK_PATH, "src.png", "dst.png", ["-resize 90%"])
 
 @patch("core.downscale.convert") 
 def test__downscaleToPercent_custom(mock_convert):
     custom_resampling = ALLOWED_RESAMPLING[0]
     downscale._downscaleToPercent("src.png", "dst.png", 90, custom_resampling)
-    mock_convert.assert_called_once_with(IMAGE_MAGICK_PATH, "src.png", "dst.png", [f"-filter {custom_resampling}", "-resize 90%"], None)
+    mock_convert.assert_called_once_with(IMAGE_MAGICK_PATH, "src.png", "dst.png", [f"-filter {custom_resampling}", "-resize 90%"])
 
 @patch("core.downscale.task_status.wasCanceled", return_value=True)
 def test_cancelCheck(mock_wasCanceled, tmp_path):
@@ -97,7 +97,7 @@ def test__downscaleManualModes_resample(resample, expected_filter, params_fixtur
         else:
             args.extend([expected_filter, "-resize 50%"])
 
-        mock_convert.assert_called_once_with(IMAGE_MAGICK_PATH, params_fixture["src"], params_fixture["dst"], args, params_fixture["n"])
+        mock_convert.assert_called_once_with(IMAGE_MAGICK_PATH, params_fixture["src"], params_fixture["dst"], args)
 
 @pytest.mark.parametrize("mode,expected_arg", [
     ("Percent", "-resize 50%"),
@@ -117,7 +117,7 @@ def test__downscaleManualModes_mode(mode, expected_arg, params_fixture):
     })
     with patch("core.downscale.convert") as mock_convert:
         downscale._downscaleManualModes(params_fixture, QMutex())
-        mock_convert.assert_called_once_with(params_fixture["enc"], params_fixture["src"], params_fixture["dst"], [expected_arg], params_fixture["n"])
+        mock_convert.assert_called_once_with(params_fixture["enc"], params_fixture["src"], params_fixture["dst"], [expected_arg])
 
 @pytest.mark.parametrize("width, height, expected_arg", [
     (float("inf"), 1000, "-resize x1000>"),
@@ -138,7 +138,6 @@ def test___downscaleManualModes_resolution(width, height, expected_arg, params_f
             params_fixture["src"],
             params_fixture["dst"],
             [expected_arg],
-            params_fixture["n"]
         )
 
 def test___downscaleManualModes_resolution_exception(params_fixture):
@@ -173,8 +172,8 @@ def test__downscaleManualModes_no_imagemagick(params_fixture):
         downscale._downscaleManualModes(params_fixture, QMutex())
         mock_getUniqueTmpFilePath.assert_called_once_with(params_fixture["dst_dir"], "png")
 
-        mock_convert.assert_any_call(IMAGE_MAGICK_PATH, params_fixture["src"], "new/path/image.png", ["-resize 50%"], params_fixture["n"])
-        mock_convert.assert_any_call(params_fixture["enc"], "new/path/image.png", params_fixture["dst"], [], params_fixture["n"])
+        mock_convert.assert_any_call(IMAGE_MAGICK_PATH, params_fixture["src"], "new/path/image.png", ["-resize 50%"])
+        mock_convert.assert_any_call(params_fixture["enc"], "new/path/image.png", params_fixture["dst"], [])
 
 @pytest.mark.parametrize("side_effect, removed_file", [
     ([200, 300], "path/to/jxl_e9.jxl"),
@@ -196,7 +195,7 @@ def test__downscaleManualModes_no_imagemagick_jxl_int_e_e9(params_fixture, side_
         patch("core.downscale.os.path.getsize", side_effect=side_effect),
     ):
         downscale._downscaleManualModes(params_fixture, QMutex())
-        mock_convert.assert_any_call(params_fixture["enc"], "path/to/jxl_e7.jxl", params_fixture["dst"], params_fixture["args"], params_fixture["n"])
+        mock_convert.assert_any_call(params_fixture["enc"], "path/to/jxl_e7.jxl", params_fixture["dst"], params_fixture["args"])
         mock_remove.assert_any_call(removed_file)
 
 # ------------------------------------------------------------

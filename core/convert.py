@@ -91,7 +91,7 @@ def runJPEGtran(
 
     return (stdout, stderr)
 
-def convert(encoder_path, src, dst, args = [], n = None):
+def convert(encoder_path, src, dst, args = []):
     """Universal method for all encoders. Deprecated."""
     cmd = []
     if encoder_path == AVIFENC_PATH:
@@ -100,15 +100,6 @@ def convert(encoder_path, src, dst, args = [], n = None):
         cmd = (encoder_path, src, *parseArgs(args), dst)
     
     runProcess(*cmd)
-    
-    if n != None:
-        log(cmd, n)
-
-def optimize(bin_path, src, args = [], n = None):
-    """Run a binary targeting a source. Deprecated."""
-    runProcess(bin_path, *parseArgs(args), src)
-    if n != None:
-        log((bin_path, *parseArgs(args), src), n)
 
 def getExtensionJxl(src_path: str) -> Literal["jpg", "png"]:
     """Assign extension based on If JPEG reconstruction data is available. Only use If src format is jxl."""
@@ -148,13 +139,6 @@ def getDecoderArgs(decoder_path: str, threads: int) -> list:
         return [f"--num_threads={threads}"]
     else:
         return []
-
-def log(msg, n=None):
-    """Deprecated logging method."""
-    if n == None:
-        logging.info(f"[Convert] {msg}")
-    else:
-        logging.info(f"[Worker #{n} - Convert] {msg}")
 
 def getImageRes(image_path: str) -> (int, int):
     """Returns resolution of an image or (-1, -1) if one cannot be determined."""
