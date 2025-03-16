@@ -21,10 +21,10 @@ from PySide6.QtGui import(
 
 from data.constants import ALLOWED_INPUT, ALLOWED_INPUT_FILTERS
 from core.utils import scanDir
-from ui.dialogs.notifications import Notifications
-from ui.widgets.file_view import FileView
-from ui.lib.widget_manager import WidgetManager
-from ui.lib.utils import isPathValidStr
+from ui.dialogs import Notifications
+from ui.widgets import FileView
+from ui.lib import WidgetManager
+from ui.lib import isPathValidStr
 
 class InputTab(QWidget):
     convert = Signal()

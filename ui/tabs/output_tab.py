@@ -24,12 +24,12 @@ from PySide6.QtCore import(
 
 from core.utils import dictToList
 from data.tooltips import TOOLTIPS
-from ui.lib.widget_manager import WidgetManager
-from ui.lib.utils import setToolTip, isPathValidStr, createQHBoxLayout, blockSignals
-from ui.widgets.slider import Slider
-from ui.widgets.combobox import ComboBox
-from ui.widgets.spinbox import SpinBox
-from ui.dialogs.notifications import Notifications
+from ui.lib import WidgetManager
+from ui.lib import setToolTip, isPathValidStr, createQHBoxLayout, blockSignals
+from ui.widgets import Slider
+from ui.widgets import ComboBox
+from ui.widgets import SpinBox
+from ui.dialogs import Notifications
 
 class OutputTab(QWidget):
     convert = Signal()

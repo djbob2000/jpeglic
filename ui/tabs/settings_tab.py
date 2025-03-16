@@ -26,13 +26,13 @@ from PySide6.QtCore import(
 
 from data.logging_manager import LoggingManager
 from data.tooltips import TOOLTIPS
-from ui.lib.widget_manager import WidgetManager
-from ui.lib.utils import setToolTip, openLocalUrl, createQHBoxLayout, blockSignals
+from ui.lib import WidgetManager
+from ui.lib import setToolTip, openLocalUrl, createQHBoxLayout, blockSignals
 from ui.theme import setTheme
-from ui.widgets.scroll_area import ScrollArea
-from ui.widgets.spinbox import SpinBox
-from ui.widgets.combobox import ComboBox
-from ui.dialogs.notifications import Notifications
+from ui.widgets import ScrollArea
+from ui.widgets import SpinBox
+from ui.widgets import ComboBox
+from ui.dialogs import Notifications
 
 class Signals(QObject):
     custom_resampling_toggled = Signal(bool)
