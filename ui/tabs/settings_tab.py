@@ -27,7 +27,7 @@ from PySide6.QtCore import(
 from data.logging_manager import LoggingManager
 from data.tooltips import TOOLTIPS
 from ui.lib import WidgetManager
-from ui.lib import setToolTip, openLocalUrl, createQHBoxLayout, blockSignals
+from ui.lib.utils import setToolTip, openLocalUrl, createQHBoxLayout, blockSignals
 from ui.theme import setTheme
 from ui.widgets import ScrollArea
 from ui.widgets import SpinBox

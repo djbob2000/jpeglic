@@ -19,7 +19,7 @@ from PySide6.QtGui import(
 
 from data.constants import VERSION, ICON_SVG
 from core.update_checker import Runner
-from ui.lib import openRemoteUrl
+from ui.lib.utils import openRemoteUrl
 
 class Dialog(QDialog):
     closed = Signal()

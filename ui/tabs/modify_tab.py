@@ -24,7 +24,7 @@ from data.constants import ALLOWED_RESAMPLING
 from data.tooltips import TOOLTIPS
 from core.utils import dictToList
 from ui.lib import WidgetManager
-from ui.lib import setToolTip, createQHBoxLayout, blockSignals
+from ui.lib.utils import setToolTip, createQHBoxLayout, blockSignals
 from ui.widgets import ComboBox
 from ui.widgets import SpinBox, DoubleSpinBox
 

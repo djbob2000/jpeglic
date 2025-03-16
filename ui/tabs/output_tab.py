@@ -25,7 +25,7 @@ from PySide6.QtCore import(
 from core.utils import dictToList
 from data.tooltips import TOOLTIPS
 from ui.lib import WidgetManager
-from ui.lib import setToolTip, isPathValidStr, createQHBoxLayout, blockSignals
+from ui.lib.utils import setToolTip, isPathValidStr, createQHBoxLayout, blockSignals
 from ui.widgets import Slider
 from ui.widgets import ComboBox
 from ui.widgets import SpinBox

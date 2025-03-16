@@ -24,7 +24,7 @@ from core.utils import scanDir
 from ui.dialogs import Notifications
 from ui.widgets import FileView
 from ui.lib import WidgetManager
-from ui.lib import isPathValidStr
+from ui.lib.utils import isPathValidStr
 
 class InputTab(QWidget):
     convert = Signal()
