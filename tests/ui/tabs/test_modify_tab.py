@@ -4,13 +4,13 @@ import pytest
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
 
-from ui.modify_tab import ModifyTab
+from ui.tabs.modify_tab import ModifyTab
 
 @pytest.fixture
 def app(qtbot):
     with (
-        patch("ui.modify_tab.WidgetManager.loadState"),
-        patch("ui.modify_tab.WidgetManager.saveState"),
+        patch("ui.tabs.modify_tab.WidgetManager.loadState"),
+        patch("ui.tabs.modify_tab.WidgetManager.saveState"),
     ):
         tab = ModifyTab(
             {

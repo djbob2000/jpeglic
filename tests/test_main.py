@@ -9,7 +9,7 @@ from PySide6.QtTest import QSignalSpy
 
 from main import MainWindow
 from core.controller import CheckStatus, CheckFlags
-from ui import SettingsTab, InputTab, OutputTab, ModifyTab, AboutTab
+from ui.tabs import SettingsTab, InputTab, OutputTab, ModifyTab, AboutTab
 from conftest import profile_test
 
 class MockTab(QWidget):

@@ -6,14 +6,14 @@ from PySide6.QtWidgets import QApplication, QStyle, QStyleOptionViewItem
 from PySide6.QtCore import Qt, QMimeData, QUrl, QModelIndex, QItemSelectionModel
 from PySide6.QtGui import QPainter
 
-import ui.file_view
+import ui.widgets.file_view as file_view_module
 
 @pytest.fixture
 def file_view(qtbot):
     file_view = QApplication.instance()
     if not file_view:
         file_view = QApplication([])
-    tab = ui.file_view.FileView()
+    tab = file_view_module.FileView()
     qtbot.addWidget(tab)
     return tab
 
@@ -131,8 +131,8 @@ def test_deleteSelected_last(file_view):
     assert file_view.topLevelItemCount() == 2
     assert file_view.currentItem() == file_view.topLevelItem(1)
 
-@patch("ui.file_view.os.path.isdir", return_value=False)
-@patch("ui.file_view.os.path.isfile", return_value=True)
+@patch("ui.widgets.file_view.os.path.isdir", return_value=False)
+@patch("ui.widgets.file_view.os.path.isfile", return_value=True)
 def test_drop_event_files(mock_isfile, mock_isdir, file_view):
     sample_imgs = get_sample_img_paths_qurls(2)
     mime_data = QMimeData()
@@ -145,9 +145,9 @@ def test_drop_event_files(mock_isfile, mock_isdir, file_view):
     assert file_view.topLevelItemCount() == 2
     assert file_view.topLevelItem(0).text(2) == normalizePath(sample_imgs[0].path())
 
-@patch("ui.file_view.os.path.isdir", return_value=True)
-@patch("ui.file_view.os.path.isfile", return_value=False)
-@patch("ui.file_view.scanDir")
+@patch("ui.widgets.file_view.os.path.isdir", return_value=True)
+@patch("ui.widgets.file_view.os.path.isfile", return_value=False)
+@patch("ui.widgets.file_view.scanDir")
 def test_drop_event_folders(mock_scanDir, mock_isfile, mock_isdir, file_view):
     sample_imgs = get_sample_img_paths(2)
     mock_scanDir.return_value = sample_imgs
@@ -162,9 +162,9 @@ def test_drop_event_folders(mock_scanDir, mock_isfile, mock_isdir, file_view):
     assert file_view.topLevelItem(0).text(2) == sample_imgs[0]
     assert file_view.topLevelItem(1).text(2) == sample_imgs[1]
 
-@patch("ui.file_view.os.path.isdir", side_effect=[False, True])
-@patch("ui.file_view.os.path.isfile", side_effect=[True, False])
-@patch("ui.file_view.scanDir")
+@patch("ui.widgets.file_view.os.path.isdir", side_effect=[False, True])
+@patch("ui.widgets.file_view.os.path.isfile", side_effect=[True, False])
+@patch("ui.widgets.file_view.scanDir")
 def test_drop_event_files_and_folders(mock_scanDir, mock_isfile, mock_isdir, file_view):
     sample_imgs = get_sample_img_paths(3)
     mock_scanDir.return_value = [sample_imgs[1], sample_imgs[2]]
@@ -295,7 +295,7 @@ def test_paint_remove_focus_rectangle(file_view):
     option.state = option.state | QStyle.State_HasFocus | QStyle.State_Enabled | QStyle.State_Selected
     original_state = option.state
 
-    delegate = ui.file_view.ItemDelegate()
+    delegate = file_view_module.ItemDelegate()
     delegate.paint(QPainter(), option, QModelIndex())
 
     assert option.state == (original_state & ~QStyle.State_HasFocus)
@@ -304,7 +304,7 @@ def test_paint_default(file_view):
     option = QStyleOptionViewItem()
     option.state = QStyle.State_Enabled
 
-    delegate = ui.file_view.ItemDelegate()
+    delegate = file_view_module.ItemDelegate()
     delegate.paint(QPainter(), option, QModelIndex())
 
     assert option.state == QStyle.State_Enabled

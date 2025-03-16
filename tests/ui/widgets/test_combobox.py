@@ -3,7 +3,7 @@ import os
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from ui.combobox import ComboBox
+from ui.widgets.combobox import ComboBox
 
 @pytest.fixture
 def combo_box(app):

@@ -11,7 +11,7 @@ from PySide6.QtCore import (
 )
 import pytest
 
-from ui.exception_view import ExceptionView
+from ui.dialogs.exception_view import ExceptionView
 
 @pytest.fixture
 def exception_view(app):
@@ -28,7 +28,7 @@ def test_addItem(exception_view):
     mock_item = MagicMock(spec=QTreeWidgetItem)
 
     with (
-        patch("ui.exception_view.QTreeWidgetItem", return_value=mock_item),
+        patch("ui.dialogs.exception_view.QTreeWidgetItem", return_value=mock_item),
         patch.object(exception_view.exceptions_t, "addTopLevelItem") as mock_addTopLevelItem,
     ):
         exception_view.addItem(id_str, exception, source)
@@ -65,9 +65,9 @@ def test_saveToFile_happy_path(exception_view):
 
     with (
         patch.object(exception_view, "isEmpty", return_value=False) as mock_isEmpty,
-        patch("ui.exception_view.QFileDialog.getSaveFileUrl", return_value=(mock_dlg, None)) as mock_getSaveFileUrl,
+        patch("ui.dialogs.exception_view.QFileDialog.getSaveFileUrl", return_value=(mock_dlg, None)) as mock_getSaveFileUrl,
         patch.object(exception_view, "_writeCsv") as mock__writeCsv,
-        patch("ui.exception_view.VERSION", "version") as version,
+        patch("ui.dialogs.exception_view.VERSION", "version") as version,
     ):
         exception_view.saveToFile()
 
@@ -98,7 +98,7 @@ def test_saveToFile_dlg_invalid(exception_view):
 
     with (
         patch.object(exception_view, "isEmpty", return_value=False),
-        patch("ui.exception_view.QFileDialog.getSaveFileUrl", return_value=(mock_dlg, None)),
+        patch("ui.dialogs.exception_view.QFileDialog.getSaveFileUrl", return_value=(mock_dlg, None)),
         patch.object(exception_view, "_writeCsv") as mock__writeCsv,
     ):
         exception_view.saveToFile()
@@ -115,7 +115,7 @@ def test__writeCsv_happy_path(exception_view):
 
     with (
         patch("builtins.open", mock_open()) as mock_csv_file,
-        patch("ui.exception_view.csv.writer") as mock_csv_writer,
+        patch("ui.dialogs.exception_view.csv.writer") as mock_csv_writer,
         patch.object(exception_view.notifications, "notifyDetailed") as mock_notifyDetailed,
     ):
         exception_view._writeCsv(file_path, rows)
@@ -136,7 +136,7 @@ def test__writeCsv_sad_path(exception_view):
 
     with (
         patch("builtins.open", side_effect=OSError()) as mock_csv_file,
-        patch("ui.exception_view.csv.writer") as mock_csv_writer,
+        patch("ui.dialogs.exception_view.csv.writer") as mock_csv_writer,
         patch.object(exception_view.notifications, "notifyDetailed") as mock_notifyDetailed,
     ):
         exception_view._writeCsv(file_path, rows)

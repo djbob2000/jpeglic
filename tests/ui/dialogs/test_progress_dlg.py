@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from PySide6.QtWidgets import QProgressDialog
 
-from ui.progress_dlg import ProgressDialog
+from ui.dialogs.progress_dlg import ProgressDialog
 
 @pytest.fixture
 def progress_dialog(qtbot):

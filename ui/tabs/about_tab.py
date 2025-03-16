@@ -13,9 +13,9 @@ from PySide6.QtCore import(
 )
 
 import data.constants as constants
-from ui.update_checker import UpdateChecker
-from ui.utils import openRemoteUrl, openUrl
-from ui.label import StyledLabel
+from ui.dialogs import UpdateChecker
+from ui.lib.utils import openRemoteUrl, openUrl
+from ui.widgets import StyledLabel
 
 class AboutTab(QWidget):
     def __init__(self):

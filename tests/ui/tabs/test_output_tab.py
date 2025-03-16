@@ -4,13 +4,13 @@ import pytest
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt, QDir
 
-from ui.output_tab import OutputTab
+from ui.tabs.output_tab import OutputTab
 
 @pytest.fixture
 def app(qtbot):
     with (
-        patch("ui.output_tab.WidgetManager.loadState"),
-        patch("ui.output_tab.WidgetManager.saveState"),
+        patch("ui.tabs.output_tab.WidgetManager.loadState"),
+        patch("ui.tabs.output_tab.WidgetManager.saveState"),
     ):
         tab = OutputTab(
             {
@@ -110,7 +110,7 @@ def test__onEffortToggled_other(app):
 def test_onJXLLossyModularVisibleToggled(visible, app):
     with (
         patch.object(app.format_cmb, "currentText", return_value="JPEG XL"),
-        patch("ui.output_tab.WidgetManager.setVisibleByTag") as mock_setVisibleByTag,
+        patch("ui.tabs.output_tab.WidgetManager.setVisibleByTag") as mock_setVisibleByTag,
     ):
         app.onJXLLossyModularVisibleToggled(visible)
 
@@ -267,9 +267,9 @@ def test_effort_ranges(app, file_format, min_val, max_val):
 
 def test__chooseOutput_var_default(app):
     with (
-        patch("ui.output_tab.QFileDialog") as mock_qfiledialog,
-        patch("ui.widget_manager.WidgetManager.getVar", return_value=None),
-        patch("ui.utils.isPathValidStr", return_value=False),
+        patch("ui.tabs.output_tab.QFileDialog") as mock_qfiledialog,
+        patch("ui.lib.widget_manager.WidgetManager.getVar", return_value=None),
+        patch("ui.lib.utils.isPathValidStr", return_value=False),
     ):
         mock_qfiledialog.return_value.exec.return_value = False
 
@@ -280,10 +280,10 @@ def test__chooseOutput_var_default(app):
 def test__chooseOutput_var_load(app):
     last_used = "/home/user/Pictures"
     with (
-        patch("ui.output_tab.QFileDialog") as mock_qfiledialog,
-        patch("ui.widget_manager.WidgetManager.getVar", return_value=last_used),
-        patch("ui.widget_manager.WidgetManager.setVar") as mock_setVar,
-        patch("ui.output_tab.isPathValidStr", return_value=True),
+        patch("ui.tabs.output_tab.QFileDialog") as mock_qfiledialog,
+        patch("ui.lib.widget_manager.WidgetManager.getVar", return_value=last_used),
+        patch("ui.lib.widget_manager.WidgetManager.setVar") as mock_setVar,
+        patch("ui.tabs.output_tab.isPathValidStr", return_value=True),
     ):
         mock_qfiledialog.return_value.exec.return_value = False
 
@@ -294,10 +294,10 @@ def test__chooseOutput_var_load(app):
 def test__chooseOutput_var_save(app):
     last_used = "/home/user/Pictures"
     with (
-        patch("ui.output_tab.QFileDialog") as mock_qfiledialog,
-        patch("ui.widget_manager.WidgetManager.getVar", return_value=last_used),
-        patch("ui.widget_manager.WidgetManager.setVar") as mock_setVar,
-        patch("ui.output_tab.isPathValidStr", return_value=False),
+        patch("ui.tabs.output_tab.QFileDialog") as mock_qfiledialog,
+        patch("ui.lib.widget_manager.WidgetManager.getVar", return_value=last_used),
+        patch("ui.lib.widget_manager.WidgetManager.setVar") as mock_setVar,
+        patch("ui.tabs.output_tab.isPathValidStr", return_value=False),
     ):
         mock_qfiledialog.return_value.exec.return_value = True
         mock_qfiledialog.return_value.directory.return_value.absolutePath.return_value = last_used

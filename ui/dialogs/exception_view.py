@@ -25,7 +25,7 @@ from PySide6.QtGui import (
 )
 
 from data.constants import ICON_SVG, VERSION
-from ui import Notifications
+from .notifications import Notifications
 
 class ItemDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):

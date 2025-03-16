@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt, QPointF, QPoint
 from PySide6.QtGui import QMouseEvent, QCursor
 
-from ui.scroll_area import ScrollArea
+from ui.widgets.scroll_area import ScrollArea
 
 @pytest.fixture
 def app(qtbot):

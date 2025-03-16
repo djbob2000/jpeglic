@@ -2,7 +2,7 @@ import logging
 
 from PySide6.QtWidgets import QApplication
 
-from ui.label import StyledLabel
+from ui.widgets.label import StyledLabel
 from .stylesheet import getStyleSheet
 from .themes import getTheme
 

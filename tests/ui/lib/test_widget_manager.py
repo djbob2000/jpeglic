@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QComboBox,
 )
 
-from ui.widget_manager import WidgetManager
+from ui.lib.widget_manager import WidgetManager
 
 class Widget(QWidget):
     def __init__(self):
@@ -30,19 +30,19 @@ def app(qtbot):
     if not app:
         app = QApplication([])
 
-    with patch("ui.widget_manager.open"), \
+    with patch("ui.lib.widget_manager.open"), \
         patch("os.makedirs"):
         w = Widget()
         qtbot.addWidget(w)
         return w
 
-@patch("ui.widget_manager.CONFIG_LOCATION")
+@patch("ui.lib.widget_manager.CONFIG_LOCATION")
 @patch("os.makedirs")
 def test_init(mock_makedirs, mock_CONFIG_LOCATION):
     wm = WidgetManager("test")
     mock_makedirs.assert_called_once_with(mock_CONFIG_LOCATION, exist_ok=True)
 
-@patch("ui.widget_manager.CONFIG_LOCATION")
+@patch("ui.lib.widget_manager.CONFIG_LOCATION")
 @patch("os.makedirs", side_effect=OSError("file error"))
 def test_init_failed(mock_makedirs, mock_CONFIG_LOCATION, caplog):
     WidgetManager("test")
@@ -282,13 +282,13 @@ def test_disableAutoSaving_no_widget(caplog, app):
     assert "text_1_l" in app.wm.exceptions
     assert "Widget not found (text_2_l)" in caplog.text
 
-@patch("ui.widget_manager.os.path.isdir", return_value=False)
+@patch("ui.lib.widget_manager.os.path.isdir", return_value=False)
 def test_saveState_not_dir_CONFIG_LOCATION(mock_isdir, caplog, app):
     app.wm.saveState()
     assert "Config location not found" in caplog.text
 
-@patch("ui.widget_manager.os.path.isdir", return_value=True)
-@patch("ui.widget_manager.open")
+@patch("ui.lib.widget_manager.os.path.isdir", return_value=True)
+@patch("ui.lib.widget_manager.open")
 def test_saveState(mock_open, mock_isdir, app):
     cb = QCheckBox()
     sl = QSlider()
@@ -335,8 +335,8 @@ def test_saveState(mock_open, mock_isdir, app):
     assert written_json["variables"]["var_0"] == 50
     assert written_json["variables"]["var_1"] == False
 
-@patch("ui.widget_manager.os.path.isdir", return_value=True)
-@patch("ui.widget_manager.open")
+@patch("ui.lib.widget_manager.os.path.isdir", return_value=True)
+@patch("ui.lib.widget_manager.open")
 def test_saveState_exceptions(mock_open, mock_isdir, app):
     cb1 = QCheckBox()
     cb2 = QCheckBox()
@@ -350,16 +350,16 @@ def test_saveState_exceptions(mock_open, mock_isdir, app):
     assert "cb1" in written_json["widgets"]
     assert not "cb2" in written_json["widgets"]
 
-@patch("ui.widget_manager.os.path.isdir", return_value=True)
-@patch("ui.widget_manager.open")
+@patch("ui.lib.widget_manager.os.path.isdir", return_value=True)
+@patch("ui.lib.widget_manager.open")
 def test_saveState_empty(mock_open, mock_isdir, app):
     app.wm.saveState()
     mock_open.return_value.__enter__.return_value.writelines.assert_not_called()
 
-@patch("ui.widget_manager.WidgetManager._applyValue")
-@patch("ui.widget_manager.json.load")
-@patch("ui.widget_manager.os.path.isfile", return_value=True)
-@patch("ui.widget_manager.open")
+@patch("ui.lib.widget_manager.WidgetManager._applyValue")
+@patch("ui.lib.widget_manager.json.load")
+@patch("ui.lib.widget_manager.os.path.isfile", return_value=True)
+@patch("ui.lib.widget_manager.open")
 def test_loadState(mock_open, mock_isfile, mock_json_load, mock__applyValue, app):
     app.wm.addWidget("cb", QCheckBox())
 
@@ -376,17 +376,17 @@ def test_loadState(mock_open, mock_isfile, mock_json_load, mock__applyValue, app
     assert app.wm.variables == sample_dict["variables"]
     mock__applyValue.assert_called_once_with("cb", True)
 
-@patch("ui.widget_manager.WidgetManager._applyValue")
-@patch("ui.widget_manager.json.load")
-@patch("ui.widget_manager.os.path.isfile", return_value=True)
-@patch("ui.widget_manager.open")
+@patch("ui.lib.widget_manager.WidgetManager._applyValue")
+@patch("ui.lib.widget_manager.json.load")
+@patch("ui.lib.widget_manager.os.path.isfile", return_value=True)
+@patch("ui.lib.widget_manager.open")
 def test_loadState_empty(mock_open, mock_isfile, mock_json_load, mock__applyValue, app):
     mock_json_load.return_value = {}
     app.wm.loadState()
     mock__applyValue.assert_not_called()
 
-@patch("ui.widget_manager.os.path.isfile")
-@patch("ui.widget_manager.os.remove")
+@patch("ui.lib.widget_manager.os.path.isfile")
+@patch("ui.lib.widget_manager.os.remove")
 def test_wipeSettings(mock_remove, mock_isfile, app):
     app.wm.save_state_path = MagicMock(return_value="/path/to/state.json")
     app.wm.wipeSettings()

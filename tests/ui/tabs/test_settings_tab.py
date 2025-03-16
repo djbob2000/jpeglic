@@ -6,14 +6,14 @@ import pytest
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox
 from PySide6.QtCore import Qt
 
-from ui.settings_tab import SettingsTab
+from ui.tabs.settings_tab import SettingsTab
 
 @pytest.fixture
 def app(qtbot):
     with (
-        patch("ui.settings_tab.WidgetManager.loadState"),
-        patch("ui.settings_tab.WidgetManager.saveState"),
-        patch("ui.settings_tab.setTheme"),
+        patch("ui.tabs.settings_tab.WidgetManager.loadState"),
+        patch("ui.tabs.settings_tab.WidgetManager.saveState"),
+        patch("ui.tabs.settings_tab.setTheme"),
     ):
         tab = SettingsTab()
         qtbot.addWidget(tab)
@@ -106,7 +106,7 @@ def onAVIFBitDepthChanged_patches(app):
         "wm.getVar": patch.object(app.wm, "getVar", return_value="8"),
         "avif_bit_depth_cmb.setCurrentText": patch.object(app.avif_bit_depth_cmb, "setCurrentText"),
         "avif_bit_depth_cmb.clear": patch.object(app.avif_bit_depth_cmb, "clear"),
-        "blockSignals": patch("ui.settings_tab.blockSignals"),
+        "blockSignals": patch("ui.tabs.settings_tab.blockSignals"),
     }
 
     with ExitStack() as stack:
@@ -151,7 +151,7 @@ def test_onAVIFBitDepthChanged_var_not_found(onAVIFBitDepthChanged_patches):
 def test_onThemeChanged(app):
     with (
         patch.object(app.theme_cmb, "currentText", return_value="theme") as mock_currentText,
-        patch("ui.settings_tab.setTheme") as mock_setTheme,
+        patch("ui.tabs.settings_tab.setTheme") as mock_setTheme,
     ):
         app.onThemeChanged()
         mock_setTheme.assert_called_once_with(mock_currentText.return_value)

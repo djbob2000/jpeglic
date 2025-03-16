@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QComboBox
 from PySide6.QtCore import QUrl, QObject
 import pytest
 
-import ui.utils as utils
+import ui.lib.utils as utils
 
 @pytest.mark.parametrize("tooltip, widget_count",[
     ("Test", 1),
@@ -65,13 +65,13 @@ def test__sanitizeEnviron(mock_environ):
     assert mock_environ["QML2_IMPORT_PATH"] == "/opt/app/_internal/PySide6/Qt/qml"
 
 def test_openRemoteUrl():
-    with patch("ui.utils.openUrl") as mock_openUrl:
+    with patch("ui.lib.utils.openUrl") as mock_openUrl:
         utils.openRemoteUrl("https://example.com")
     
         mock_openUrl.assert_called_once_with("https://example.com")
 
 def test_openLocalUrl():
-    with patch("ui.utils.openUrl") as mock_openUrl:
+    with patch("ui.lib.utils.openUrl") as mock_openUrl:
         utils.openLocalUrl("/path/to/file.txt")
     
         mock_openUrl.assert_called_once_with(QUrl.fromLocalFile("/path/to/file.txt"))
@@ -79,10 +79,10 @@ def test_openLocalUrl():
 @pytest.fixture
 def mock_openUrl():
     patches = {
-        "system": patch("ui.utils.platform.system", return_value="Linux"),
-        "openUrl": patch("ui.utils.QDesktopServices.openUrl"),
-        "sanitize": patch("ui.utils._sanitizeEnviron"),
-        "logging": patch("ui.utils.logging.error"),
+        "system": patch("ui.lib.utils.platform.system", return_value="Linux"),
+        "openUrl": patch("ui.lib.utils.QDesktopServices.openUrl"),
+        "sanitize": patch("ui.lib.utils._sanitizeEnviron"),
+        "logging": patch("ui.lib.utils.logging.error"),
     }
 
     with ExitStack() as stack:
@@ -111,15 +111,15 @@ def test_openUrl_exception(mock_openUrl):
     assert "test" in mock_openUrl["logging"].call_args[0][0]
 
 def test_isPathValidStr_valid():
-    with patch("ui.utils.os.access", return_value=True):
+    with patch("ui.lib.utils.os.access", return_value=True):
         assert utils.isPathValidStr("/home/Pictures") == True
 
 def test_isPathValidStr_invalid_type():
-    with patch("ui.utils.os.access", return_value=True):
+    with patch("ui.lib.utils.os.access", return_value=True):
         assert utils.isPathValidStr(None) == False
 
 def test_isPathValidStr_invalid_no_access():
-    with patch("ui.utils.os.access", return_value=False):
+    with patch("ui.lib.utils.os.access", return_value=False):
         assert utils.isPathValidStr("/home/Pictures") == False
     
 def test_createQHBoxLayout_all_valid():
@@ -151,7 +151,7 @@ def test_createQHBoxLayout_mixed(caplog):
     assert "Type mismatch" in caplog.text
 
 def test_createQHBoxLayout_addWidget_failed(caplog):
-    with patch("ui.utils.QHBoxLayout.addWidget", side_effect=Exception):
+    with patch("ui.lib.utils.QHBoxLayout.addWidget", side_effect=Exception):
         widgets_hb = utils.createQHBoxLayout(QLabel("test"))
 
     assert widgets_hb.count() == 0

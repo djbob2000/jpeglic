@@ -3,15 +3,15 @@ from unittest.mock import patch
 import pytest
 from PySide6.QtWidgets import QMessageBox
 
-from ui.notifications import Notifications
+from ui.dialogs.notifications import Notifications
 
 @pytest.fixture
-def notifications():
+def notifications(app):
     return Notifications()
 
 @pytest.fixture
 def notifications_mock():
-    with patch("ui.notifications.QMessageBox") as mock_msgbox:
+    with patch("ui.dialogs.notifications.QMessageBox") as mock_msgbox:
         mock_dlg = mock_msgbox.return_value
         notifications_instance = Notifications()
         yield notifications_instance, mock_dlg

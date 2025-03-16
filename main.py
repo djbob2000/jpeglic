@@ -19,28 +19,17 @@ from PySide6.QtGui import (
     QKeySequence,
 )
 
-from data.constants import (
-    ICON_SVG,
-)
-from ui import (
-    InputTab,
-    AboutTab,
-    ModifyTab,
-    OutputTab,
-    SettingsTab,
-    Notifications,
-    ProgressDialog,
-    ExceptionView,
-)
-
+from core.controller import Controller, CheckFlags
 from core.utils import clip
+from data.constants import ICON_SVG
 import data.font_loader as font_loader
 import data.task_status as task_status
+import data.cli_args as cli_args
 from data.sounds import finished_sound
 from data.logging_manager import LoggingManager
 from data.process_manager import ProcessManager
-from core.controller import Controller, CheckFlags
-import data.cli_args as cli_args
+from ui.tabs import InputTab, AboutTab, ModifyTab, OutputTab, SettingsTab
+from ui.dialogs import Notifications, ProgressDialog, ExceptionView
 
 class MainWindow(QMainWindow):
     moved = Signal()

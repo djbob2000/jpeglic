@@ -1,7 +1,7 @@
 from unittest.mock import patch
 import pytest
 
-from ui.label import StyledLabel
+from ui.widgets.label import StyledLabel
 
 @pytest.fixture(autouse=True)
 def reset_StyledLabel():
@@ -21,7 +21,7 @@ def test_StyledLabel_updateStyleForAll(app):
     custom_qss = "a {{ color: blue; }}"
 
     with (
-        patch("ui.label.StyledLabel.updateStyle") as mock_updateStyle,
+        patch("ui.widgets.label.StyledLabel.updateStyle") as mock_updateStyle,
     ):
         labels[0].updateStyleForAll(custom_qss)
         mock_updateStyle.call_count == len(StyledLabel._instances)
@@ -30,12 +30,12 @@ def test_StyledLabel_updateStyleForAll(app):
 
 def test_StyledLabel_updateStyle(app):
     custom_qss = "<div><p>Sample text</p></div>"
-    with patch("ui.label.StyledLabel.setStyledText") as mock_setStyledText:
+    with patch("ui.widgets.label.StyledLabel.setStyledText") as mock_setStyledText:
         label = StyledLabel(custom_qss)
         mock_setStyledText.assert_called_once_with(custom_qss)
 
 def test_StyledLabel_setStyledText(app):
-    with patch("ui.label.StyledLabel.setText") as mock_setText:
+    with patch("ui.widgets.label.StyledLabel.setText") as mock_setText:
         StyledLabel("").setStyledText("text")
         mock_setText.call_count == 2    # 1 in the __init__()
         assert "<style>" in mock_setText.call_args[0][0]

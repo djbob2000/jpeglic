@@ -21,12 +21,12 @@ from PySide6.QtCore import(
 )
 
 from data.constants import ALLOWED_RESAMPLING
-from .widget_manager import WidgetManager
-from core.utils import dictToList
-from ui.combobox import ComboBox
-from ui.spinbox import SpinBox, DoubleSpinBox
-from ui.utils import setToolTip, createQHBoxLayout, blockSignals
 from data.tooltips import TOOLTIPS
+from core.utils import dictToList
+from ui.lib.widget_manager import WidgetManager
+from ui.lib.utils import setToolTip, createQHBoxLayout, blockSignals
+from ui.widgets.combobox import ComboBox
+from ui.widgets.spinbox import SpinBox, DoubleSpinBox
 
 MAX_RES_PX = 999_999_999
 MAX_FILE_SIZE = 1024**2   # KiB
