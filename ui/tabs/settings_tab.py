@@ -180,6 +180,7 @@ class SettingsTab(QWidget):
         
         self.general_btn.setCheckable(True)
         self.conversion_btn.setCheckable(True)
+        self.exiftool_btn.setCheckable(True)
         self.advanced_btn.setCheckable(True)
 
     def setupLayouts(self):

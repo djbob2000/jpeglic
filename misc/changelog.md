@@ -11,6 +11,7 @@
 ### Fixed
 
 - Account for unsupported routine (#93).
+- Fix visual bug where a category button was not lit up.
 
 ### Removed
 
