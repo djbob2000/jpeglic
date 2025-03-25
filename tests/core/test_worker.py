@@ -73,6 +73,7 @@ def worker():
                 "ExifTool - Preserve": "-tagsFromFile $src $dst -overwrite_original",
             },
             "avif_encoder": "AOM AV1",
+            "avif_aom_iq_tune": False,
             "avif_bit_depth": "Auto",
         },
         4,
@@ -364,6 +365,16 @@ def test_avif_bit_depth_specified(worker_convert_patches):
     worker.convert()
 
     assert "-d 8" in mocks["runBinary"].call_args[0][1]
+
+@pytest.mark.parametrize("iq_tune", [True, False])
+def test_avif_iq_tune(iq_tune, worker_convert_patches):
+    worker, mocks = worker_convert_patches
+    worker.params["format"] = "AVIF"
+    worker.settings["avif_aom_iq_tune"] = iq_tune
+
+    worker.convert()
+
+    assert ("-a tune=iq" in mocks["runBinary"].call_args[0][1]) == iq_tune
 
 @pytest.mark.parametrize("quality, encoder, chroma_subsampling, disable_progressive_jpegli, expected_args", [
     (80, "JPEGLI", "Default", False, ["-q 80"]),

@@ -125,6 +125,9 @@ class SettingsTab(QWidget):
         self.avif_bit_depth_cmb = self.wm.addWidget("avif_bit_depth_cmb", ComboBox(("Auto", "12", "10", "8")))
         self.avif_encoder_l = self.wm.addWidget("avif_encoder_l", QLabel("AVIF Encoder"))
         self.avif_encoder_cmb = self.wm.addWidget("avif_encoder_cmb", ComboBox(("AOM AV1", "SVT-AV1-PSY")))
+        # self.avif_aom_tune_l = self.wm.addWidget("avif_aom_tune_l", QLabel("AOM AV1 Tune"))
+        # self.avif_aom_tune_cmb = self.wm.addWidget("avif_aom_tune_cmb", ComboBox(("SSIM", "IQ", "PSNR")))
+        self.avif_aom_iq_tune_cb = self.wm.addWidget("avif_aom_iq_tune_cb", QCheckBox("AOM AV1 - Use IQ Tune"))
         self.keep_if_larger_cb = self.wm.addWidget("keep_if_larger_cb", QCheckBox("Do Not Delete Original When Result is Larger"))
         self.copy_if_larger_cb = self.wm.addWidget("copy_if_larger_cb", QCheckBox("Copy Original When Result is Larger"))
 
@@ -212,6 +215,9 @@ class SettingsTab(QWidget):
         self.settings_lt.addLayout(self.avif_bit_depth_hb)
         self.avif_encoder_hb = createQHBoxLayout(self.avif_encoder_l, self.avif_encoder_cmb)
         self.settings_lt.addLayout(self.avif_encoder_hb)
+        # self.avif_aom_tune_hb = createQHBoxLayout(self.avif_aom_tune_l, self.avif_aom_tune_cmb)
+        # self.settings_lt.addLayout(self.avif_aom_tune_hb)
+        self.settings_lt.addWidget(self.avif_aom_iq_tune_cb)
         self.settings_lt.addWidget(self.keep_if_larger_cb)
         self.settings_lt.addWidget(self.copy_if_larger_cb)
 
@@ -264,6 +270,7 @@ class SettingsTab(QWidget):
             self.play_sound_on_finish_vol_hb,
             self.theme_hb,
             self.ram_optimizer_hb,
+            # self.avif_aom_tune_hb,
         ):
             hbox.setAlignment(Qt.AlignLeft)
         
@@ -273,6 +280,7 @@ class SettingsTab(QWidget):
             self.avif_bit_depth_cmb,
             self.theme_cmb,
             self.ram_optimizer_cmb,
+            # self.avif_aom_tune_cmb,
         ):
             cmb.setMinimumWidth(150)
 
@@ -322,6 +330,7 @@ class SettingsTab(QWidget):
         setToolTip(TOOLTIPS["jxl_lossy_modular"], self.jxl_lossy_modular_cb)
         setToolTip(TOOLTIPS["avif_encoder"], self.avif_encoder_cmb)
         setToolTip(TOOLTIPS["avif_bit_depth"], self.avif_bit_depth_cmb)
+        setToolTip(TOOLTIPS["avif_aom_iq_tune"], self.avif_aom_iq_tune_cb)
         setToolTip(TOOLTIPS["ram_optimizer"], self.ram_optimizer_cmb)
         setToolTip(TOOLTIPS["ram_optimizer_rules"], self.ram_optimizer_rules_te)
 
@@ -348,6 +357,8 @@ class SettingsTab(QWidget):
                 "disable_progressive_jpegli_cb",
                 "avif_encoder_l", "avif_encoder_cmb",
                 "avif_bit_depth_l", "avif_bit_depth_cmb",
+                # "avif_aom_tune_l", "avif_aom_tune_cmb",
+                "avif_aom_iq_tune_cb",
                 "keep_if_larger_cb",
                 "copy_if_larger_cb",
             ],
@@ -425,6 +436,7 @@ class SettingsTab(QWidget):
                     logging.error(f"[onAVIFEncoderChanged] Unknown encoder ({avif_enc})")
                     return
             self.avif_bit_depth_cmb.setCurrentText(loaded_var or "Auto")
+            self.avif_aom_iq_tune_cb.setEnabled(avif_enc == "AOM AV1")
 
     def onThemeChanged(self) -> None:
         setTheme(self.theme_cmb.currentText())
@@ -491,6 +503,7 @@ class SettingsTab(QWidget):
             },
             "avif_encoder": self.avif_encoder_cmb.currentText(),
             "avif_bit_depth": self.avif_bit_depth_cmb.currentText(),
+            "avif_aom_iq_tune": self.avif_aom_iq_tune_cb.isChecked(),
         }
     
     def resetExifTool(self):
@@ -519,6 +532,7 @@ class SettingsTab(QWidget):
         self.jpg_encoder_cmb.setCurrentIndex(0)
         self.avif_encoder_cmb.setCurrentIndex(0)
         self.avif_bit_depth_cmb.setCurrentIndex(0)
+        self.avif_aom_iq_tune_cb.setChecked(False)
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
 

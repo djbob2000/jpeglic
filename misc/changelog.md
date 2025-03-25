@@ -2,10 +2,13 @@
 
 ### Added
 
+- Add new IQ tuning to AVIF.
 - Add Page Up and Page Down navigation to file view.
 
 ### Changed
 
+- Update `libavif` to `v1.2.1`.
+- Update `libaom` to `v3.12.0`.
 - Reintroduce limited APNG support.
 
 ### Fixed

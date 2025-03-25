@@ -41,6 +41,7 @@ def test_changeCategory_visibility(category, button, app):
             "disable_progressive_jpegli_cb",
             "avif_encoder_l", "avif_encoder_cmb",
             "avif_bit_depth_l", "avif_bit_depth_cmb",
+            "avif_aom_iq_tune_cb",
             "keep_if_larger_cb",
             "copy_if_larger_cb",
         ],
@@ -107,6 +108,7 @@ def onAVIFBitDepthChanged_patches(app):
         "avif_bit_depth_cmb.setCurrentText": patch.object(app.avif_bit_depth_cmb, "setCurrentText"),
         "avif_bit_depth_cmb.clear": patch.object(app.avif_bit_depth_cmb, "clear"),
         "blockSignals": patch("ui.tabs.settings_tab.blockSignals"),
+        "avif_aom_iq_tune_cb.setEnabled": patch.object(app.avif_aom_iq_tune_cb, "setEnabled"),
     }
 
     with ExitStack() as stack:
@@ -128,6 +130,7 @@ def test_onAVIFBitDepthChanged_happy_path(encoder, var_name, onAVIFBitDepthChang
     mocks["avif_bit_depth_cmb.clear"].assert_called_once()
     mocks["wm.getVar"].assert_called_once_with(var_name)
     mocks["avif_bit_depth_cmb.setCurrentText"].assert_called_once_with(mocks["wm.getVar"].return_value)
+    mocks["avif_aom_iq_tune_cb.setEnabled"].assert_called_once_with(encoder == "AOM AV1")
 
 def test_onAVIFBitDepthChanged_unknown_encoder(caplog, onAVIFBitDepthChanged_patches):
     app, mocks = onAVIFBitDepthChanged_patches
