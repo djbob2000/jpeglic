@@ -66,10 +66,10 @@ class ModifyTab(QWidget):
         self.downscale_cb = self.wm.addWidget("downscale_cb", QCheckBox("Downscale"))
         self.mode_cmb = self.wm.addWidget("mode_cmb", ComboBox((
             "Resolution",
+            "Megapixels",
             "Percent",
             "Shortest Side",
             "Longest Side",
-            "Megapixels",
             "File Size",
         )))
         self.mode_l = self.wm.addWidget("mode_l", QLabel("Scale to"))
