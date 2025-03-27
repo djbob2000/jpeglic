@@ -2,7 +2,6 @@
 Type=Application
 Name=XL Converter
 Comment=Easy-to-use image converter for modern formats
-Path=/opt/xl-converter
 Exec=/opt/xl-converter/xl-converter
 Icon=/opt/xl-converter/_internal/assets/icons/logo.svg
 Terminal=false
