@@ -8,34 +8,59 @@ import pytest
 
 import ui.lib.utils as utils
 
-@pytest.mark.parametrize("tooltip, widget_count",[
-    ("Test", 1),
-    ("Line 1\n\nLine 2", 5),
-    ("", 2),
-    ("ABC" * 1000, 5),
-])
-def test_setToolTip_valid(tooltip, widget_count, qapp):
-    widgets = [QWidget() for _ in range(widget_count)]
-    utils.setToolTip(tooltip, *widgets)
-    for widget in widgets:
-        assert widget.toolTip() == tooltip
+@pytest.fixture
+def setToolTip_patches(app):
+    TOOLTIPS_DICT = {
+        "tooltip_id_0": "Sample tooltip",
+    }
 
-def test_setToolTip_wrong_type(caplog):
+    mocks = {
+        "TOOLTIPS": patch("ui.lib.utils.TOOLTIPS", TOOLTIPS_DICT),
+    }
+
+    with ExitStack() as stack:
+        _mocks = { name: stack.enter_context(patcher) for name, patcher in mocks.items() }
+        yield _mocks
+
+def test_setToolTip_key_does_not_exist(caplog, setToolTip_patches):
     with caplog.at_level(logging.ERROR):
-        utils.setToolTip("123", object())      # No exception
+        utils.setToolTip("does_not_exist", MagicMock(spec=QWidget))
 
-    assert "Failed to apply tooltip" in caplog.text
+        assert 'Key "does_not_exist" does not exist in TOOLTIPS.' in caplog.text
 
-def test_setToolTip_mixed_type(qapp, caplog):
-    valid_widgets = [QWidget() for _ in range(3)]
+def test_setToolTip_key_exists(caplog, setToolTip_patches):
+    with caplog.at_level(logging.ERROR):
+        utils.setToolTip("tooltip_id_0", MagicMock(spec=QWidget))
+
+        assert not caplog.text
+
+def test_setToolTip_valid_widget_types(caplog, setToolTip_patches):
+    widgets = [MagicMock(spec=QWidget) for _ in range(3)]
+    utils.setToolTip("tooltip_id_0", *widgets)
+    for widget in widgets:
+        widget.setToolTip.assert_called_once_with(setToolTip_patches["TOOLTIPS"]["tooltip_id_0"])
+
+def test_setToolTip_mixed_type(caplog, setToolTip_patches):
+    valid_widgets = [MagicMock(spec=QWidget) for _ in range(3)]
     invalid_widgets = [object() for _ in range(3)]
 
     with caplog.at_level(logging.ERROR):
-        utils.setToolTip("123", *valid_widgets, *invalid_widgets)
+        utils.setToolTip("tooltip_id_0", *valid_widgets, *invalid_widgets)
     
-    for widget in valid_widgets:
-        assert widget.toolTip() == "123"
-    assert "Failed to apply tooltip" in caplog.text
+        for widget in valid_widgets:
+            widget.setToolTip.assert_called_once_with(setToolTip_patches["TOOLTIPS"]["tooltip_id_0"])
+        
+        assert len(caplog.records) == 3
+        for record in caplog.records:
+            assert "Failed to apply tooltip" in record.message
+
+def test_setToolTip_invalid_widget_types(caplog, setToolTip_patches):
+    with caplog.at_level(logging.ERROR):
+        utils.setToolTip("tooltip_id_0", object(), int(1))
+
+        assert len(caplog.records) == 2
+        for record in caplog.records:
+            assert "Failed to apply tooltip, expected QWidget" == record.message
 
 @pytest.fixture
 def mock_environ():

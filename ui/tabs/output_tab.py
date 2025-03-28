@@ -23,7 +23,6 @@ from PySide6.QtCore import(
 )
 
 from core.utils import dictToList
-from data.tooltips import TOOLTIPS
 from ui.lib import WidgetManager
 from ui.lib.utils import setToolTip, isPathValidStr, createQHBoxLayout, blockSignals
 from ui.widgets import Slider
@@ -211,46 +210,46 @@ class OutputTab(QWidget):
 
     def _setToolTipsStatic(self):
         """Sets tooltips at once at startup."""
-        setToolTip(TOOLTIPS["duplicates"], self.duplicates_cmb)
-        setToolTip(TOOLTIPS["threads"], self.threads_sl, self.threads_sb)
-        setToolTip(TOOLTIPS["output_src"], self.choose_output_src_rb)
-        setToolTip(TOOLTIPS["output_ct"], self.choose_output_ct_le, self.choose_output_ct_rb, self.choose_output_ct_btn)
-        setToolTip(TOOLTIPS["keep_dir_struct"], self.keep_dir_struct_cb)
-        setToolTip(TOOLTIPS["delete_original"], self.delete_original_cb, self.delete_original_cmb)
-        setToolTip(TOOLTIPS["clear_after_conv"], self.clear_after_conv_cb)
-        setToolTip(TOOLTIPS["format"], self.format_cmb)
-        setToolTip(TOOLTIPS["jxl_modular"], self.jxl_modular_cb)
-        setToolTip(TOOLTIPS["jxl_png_fallback"], self.jxl_png_fallback_cb)
-        setToolTip(TOOLTIPS["jxl_verify"], self.jxl_verify_cb)
-        setToolTip(TOOLTIPS["jxl_normalize_enable"], self.jxl_normalize_enable_cb)
-        setToolTip(TOOLTIPS["jxl_normalize_when"], self.jxl_normalize_when_cmb)
-        setToolTip(TOOLTIPS["int_effort"], self.int_effort_cb)
-        setToolTip(TOOLTIPS["chroma_subsampling_jpeg"], self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_jpg_cmb)
-        setToolTip(TOOLTIPS["chroma_subsampling_aom_av1"], self.chroma_subsampling_aom_av1_cmb)
-        setToolTip(TOOLTIPS["chroma_subsampling_svt_av1_psy"], self.chroma_subsampling_svt_av1_psy_cmb)
-        setToolTip(TOOLTIPS["smallest_lossless_png"], self.smallest_lossless_png_cb)
-        setToolTip(TOOLTIPS["smallest_lossless_webp"], self.smallest_lossless_webp_cb)
-        setToolTip(TOOLTIPS["smallest_lossless_jpeg_xl"], self.smallest_lossless_jxl_cb)
-        setToolTip(TOOLTIPS["smallest_lossless_max_comp"], self.max_compression_cb)
+        setToolTip("duplicates", self.duplicates_cmb)
+        setToolTip("threads", self.threads_sl, self.threads_sb)
+        setToolTip("output_src", self.choose_output_src_rb)
+        setToolTip("output_ct", self.choose_output_ct_le, self.choose_output_ct_rb, self.choose_output_ct_btn)
+        setToolTip("keep_dir_struct", self.keep_dir_struct_cb)
+        setToolTip("delete_original", self.delete_original_cb, self.delete_original_cmb)
+        setToolTip("clear_after_conv", self.clear_after_conv_cb)
+        setToolTip("format", self.format_cmb)
+        setToolTip("jxl_modular", self.jxl_modular_cb)
+        setToolTip("jxl_png_fallback", self.jxl_png_fallback_cb)
+        setToolTip("jxl_verify", self.jxl_verify_cb)
+        setToolTip("jxl_normalize_enable", self.jxl_normalize_enable_cb)
+        setToolTip("jxl_normalize_when", self.jxl_normalize_when_cmb)
+        setToolTip("int_effort", self.int_effort_cb)
+        setToolTip("chroma_subsampling_jpeg", self.chroma_subsampling_jpegli_cmb, self.chroma_subsampling_jpg_cmb)
+        setToolTip("chroma_subsampling_aom_av1", self.chroma_subsampling_aom_av1_cmb)
+        setToolTip("chroma_subsampling_svt_av1_psy", self.chroma_subsampling_svt_av1_psy_cmb)
+        setToolTip("smallest_lossless_png", self.smallest_lossless_png_cb)
+        setToolTip("smallest_lossless_webp", self.smallest_lossless_webp_cb)
+        setToolTip("smallest_lossless_jpeg_xl", self.smallest_lossless_jxl_cb)
+        setToolTip("smallest_lossless_max_comp", self.max_compression_cb)
 
     def _setToolTipsDynamic(self):
         """Sets tooltips. Their content can change."""
         match self.format_cmb.currentText():
             case "JPEG XL":
-                setToolTip(TOOLTIPS["lossless_jpeg_xl"], self.lossless_cb)
-                setToolTip(TOOLTIPS["effort"], self.effort_sb)
-                setToolTip(TOOLTIPS["quality_jpeg_xl"], self.quality_sl, self.quality_sb)
+                setToolTip("lossless_jpeg_xl", self.lossless_cb)
+                setToolTip("effort", self.effort_sb)
+                setToolTip("quality_jpeg_xl", self.quality_sl, self.quality_sb)
             case "AVIF":
-                setToolTip(TOOLTIPS["speed"], self.effort_sb)
-                setToolTip(TOOLTIPS["quality_avif"], self.quality_sl, self.quality_sb)
+                setToolTip("speed", self.effort_sb)
+                setToolTip("quality_avif", self.quality_sl, self.quality_sb)
             case "WebP":
-                setToolTip(TOOLTIPS["method"], self.effort_sb)
-                setToolTip(TOOLTIPS["quality_webp"], self.quality_sl, self.quality_sb)
-                setToolTip(TOOLTIPS["lossless"], self.lossless_cb)
+                setToolTip("method", self.effort_sb)
+                setToolTip("quality_webp", self.quality_sl, self.quality_sb)
+                setToolTip("lossless", self.lossless_cb)
             case "JPEG":
-                setToolTip(TOOLTIPS["quality_jpeg"], self.quality_sl, self.quality_sb)
+                setToolTip("quality_jpeg", self.quality_sl, self.quality_sb)
             case "Lossless JPEG Transcoding":
-                setToolTip(TOOLTIPS["effort_jpeg_recomp"], self.effort_sb)
+                setToolTip("effort_jpeg_recomp", self.effort_sb)
 
     # //////////////////////////////////////////////////////////
     # /                      Getters

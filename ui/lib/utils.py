@@ -9,13 +9,33 @@ from PySide6.QtCore import QUrl, QObject
 from PySide6.QtGui import QDesktopServices
 
 from core.process import runProcess
+from data.tooltips import TOOLTIPS
+
+logger = logging.getLogger(__name__)
 
 def setToolTip(tooltip: str, *widget_ids: QWidget) -> None:
+    """Sets tooltips for widgets.
+
+    Args:
+        tooltip - a valid key from data.tooltips.TOOLTIPS
+        widget_ids - widgets
+    
+    Exceptions:
+        Does not raise exceptions, can log errors.
+    """
+    if tooltip not in TOOLTIPS:
+        logger.error(f'Key "{tooltip}" does not exist in TOOLTIPS.')
+        return
+
     for widget in widget_ids:
+        if not isinstance(widget, QWidget):
+            logger.error(f"Failed to apply tooltip, expected QWidget")
+            continue
+
         try:
-            widget.setToolTip(tooltip)
+            widget.setToolTip(TOOLTIPS[tooltip])
         except Exception as e:
-            logging.error(f"[ui.utils.setToolTip] Failed to apply tooltip. {e}")
+            logger.error(f"Failed to apply tooltip. {e}")
 
 @contextmanager
 def _sanitizeEnviron() -> dict[str, str]:

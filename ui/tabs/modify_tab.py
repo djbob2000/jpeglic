@@ -21,7 +21,6 @@ from PySide6.QtCore import(
 )
 
 from data.constants import ALLOWED_RESAMPLING
-from data.tooltips import TOOLTIPS
 from core.utils import dictToList
 from ui.lib import WidgetManager
 from ui.lib.utils import setToolTip, createQHBoxLayout, blockSignals
@@ -189,19 +188,19 @@ class ModifyTab(QWidget):
         self.pixel_h_cb.toggled.connect(self._onResHeightToggled)
 
     def _setToolTips(self):
-        setToolTip(TOOLTIPS["metadata"], self.metadata_cmb)
+        setToolTip("metadata", self.metadata_cmb)
         if platform.system() == "Linux":
-            setToolTip(TOOLTIPS["date_time_linux"], self.date_time_cb)
+            setToolTip("date_time_linux", self.date_time_cb)
         else:
-            setToolTip(TOOLTIPS["date_time"], self.date_time_cb)
-        setToolTip(TOOLTIPS["downscaling"], self.downscale_cb)
-        setToolTip(TOOLTIPS["downscaling_file_size"], self.file_size_sb)
-        setToolTip(TOOLTIPS["downscaling_percent"], self.percent_sb)
-        setToolTip(TOOLTIPS["downscaling_megapixels"], self.megapixels_sb)
-        setToolTip(TOOLTIPS["downscaling_resolution_width_enabled"], self.pixel_w_cb)
-        setToolTip(TOOLTIPS["downscaling_resolution_width"], self.pixel_w_sb)
-        setToolTip(TOOLTIPS["downscaling_resolution_height_enabled"], self.pixel_h_cb)
-        setToolTip(TOOLTIPS["downscaling_resolution_height"], self.pixel_h_sb)
+            setToolTip("date_time", self.date_time_cb)
+        setToolTip("downscaling", self.downscale_cb)
+        setToolTip("downscaling_file_size", self.file_size_sb)
+        setToolTip("downscaling_percent", self.percent_sb)
+        setToolTip("downscaling_megapixels", self.megapixels_sb)
+        setToolTip("downscaling_resolution_width_enabled", self.pixel_w_cb)
+        setToolTip("downscaling_resolution_width", self.pixel_w_sb)
+        setToolTip("downscaling_resolution_height_enabled", self.pixel_h_cb)
+        setToolTip("downscaling_resolution_height", self.pixel_h_sb)
 
     def _onResWidthToggled(self, enabled: bool) -> None:
         if self.downscale_cb.isEnabled():
