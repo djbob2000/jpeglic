@@ -76,7 +76,7 @@ def openUrl(qurl: QUrl) -> None:
         else:
             QDesktopServices.openUrl(qurl)
     except Exception as e:
-        logging.error(f"[ui.utils.openUrl] Failed to open URL. {e}")
+        logger.error(f"[ui.utils.openUrl] Failed to open URL. {e}")
 
 def isPathValidStr(path: str) -> bool:
     """Checks if a given path is valid and accessible for R/W."""
@@ -95,14 +95,14 @@ def createQHBoxLayout(*widgets: QWidget) -> QHBoxLayout:
     for widget in widgets:
         if not isinstance(widget, QWidget):
             caller_frame = traceback.extract_stack()[-2]
-            logging.error(f"[ui.utils.createQHBoxLayout] Type mismatch. Expected QWidget, got {type(widget)}.\n\tCaller: {caller_frame.filename}:{caller_frame.lineno}")
+            logger.error(f"Type mismatch. Expected QWidget, got {type(widget)}.\n\tCaller: {caller_frame.filename}:{caller_frame.lineno}")
             continue
 
         try:
             layout.addWidget(widget)
         except Exception as e:
             caller_frame = traceback.extract_stack()[-2]
-            logging.error(f"[ui.utils.createQHBoxLayout] Failed to add a widget.\n\t{e}\n\tCaller: {caller_frame.filename}:{caller_frame.lineno}")
+            logger.error(f"Failed to add a widget.\n\t{e}\n\tCaller: {caller_frame.filename}:{caller_frame.lineno}")
     
     return layout
 

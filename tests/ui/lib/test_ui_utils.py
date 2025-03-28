@@ -107,7 +107,6 @@ def mock_openUrl():
         "system": patch("ui.lib.utils.platform.system", return_value="Linux"),
         "openUrl": patch("ui.lib.utils.QDesktopServices.openUrl"),
         "sanitize": patch("ui.lib.utils._sanitizeEnviron"),
-        "logging": patch("ui.lib.utils.logging.error"),
     }
 
     with ExitStack() as stack:
@@ -127,13 +126,13 @@ def test_openUrl_sanitize(platform_name, use_sanitize, mock_openUrl):
     mock_openUrl["openUrl"].assert_called_once_with(url)
     assert mock_openUrl["sanitize"].called == use_sanitize
 
-def test_openUrl_exception(mock_openUrl):
+def test_openUrl_exception(caplog, mock_openUrl):
     mock_openUrl["openUrl"].side_effect = Exception("test")
     url = QUrl("https://example.com")
 
     utils.openUrl(url)
 
-    assert "test" in mock_openUrl["logging"].call_args[0][0]
+    assert "test" in caplog.records[0].message
 
 def test_isPathValidStr_valid():
     with patch("ui.lib.utils.os.access", return_value=True):
