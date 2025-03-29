@@ -19,7 +19,7 @@ from PySide6.QtGui import(
     QKeySequence,
 )
 
-from data.constants import ALLOWED_INPUT, ALLOWED_INPUT_FILTERS
+from data.constants import ALLOWED_INPUT, ALLOWED_INPUT_FILTERS, FLATPAK
 from core.utils import scanDir
 from ui.dialogs import Notifications
 from ui.widgets import FileView
@@ -108,10 +108,12 @@ class InputTab(QWidget):
         self.file_view.finishAddingItems()
 
     def addFiles(self):
+        # Load last used dir
         dir_to_load = self.wm.getVar("add_files_last_dir")
         if dir_to_load is None or not isPathValidStr(dir_to_load):
             dir_to_load = QDir.homePath()
 
+        # Dialog
         dlg = QFileDialog(
             self,
             "Add Images",
@@ -120,19 +122,26 @@ class InputTab(QWidget):
         dlg.setFileMode(QFileDialog.ExistingFiles)
         dlg.setNameFilters(ALLOWED_INPUT_FILTERS)
 
-        if dlg.exec():
-            self.wm.setVar("add_files_last_dir", dlg.directory().absolutePath())
+        if not dlg.exec():
+            return
+        
+        self.wm.setVar("add_files_last_dir", dlg.directory().absolutePath())
 
-            # Add items
-            file_paths = []
-            for i in dlg.selectedFiles():
-                file_paths.append(
-                    (
-                        Path(i),
-                        Path(i).parent,
-                    )
+        # Add items
+        file_paths = []
+        for i in dlg.selectedFiles():
+            file_paths.append(
+                (
+                    Path(i),
+                    Path(i).parent,
                 )
-            self._addItems(file_paths)
+            )
+        
+        if FLATPAK and len(file_paths) > 0 and str(file_paths[0][0]).startswith("/run"):
+            self.notify.notify("Flatpak Limitation Notice", "To use this feature, add filesystem permissions to the source directory or volume.\nDirectory context is required to manage outputs.")
+            return
+
+        self._addItems(file_paths)
 
     def addFolder(self):
         dir_to_load = self.wm.getVar("add_folder_last_dir")

@@ -1,5 +1,6 @@
 from typing import Any, Union
 from collections.abc import Hashable
+import os
 
 def removeDuplicatesHashable(data: list[Hashable]) -> list[Hashable]:
     """Removes duplicates from a list while preserving order. All entries must be hashable.
@@ -22,3 +23,10 @@ def listToFilter(title: str, ext: list[str]) -> str:
 
     output += f"*.{ext[last_idx]})" # Last one (no space at the end)
     return output
+
+def isRunningInFlatpak() -> bool:
+    """Determines if the application is running inside a Flatpak sandbox."""
+    if os.environ.get("FLATPAK_ID", None) is not None:
+        return True
+    
+    return False
