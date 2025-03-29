@@ -8,13 +8,7 @@ from PySide6.QtTest import QSignalSpy
 
 from ui.tabs.input_tab import InputTab
 from ui.widgets.file_view import FileView
-
-@pytest.fixture
-def app():
-    app = QApplication.instance()
-    if not app:
-        app = QApplication([])
-    return app
+from ui.dialogs import Notifications
 
 @pytest.fixture
 def input_tab(app, settings):
@@ -75,6 +69,27 @@ def test_addFiles_var_save(input_tab):
         input_tab.addFiles()
         
         mock_setVar.assert_called_once_with("add_files_last_dir", last_used)
+
+def test_addFiles_flatpak(input_tab):
+    mock_notify = MagicMock(spec=Notifications)
+
+    with (
+        patch("ui.tabs.input_tab.QFileDialog") as mock_qfiledialog,
+        patch("ui.tabs.input_tab.QFileDialog.exec", return_value=True) as mock_exec,
+        patch("ui.lib.widget_manager.WidgetManager.getVar", return_value=None) as mock_getVar,
+        patch("ui.lib.widget_manager.WidgetManager.setVar") as mock_setVar,
+        patch("ui.tabs.input_tab.isPathValidStr", return_value=True),
+        patch.object(input_tab, "_addItems") as mock__addItems,
+        patch("ui.tabs.input_tab.FLATPAK", True),
+        patch.object(input_tab, "notify", mock_notify),
+    ):
+        mock_qfiledialog.return_value.directory.return_value.absolutePath.return_value = "/run/user/1000/doc/123123123/Pictures/image.jpg"
+        mock_qfiledialog.return_value.selectedFiles.return_value = [normalizePath("/run/user/1000/doc/123123123/Pictures/image.jpg")]
+
+        input_tab.addFiles()
+        
+        mock_notify.notify.assert_called_once()
+        mock__addItems.assert_not_called()
 
 @patch("ui.tabs.input_tab.QFileDialog.exec", return_value=True)
 @patch("ui.tabs.input_tab.QFileDialog.selectedFiles", return_value=[normalizePath("/path/to/folder")])

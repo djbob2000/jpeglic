@@ -1,4 +1,5 @@
 import random
+from unittest.mock import patch
 
 import pytest
 
@@ -56,3 +57,11 @@ def test_listToFilter_multiple_ext():
         "Images",
         ["jpg", "png", "webp", "jxl", "avif"]
     ) == "Images (*.jpg *.png *.webp *.jxl *.avif)"
+
+def test_isRunningInFlatpak_true():
+    with patch("data.utils.os.environ.get", return_value="org.example.app"):
+        assert utils.isRunningInFlatpak()
+
+def test_isRunningInFlatpak_false():
+    with patch("data.utils.os.environ.get", return_value=None):
+        assert not utils.isRunningInFlatpak()
