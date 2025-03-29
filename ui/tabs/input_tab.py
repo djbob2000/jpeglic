@@ -155,26 +155,28 @@ class InputTab(QWidget):
         )
         dlg.setFileMode(QFileDialog.Directory)
 
-        if dlg.exec():
-            self.wm.setVar("add_folder_last_dir", dlg.directory().absolutePath())
-            selected_dir = dlg.selectedFiles()[0]
-            
-            try:
-                file_paths = scanDir(selected_dir)
-            except FileNotFoundError:
-                self.notify.notify("Error", "The directory was not found.")
-                return
+        if not dlg.exec():
+            return
 
-            # Add items
-            tmp = []
-            for i in file_paths:
-                tmp.append(
-                    (
-                        Path(i),
-                        Path(selected_dir),
-                    )
+        self.wm.setVar("add_folder_last_dir", dlg.directory().absolutePath())
+        selected_dir = dlg.selectedFiles()[0]
+        
+        try:
+            file_paths = scanDir(selected_dir)
+        except FileNotFoundError:
+            self.notify.notify("Error", "The directory was not found.")
+            return
+
+        # Add items
+        tmp = []
+        for i in file_paths:
+            tmp.append(
+                (
+                    Path(i),
+                    Path(selected_dir),
                 )
-            self._addItems(tmp)
+            )
+        self._addItems(tmp)
     
     # Misc.
     def clearInput(self):
