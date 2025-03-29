@@ -4,6 +4,7 @@
 
 - Add new IQ tuning to AVIF (#99).
 - Add Page Up and Page Down navigation to file view.
+- Publish this program on [Flathub](https://flathub.org/apps/eu.codepoems.xl-converter) (#95).
 
 ### Changed
 
