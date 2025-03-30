@@ -2,6 +2,7 @@ from unittest.mock import patch
 import sys
 from importlib import reload
 import platform
+import os
 
 import pytest
 
@@ -51,3 +52,60 @@ def test_program_folder_not_frozen():
          patch("os.path.realpath", return_value="/path/to/program/data/constants.py"):
         reload(constants)
         assert constants.PROGRAM_FOLDER == "/path/to/program"
+
+def test_config_location_linux_portable():
+    with (
+        patch("data.constants.platform.system", return_value="Linux"),
+        patch("data.constants.ConfigManager.getboolean", return_value=True) as mock_getboolean,
+        patch("data.constants.isRunningInFlatpak", return_value=False),
+    ):
+        reload(constants)
+        assert constants.CONFIG_LOCATION == os.path.join(constants.PROGRAM_FOLDER, "user_data")
+        mock_getboolean.assert_called_once_with("General", "portable_user_data", False)
+
+def test_config_location_linux_default():
+    with (
+        patch("data.constants.platform.system", return_value="Linux"),
+        patch("data.constants.ConfigManager.getboolean", return_value=False) as mock_getboolean,
+        patch("data.constants.isRunningInFlatpak", return_value=False),
+    ):
+        reload(constants)
+        assert constants.CONFIG_LOCATION == os.path.expanduser('~/.config/xl-converter')
+
+def test_config_location_linux_flatpak():
+    with (
+        patch("data.constants.platform.system", return_value="Linux"),
+        patch("data.constants.ConfigManager.getboolean", return_value=False) as mock_getboolean,
+        patch("data.constants.isRunningInFlatpak", return_value=True),
+        patch("data.constants.os.environ.get", return_value="/tmp/path"),
+    ):
+        reload(constants)
+        assert constants.CONFIG_LOCATION == os.path.join("/tmp/path", "xl-converter")
+
+def test_config_location_linux_flatpak_no_xdg_home():
+    with (
+        patch("data.constants.platform.system", return_value="Linux"),
+        patch("data.constants.ConfigManager.getboolean", return_value=False) as mock_getboolean,
+        patch("data.constants.isRunningInFlatpak", return_value=False),
+    ):
+        reload(constants)
+        assert constants.CONFIG_LOCATION == os.path.expanduser('~/.config/xl-converter')
+
+def test_config_location_win_portable():
+    with (
+        patch("data.constants.platform.system", return_value="Windows"),
+        patch("data.constants.ConfigManager.getboolean", return_value=True) as mock_getboolean,
+        patch("data.constants.isRunningInFlatpak", return_value=False),
+    ):
+        reload(constants)
+        assert constants.CONFIG_LOCATION == os.path.join(constants.PROGRAM_FOLDER, "user_data")
+        mock_getboolean.assert_called_once_with("General", "portable_user_data", False)
+
+def test_config_location_win_default():
+    with (
+        patch("data.constants.platform.system", return_value="Windows"),
+        patch("data.constants.ConfigManager.getboolean", return_value=False) as mock_getboolean,
+        patch("data.constants.isRunningInFlatpak", return_value=False),
+    ):
+        reload(constants)
+        assert constants.CONFIG_LOCATION == os.path.normpath(os.path.expanduser("~/AppData/Local/xl-converter"))

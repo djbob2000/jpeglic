@@ -16,6 +16,7 @@
 - Update ImageMagick to `7.1.1-46`.
 - Adjust update checker to Flatpak.
 - Notify user when Flatpak permissions are insufficient.
+- Change user data location for Flatpak builds.
 
 ### Fixed
 

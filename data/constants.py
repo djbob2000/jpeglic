@@ -67,6 +67,8 @@ elif platform.system() == "Linux":
 
     if ConfigManager().getboolean("General", "portable_user_data", False):
         CONFIG_LOCATION = os.path.join(PROGRAM_FOLDER, "user_data")
+    elif FLATPAK and (xdg_config_home := os.environ.get("XDG_CONFIG_HOME", None)):
+        CONFIG_LOCATION = os.path.join(xdg_config_home, "xl-converter")
     else:
         CONFIG_LOCATION = os.path.expanduser('~/.config/xl-converter')
 
