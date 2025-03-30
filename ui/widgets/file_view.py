@@ -17,7 +17,8 @@ from PySide6.QtCore import(
 )
 
 from core.utils import scanDir
-from data.constants import ALLOWED_INPUT
+from data.constants import ALLOWED_INPUT, FLATPAK
+from ui.dialogs import Notifications
 
 class ItemDelegate(QStyledItemDelegate):
     def paint(self, painter, option, index):
@@ -27,6 +28,7 @@ class ItemDelegate(QStyledItemDelegate):
 class FileView(QTreeWidget):
     def __init__(self, parent=None):
         super(FileView, self).__init__(parent)
+        self.notify = Notifications(self)
 
         self.setColumnCount(3)
         self.setHeaderLabels(("File Name", "Ext.", "Location"))
@@ -158,6 +160,12 @@ class FileView(QTreeWidget):
                                 Path(file_path).parent,
                             )
                         )
+
+        if FLATPAK and not items:
+            for url in event.mimeData().urls():
+                if url.isLocalFile():
+                    self.notify.notify("Flatpak Limitation Notice", "Dropped items not found.\nAdd filesystem permissions to the source directory or volume.\nDirectory context is required to manage outputs.")
+                    return
 
         self.startAddingItems()
         self.addItems(items)

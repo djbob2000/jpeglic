@@ -182,6 +182,53 @@ def test_drop_event_files_and_folders(mock_scanDir, mock_isfile, mock_isdir, fil
     assert file_view.topLevelItem(0).text(2) == sample_imgs[0]
     assert file_view.topLevelItem(2).text(2) == sample_imgs[2]
 
+def test_drop_event_flatpak_no_permissions(file_view):
+    sample_imgs = get_sample_img_paths(3)
+    mime_data = QMimeData()
+    mime_data.setUrls([
+        QUrl.fromLocalFile(sample_imgs[0]),
+        QUrl.fromLocalFile(get_sample_folder_paths(1)[0]),
+    ])
+    mock_event = MagicMock()
+    mock_event.mimeData.return_value = mime_data
+    with (
+        patch("ui.widgets.file_view.os.path.isdir", return_value=False),
+        patch("ui.widgets.file_view.os.path.isfile", return_value=False),
+        patch("ui.widgets.file_view.scanDir") as mock_scanDir,
+        patch("ui.widgets.file_view.FLATPAK", True),
+        patch.object(file_view.notify, "notify") as mock_notify,
+    ):
+        mock_scanDir.return_value = [sample_imgs[1], sample_imgs[2]]
+        
+        file_view.dropEvent(mock_event)
+
+        mock_notify.assert_called_once()
+
+def test_drop_event_flatpak_has_permissions(file_view):
+    sample_imgs = get_sample_img_paths(3)
+    mime_data = QMimeData()
+    mime_data.setUrls([
+        QUrl.fromLocalFile(sample_imgs[0]),
+        QUrl.fromLocalFile(get_sample_folder_paths(1)[0]),
+    ])
+    mock_event = MagicMock()
+    mock_event.mimeData.return_value = mime_data
+    with (
+        patch("ui.widgets.file_view.os.path.isdir", side_effect=[False, True]),
+        patch("ui.widgets.file_view.os.path.isfile", side_effect=[True, False]),
+        patch("ui.widgets.file_view.scanDir") as mock_scanDir,
+        patch("ui.widgets.file_view.FLATPAK", True),
+        patch.object(file_view.notify, "notify") as mock_notify,
+    ):
+        mock_scanDir.return_value = [sample_imgs[1], sample_imgs[2]]
+        
+        file_view.dropEvent(mock_event)
+
+        mock_notify.assert_not_called()
+        assert file_view.topLevelItemCount() == 3
+        assert file_view.topLevelItem(0).text(2) == sample_imgs[0]
+        assert file_view.topLevelItem(2).text(2) == sample_imgs[2]
+
 def test_move_down(file_view):
     file_view.addItems(get_sample_items(3))
 
