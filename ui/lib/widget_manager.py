@@ -69,7 +69,7 @@ class WidgetManager():
         for tag in tags:
             self.addTag(tag, _id)
 
-    def getWidgetsByTag(self, tag: str):
+    def getWidgetsByTag(self, tag: str) -> list[QWidget]:
         if not tag in self.tags:
             self.error(f"Tag not found ({tag})", "getWidgetsByTag")
             return []
@@ -106,7 +106,7 @@ class WidgetManager():
     def setVar(self, var: str, value: Any):
         self.variables[var] = value
 
-    def getVar(self, var: str) -> Any:
+    def getVar(self, var: str) -> Any | None:
         if not var in self.variables:
             return None
 
