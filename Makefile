@@ -78,3 +78,7 @@ test-convert:
 coverage:
 	export PYTHONPATH=$$PYTHONPATH:. && pytest --cov=core --cov=ui --cov=main --cov=data --cov=build --cov-report term-missing tests/
 	coverage html
+
+.PHONY: validate-appstream
+validate-appstream:
+	flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream ./misc/eu.codepoems.xl-converter.metainfo.xml
