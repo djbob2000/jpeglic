@@ -17,7 +17,7 @@ from PySide6.QtGui import(
     QIcon,
 )
 
-from data.constants import VERSION, ICON_SVG
+from data.constants import VERSION, ICON_SVG, FLATPAK
 from core.update_checker import Runner
 from ui.lib.utils import openRemoteUrl
 
@@ -37,6 +37,8 @@ class Dialog(QDialog):
         self.ok_btn = QPushButton("Ok", self)
         self.ok_btn.clicked.connect(self.close)
         self.link_btn = QPushButton("Open Link", self)
+        self.link_btn.clicked.connect(self.onLinkBtnPress)
+        self.link_btn_url = None
 
         # Layout
         self.main_lt = QVBoxLayout()
@@ -63,19 +65,17 @@ class Dialog(QDialog):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def openUrl(self, url):
-        openRemoteUrl(url)
+    def onLinkBtnPress(self):
+        if not self.link_btn_url:
+            return
+        openRemoteUrl(self.link_btn_url)
         self.close()
 
     def show(self, message, url = None, url_text = None, resize_to_content = False):
         self.text_l.setText(message)
         if url:
             self.link_btn.setText(url_text if url_text else "Open Link")
-            try:
-                self.link_btn.clicked.disconnect()
-            except:
-                pass
-            self.link_btn.clicked.connect(lambda: self.openUrl(url))
+            self.link_btn_url = url
 
         self.link_btn.setVisible(url is not None)
 
@@ -138,7 +138,10 @@ class UpdateChecker(QObject):
 
         if not isKeyEmpty(json, "latest_version"):
             if json["latest_version"] != VERSION:
-                self.dlg.show(f"New version is available ({json['latest_version']}).",json.get("download_url", None), "Download")
+                if FLATPAK:
+                    self.dlg.show(f"New version is available ({json['latest_version']}).")
+                else:
+                    self.dlg.show(f"New version is available ({json['latest_version']}).",json.get("download_url", None), "Download")
             elif not self.silent:
                 self.dlg.show("This version is up to date.")
         elif not self.silent:

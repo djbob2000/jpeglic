@@ -14,6 +14,7 @@
 - Update `oxipng` to `v9.1.4`.
 - Update ExifTool to `13.25`.
 - Update ImageMagick to `7.1.1-46`.
+- Adjust update checker to Flatpak.
 
 ### Fixed
 
