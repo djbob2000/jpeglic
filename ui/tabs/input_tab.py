@@ -1,6 +1,6 @@
 from pathlib import Path
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Literal
 import os
 
 from PySide6.QtWidgets import(
@@ -25,6 +25,8 @@ from ui.dialogs import Notifications
 from ui.widgets import FileView
 from ui.lib import WidgetManager
 from ui.lib.utils import isPathValidStr
+
+logger = logging.getLogger(__name__)
 
 class InputTab(QWidget):
     convert = Signal()
@@ -87,21 +89,8 @@ class InputTab(QWidget):
         return self.file_view.getItems()
 
     def addFiles(self):
-        # Load last used dir
-        dir_to_load = self.wm.getVar("add_files_last_dir")
-        if dir_to_load is None or not isPathValidStr(dir_to_load):
-            dir_to_load = QDir.homePath()
-
-        # Dialog
-        dlg = QFileDialog(
-            self,
-            "Add Images",
-            dir_to_load,
-        )
-        dlg.setFileMode(QFileDialog.ExistingFiles)
-        dlg.setNameFilters(ALLOWED_INPUT_FILTERS)
-
-        if not dlg.exec():
+        dlg = self._createFileDialog("files", "Add Images")
+        if not dlg or not dlg.exec():
             return
         
         self.wm.setVar("add_files_last_dir", dlg.directory().absolutePath())
@@ -123,18 +112,8 @@ class InputTab(QWidget):
         self._addItems(file_paths)
 
     def addFolder(self):
-        dir_to_load = self.wm.getVar("add_folder_last_dir")
-        if dir_to_load is None or not isPathValidStr(dir_to_load):
-            dir_to_load = QDir.homePath()
-
-        dlg = QFileDialog(
-            self,
-            "Add Images from a Folder",
-            dir_to_load
-        )
-        dlg.setFileMode(QFileDialog.Directory)
-
-        if not dlg.exec():
+        dlg = self._createFileDialog("folder", "Add Images from a Folder")
+        if not dlg or not dlg.exec():
             return
 
         self.wm.setVar("add_folder_last_dir", dlg.directory().absolutePath())
@@ -169,6 +148,35 @@ class InputTab(QWidget):
     # --------------------------------------
     #                Private
     # --------------------------------------
+
+    def _createFileDialog(self, mode: Literal["files", "folder"], caption: str) -> QFileDialog | None:
+        match mode:
+            case "files":
+                last_used_dir_key = "add_files_last_dir"
+            case "folder":
+                last_used_dir_key = "add_folder_last_dir"
+            case _:
+                logger.error(f"Unsupported mode ({mode})")
+                return None
+
+        # Load last used dir
+        dir_to_load = self.wm.getVar(last_used_dir_key)
+        if dir_to_load is None or not isPathValidStr(dir_to_load):
+            dir_to_load = QDir.homePath()
+
+        # Dialog
+        dlg = QFileDialog(
+            self,
+            caption,
+            dir_to_load,
+        )
+        if mode == "files":
+            dlg.setFileMode(QFileDialog.ExistingFiles)
+            dlg.setNameFilters(ALLOWED_INPUT_FILTERS)
+        elif mode == "folder":
+            dlg.setFileMode(QFileDialog.Directory)
+        
+        return dlg
 
     def _addItems(self, items: List[Tuple[Path, Path]]) -> None:
         """
