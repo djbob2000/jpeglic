@@ -144,8 +144,8 @@ def test_addFiles_flatpak_no_permissions(input_tab_patched):
     with patch("ui.tabs.input_tab.FLATPAK", True):
         input_tab.addFiles()
         input_tab.notify.notify.assert_called_once()
-        assert "Flatpak" in input_tab.notify.notify.call_args[0][0]
-        assert "add filesystem permissions" in input_tab.notify.notify.call_args[0][1]
+        assert "Error" in input_tab.notify.notify.call_args[0][0]
+        assert "Add filesystem permissions" in input_tab.notify.notify.call_args[0][1]
 
 def test_addFiles_happy_path(input_tab_patched):
     input_tab, mocks = input_tab_patched

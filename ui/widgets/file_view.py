@@ -164,7 +164,7 @@ class FileView(QTreeWidget):
         if FLATPAK and not items:
             for url in event.mimeData().urls():
                 if url.isLocalFile():
-                    self.notify.notify("Flatpak Limitation Notice", "Dropped items not found.\nAdd filesystem permissions to the source directory or volume.\nDirectory context is required to manage outputs.")
+                    self.notify.notify("Permission Error", "Insufficient Flatpak permissions.\nAdd filesystem permissions to the source directory or volume.")
                     return
 
         self.startAddingItems()
