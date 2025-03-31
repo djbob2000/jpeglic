@@ -148,7 +148,7 @@ class SettingsTab(QWidget):
 
         # Advanced
         self.ram_optimizer_l = self.wm.addWidget("ram_optimizer_l", QLabel("RAM Optimizer"))
-        self.ram_optimizer_cmb = self.wm.addWidget("ram_optimizer_cmb", ComboBox(("Static", "Dynamic", "Disabled")))
+        self.ram_optimizer_cmb = self.wm.addWidget("ram_optimizer_cmb", ComboBox(("Dynamic", "Static", "Disabled")))
         self.ram_optimizer_rules_l = self.wm.addWidget("ram_optimizer_rules_l", QLabel("Optimization Rules"))
         self.ram_optimizer_rules_te = self.wm.addWidget("ram_optimizer_rules_te", QTextEdit())
         self.ram_optimizer_rules_reset_btn = self.wm.addWidget("ram_optimizer_rules_reset_btn", QPushButton("Reset"))
@@ -535,7 +535,7 @@ class SettingsTab(QWidget):
         self.keep_if_larger_cb.setChecked(False)
         self.copy_if_larger_cb.setChecked(False)
 
-        self.ram_optimizer_cmb.setCurrentIndex(1)
+        self.ram_optimizer_cmb.setCurrentIndex(0)
         self.resetOptimizationRules()
         self.jxl_int_effort_cb.setChecked(False)
         self.resetExifTool()
