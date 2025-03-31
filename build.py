@@ -344,7 +344,6 @@ class Builder():
         appdir = f"{self.dst_dir}/AppDir"
 
         replaceLine(dsk_ent_p, "Icon=", "Icon=/logo\n")
-        replaceLine(dsk_ent_p, "Path=", "")
         replaceLine(dsk_ent_p, "Exec=", "Exec=/AppRun\n")
         
         makedirs(f"{appdir}/usr/bin")
