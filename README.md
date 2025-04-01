@@ -45,7 +45,7 @@ Scale down images to resolution, percent, shortest (and longest) side, and megap
 ### Windows 10
 
 Install:
-- [Python 3.13](https://www.python.org/ftp/python/3.13.1/python-3.13.1-amd64.exe) (check `Add python.exe to PATH`)
+- [Python 3.13](https://python.org/downloads/) (check `Add python.exe to PATH`)
 - [git](https://git-scm.com/)
 
 Clone the repo.
@@ -107,7 +107,6 @@ cd ..\..
 Reload the environment to avoid the `ModuleNotFoundError` error.
 
 ```cmd
-deactivate
 env_build\Scripts\activate
 ```
 
@@ -193,7 +192,6 @@ cd ../..
 Reload the environment to avoid the `ModuleNotFoundError` error.
 
 ```bash
-deactivate
 source env_build/bin/activate
 ```
 
