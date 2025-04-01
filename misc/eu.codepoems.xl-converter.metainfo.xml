@@ -5,7 +5,7 @@
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>GPL-3.0-only</project_license>
     <developer id="eu.codepoems">
-        <name>Jacob</name>
+        <name>Code Poems</name>
     </developer>
     <name>XL Converter</name>
     <summary>Convert images</summary>
@@ -17,8 +17,9 @@
             <li>Encode better quality JPEG images with JPEGLI.</li>
             <li>Losslessly recompress your JPEG images.</li>
             <li>Convert faster with parallel encoding.</li>
-            <li>Scale down images and preserve metadata with ExifTool.</li>
-            <li>QoL features available: drag 'n drop, dark theme, keep directory structure, copy smaller sources, and many more!</li>
+            <li>Preserve metadata with ExifTool.</li>
+            <li>Scale down images.</li>
+            <li>QoL features available: drag 'n drop, dark theme, keep directory structure, copy smaller sources, and more.</li>
         </ul>
     </description>
     <launchable type="desktop-id">eu.codepoems.xl-converter.desktop</launchable>
@@ -63,27 +64,33 @@
     <url type="help">https://xl-docs.codepoems.eu/</url>
     <screenshots>
         <screenshot type="default">
-            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/ec682077717f4654b1ed66473ee7d13eba09b227/screenshots/output_tab_jpeg_xl.png</image>
+            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/1e48d410d84479847fd30c1e223d3391c41d83c0/screenshots/output_tab_jpeg_xl.webp</image>
             <caption>Output tab - JPEG XL</caption>
         </screenshot>
         <screenshot>
-            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/ec682077717f4654b1ed66473ee7d13eba09b227/screenshots/output_tab_lossless_jpeg_transcoding.png</image>
+            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/1e48d410d84479847fd30c1e223d3391c41d83c0/screenshots/output_tab_lossless_jpeg_transcoding.webp</image>
             <caption>Output tab - Lossless JPEG Transcoding</caption>
         </screenshot>
         <screenshot>
-            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/ec682077717f4654b1ed66473ee7d13eba09b227/screenshots/modify_tab.png</image>
+            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/1e48d410d84479847fd30c1e223d3391c41d83c0/screenshots/modify_tab.webp</image>
             <caption>Modify tab</caption>
         </screenshot>
         <screenshot>
-            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/ec682077717f4654b1ed66473ee7d13eba09b227/screenshots/input_tab.png</image>
+            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/1e48d410d84479847fd30c1e223d3391c41d83c0/screenshots/input_tab.webp</image>
             <caption>Input tab</caption>
         </screenshot>
         <screenshot>
-            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/ec682077717f4654b1ed66473ee7d13eba09b227/screenshots/about_tab.png</image>
-            <caption>About tab</caption>
+            <image>https://raw.githubusercontent.com/JacobDev1/xl-converter-flatpak/1e48d410d84479847fd30c1e223d3391c41d83c0/screenshots/settings_tab_conversion_category.webp</image>
+            <caption>Settings tab - Conversion tab</caption>
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.2.1" date="2025-04-02">
+            <url type="details">https://github.com/JacobDev1/xl-converter/blob/v1.2.1/misc/changelog.md</url>
+            <description>
+                <p>Adds IQ tune for AOM AV1, and Page Up / Down navigation. Improves "Add Files" and drag 'n drop behavior in Flatpak.</p>
+            </description>
+        </release>
         <release version="1.2.0" date="2025-02-14">
             <url type="details">https://github.com/JacobDev1/xl-converter/blob/v1.2.0/misc/changelog.md</url>
             <description>
