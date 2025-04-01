@@ -201,6 +201,7 @@ class ModifyTab(QWidget):
         setToolTip("downscaling_resolution_width", self.pixel_w_sb)
         setToolTip("downscaling_resolution_height_enabled", self.pixel_h_cb)
         setToolTip("downscaling_resolution_height", self.pixel_h_sb)
+        setToolTip("downscaling_sides", self.shortest_sb, self.longest_sb)
 
     def _onResWidthToggled(self, enabled: bool) -> None:
         if self.downscale_cb.isEnabled():

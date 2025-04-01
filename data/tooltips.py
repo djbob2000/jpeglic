@@ -2,8 +2,12 @@ TOOLTIPS = {
     # Output tab
     "duplicates": "What to do when an output image of the same name already exists.",
     "threads": "How many CPU threads to use for conversion.\n\nHigher means faster, but leaves less resources for other processes.",
-    "output_src": "Save the resulting image next to the one you are converting from.",
-    "output_ct": """Save the resulting image in the specified location. There are 2 types of paths:\n\n1. Absolute path (e.g. C:/Images/Converted)\n\n2. Relative path (e.g. Converted). Choosing it will save output to a folder located next to the source image.""",
+    "output_src": "Saves images next to their sources.",
+    "output_ct": """Saves images to the specified folder. Supported path types:
+
+- Absolute path (e.g. `C:\\Images\\Converted`) - all images will be saved the specified folder.
+
+- Relative path (e.g. `Converted`) - images will be saved to a folder with the specified name next to each source.""",
     "keep_dir_struct": "Preserves folder hierarchy when saving images.",
     "delete_original": "Deletes the input image after conversion.\n\nDoes not execute if conversion fails.",
     "clear_after_conv": "Clear the file list (in the input tab) after conversion.",
@@ -12,7 +16,11 @@ TOOLTIPS = {
     "jxl_png_fallback": "Image will be decoded to PNG if reconstruction data is not found.",
     "jxl_verify": "Validates that a JPEG image can be reconstructed, and its checksum matches the original.\n\nAn exception will be displayed if any problems occur.\n\nEnabling this option is unnecessary because the transcoding is highly reliable.\n\nHowever, it does provide an additional reassurance.\n\nIf \"Normalize\" is enabled, the checksum of the normalized image will be used instead.\n\nImages will take slightly longer to process if enabled.",
     "jxl_normalize_enable": "Allows for transcoding problematic JPEG images.\n\nRewrites image structure without affecting quality or metadata.\n\nDiscards unnecessary information, such as unused quantization tables or arbitrary tail data.\n\nWith this enabled, the checksum of a JPEG image you can reconstruct will change, and its file size will increase.\n\nEquivalent to `jpegtran -copy all -optimize`. Images will take longer to process if enabled.",
-    "jxl_normalize_when": "Controls when to perform \"Normalize\".\n\nOn Fail - will normalize only when transcoding fails. Then transcoding will be retried.\n\nAlways - all sources will be normalized.",
+    "jxl_normalize_when": """Controls when to perform "Normalize".
+
+On Fail - will normalize only when transcoding fails then retry.
+
+Always - all sources will be normalized.""",
     "lossless": "Enables lossless compression.\n\nPixel data will stay the same.",
     "lossless_jpeg_xl": "Enables lossless compression.\n\nPixel data will stay the same if given bit depth is supported.\n\nIt does not perform Lossless JPEG Transcoding by default.",
     "int_effort": "Prioritizes smaller file size.\n\nAlternates between Effort 7 and 9 based on context.\n\nLossless and Lossy (Modular) - Effort 9\n\nLossy (VarDCT) - smallest out of Effort 7 and 9.",
@@ -35,14 +43,15 @@ TOOLTIPS = {
     # Modify tab
     "date_time": "Preserves date and time.",
     "date_time_linux": "Preserves date and time.\n\nOn Linux, it also preserves permission bits and extended attributes.",
-    "metadata": "Controls how metadata is handled.\n\nEncoder modes are faster and recommended. ExifTool is more thorough but more error-prone.\n\nEncoder - Wipe - wipes metadata. Works well for encoding everything except PNG, where it depends on the input format.\n\nEncoder - Preserve - preserves metadata. Works on common input formats, may not work for less popular ones.\n\nExifTool - Wipe - deletes all metadata except that which affects the final image.\n\nExifTool - Preserve - preserves all metadata.\n\nExifTool - Unsafe Wipe - deletes every last bit of metadata, including color profile. It can potentially alter the final image, but is the most effective.\n\nExifTool - Custom - empty. It allows you to specify custom behavior (in the settings).\n\nView and edit ExifTool commands in the settings (Settings -> ExifTool -> ExifTool Arguments).",
+    "metadata": "Controls how metadata is handled.\n\nEncoder modes are faster and recommended. ExifTool is more thorough but more error-prone.\n\nEncoder - Wipe - wipes metadata. Works well for encoding everything except PNG, where it depends on the input format.\n\nEncoder - Preserve - preserves metadata. Works on common input formats, may not work for less popular ones.\n\nExifTool - Wipe - Deletes all metadata except orientation, and color profile.\n\nExifTool - Preserve - preserves all metadata.\n\nExifTool - Unsafe Wipe - deletes every last bit of metadata, including color profile. It can potentially alter the final image, but is the most effective.\n\nExifTool - Custom - empty. It allows you to specify custom behavior (in the settings).\n\nView and edit ExifTool commands in the settings (Settings -> ExifTool -> ExifTool Arguments).",
     "downscaling": "Scales down the resolution of your image.",
     "downscaling_resolution_width_enabled": "Checked - restricts width to a given amount of pixels.\n\nUnchecked - imposes no restrictions on width. Disables downscaling for this dimension.",
     "downscaling_resolution_height_enabled": "Checked - restricts height to a given amount of pixels.\n\nUnchecked - imposes no restrictions on height. Disables downscaling for this dimension.",
     "downscaling_resolution_width": "Scales down to fit to a given width in pixels.",
     "downscaling_resolution_height": "Scales down to fit to a given height in pixels.",
-    "downscaling_file_size": "Scales image to approximated file size in kibibytes.\n\nIt is much slower than other downscaling modes. Its accuracy and reliability varies.\n\nOther modes are recommended instead.",
-    "downscaling_percent": "Scales to that percentage.\n\nExample: 80% will result in both width and height being 80% of the original resolution.",
+    "downscaling_file_size": "Scales image to approximated file size in kibibytes.\n\nIt is much slower than other downscaling modes. Its accuracy and reliability varies.\n\nOther methods are recommended instead.",
+    "downscaling_sides": "Makes a particular side fit to the specified pixel count.",
+    "downscaling_percent": "Scales to the specified percentage of each dimension.\n\nFor example, 50% of 1920 x 1080 will result in 960 x 540.",
     "downscaling_megapixels": "Scales down to megapixel count.\n\nA megapixel is the total pixel count of an image divided by a million.\n\nFormula: (width * height) / 1 000 000\n\nReference (rounded):\n\n- 0.9 MP - 1280 x 720 (HD)\n\n- 2.1 MP - 1920 x 1080 (Full HD)\n\n- 8.3 MP - 3840 x 2160 (4K)\n\n- 33.2 MP - 7680 x 4320 (8K)",
 
     # Settings tab
