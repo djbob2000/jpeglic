@@ -1,4 +1,4 @@
-## 1.2.1 - TBA
+## 1.2.1 - 2025-04-02
 
 ### Added
 
@@ -10,10 +10,7 @@
 
 - Reintroduce limited APNG support.
 - Update `libaom` to `v3.12.0`.
-- Update `libavif` to `v1.2.1`.
-- Update `oxipng` to `v9.1.4`.
-- Update ExifTool to `13.25`.
-- Update ImageMagick to `7.1.1-46`.
+- Update `libavif`, `oxipng`, ExifTool, ImageMagick, and Qt.
 - Adjust update checker to Flatpak.
 - Notify user when Flatpak permissions are insufficient.
 - Change user data location for Flatpak builds.
@@ -23,8 +20,6 @@
 - Account for unsupported routine (#93).
 - Fix visual bug where a category button was not lit up.
 - Fix "Add Files" button behavior inside Flatpak.
-
-### Removed
 
 ## 1.2.0 - 2025-02-14
 
