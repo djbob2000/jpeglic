@@ -6,7 +6,7 @@ import logging
 from data.utils import removeDuplicatesHashable, listToFilter, isRunningInFlatpak
 from data.config_manager import ConfigManager
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 UPDATE_CHECKER_VER_FILE_URL = "https://codepoems.eu/downloads/xl-converter/version.json"   # Used by UpdateChecker; example in misc/version.json
 UPDATE_CHECKER_ENABLED = True
 
