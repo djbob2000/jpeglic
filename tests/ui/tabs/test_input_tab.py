@@ -134,14 +134,20 @@ def test_addFiles_no_flatpak(input_tab_patched):
 def test_addFiles_flatpak_has_permission(input_tab_patched):
     input_tab, mocks = input_tab_patched
     mocks["_createFileDialog"].return_value.selectedFiles.return_value = ["/tmp/image.jpg"]
-    with patch("ui.tabs.input_tab.FLATPAK", True):
+    with (
+        patch("ui.tabs.input_tab.FLATPAK", True),
+        patch("ui.tabs.input_tab.Path.__str__", return_value="/tmp/user/Pictures/image.jpg"),
+    ):
         input_tab.addFiles()
         input_tab.notify.notify.assert_not_called()
 
 def test_addFiles_flatpak_no_permissions(input_tab_patched):
     input_tab, mocks = input_tab_patched
     mocks["_createFileDialog"].return_value.selectedFiles.return_value = ["/run/user/1000/doc/123456789/Pictures/image.jpg"]
-    with patch("ui.tabs.input_tab.FLATPAK", True):
+    with (
+        patch("ui.tabs.input_tab.FLATPAK", True),
+        patch("ui.tabs.input_tab.Path.__str__", return_value="/run/user/1000/doc/123456789/Pictures/image.jpg"),
+    ):
         input_tab.addFiles()
         input_tab.notify.notify.assert_called_once()
         assert "Error" in input_tab.notify.notify.call_args[0][0]
