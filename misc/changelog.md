@@ -2,7 +2,7 @@
 
 ### Added
 
-- Add new IQ tune for AVIF encoding (#99).
+- Add AOM AV1 image quality (IQ) tuning mode (#99).
 - Add Page Up and Page Down navigation to file view.
 - Publish this program on [Flathub](https://flathub.org/apps/eu.codepoems.xl-converter) (#95).
 
@@ -52,8 +52,6 @@
 
 - Remove "JPEG XL - Optimize RAM Usage" option.
 - Remove "Disable Exception Popups" option.
-
-### Deprecated
 
 ## 1.1.1 - 2025-01-06
 
