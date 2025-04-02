@@ -2,7 +2,7 @@
 
 ### Added
 
-- Add new IQ tuning to AVIF (#99).
+- Add new IQ tune for AVIF encoding (#99).
 - Add Page Up and Page Down navigation to file view.
 - Publish this program on [Flathub](https://flathub.org/apps/eu.codepoems.xl-converter) (#95).
 
@@ -11,9 +11,9 @@
 - Reintroduce limited APNG support.
 - Update `libaom` to `v3.12.0`.
 - Update `libavif`, `oxipng`, ExifTool, ImageMagick, and Qt.
-- Adjust update checker to Flatpak.
 - Notify user when Flatpak permissions are insufficient.
 - Change user data location for Flatpak builds.
+- Adjust update checker to Flatpak.
 
 ### Fixed
 
