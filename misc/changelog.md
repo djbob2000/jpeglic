@@ -1,3 +1,15 @@
+## 1.2.2 - TBA
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Deprecated
+
+### Removed
+
 ## 1.2.1 - 2025-04-02
 
 ### Added
