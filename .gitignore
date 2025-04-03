@@ -9,10 +9,11 @@ tmp.py
 /env_test/
 /env_dev/
 /env_build/
-/sample_img/
-/unit_tests_tmp/
+/_sample_img/
+/_unit_tests_tmp/
 /misc/appimagetool
 /misc/VC_redist.x64.exe
 /bin/
 /.coverage
 /htmlcov/
+/_pyinstaller

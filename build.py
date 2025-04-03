@@ -254,7 +254,6 @@ class Builder():
         # self._reduceBundleSize()  # Note: experimental
         self._copyDependencies()
         self._copyAssets()
-        self._finish()
 
         match platform.system():
             case "Linux":
@@ -276,6 +275,8 @@ class Builder():
        
         if self.args.getArg("update_file"):
             self._appendUpdateFile()
+        
+        print(f"[Building] Finished (built to {self.dst_dir}/{self.project_name})")
 
     def _prepare(self):
         if platform.system() == "Windows":
@@ -285,30 +286,13 @@ class Builder():
             removeReadOnly(self.bin_dir["Windows"])
         
         rmTree(self.dst_dir)    # Delete ./dist 
-
-        # Prevent conflicts If the same folder is used on multiple systems
-        if os.path.isdir("build"):  
-            if os.path.isfile("build/last_built_on"):
-                last_built_on = open("build/last_built_on","r")
-                last_platform = last_built_on.read()
-                last_built_on.close()
-                
-                if last_platform == f"{platform.system()}_{platform.architecture()}":
-                    print("[Building] Using previously compiled cache")
-                else:
-                    print("[Error] Platform mismatch - deleting the cache")
-                    rmTree("build")
-                    rmTree("__pycache__")
-            else:
-                print("[Building] \"last_built_on\" not found - deleting the cache")
-                rmTree("build")
-                rmTree("__pycache__")
         
     def _buildBinaries(self):
         print("[Building] Generating binaries")
         makedirs(self.dst_dir)
         PyInstaller.__main__.run([
             "--log-level=ERROR",
+            "--workpath=./_pyinstaller",
             str(Path("misc/main.spec"))
         ])
     
@@ -352,12 +336,6 @@ class Builder():
         print("[Building] Appending an update file (to place on a server)")
         copy(self.version_file_path, self.dst_dir)
         replaceLine(f"{self.dst_dir}/{os.path.basename(self.version_file_path)}", "latest_version", f"    \"latest_version\": \"{VERSION}\",\n")
-    
-    def _finish(self):
-        with open("build/last_built_on","w") as last_built_on:
-            last_built_on.write(f"{platform.system()}_{platform.architecture()}")
-
-        print(f"[Building] Finished (built to {self.dst_dir}/{self.project_name})")
 
     def _appendConfig(self, portable=True):
         config = "[General]\n"

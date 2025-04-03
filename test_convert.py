@@ -29,8 +29,8 @@ from data.constants import *
 import core.controller as controller 
 
 # CONFIG
-SAMPLE_IMG_FOLDER = Path(".").resolve() / "sample_img"
-TMP_IMG_FOLDER = Path(".").resolve() / "unit_tests_tmp"
+SAMPLE_IMG_FOLDER = Path(".").resolve() / "_sample_img"
+TMP_IMG_FOLDER = Path(".").resolve() / "_unit_tests_tmp"
 app = QApplication(sys.argv)
 
 # ---------------------------------------------------------------
