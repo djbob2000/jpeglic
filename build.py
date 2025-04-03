@@ -101,10 +101,6 @@ class Downloader():
         self.appimagetool_dst = "misc/appimagetool"
         self.appimagetool_blake2 = "83db0c2644d992045f974592099fdbf69c690f20d8440e773bfb76fff199d4abf9a3b19a72279e63b9aa37ef46b201ced2a106138c0404e2a03de2f7b390c4a5"
 
-        self.redist_url = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-        self.redist_dst = "misc/VC_redist.x64.exe"
-        # No static link available
-
     def download(self, url, dst, checksum = None):
         dst = Path(dst)
         if dst.is_file():
@@ -132,9 +128,6 @@ class Downloader():
     def downloadAppImageTool(self):
         self.download(self.appimagetool_url, self.appimagetool_dst, self.appimagetool_blake2)
     
-    def downloadRedistributable(self):
-        self.download(self.redist_url, self.redist_dst)
-
 class Args():
     def __init__(self):
         self.parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
@@ -274,7 +267,6 @@ class Builder():
                         self._appendDesktopEntry()
                         self._buildAppImage()
             case "Windows":
-                # self.downloader.downloadRedistributable()
                 match build_type:
                     case "innosetup":
                         self._appendInstaller()
