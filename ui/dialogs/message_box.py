@@ -14,12 +14,13 @@ def _displayMessageBox(
     text: str,
     detailed_text: str | None = None,
     buttons: QMessageBox.StandardButton = QMessageBox.StandardButton.Ok,
-) -> int:
+) -> QMessageBox.StandardButton:
     dlg = QMessageBox(parent)
     dlg.setWindowIcon(QIcon(ICON_SVG))
     dlg.setWindowTitle(title)
     dlg.setText(text)
     dlg.setDetailedText(detailed_text)
+    dlg.setStandardButtons(buttons)
 
     result = dlg.exec()
 
