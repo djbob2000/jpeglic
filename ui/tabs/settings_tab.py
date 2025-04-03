@@ -28,10 +28,8 @@ from data.logging_manager import LoggingManager
 from ui.lib import WidgetManager
 from ui.lib.utils import setToolTip, openLocalUrl, createQHBoxLayout, blockSignals
 from ui.theme import setTheme
-from ui.widgets import ScrollArea
-from ui.widgets import SpinBox
-from ui.widgets import ComboBox
-from ui.dialogs import Notifications
+from ui.widgets import ScrollArea, SpinBox, ComboBox
+from ui.dialogs import message_box
 
 class Signals(QObject):
     custom_resampling_toggled = Signal(bool)
@@ -50,7 +48,6 @@ class SettingsTab(QWidget):
         self.wm = WidgetManager("SettingsTab")
         self.signals = Signals()
         self.logging_manager = LoggingManager()
-        self.notifications = Notifications(self)
 
         # Init UI
         self.setupUI()
@@ -457,7 +454,7 @@ class SettingsTab(QWidget):
     def openLogsDir(self):
         logs_dir = self.logging_manager.getLogsDir()
         if not os.path.isdir(logs_dir):
-            self.notifications.notify("No logs", "No logs have been found.")
+            message_box.info(self, "No logs", "No logs have been found.")
             return
         openLocalUrl(logs_dir)
     
@@ -468,7 +465,7 @@ class SettingsTab(QWidget):
             self.start_logging_btn.setText("Start Logging")
             self.start_logging_btn.setChecked(False)
 
-        self.notifications.notify("File Message", self.logging_manager.wipeLogsDir())
+        message_box.info(self, "File Message", self.logging_manager.wipeLogsDir())
 
     def getSettings(self):
         return {

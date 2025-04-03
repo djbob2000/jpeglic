@@ -29,7 +29,7 @@ from data.sounds import finished_sound
 from data.logging_manager import LoggingManager
 from data.process_manager import ProcessManager
 from ui.tabs import InputTab, AboutTab, ModifyTab, OutputTab, SettingsTab
-from ui.dialogs import Notifications, ProgressDialog, ExceptionView
+from ui.dialogs import message_box, ProgressDialog, ExceptionView
 
 class MainWindow(QMainWindow):
     moved = Signal()
@@ -62,7 +62,6 @@ class MainWindow(QMainWindow):
         self.about_tab = AboutTab()
 
         self.exception_view = ExceptionView(parent=self)
-        self.notifications = Notifications(self)
         self.progress_dlg = ProgressDialog(parent=self, title="Converting...", cancelable=True)
 
         self.tabs.addTab(self.input_tab, "Input")
@@ -144,7 +143,7 @@ class MainWindow(QMainWindow):
         )
 
         if check_status.display_error:
-            self.notifications.notify(check_status.error_title, check_status.error_description)
+            message_box.info(self, check_status.error_title, check_status.error_description)
 
         if CheckFlags.DISABLE_DOWNSCALING in check_status.flags:
             self.modify_tab.disableDownscaling()

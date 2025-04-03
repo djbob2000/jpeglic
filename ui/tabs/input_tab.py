@@ -21,10 +21,10 @@ from PySide6.QtGui import(
 
 from data.constants import ALLOWED_INPUT, ALLOWED_INPUT_FILTERS, FLATPAK
 from core.utils import scanDir
-from ui.dialogs import Notifications
 from ui.widgets import FileView
 from ui.lib import WidgetManager
 from ui.lib.utils import isPathValidStr
+from ui.dialogs import message_box
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,6 @@ class InputTab(QWidget):
 
     def __init__(self, settings):
         super(InputTab, self).__init__()
-        self.notify = Notifications(self)
         self.wm = WidgetManager("InputTab")
         
         self._setupWidgets()
@@ -106,7 +105,7 @@ class InputTab(QWidget):
             )
         
         if FLATPAK and len(file_paths) > 0 and str(file_paths[0][0]).startswith("/run"):
-            self.notify.notify("Permission Error", "Insufficient Flatpak permissions.\nAdd filesystem permissions to the source directory or volume.")
+            message_box.info(self, "Permission Error", "Insufficient Flatpak permissions.\nAdd filesystem permissions to the source directory or volume.")
             return
 
         self._addItems(file_paths)
@@ -122,7 +121,7 @@ class InputTab(QWidget):
         try:
             file_paths = scanDir(selected_dir)
         except FileNotFoundError:
-            self.notify.notify("Error", "The directory was not found.")
+            message_box.info(self, "Error", "The directory was not found.")
             return
 
         # Add items

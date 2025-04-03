@@ -25,7 +25,7 @@ from PySide6.QtGui import (
 )
 
 from data.constants import ICON_SVG, VERSION
-from .notifications import Notifications
+from . import message_box
 
 class ItemDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
@@ -61,8 +61,6 @@ class ExceptionView(QDialog):
         self._setupLayouts()
     
     def _setupWidgets(self):
-        self.notifications = Notifications(self)
-
         self.exceptions_t = QTreeWidget(self.parent)
         self.exceptions_t.setRootIsDecorated(False)
         self.exceptions_t.setHeaderLabels(("ID", "Exception", "Source",))
@@ -117,7 +115,7 @@ class ExceptionView(QDialog):
 
     def saveToFile(self) -> None:
         if self.isEmpty():
-            self.notifications.notify("Empty List", "Exception list is empty, there is nothing to save.")
+            message_box.info(self, "Empty List", "Exception list is empty, there is nothing to save.")
             return
 
         dlg, _ = QFileDialog.getSaveFileUrl(
@@ -154,7 +152,7 @@ class ExceptionView(QDialog):
                 writer = csv.writer(csv_file, quoting=csv.QUOTE_MINIMAL)
                 writer.writerows(rows)
         except OSError as e:
-            self.notifications.notifyDetailed("Error", "Failed to save file", str(e))
+            message_box.info(self, "Error", "Failed to save file", str(e))
 
     def resizeToContent(self) -> None:
         self.exceptions_t.resizeColumnToContents(0)

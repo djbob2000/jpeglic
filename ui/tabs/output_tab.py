@@ -25,10 +25,8 @@ from PySide6.QtCore import(
 from core.utils import dictToList
 from ui.lib import WidgetManager
 from ui.lib.utils import setToolTip, isPathValidStr, createQHBoxLayout, blockSignals
-from ui.widgets import Slider
-from ui.widgets import ComboBox
-from ui.widgets import SpinBox
-from ui.dialogs import Notifications
+from ui.widgets import Slider, ComboBox, SpinBox
+from ui.dialogs import message_box
 
 class OutputTab(QWidget):
     convert = Signal()
@@ -39,7 +37,6 @@ class OutputTab(QWidget):
 
         # Components
         self.wm = WidgetManager("OutputTab")
-        self.notifications = Notifications(self)
 
         # Variables
         self.prev_format = None
@@ -396,7 +393,7 @@ class OutputTab(QWidget):
     def _onJXLNormalizeClicked(self) -> None:
         """On user's action."""
         if self.wm.getVar("jxl_normalize_checksum_msg_seen") is None:
-            self.notifications.notify("Usage Info", "After \"Normalize\" is applied, JPEG images will have a different checksum, and get slightly larger once reconstructed. Learn more in the manual.")
+            message_box.info(self, "Usage Info", "After \"Normalize\" is applied, JPEG images will have a different checksum, and get slightly larger once reconstructed. Learn more in the manual.")
             self.wm.setVar("jxl_normalize_checksum_msg_seen", True)
 
     def _onSmLBitDepthChanged(self) -> None:
