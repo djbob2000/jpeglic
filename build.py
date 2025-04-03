@@ -7,6 +7,7 @@ import stat
 import hashlib
 from pathlib import Path
 import re
+import glob
 
 import PyInstaller.__main__
 import requests
@@ -206,7 +207,49 @@ class Builder():
         
         self.build_7z_name = f"xl-converter-linux-{self.version_sanitized}-x86_64"
         self.build_appimage_name = f"xl-converter-linux-{self.version_sanitized}-x86_64.AppImage"
-    
+
+        # Clean up
+        # base path: xl-converter/_internal
+        self.cleanup_resources = {
+            "Linux": [
+                # "PySide6/QtNetwork*",     # QSoundEffect needs it.
+                "PySide6/Qt/lib/libavcodec*",
+                "PySide6/Qt/lib/libavformat*",
+                "PySide6/Qt/lib/libavutil*",
+                "PySide6/Qt/lib/libQt6OpenGL*",
+                "PySide6/Qt/lib/libQt6Pdf*",
+                "PySide6/Qt/lib/libQt6Qml*",
+                "PySide6/Qt/lib/libQt6Quick*",
+                # "PySide6/Qt/lib/Qt6Network*",
+                "PySide6/Qt/lib/libswscale*",
+                "PySide6/Qt/lib/libQt6VirtualKeyboard*",
+
+                "PySide6/Qt/plugins/imageformats",
+                "PySide6/Qt/plugins/multimedia",
+                "PySide6/Qt/translations",
+            ],
+            "Windows": [
+                "PySide6\\avcodec-61.dll",
+                "PySide6\\avformat-61.dll",
+                "PySide6\\avutil-59.dll",
+                "PySide6\\opengl32sw.dll",
+                # "PySide6\\Qt6Network.dll",
+                "PySide6\\Qt6OpenGL.dll",
+                "PySide6\\Qt6Pdf.dll",
+                "PySide6\\Qt6Qml.dll",
+                "PySide6\\Qt6QmlMeta.dll",
+                "PySide6\\Qt6QmlModels.dll",
+                "PySide6\\Qt6Quick.dll",
+                "PySide6\\Qt6VirtualKeyboard.dll",
+                "PySide6\\swresample-5.dll",
+                "PySide6\\swscale-8.dll",
+
+                "PySide6\\plugins\\imageformats",
+                "PySide6\\Qt6MultimediaWidgets",
+                "PySide6\\translations",
+            ]
+        }
+
     def build(self):
         build_type = self.args.getArg('build_type')
 
@@ -215,6 +258,7 @@ class Builder():
 
         self._prepare()
         self._buildBinaries()
+        # self._reduceBundleSize()  # Note: experimental
         self._copyDependencies()
         self._copyAssets()
         self._finish()
@@ -412,6 +456,24 @@ class Builder():
             f"{self.build_win_portable_name}.7z",
             self.build_win_portable_name,
         ], cwd=self.dst_dir)
+
+    def _reduceBundleSize(self) -> None:
+        print("[Building] Reducing bundle size")
+
+        current_system = platform.system()
+        if current_system not in self.cleanup_resources:
+            Exception(f"_reduceBundleSize is unsupported for {current_system}")
+        
+        file_patterns = [os.path.join(self.internal_dir, res) for res in self.cleanup_resources[current_system]]
+        files_to_remove = []
+        for pattern in file_patterns:
+            files_to_remove.extend(glob.glob(pattern))
+        
+        for path in files_to_remove:
+            if os.path.isfile(path):
+                os.remove(path)
+            elif os.path.isdir(path):
+                shutil.rmtree(path)
 
 if __name__ == '__main__':
     try:
