@@ -9,7 +9,6 @@ from PySide6.QtTest import QSignalSpy
 
 from ui.tabs.input_tab import InputTab
 from ui.widgets.file_view import FileView
-from ui.dialogs import Notifications
 from ui.lib import WidgetManager
 
 @pytest.fixture
@@ -18,7 +17,6 @@ def input_tab_widget(app):
     input_tab = InputTab(settings)
     input_tab.wm = MagicMock(spec=WidgetManager)
     input_tab.file_view = MagicMock(spec=FileView)
-    input_tab.notify = MagicMock(spec=Notifications)
     yield input_tab
 
 @pytest.fixture
@@ -37,6 +35,7 @@ def input_tab_patched(input_tab_widget):
         "ALLOWED_INPUT_FILTERS": patch("ui.tabs.input_tab.ALLOWED_INPUT_FILTERS", "All Files (*)"),
         "scanDir": patch("ui.tabs.input_tab.scanDir"),
         "_createFileDialog": patch.object(input_tab_widget, "_createFileDialog", return_value=mock_file_dialog),
+        "message_box.info": patch("ui.tabs.input_tab.message_box.info"),
     }
 
     with ExitStack() as stack:
@@ -46,7 +45,7 @@ def input_tab_patched(input_tab_widget):
 @pytest.fixture
 def input_tab__addItems_patched(input_tab_widget):
     mocks = {
-        "notify": patch.object(input_tab_widget, "notify", MagicMock(spec=Notifications)),
+        "message_box.info": patch("ui.tabs.input_tab.message_box.info"),
         "wm": patch.object(input_tab_widget, "wm", MagicMock(spec=WidgetManager)),
         "wm.getVar": patch.object(input_tab_widget.wm, "getVar", return_value=None),
         "file_view": patch.object(input_tab_widget, "file_view", MagicMock(spec=FileView)),
@@ -72,7 +71,6 @@ def input_tab__createFileDialog_patched(input_tab_widget):
 def test_init(input_tab_patched):
     input_tab, mocks = input_tab_patched
     assert input_tab.file_view
-    assert input_tab.notify
     assert input_tab.wm
 
 def test_getItems(input_tab_patched):
@@ -129,7 +127,7 @@ def test_addFiles_no_flatpak(input_tab_patched):
     input_tab, mocks = input_tab_patched
     with patch("ui.tabs.input_tab.FLATPAK", False):
         input_tab.addFiles()
-        input_tab.notify.notify.assert_not_called()
+        mocks["message_box.info"].assert_not_called()
 
 def test_addFiles_flatpak_has_permission(input_tab_patched):
     input_tab, mocks = input_tab_patched
@@ -139,7 +137,7 @@ def test_addFiles_flatpak_has_permission(input_tab_patched):
         patch("ui.tabs.input_tab.Path.__str__", return_value="/tmp/user/Pictures/image.jpg"),
     ):
         input_tab.addFiles()
-        input_tab.notify.notify.assert_not_called()
+        mocks["message_box.info"].assert_not_called()
 
 def test_addFiles_flatpak_no_permissions(input_tab_patched):
     input_tab, mocks = input_tab_patched
@@ -149,9 +147,9 @@ def test_addFiles_flatpak_no_permissions(input_tab_patched):
         patch("ui.tabs.input_tab.Path.__str__", return_value="/run/user/1000/doc/123456789/Pictures/image.jpg"),
     ):
         input_tab.addFiles()
-        input_tab.notify.notify.assert_called_once()
-        assert "Error" in input_tab.notify.notify.call_args[0][0]
-        assert "Add filesystem permissions" in input_tab.notify.notify.call_args[0][1]
+        mocks["message_box.info"].assert_called_once()
+        assert "Error" in mocks["message_box.info"].call_args[0][1]
+        assert "Add filesystem permissions" in mocks["message_box.info"].call_args[0][2]
 
 def test_addFiles_happy_path(input_tab_patched):
     input_tab, mocks = input_tab_patched
@@ -195,9 +193,9 @@ def test_addFolder_selected_folder_not_found(input_tab_patched):
     input_tab.addFolder()
 
     input_tab._addItems.assert_not_called()
-    input_tab.notify.notify.assert_called_once()
-    assert "Error" in input_tab.notify.notify.call_args[0][0]
-    assert "not found" in input_tab.notify.notify.call_args[0][1]
+    mocks["message_box.info"].assert_called_once()
+    assert "Error" in mocks["message_box.info"].call_args[0][1]
+    assert "not found" in mocks["message_box.info"].call_args[0][2]
 
 def test_addFolder_empty_selection(input_tab_patched):
     input_tab, mocks = input_tab_patched

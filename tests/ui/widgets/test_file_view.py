@@ -196,13 +196,13 @@ def test_drop_event_flatpak_no_permissions(file_view):
         patch("ui.widgets.file_view.os.path.isfile", return_value=False),
         patch("ui.widgets.file_view.scanDir") as mock_scanDir,
         patch("ui.widgets.file_view.FLATPAK", True),
-        patch.object(file_view.notify, "notify") as mock_notify,
+        patch("ui.widgets.file_view.message_box.info") as mock_message_box_info,
     ):
         mock_scanDir.return_value = [sample_imgs[1], sample_imgs[2]]
         
         file_view.dropEvent(mock_event)
 
-        mock_notify.assert_called_once()
+        mock_message_box_info.assert_called_once()
 
 def test_drop_event_flatpak_has_permissions(file_view):
     sample_imgs = get_sample_img_paths(3)
@@ -218,13 +218,13 @@ def test_drop_event_flatpak_has_permissions(file_view):
         patch("ui.widgets.file_view.os.path.isfile", side_effect=[True, False]),
         patch("ui.widgets.file_view.scanDir") as mock_scanDir,
         patch("ui.widgets.file_view.FLATPAK", True),
-        patch.object(file_view.notify, "notify") as mock_notify,
+        patch("ui.widgets.file_view.message_box.info") as mock_message_box_info,
     ):
         mock_scanDir.return_value = [sample_imgs[1], sample_imgs[2]]
         
         file_view.dropEvent(mock_event)
 
-        mock_notify.assert_not_called()
+        mock_message_box_info.assert_not_called()
         assert file_view.topLevelItemCount() == 3
         assert file_view.topLevelItem(0).text(2) == sample_imgs[0]
         assert file_view.topLevelItem(2).text(2) == sample_imgs[2]

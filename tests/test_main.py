@@ -75,7 +75,6 @@ def main_window(qtbot):
             AboutTab=MockTab,
             SettingsTab=MockTab,
             ExceptionView=MagicMock(),
-            Notifications=MagicMock(),
             ProgressDialog=MagicMock(),
             QTabWidget=MockTabWidget,
         ),
@@ -116,7 +115,7 @@ def main_window_patched(main_window):
         "controller_parseData": patch.object(main_window.controller, "parseData"),
         "controller_checkProcessingRequirements": patch.object(main_window.controller, "checkProcessingRequirements", return_value=CheckStatus()),
         "input_tab_getItems": patch.object(main_window.input_tab, "getItems", return_value=["item_0", "item_1"]),
-        "notifications_notify": patch.object(main_window.notifications, "notify"),
+        "message_box_info": patch("ui.tabs.output_tab.message_box.info"),
         "modify_tab_disableDownscaling": patch.object(main_window.modify_tab, "disableDownscaling"),
         "output_tab_getUsedThreadCount": patch.object(main_window.output_tab, "getUsedThreadCount"),
     }    
@@ -221,9 +220,9 @@ def test_convert_display_error(display, main_window_patched):
     main_window.convert()
 
     if display:
-        mocks["notifications_notify"].assert_called_once_with(check_status.error_title, check_status.error_description)
+        mocks["message_box_info"].assert_called_once_with(main_window, check_status.error_title, check_status.error_description)
     else:
-        mocks["notifications_notify"].assert_not_called()
+        mocks["message_box_info"].assert_not_called()
 
 @pytest.mark.parametrize("include_flag", [True, False])
 def test_convert_disable_downscaling(include_flag, main_window_patched):

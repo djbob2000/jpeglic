@@ -322,24 +322,24 @@ def test__onJXLNormalizeClicked_no_var(app):
     with (
         patch.object(app.wm, "getVar", return_value=None) as mock_getVar,
         patch.object(app.wm, "setVar") as mock_setVar,
-        patch.object(app.notifications, "notify") as mock_notify,
+        patch("ui.tabs.output_tab.message_box.info") as mock_message_box_info,
     ):
         app._onJXLNormalizeClicked()
     
     mock_getVar.assert_called_once_with("jxl_normalize_checksum_msg_seen")
-    mock_notify.assert_called_once()
+    mock_message_box_info.assert_called_once()
     mock_setVar.assert_called_once_with("jxl_normalize_checksum_msg_seen", True)
 
 def test__onJXLNormalizeClicked_var_present(app):
     with (
         patch.object(app.wm, "getVar", return_value=True) as mock_getVar,
         patch.object(app.wm, "setVar") as mock_setVar,
-        patch.object(app.notifications, "notify") as mock_notify,
+        patch("ui.tabs.output_tab.message_box.info") as mock_message_box_info,
     ):
         app._onJXLNormalizeClicked()
     
     mock_getVar.assert_called_once_with("jxl_normalize_checksum_msg_seen")
-    mock_notify.assert_not_called()
+    mock_message_box_info.assert_not_called()
     mock_setVar.assert_not_called()
 
 @pytest.mark.parametrize("encoder", ("AOM AV1", "SVT-AV1-PSY"))

@@ -84,12 +84,12 @@ def test_saveToFile_happy_path(exception_view):
 def test_saveToFile_empty(exception_view):
     with (
         patch.object(exception_view, "isEmpty", return_value=True),
-        patch.object(exception_view.notifications, "notify") as mock_notify,
+        patch("ui.dialogs.exception_view.message_box.info") as mock_message_box_info,
         patch.object(exception_view, "_writeCsv") as mock__writeCsv,
     ):
         exception_view.saveToFile()
 
-        mock_notify.assert_called_once()
+        mock_message_box_info.assert_called_once()
         mock__writeCsv.assert_not_called()
 
 def test_saveToFile_dlg_invalid(exception_view):
@@ -116,7 +116,7 @@ def test__writeCsv_happy_path(exception_view):
     with (
         patch("builtins.open", mock_open()) as mock_csv_file,
         patch("ui.dialogs.exception_view.csv.writer") as mock_csv_writer,
-        patch.object(exception_view.notifications, "notifyDetailed") as mock_notifyDetailed,
+        patch("ui.dialogs.exception_view.message_box.info") as mock_message_box_info,
     ):
         exception_view._writeCsv(file_path, rows)
 
@@ -124,7 +124,7 @@ def test__writeCsv_happy_path(exception_view):
         file_handle = mock_csv_file()
         mock_csv_writer.assert_called_once_with(file_handle, quoting=csv.QUOTE_MINIMAL)
         mock_csv_writer.return_value.writerows.assert_called_once_with(rows)
-        mock_notifyDetailed.assert_not_called()
+        mock_message_box_info.assert_not_called()
 
 def test__writeCsv_sad_path(exception_view):
     file_path = "/tmp/path/to/file.csv"
@@ -137,14 +137,14 @@ def test__writeCsv_sad_path(exception_view):
     with (
         patch("builtins.open", side_effect=OSError()) as mock_csv_file,
         patch("ui.dialogs.exception_view.csv.writer") as mock_csv_writer,
-        patch.object(exception_view.notifications, "notifyDetailed") as mock_notifyDetailed,
+        patch("ui.dialogs.exception_view.message_box.info") as mock_message_box_info,
     ):
         exception_view._writeCsv(file_path, rows)
 
         mock_csv_file.assert_called_once_with(file_path, "w", newline="", encoding="utf-8")
         mock_csv_writer.assert_not_called()
         mock_csv_writer.return_value.writerows.assert_not_called()
-        mock_notifyDetailed.assert_called_once()
+        mock_message_box_info.assert_called_once()
 
 @pytest.mark.parametrize("item_count, expected", [
     (0, True),
