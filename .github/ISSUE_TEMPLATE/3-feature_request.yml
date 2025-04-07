@@ -2,25 +2,30 @@ name: Feature Request
 description: Suggest improvements
 body:
   - type: textarea
-    id: feature-description
+    id: brief-description
     attributes:
-      label: Feature Description
-      description: A detailed description of a feature or an improvement you would like to see.
+      label: Brief Description
+      description: Write a brief description of a feature or an improvement you would like to see.
     validations:
       required: true
     
   - type: textarea
-    id: how-it-works
+    id: detailed-description
     attributes:
-      label: Technical Details
-      description: Describe how this feature would work in technical details or add more context.
+      label: Detailed Description
+      description: |
+        Describe how this feature is intended to work conceptually and what benefits it brings.
+
+        For a simple request, like a library update, you can keep it brief. For a new feature, describe how it works thoroughly.
+        
+        **New features with unclear descriptions will not be considered!**
     validations:
       required: true
-    
+      
   - type: textarea
-    id: existing-implementations
+    id: additional-info
     attributes:
-      label: Existing Implementations
-      description: List at least one program with that feature included.
+      label: Additional Information (Optional)
+      description: Include any other relevant information, context, or references.
     validations:
-      required: true
+      required: false
