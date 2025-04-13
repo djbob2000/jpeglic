@@ -31,8 +31,17 @@ class UpdateCheckerWorker(QObject):
         
         try:
             response = requests.get(UPDATE_CHECKER_VER_FILE_URL, timeout=5)
-            response.raise_for_status()
-            self.json_received.emit(response.json())
+            match response.status_code:
+                case 200:
+                    self.json_received.emit(response.json())
+                case 404:
+                    self.error_occurred.emit("Version file not found.")
+                case 500:
+                    self.error_occurred.emit("Internal server error.")
+                case _:
+                    self.error_occurred.emit(f"Error, status code: {code}")
+        except requests.ConnectionError:
+            self.error_occurred.emit(f"Couldn't connect to the server.")
         except requests.exceptions.RequestException as e:
             self.error_occurred.emit(str(e))
         finally:

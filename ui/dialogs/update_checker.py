@@ -147,9 +147,12 @@ class UpdateChecker(QObject):
             return
         
         self.dlg.show(error)
-        self.finished.emit()
 
     def _onDialogClosed(self) -> None:
+        if not self.update_info:    # _errorOccurred
+            self.finished.emit()
+            return
+
         if self.update_info.message and not self.message_viewed:
             self.dlg.show(
                 self.update_info.message,
