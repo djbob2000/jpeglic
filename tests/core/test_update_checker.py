@@ -1,157 +1,191 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import requests
 
 import pytest
 from PySide6.QtTest import QSignalSpy
+from PySide6.QtCore import QThread
 
-from core.update_checker import (
-    Worker,
-    Runner,
-    SIMULATE_SERVER_JSON
-)
-from data.constants import VERSION, UPDATE_CHECKER_VER_FILE_URL
+import core.update_checker as update_checker
 
 @pytest.fixture
-def worker():
-    return Worker()
+def worker(app):
+    return update_checker.UpdateCheckerWorker()
 
-@pytest.fixture
-def runner():
-    r = Runner()
-    yield r
-    r.handleFinish()
+def getSampleUpdateFileUrl() -> str:
+    return "https://codepoems.eu/downloads/xl-converter/version.json"
 
 def test_worker_simulate_server(worker):
-    with patch("core.update_checker.SIMULATE_SERVER", True):
-        json_spy = QSignalSpy(worker.json)
+    with (
+        patch("core.update_checker.SIMULATE_SERVER", True),
+        patch("core.update_checker.SIMULATE_SERVER_JSON", {"latest_version": "1.0.0"}) as var_SIMULATE_SERVER_JSON,
+    ):
+        json_received_spy = QSignalSpy(worker.json_received)
         finished_spy = QSignalSpy(worker.finished)
 
         worker.run()
     
-        try:
-            assert json_spy.at(0)[0] == SIMULATE_SERVER_JSON
-        except:
-            pytest.fail("QSignalSpy instance error")
-        assert json_spy.count() == 1
+        assert json_received_spy.count() == 1
         assert finished_spy.count() == 1
+        assert json_received_spy.at(0)[0] == var_SIMULATE_SERVER_JSON
 
 def test_worker_connection_success(worker, requests_mock):
-    tmp = {"latest_version": VERSION}
-    requests_mock.get(UPDATE_CHECKER_VER_FILE_URL, json=tmp, status_code=200)
-    json_spy = QSignalSpy(worker.json)
+    sample_json_data = {"latest_version": "1.0.0"}
+    sample_update_file_url = getSampleUpdateFileUrl()
+    requests_mock.get(
+        sample_update_file_url,
+        json=sample_json_data,
+        status_code=200
+    )
+    json_received_spy = QSignalSpy(worker.json_received)
     finished_spy = QSignalSpy(worker.finished)
 
-    worker.run()
+    with (
+        patch("core.update_checker.SIMULATE_SERVER", False),
+        patch("core.update_checker.UPDATE_CHECKER_VER_FILE_URL", sample_update_file_url),
+    ):
+        worker.run()
 
-    try:
-        assert json_spy.at(0)[0] == tmp
-    except:
-        pytest.fail("QSignalSpy instance error")
-    assert json_spy.count() == 1
-    assert finished_spy.count() == 1
+        assert json_received_spy.count() == 1
+        assert finished_spy.count() == 1
+        assert json_received_spy.at(0)[0] == sample_json_data
 
-def test_worker_connection_failed(worker, requests_mock, caplog):
-    requests_mock.get(UPDATE_CHECKER_VER_FILE_URL, exc=requests.ConnectionError("No internet connection"))
-    misc_spy = QSignalSpy(worker.misc_error)
+def test_worker_connection_error(worker, requests_mock):
+    sample_update_file_url = getSampleUpdateFileUrl()
+    requests_mock.get(
+        sample_update_file_url,
+        exc=requests.ConnectionError("No internet connection")
+    )
+    error_occurred_spy = QSignalSpy(worker.error_occurred)
     finished_spy = QSignalSpy(worker.finished)
     
-    worker.run()
+    with (
+        patch("core.update_checker.SIMULATE_SERVER", False),
+        patch("core.update_checker.UPDATE_CHECKER_VER_FILE_URL", sample_update_file_url),
+    ):
+        worker.run()
 
-    try:
-        assert misc_spy.at(0)[0] == "Couldn't connect to the server."
-    except:
-        pytest.fail("QSignalSpy instance error")
-    assert "No internet connection" in caplog.text
-    assert finished_spy.count() == 1
+        assert finished_spy.count() == 1
+        assert error_occurred_spy.count() == 1
+        assert error_occurred_spy.at(0)[0] == "Couldn't connect to the server."
 
-def test_worker_status_code_error(worker, requests_mock):
-    requests_mock.get(UPDATE_CHECKER_VER_FILE_URL, json={}, status_code=404)
-    status_code_error_spy = QSignalSpy(worker.status_code_error)
+@pytest.mark.parametrize("error_code, error_message", [
+    (404, "Version file not found"),
+    (500, "Internal server error"),
+    (401, "Error, status code: 401"),
+])
+def test_worker_status_code_error(error_code, error_message, worker, requests_mock):
+    sample_update_file_url = getSampleUpdateFileUrl()
+    requests_mock.get(sample_update_file_url, json={}, status_code=error_code)
+    error_occurred_spy = QSignalSpy(worker.error_occurred)
     finished_spy = QSignalSpy(worker.finished)
 
-    worker.run()
+    with (
+        patch("core.update_checker.SIMULATE_SERVER", False),
+        patch("core.update_checker.UPDATE_CHECKER_VER_FILE_URL", sample_update_file_url),
+    ):
+        worker.run()
 
-    try:
-        assert status_code_error_spy.at(0)[0] == 404
-    except:
-        pytest.fail("QSignalSpy instance error")
-    assert finished_spy.count() == 1
+        assert finished_spy.count() == 1
+        assert error_occurred_spy.count() == 1
+        assert error_message in error_occurred_spy.at(0)[0]
 
-def test_worker_parse_json_failed(worker, requests_mock):
-    requests_mock.get(UPDATE_CHECKER_VER_FILE_URL, json=None, status_code=200)
-    misc_error_spy = QSignalSpy(worker.misc_error)
+def test_worker_generic_exception(worker, requests_mock):
+    sample_update_file_url = getSampleUpdateFileUrl()
+    requests_mock.get(
+        sample_update_file_url,
+        exc=requests.RequestException("Failed to parse JSON."),
+    )
+    error_occurred_spy = QSignalSpy(worker.error_occurred)
     finished_spy = QSignalSpy(worker.finished)
 
-    worker.run()
+    with (
+        patch("core.update_checker.SIMULATE_SERVER", False),
+        patch("core.update_checker.UPDATE_CHECKER_VER_FILE_URL", sample_update_file_url),
+    ):
+        worker.run()
 
-    try:
-        assert misc_error_spy.at(0)[0] == "Parsing JSON failed."
-    except:
-        pytest.fail("QSignalSpy instance error")
-    assert finished_spy.count() == 1
-    
-@patch("core.update_checker.Worker")
-@patch("core.update_checker.QThread")
-def test_runner_run(mock_qthread, mock_worker, runner):
-    worker_instance = mock_worker.return_value
-    thread_instance = mock_qthread.return_value
+        assert finished_spy.count() == 1
+        assert error_occurred_spy.count() == 1
+        assert "Failed to parse JSON." in error_occurred_spy.at(0)[0]
 
-    runner.run()
+@pytest.fixture
+def runner(app):
+    return update_checker.UpdateCheckerRunner()
 
-    thread_instance.started.connect.assert_called_once_with(worker_instance.run)
-    worker_instance.finished.connect.assert_called_once_with(runner.handleFinish)
-    worker_instance.json.connect.assert_called_once_with(runner.json)
-    worker_instance.status_code_error.connect.assert_called_once_with(runner.handleErrorStatusCode)
-    worker_instance.misc_error.connect.assert_called_once_with(runner.handleError)
-    worker_instance.moveToThread.assert_called_once_with(thread_instance)
-    thread_instance.start.assert_called_once()
+def test_runner_run_happy_path(runner):
+    mock_UpdateCheckerWorker = MagicMock(spec=update_checker.UpdateCheckerWorker)
+    mock_QThread = MagicMock(spec=QThread)
 
-def test_runner_handleErrorStatusCode(runner):
-    error_spy = QSignalSpy(runner.error)
-    
-    runner.handleErrorStatusCode(404)
-    runner.handleErrorStatusCode(500)
-    runner.handleErrorStatusCode(123)
-    
-    try:
-        assert error_spy.at(0)[0] == "Version file not found."
-        assert error_spy.at(1)[0] == "Internal server error."
-        assert error_spy.at(2)[0] == "Error, status code: 123"
-    except:
-        pytest.fail("QSignalSpy instance error")
+    with (
+        patch("core.update_checker.UpdateCheckerWorker", return_value=mock_UpdateCheckerWorker),
+        patch("core.update_checker.QThread", return_value=mock_QThread),
+    ):    
+        runner.run()
 
-def test_runner_handleError(runner):
-    error_spy = QSignalSpy(runner.error)
+        mock_UpdateCheckerWorker.moveToThread.assert_called_once_with(mock_QThread)
+        mock_QThread.started.connect.assert_called_once_with(mock_UpdateCheckerWorker.run)
+        mock_UpdateCheckerWorker.json_received.connect.assert_called_once_with(runner.json_received)
+        mock_UpdateCheckerWorker.error_occurred.connect.assert_called_once_with(runner.error_occurred)
+        mock_UpdateCheckerWorker.finished.connect.assert_called_once_with(runner._cleanup)
+        mock_QThread.start.assert_called_once()
 
-    runner.handleError("Custom error.")
+def test_runner_run_already_running(runner):
+    mock_UpdateCheckerWorker = MagicMock(spec=update_checker.UpdateCheckerWorker)
+    mock_QThread = MagicMock(spec=QThread)
+    mock_QThread.isRunning.return_value = True
+    runner.thread = mock_QThread
 
-    try:
-        assert error_spy.at(0)[0] == "Custom error."
-    except:
-        pytest.fail("QSignalSpy instance error")
+    with (
+        patch("core.update_checker.UpdateCheckerWorker", return_value=mock_UpdateCheckerWorker),
+        patch("core.update_checker.QThread", return_value=mock_QThread),
+    ):  
+        runner.run()
 
-@patch("core.update_checker.Worker")
-@patch("core.update_checker.QThread")
-def test_runner_handleFinish(mock_qthread, mock_worker, runner):
-    worker_instance = mock_worker.return_value
-    thread_instance = mock_qthread.return_value
-    runner.thread = thread_instance
-    runner.worker = worker_instance
+        mock_QThread.start.assert_not_called()
 
-    runner.handleFinish()
+@pytest.mark.parametrize("current_ver, remote_ver, expected", [
+    ("1.0.0", "1.0.0", False),
+    ("1.0.0", "1.0.1", True),
+    ("0.0.0", "", True),
+    ("1.0.0", "1.0.1", True),
+    ("1.0.1", "1.1.0", True),
+    ("1.0.0", "1.1.0", True),
+    ("0.0.0", "1.0.0", True),
+])
+def test_isVersionNewer(current_ver, remote_ver, expected):
+    assert update_checker.isVersionNewer(current_ver, remote_ver) == expected
 
-    thread_instance.isRunning.assert_called_once()
-    thread_instance.requestInterruption.assert_called_once()
-    thread_instance.quit.assert_called_once()
-    thread_instance.wait.assert_called_once()
-    thread_instance.deleteLater.assert_called_once()
-    assert runner.thread is None
-    worker_instance.deleteLater.assert_called_once()
-    assert runner.worker is None
+def test_UpdateInfo_happy_path():
+    json_data = {
+        "latest_version": "1.0.0",
+        "download_url": "https://codepoems.eu/xl-converter",
+        "message": "Sample message",
+        "message_url": "https://codepoems.eu/sample_url"
+    }
 
-def test_runner_handleFinish_not_started(runner):
-    finished_spy = QSignalSpy(runner.finished)
+    update_info = update_checker.UpdateInfo.fromJson(json_data)
+    assert update_info.latest_version == json_data["latest_version"]
+    assert update_info.download_url == json_data["download_url"]
+    assert update_info.message == json_data["message"]
+    assert update_info.message_url == json_data["message_url"]
 
-    runner.handleFinish()
-    
-    assert finished_spy.count() == 1
+def test_UpdateInfo_only_required():
+    json_data = {
+        "latest_version": "1.0.0",
+    }
+
+    update_info = update_checker.UpdateInfo.fromJson(json_data)
+    assert update_info.latest_version == json_data["latest_version"]
+    assert update_info.download_url == ""
+    assert update_info.message == ""
+    assert update_info.message_url == ""
+
+def test_UpdateInfo_missing_required():
+    json_data = {
+        "download_url": "",
+        "message": "",
+        "message_url": ""
+    }
+
+    with pytest.raises(ValueError, match="\"latest_version\" not found") as exc_info:
+        update_info = update_checker.UpdateInfo.fromJson(json_data)
