@@ -11,7 +11,7 @@ from PySide6.QtCore import(
 from data.constants import UPDATE_CHECKER_VER_FILE_URL, VERSION
 
 # Debug
-SIMULATE_SERVER = True
+SIMULATE_SERVER = False
 SIMULATE_SERVER_JSON = {
     "latest_version": VERSION,
     "download_url": "https://codepoems.eu/xl-converter",
@@ -27,7 +27,7 @@ class UpdateCheckerWorker(QObject):
     error_occurred = Signal(str)
     finished = Signal()
 
-    def run(self) -> dict:
+    def run(self):
         if SIMULATE_SERVER:
             self.json_received.emit(SIMULATE_SERVER_JSON)
             self.finished.emit()
@@ -43,10 +43,10 @@ class UpdateCheckerWorker(QObject):
                 case 500:
                     self.error_occurred.emit("Internal server error.")
                 case _:
-                    self.error_occurred.emit(f"Error, status code: {code}")
+                    self.error_occurred.emit(f"Error, status code: {response.status_code}")
         except requests.ConnectionError:
             self.error_occurred.emit(f"Couldn't connect to the server.")
-        except requests.exceptions.RequestException as e:
+        except requests.RequestException as e:
             self.error_occurred.emit(str(e))
         finally:
             self.finished.emit()
@@ -82,8 +82,8 @@ class UpdateCheckerRunner(QObject):
         self.thread.started.connect(self.worker.run)
         self.worker.json_received.connect(self.json_received)
         self.worker.error_occurred.connect(self.error_occurred)
-        self.thread.start()
         self.worker.finished.connect(self._cleanup)
+        self.thread.start()
 
 def isVersionNewer(current_ver: str, remote_ver: str) -> bool:
     """
