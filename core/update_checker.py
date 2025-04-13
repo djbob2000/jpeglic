@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 
 import requests
 from PySide6.QtCore import(
@@ -17,6 +18,9 @@ SIMULATE_SERVER_JSON = {
     "message": "",
     "message_url": ""
 }
+# Notes:
+# Only the "latest_version" key is required. The remaining keys are optional.
+# Empty strings are ignored by the UI.
 
 class UpdateCheckerWorker(QObject):
     json_received = Signal(dict)
@@ -100,3 +104,27 @@ def isVersionNewer(current_ver: str, remote_ver: str) -> bool:
     remote_parts = tuple(int(x) for x in remote_ver_match.groups())
 
     return remote_parts > current_parts     # Compared lexicographically
+
+@dataclass
+class UpdateInfo:
+    latest_version: str
+    download_url: str = ""
+    message: str = ""
+    message_url: str = ""
+
+    @classmethod
+    def fromJson(cls, json_data: dict) -> "UpdateInfo":
+        """Creates an UpdateInfo object from JSON data and returns it. Can raise ValueError."""
+        if "latest_version" not in json_data:
+            raise ValueError("Key \"latest_version\" not found in JSON response.")
+        
+        def getField(key: str) -> str:
+            value = json_data.get(key, "")
+            return str(value)
+
+        return cls(
+            latest_version=getField("latest_version"),
+            download_url=getField("download_url"),
+            message=getField("message"),
+            message_url=getField("message_url"),
+        )

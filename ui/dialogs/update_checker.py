@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from PySide6.QtWidgets import(
     QDialog,
     QPushButton,
@@ -20,7 +18,7 @@ from PySide6.QtGui import(
 )
 
 from data.constants import VERSION, ICON_SVG, FLATPAK
-from core.update_checker import isVersionNewer, UpdateCheckerRunner
+from core.update_checker import isVersionNewer, UpdateCheckerRunner, UpdateInfo
 from ui.lib.utils import openRemoteUrl
 
 class Dialog(QDialog):
@@ -108,13 +106,6 @@ class Dialog(QDialog):
         super().accept()
         self.closed.emit()
 
-@dataclass
-class UpdateInfo:
-    latest_version: str
-    download_url: str
-    message: str
-    message_url: str
-
 class UpdateChecker(QObject):
     finished = Signal()
 
@@ -164,14 +155,13 @@ class UpdateChecker(QObject):
             self.finished.emit()
 
     def _jsonReceived(self, update_data: dict) -> None:
-        self.update_info = UpdateInfo(
-            latest_version=update_data.get("latest_version", ""),
-            download_url=update_data.get("download_url", ""),
-            message=update_data.get("message", ""),
-            message_url=update_data.get("message_url", ""),
-        )
+        try:
+            self.update_info = UpdateInfo.fromJson(update_data)
+        except Exception as e:
+            self.dlg.show(str(e))
+            return
 
-        if self.update_info.latest_version and isVersionNewer(VERSION, self.update_info.latest_version):
+        if isVersionNewer(VERSION, self.update_info.latest_version):
             if FLATPAK:
                 self.dlg.show(f"New version is available ({self.update_info.latest_version}).")
             else:
