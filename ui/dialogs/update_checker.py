@@ -128,11 +128,11 @@ class UpdateChecker(QObject):
         self.update_info = None
         
         # Settings
-        self.silent = False
+        self.prompt_on_update_only = False
 
         # Flags
         self.initialized = False
-        self.message_read = False
+        self.message_viewed = False
 
     def _lazyInit(self):
         self.initialized = True
@@ -143,20 +143,20 @@ class UpdateChecker(QObject):
         self.runner.error_occurred.connect(self._errorOccurred)
 
     def _errorOccurred(self, error: str) -> None:
-        if self.silent:
+        if self.prompt_on_update_only:
             return
         
         self.dlg.show(error)
         self.finished.emit()
 
     def _onDialogClosed(self) -> None:
-        if self.update_info.message and not self.message_read:
+        if self.update_info.message and not self.message_viewed:
             self.dlg.show(
                 self.update_info.message,
                 self.update_info.message_url,
                 "Read More",
             )
-            self.message_read = True
+            self.message_viewed = True
         else:
             self.finished.emit()
 
@@ -177,7 +177,7 @@ class UpdateChecker(QObject):
                     self.update_info.download_url,
                     "Download"
                 )
-        elif not self.silent:
+        elif not self.prompt_on_update_only:
             self.dlg.show("This version is up to date.")
 
     def run(self, silent: bool = False) -> None:
@@ -185,6 +185,6 @@ class UpdateChecker(QObject):
             self._lazyInit()
 
         self.update_info = None
-        self.message_read = False
+        self.message_viewed = False
 
         self.runner.run()
