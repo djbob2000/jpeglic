@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from PySide6.QtWidgets import(
     QDialog,
     QPushButton,
@@ -18,44 +20,52 @@ from PySide6.QtGui import(
 )
 
 from data.constants import VERSION, ICON_SVG, FLATPAK
-from core.update_checker import Runner
+from core.update_checker import isVersionNewer, UpdateCheckerRunner
 from ui.lib.utils import openRemoteUrl
 
 class Dialog(QDialog):
     closed = Signal()
 
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super().__init__(parent)
+
+        # UI setup
+        self._setupWidgets()
+        self._setupLayout()
+        self._setupSignals()
+
+        # Vars
+        self.link_btn_url = None
+
+    def _setupWidgets(self):
+        self.text_l = QLabel("Placeholder", self)
+        self.ok_btn = QPushButton("Ok", self)
+        self.link_btn = QPushButton("Read More", self)
+
+    def _setupLayout(self):
         self.setWindowTitle("Update Checker")
         self.setWindowIcon(QIcon(ICON_SVG))
         self.setMinimumSize(280, 100)
 
-        # Widgets
-        self.text_l = QLabel("Placeholder", self)
         self.text_l.setAlignment(Qt.AlignCenter)
         self.text_l.setWordWrap(True)
-        self.ok_btn = QPushButton("Ok", self)
-        self.ok_btn.clicked.connect(self.close)
-        self.link_btn = QPushButton("Open Link", self)
-        self.link_btn.clicked.connect(self.onLinkBtnPress)
-        self.link_btn_url = None
-
-        # Layout
-        self.main_lt = QVBoxLayout()
-        self.setLayout(self.main_lt)
-
-        self.main_lt.addWidget(self.text_l)
-
-        buttons_hb = QHBoxLayout()
-        buttons_hb.addWidget(self.link_btn)
-        buttons_hb.addWidget(self.ok_btn)
-        self.main_lt.addLayout(buttons_hb)
-
-        buttons_hb.setAlignment(Qt.AlignRight)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-
         self.link_btn.setMinimumWidth(100)
         self.ok_btn.setMinimumWidth(100)
+
+        self.buttons_hb = QHBoxLayout()
+        self.buttons_hb.addWidget(self.link_btn)
+        self.buttons_hb.addWidget(self.ok_btn)
+        self.buttons_hb.setAlignment(Qt.AlignRight)
+
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.main_lt = QVBoxLayout()
+        self.setLayout(self.main_lt)
+        self.main_lt.addWidget(self.text_l)
+        self.main_lt.addLayout(self.buttons_hb)
+
+    def _setupSignals(self):
+        self.ok_btn.clicked.connect(self.close)
+        self.link_btn.clicked.connect(self._onLinkBtnPress)
 
     def resizeToContent(self):
         """Resize to content and center."""
@@ -65,89 +75,116 @@ class Dialog(QDialog):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def onLinkBtnPress(self):
+    def _onLinkBtnPress(self):
         if not self.link_btn_url:
             return
         openRemoteUrl(self.link_btn_url)
         self.close()
 
-    def show(self, message, url = None, url_text = None, resize_to_content = False):
+    def show(
+        self,
+        message: str,
+        url: str | None = None,
+        url_text: str | None = None,
+        resize_to_content: bool = False
+    ):
         self.text_l.setText(message)
         if url:
             self.link_btn.setText(url_text if url_text else "Open Link")
             self.link_btn_url = url
 
-        self.link_btn.setVisible(url is not None)
+        self.link_btn.setVisible(bool(url))
 
         if resize_to_content:
             self.resizeToContent()
         
         super().show()
 
-    def close(self):
-        super().close()
+    def reject(self):
+        super().reject()
         self.closed.emit()
+
+    def accept(self):
+        super().accept()
+        self.closed.emit()
+
+@dataclass
+class UpdateInfo:
+    latest_version: str
+    download_url: str
+    message: str
+    message_url: str
 
 class UpdateChecker(QObject):
     finished = Signal()
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        
+        # Vars
+        self.dlg = None
+        self.runner = None
+        self.update_info = None
+        
+        # Settings
         self.silent = False
-        self.msg_read = False
-        self.msg = None
-        self.msg_url = None
 
-        self.runner = Runner(self)
-        self.runner.error.connect(self.showError)
-        self.runner.json.connect(self.processJSON)
-        self.runner.finished.connect(self.finished)
-        self.dlg = Dialog()
+        # Flags
+        self.initialized = False
+        self.message_read = False
 
-    def run(self, silent = False):
-        self.silent = silent
-        self.runner.run()
-        self.msg_read = False
-        self.msg = None
-        self.msg_url = None
-    
-    def showError(self, msg):
-        if not self.silent:
-            self.dlg.show(msg)
+    def _lazyInit(self):
+        self.initialized = True
+        self.dlg = Dialog(parent=self.parent)
+        self.dlg.closed.connect(self._onDialogClosed)
+        self.runner = UpdateCheckerRunner()
+        self.runner.json_received.connect(self._jsonReceived)
+        self.runner.error_occurred.connect(self._errorOccurred)
 
-    def processJSON(self, json):
-        def isKeyEmpty(json, key):
-            value = json.get(key, None)
-            if isinstance(value, str):
-                return not value.strip()
+    def _errorOccurred(self, error: str) -> None:
+        if self.silent:
+            return
+        
+        self.dlg.show(error)
+        self.finished.emit()
+
+    def _onDialogClosed(self) -> None:
+        if self.update_info.message and not self.message_read:
+            self.dlg.show(
+                self.update_info.message,
+                self.update_info.message_url,
+                "Read More",
+            )
+            self.message_read = True
+        else:
+            self.finished.emit()
+
+    def _jsonReceived(self, update_data: dict) -> None:
+        self.update_info = UpdateInfo(
+            latest_version=update_data.get("latest_version", ""),
+            download_url=update_data.get("download_url", ""),
+            message=update_data.get("message", ""),
+            message_url=update_data.get("message_url", ""),
+        )
+
+        if self.update_info.latest_version and isVersionNewer(VERSION, self.update_info.latest_version):
+            if FLATPAK:
+                self.dlg.show(f"New version is available ({self.update_info.latest_version}).")
             else:
-                return True
-    
-        if not self.silent:
-            if not isKeyEmpty(json, "message"):
-                self.msg = json["message"]
-                if not isKeyEmpty(json, "message_url"):
-                    self.msg_url = json["message_url"]
-
-            if self.msg:
-                try:
-                    self.dlg.closed.disconnect()
-                except:
-                    pass
-                self.dlg.closed.connect(self.displayMessage)
-
-        if not isKeyEmpty(json, "latest_version"):
-            if json["latest_version"] != VERSION:
-                if FLATPAK:
-                    self.dlg.show(f"New version is available ({json['latest_version']}).")
-                else:
-                    self.dlg.show(f"New version is available ({json['latest_version']}).",json.get("download_url", None), "Download")
-            elif not self.silent:
-                self.dlg.show("This version is up to date.")
+                self.dlg.show(
+                    f"New version is available ({self.update_info.latest_version}).",
+                    self.update_info.download_url,
+                    "Download"
+                )
         elif not self.silent:
-            self.dlg.show("JSON is missing 'latest_version' key")
-    
-    def displayMessage(self):
-        if not self.msg_read and self.msg:
-            self.msg_read = True
-            self.dlg.show(self.msg, self.msg_url, "Read More")
+            self.dlg.show("This version is up to date.")
+
+    def run(self, silent: bool = False) -> None:
+        if not self.initialized:
+            self._lazyInit()
+
+        self.update_info = None
+        self.message_read = False
+
+        self.runner.run()

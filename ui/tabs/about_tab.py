@@ -20,7 +20,7 @@ from ui.widgets import StyledLabel
 class AboutTab(QWidget):
     def __init__(self):
         super(AboutTab, self).__init__()
-        self.update_checker = UpdateChecker()
+        self.update_checker = UpdateChecker(self)
 
         self.setupWidgets()
         self.setupLayouts()
@@ -94,5 +94,5 @@ class AboutTab(QWidget):
         self.credits_l.setAlignment(Qt.AlignCenter)
 
     def checkForUpdate(self):
-        self.update_checker.run()
         self.update_btn.setEnabled(False)
+        self.update_checker.run()
