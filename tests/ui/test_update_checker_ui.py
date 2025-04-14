@@ -4,6 +4,7 @@ from contextlib import ExitStack
 import pytest
 from PySide6.QtCore import QSize, QRect, QPoint
 from PySide6.QtTest import QSignalSpy
+from PySide6.QtWidgets import QWidget
 
 import ui.dialogs.update_checker as update_checker
 
@@ -128,3 +129,201 @@ def test_dialog_accept(dialog):
     dialog.accept()
     assert closed_spy.count() == 1
 
+@pytest.fixture
+def update_checker_object(app):
+    return update_checker.UpdateChecker()
+
+def test_update_checker_init(app):
+    mock_parent = QWidget()
+    uc = update_checker.UpdateChecker(mock_parent)
+    
+    uc.parent == mock_parent
+
+    # Vars
+    uc.dlg = None
+    uc.runner = None
+    uc.update_info = None
+    
+    # Settings
+    uc.prompt_on_update_only = False
+
+    # Flags
+    uc.initialized = False
+    uc.message_viewed = False
+
+def test_update_checker_lazy_init(update_checker_object):
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    mock_parent = MagicMock(spec=QWidget)
+    update_checker_object.parent = mock_parent
+    mock_update_checker_runner = MagicMock(spec=update_checker.UpdateCheckerRunner)
+
+    
+    with (
+        patch("ui.dialogs.update_checker.Dialog", return_value=mock_dialog) as mock_dialog_init,
+        patch("ui.dialogs.update_checker.UpdateCheckerRunner", return_value=mock_update_checker_runner),
+    ):    
+        update_checker_object._lazyInit()
+
+    assert update_checker_object.initialized == True
+    mock_dialog_init.assert_called_once_with(parent=mock_parent)
+    mock_dialog.closed.connect.assert_called_once_with(update_checker_object._onDialogClosed)
+    update_checker_object.runner == mock_update_checker_runner
+    mock_update_checker_runner.json_received.connect.assert_called_once_with(update_checker_object._jsonReceived)
+    mock_update_checker_runner.error_occurred.connect.assert_called_once_with(update_checker_object._errorOccurred)
+
+def test_update_checker_errorOccurred(update_checker_object):
+    sample_error = "sample error"
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+
+    update_checker_object._errorOccurred(sample_error)
+
+    mock_dialog.show.assert_called_once_with(sample_error)
+
+def test_update_checker_errorOccurred_no_prompt(update_checker_object):
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+    update_checker_object.prompt_on_update_only = True
+
+    update_checker_object._errorOccurred("error")
+
+    mock_dialog.show.assert_not_called()
+
+def test_update_checker_onDialogClosed_update_info_none(update_checker_object):
+    update_checker_object.update_info = None
+    finished_spy = QSignalSpy(update_checker_object.finished)
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+
+    update_checker_object._onDialogClosed()
+
+    assert finished_spy.count() == 1
+    mock_dialog.show.assert_not_called()
+
+def test_update_checker_onDialogClosed_message_already_viewed(update_checker_object):
+    mock_update_info = update_checker.UpdateInfo(latest_version="1.0.0")
+    mock_update_info.message = "some message"
+    update_checker_object.update_info = mock_update_info
+    update_checker_object.message_viewed = True
+    finished_spy = QSignalSpy(update_checker_object.finished)
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+
+    update_checker_object._onDialogClosed()
+
+    assert finished_spy.count() == 1
+    mock_dialog.show.assert_not_called()
+
+@pytest.mark.parametrize("message_url, expected_arg", [
+    ("", None),
+    ("https://example.org", "https://example.org"),
+])
+def test_update_checker_onDialogClosed_display_message_no_url(message_url, expected_arg, update_checker_object):
+    mock_update_info = update_checker.UpdateInfo(
+        latest_version="1.0.0",
+        message="some message",
+        message_url=message_url,
+    )
+    update_checker_object.update_info = mock_update_info
+    update_checker_object.message_viewed = False
+    finished_spy = QSignalSpy(update_checker_object.finished)
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+
+    update_checker_object._onDialogClosed()
+
+    assert finished_spy.count() == 0
+    mock_dialog.show.assert_called_once_with(
+        mock_update_info.message,
+        expected_arg,
+        "Read More"
+    )
+    assert update_checker_object.message_viewed == True
+
+def test_update_checker_jsonReceived_update_info_exception(update_checker_object):
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+    with (
+        patch("ui.dialogs.update_checker.UpdateInfo.fromJson", side_effect=ValueError("Key \"latest_version\" not found")) as mock_UpdateInfo_fromJson,
+    ):
+        update_checker_object._jsonReceived({})
+        
+        mock_dialog.show.assert_called_once_with("Key \"latest_version\" not found")
+
+def test_update_checker_jsonReceived_up_to_date(update_checker_object):
+    mock_update_info = update_checker.UpdateInfo(latest_version="1.0.0")
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+    with (
+        patch("ui.dialogs.update_checker.UpdateInfo.fromJson", return_value=mock_update_info),
+        patch("ui.dialogs.update_checker.isVersionNewer", return_value=False) as mock_isVersionNewer,
+        patch("ui.dialogs.update_checker.VERSION", "1.0.0") as mock_VERSION,
+    ):
+        update_checker_object._jsonReceived({})
+        
+        mock_isVersionNewer.assert_called_once_with(mock_VERSION, mock_update_info.latest_version)
+        mock_dialog.show.assert_called_once_with("This version is up to date.")
+
+def test_update_checker_jsonReceived_new_ver_available(update_checker_object):
+    mock_update_info = update_checker.UpdateInfo(latest_version="1.0.0")
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+    with (
+        patch("ui.dialogs.update_checker.UpdateInfo.fromJson", return_value=mock_update_info),
+        patch("ui.dialogs.update_checker.isVersionNewer", return_value=True) as mock_isVersionNewer,
+        patch("ui.dialogs.update_checker.VERSION", "1.0.0") as mock_VERSION,
+        patch("ui.dialogs.update_checker.FLATPAK", False),
+    ):
+        update_checker_object._jsonReceived({})
+        
+        mock_isVersionNewer.assert_called_once_with(mock_VERSION, mock_update_info.latest_version)
+        mock_dialog.show.assert_called_once_with(
+            "New version is available (1.0.0).",
+            None,
+            "Download",
+        )
+
+def test_update_checker_jsonReceived_new_ver_available_flatpak(update_checker_object):
+    mock_update_info = update_checker.UpdateInfo(latest_version="1.0.0")
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+    with (
+        patch("ui.dialogs.update_checker.UpdateInfo.fromJson", return_value=mock_update_info),
+        patch("ui.dialogs.update_checker.isVersionNewer", return_value=True) as mock_isVersionNewer,
+        patch("ui.dialogs.update_checker.VERSION", "1.0.0") as mock_VERSION,
+        patch("ui.dialogs.update_checker.FLATPAK", True),
+    ):
+        update_checker_object._jsonReceived({})
+        
+        mock_isVersionNewer.assert_called_once_with(mock_VERSION, mock_update_info.latest_version)
+        mock_dialog.show.assert_called_once_with(
+            "New version is available (1.0.0).",
+        )
+
+def test_update_checker_run_already_initialized(update_checker_object):
+    update_checker_object.initialized = True
+    update_checker_object.runner = MagicMock()
+
+    with (
+        patch.object(update_checker_object, "_lazyInit") as mock_lazyInit,
+    ):
+        update_checker_object.run()
+
+        mock_lazyInit.assert_not_called()
+
+def test_update_checker_run_happy_path(update_checker_object):
+    update_checker_object.initialized = False
+    update_checker_object.update_info = MagicMock()
+    update_checker_object.message_viewed = True
+    update_checker_object.runner = MagicMock()  # So patches can be applied on top of it
+
+    with (
+        patch.object(update_checker_object, "_lazyInit") as mock_lazyInit,
+        patch.object(update_checker_object.runner, "run") as mock_runner_run,
+    ):
+        update_checker_object.run()
+
+        mock_lazyInit.assert_called_once()
+        assert update_checker_object.update_info is None
+        assert update_checker_object.message_viewed == False
+        mock_runner_run.assert_called_once()
