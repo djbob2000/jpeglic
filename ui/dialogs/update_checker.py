@@ -22,6 +22,7 @@ from core.update_checker import isVersionNewer, UpdateCheckerRunner, UpdateInfo
 from ui.lib.utils import openRemoteUrl
 
 class Dialog(QDialog):
+    """The update checker dialog for internal use by the UpdateChecker class."""
     closed = Signal()
 
     def __init__(self, parent=None):
@@ -74,7 +75,7 @@ class Dialog(QDialog):
         self.move(qr.topLeft())
 
     def _onLinkBtnPress(self):
-        if not self.link_btn_url:
+        if self.link_btn_url is None:
             return
         openRemoteUrl(self.link_btn_url)
         self.close()
@@ -86,6 +87,7 @@ class Dialog(QDialog):
         url_text: str | None = None,
         resize_to_content: bool = False
     ):
+        """Shows a modal dialog."""
         self.text_l.setText(message)
         if url:
             self.link_btn.setText(url_text if url_text else "Open Link")
@@ -107,6 +109,7 @@ class Dialog(QDialog):
         self.closed.emit()
 
 class UpdateChecker(QObject):
+    """The public class for interactive with the update checker."""
     finished = Signal()
 
     def __init__(self, parent=None):
@@ -147,7 +150,7 @@ class UpdateChecker(QObject):
         if self.update_info.message and not self.message_viewed:
             self.dlg.show(
                 self.update_info.message,
-                self.update_info.message_url,
+                self.update_info.message_url or None,
                 "Read More",
             )
             self.message_viewed = True
@@ -167,7 +170,7 @@ class UpdateChecker(QObject):
             else:
                 self.dlg.show(
                     f"New version is available ({self.update_info.latest_version}).",
-                    self.update_info.download_url,
+                    self.update_info.download_url or None,
                     "Download"
                 )
         elif not self.prompt_on_update_only:
