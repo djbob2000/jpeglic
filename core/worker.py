@@ -37,6 +37,7 @@ from core.utils import getFreeSpaceLeft, remove
 from core.process import runProcessOutput
 import core.lossless_jpeg as lossless_jpeg
 from core.ram_optimizer import RAMOptimizer
+import core.timestamps as timestamps
 
 class Signals(QObject):
     started = Signal(int)
@@ -90,6 +91,7 @@ class Worker(QRunnable):
         # Misc.
         self.scl_params = None
         self.anchor_path = anchor_path        # keep_dir_struct
+        self.src_timestamps = None
     
     def logException(self, id_str: str, msg: str):
         self.signals.exception.emit(id_str, msg, str(self.org_item_abs_path))
@@ -233,6 +235,13 @@ class Worker(QRunnable):
                 "resample": self.params["downscaling"]["resample"],
                 "n": self.n,
             }
+        
+        # Get timestamps
+        if self.params["misc"]["keep_timestamps"]:
+            try:
+                self.src_timestamps = timestamps.getTimestamps(self.org_item_abs_path)
+            except (OSError, Exception) as e:
+                self.logException("S6", f"Cannot extract timestamps from source. {e}")
 
     def convert(self):
         args = []
@@ -463,13 +472,6 @@ class Worker(QRunnable):
         if not os.path.isfile(self.final_output):    # Checking if renaming was successful
             raise FileException("P2", "Output not found.")
 
-        # Apply attributes
-        try:
-            if self.params["misc"]["attributes"]:
-                shutil.copystat(self.org_item_abs_path, self.final_output)
-        except OSError as err:
-            raise FileException("P0", f"Failed to apply attributes. {err}")
-
         # Delete original
         if (
             (not self.settings["keep_if_larger"] or 
@@ -484,6 +486,13 @@ class Worker(QRunnable):
                         os.remove(self.org_item_abs_path)
             except OSError as err:
                 raise FileException("P1", f"Failed to delete original file. {err}")
+
+        # Apply timestamps
+        if self.params["misc"]["keep_timestamps"] and self.src_timestamps:
+            try:
+                timestamps.applyTimestamps(self.final_output, self.src_timestamps)
+            except (OSError, Exception) as err:
+                raise FileException("P0", f"Failed to apply timestamps. {err}")
 
     def runDynamicRamOptimizer(self) -> None:
         with QMutexLocker(self.mutex):

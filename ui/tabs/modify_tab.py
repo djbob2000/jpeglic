@@ -285,7 +285,7 @@ class ModifyTab(QWidget):
             },
             "misc": {
                 "keep_metadata": self.metadata_cmb.currentText(),
-                "attributes": self.date_time_cb.isChecked(),
+                "keep_timestamps": self.date_time_cb.isChecked(),
             }
         }
     
