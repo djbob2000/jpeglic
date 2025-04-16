@@ -22,6 +22,21 @@ class Timestamps:
     modified: int
     created: int | None     # Not available on Linux
 
+    def __post_init__(self):
+        def validateField(name: str, value: int | None, allow_none: bool = False) -> None:
+            if value is None and allow_none:
+                return
+
+            if not isinstance(value, int):
+                raise ValueError(f"\"{name}\" variable cannot be {type(value)}, expected int.")
+            
+            if value < 0:
+                raise ValueError(f"\"{name}\" variable cannot be smaller than 0. Received: {value}")
+
+        validateField("accessed", self.accessed)
+        validateField("modified", self.modified)
+        validateField("created", self.created, allow_none=True)
+
 def getTimestamps(src_path: str) -> Timestamps:
     """Returns a Timestamps object. Can raise OSError and Exception."""
     if not os.path.isfile(src_path):
@@ -34,7 +49,7 @@ def getTimestamps(src_path: str) -> Timestamps:
             modified=stat.st_mtime_ns,
             created=stat.st_birthtime_ns if hasattr(stat, "st_birthtime_ns") else None,     # None on Linux
         )
-    except OSError as e:
+    except (OSError, ValueError) as e:
         raise Exception(f"getTimestamps failed. {e}")
 
 def applyTimestamps(dst_path: str, timestamps: Timestamps) -> None:
