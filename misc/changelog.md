@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Rework preserving timestamps (#92).
+
 ### Fixed
 
 ### Deprecated
