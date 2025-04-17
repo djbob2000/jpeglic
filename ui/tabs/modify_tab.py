@@ -106,7 +106,7 @@ class ModifyTab(QWidget):
             "Default",
             *ALLOWED_RESAMPLING
         )))
-        self.date_time_cb = self.wm.addWidget("date_time_cb", QCheckBox("Preserve Date && Time"))
+        self.keep_timestamps_cb = self.wm.addWidget("keep_timestamps_cb", QCheckBox("Preserve Timestamps"))
         self.metadata_l = self.wm.addWidget("metadata_l", QLabel("Metadata"))
         self.metadata_cmb = self.wm.addWidget("metadata_cmb", ComboBox((
             "Encoder - Wipe",
@@ -140,7 +140,7 @@ class ModifyTab(QWidget):
         misc_grp = QGroupBox("Misc.")
         misc_grp_lt = QVBoxLayout()
         metadata_hb = createQHBoxLayout(self.metadata_l, self.metadata_cmb)
-        misc_grp_lt.addWidget(self.date_time_cb)
+        misc_grp_lt.addWidget(self.keep_timestamps_cb)
         misc_grp_lt.addLayout(metadata_hb)
         misc_grp.setLayout(misc_grp_lt)
 
@@ -189,10 +189,7 @@ class ModifyTab(QWidget):
 
     def _setToolTips(self):
         setToolTip("metadata", self.metadata_cmb)
-        if platform.system() == "Linux":
-            setToolTip("date_time_linux", self.date_time_cb)
-        else:
-            setToolTip("date_time", self.date_time_cb)
+        setToolTip("keep_timestamps", self.keep_timestamps_cb)
         setToolTip("downscaling", self.downscale_cb)
         setToolTip("downscaling_file_size", self.file_size_sb)
         setToolTip("downscaling_percent", self.percent_sb)
@@ -221,7 +218,7 @@ class ModifyTab(QWidget):
 
     def resetToDefault(self):
         self.metadata_cmb.setCurrentIndex(0)
-        self.date_time_cb.setChecked(False)
+        self.keep_timestamps_cb.setChecked(False)
         self.mode_cmb.setCurrentIndex(0)
         self.resample_cmb.setCurrentIndex(0)
         self.file_size_sb.setValue(300)
@@ -285,7 +282,7 @@ class ModifyTab(QWidget):
             },
             "misc": {
                 "keep_metadata": self.metadata_cmb.currentText(),
-                "keep_timestamps": self.date_time_cb.isChecked(),
+                "keep_timestamps": self.keep_timestamps_cb.isChecked(),
             }
         }
     
