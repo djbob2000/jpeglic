@@ -47,7 +47,7 @@ def getTimestamps(src_path: str) -> Timestamps:
         return Timestamps(
             accessed=stat.st_atime_ns,
             modified=stat.st_mtime_ns,
-            created=stat.st_birthtime_ns if hasattr(stat, "st_birthtime_ns") else None,     # None on Linux
+            created=getattr(stat, "st_birthtime_ns", None),     # None on Linux
         )
     except (OSError, ValueError) as e:
         raise Exception(f"getTimestamps failed. {e}")
