@@ -53,7 +53,7 @@ def worker():
             },
             "misc": {
                 "keep_metadata": "Encoder - Wipe",
-                "attributes": False,
+                "keep_timestamps": False,
             }
         },
         {
@@ -632,44 +632,69 @@ def test_runExifTool_args_empty(mock_exiftool_env):
     assert "Argument list for \"ExifTool - Wipe\" is empty." in mocks["logException"].call_args[0][1]
 
 @pytest.fixture
-def postConversionRoutines_patches():
-    with (
-        patch("core.worker.os.path.isfile", return_value=True) as mock_isfile,
-        patch("core.worker.metadata.runExifTool", return_value=[]) as mock_runExifTool,
-        patch("core.worker.shutil.copystat") as mock_copystat,
-        patch("core.worker.os.remove") as mock_remove,
-        patch("core.worker.send2trash") as mock_send2trash,
-        patch("core.worker.os.path.samefile", return_value=False),
-    ):
-        yield mock_isfile, mock_runExifTool, mock_copystat, mock_remove, mock_send2trash
+def postConversionRoutines_patched(worker):
+    mocks = {
+        "isfile": patch("core.worker.os.path.isfile", return_value=True),
+        "runExifTool": patch("core.worker.metadata.runExifTool", return_value=[]),
+        "applyTimestamps": patch("core.worker.timestamps.applyTimestamps"),
+        "remove": patch("core.worker.os.remove"),
+        "send2trash": patch("core.worker.send2trash"),
+        "samefile": patch("core.worker.os.path.samefile", return_value=False),
+    }
 
-def test_postConversionRoutines_no_output(postConversionRoutines_patches, worker):
-    mock_isfile, *_ = postConversionRoutines_patches
-    mock_isfile.return_value = False
+    with ExitStack() as stack:
+        _mocks = {name: stack.enter_context(patcher) for name, patcher in mocks.items()}
+        yield worker, _mocks
+
+def test_postConversionRoutines_no_output(postConversionRoutines_patched):
+    worker, mocks = postConversionRoutines_patched
+    mocks["isfile"].return_value = False
 
     with pytest.raises(FileException) as exc:
         worker.postConversionRoutines()
 
     assert "Output not found" in exc.value.msg
 
-@pytest.mark.parametrize("attributes", [True, False])
-def test_postConversionRoutines_attributes(attributes, postConversionRoutines_patches, worker):
-    _, _, mock_copystat, *_ = postConversionRoutines_patches
-    worker.params["misc"]["attributes"] = attributes
+def test_postConversionRoutines_keep_timestamps(postConversionRoutines_patched):
+    worker, mocks = postConversionRoutines_patched
+    worker.params["misc"]["keep_timestamps"] = True
+    mock_timestamps = MagicMock()
+    worker.src_timestamps = mock_timestamps
+    sample_output = "/tmp/sample_out.jpg"
+    worker.final_output = sample_output
 
     worker.postConversionRoutines()
 
-    assert mock_copystat.called == attributes
+    mocks["applyTimestamps"].assert_called_once_with(sample_output, mock_timestamps)
 
-def test_postConversionRoutines_attributes_failed(postConversionRoutines_patches, worker):
-    _, _, mock_copystat, *_ = postConversionRoutines_patches
-    mock_copystat.side_effect = OSError()
-    worker.params["misc"]["attributes"] = True
+def test_postConversionRoutines_keep_timestamps_exc(postConversionRoutines_patched):
+    worker, mocks = postConversionRoutines_patched
+    mocks["applyTimestamps"].side_effect = OSError("sample exc")
+    worker.params["misc"]["keep_timestamps"] = True
+    worker.src_timestamps = MagicMock()
 
-    with pytest.raises(FileException) as exc:
+    with pytest.raises(FileException):
         worker.postConversionRoutines()
 
-    assert "Failed to apply attributes" in exc.value.msg
+    mocks["applyTimestamps"].assert_called_once()
+
+def test_postConversionRoutines_keep_timestamps_src_timestamps_unavailable(postConversionRoutines_patched):
+    worker, mocks = postConversionRoutines_patched
+    worker.params["misc"]["keep_timestamps"] = True
+    worker.src_timestamps = None
+
+    worker.postConversionRoutines()
+
+    mocks["applyTimestamps"].assert_not_called()
+
+def test_postConversionRoutines_do_not_keep_timestamps(postConversionRoutines_patched):
+    worker, mocks = postConversionRoutines_patched
+    worker.params["misc"]["keep_timestamps"] = False
+    worker.src_timestamps = MagicMock()
+
+    worker.postConversionRoutines()
+
+    mocks["applyTimestamps"].assert_not_called()
 
 @pytest.mark.parametrize("mode, send2trash_called, remove_called", [
     ("To Trash", True, False),
@@ -677,20 +702,20 @@ def test_postConversionRoutines_attributes_failed(postConversionRoutines_patches
 ])
 def test_postConversionRoutines_delete_to_trash(
     mode, send2trash_called, remove_called,
-    postConversionRoutines_patches, worker
+    postConversionRoutines_patched
 ):
-    _, _, _, mock_remove, mock_send2trash = postConversionRoutines_patches
+    worker, mocks = postConversionRoutines_patched
     worker.params["delete_original"] = True
     worker.params["delete_original_mode"] = mode
     
     worker.postConversionRoutines()
 
-    assert mock_send2trash.called == send2trash_called
-    assert mock_remove.called == remove_called
+    assert mocks["send2trash"].called == send2trash_called
+    assert mocks["remove"].called == remove_called
 
-def test_postConversionRoutines_delete_failed(postConversionRoutines_patches, worker):
-    _, _, _, _, mock_send2trash = postConversionRoutines_patches
-    mock_send2trash.side_effect = OSError
+def test_postConversionRoutines_delete_failed(postConversionRoutines_patched):
+    worker, mocks = postConversionRoutines_patched
+    mocks["send2trash"].side_effect = OSError
     worker.params["delete_original"] = True
     worker.params["delete_original_mode"] = "To Trash"
 

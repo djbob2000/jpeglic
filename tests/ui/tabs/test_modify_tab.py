@@ -52,7 +52,7 @@ def test_toggleDownscaleUI(enabled, app):
 def test_resetToDefault(app):
     app.downscale_cb.setChecked(True)
     app.metadata_cmb.setCurrentIndex(1)
-    app.date_time_cb.setChecked(True)
+    app.keep_timestamps_cb.setChecked(True)
     app.mode_cmb.setCurrentIndex(1)
     app.resample_cmb.setCurrentIndex(1)
     app.file_size_sb.setValue(400)
@@ -69,7 +69,7 @@ def test_resetToDefault(app):
     assert app.downscale_cb.isChecked() == False
     assert app.resample_cmb.currentIndex() == 0
     assert app.metadata_cmb.currentIndex() == 0
-    assert app.date_time_cb.isChecked() == False
+    assert app.keep_timestamps_cb.isChecked() == False
     assert app.mode_cmb.currentIndex() == 0
     assert app.resample_cmb.currentIndex() == 0
     assert app.file_size_sb.value() == 300
