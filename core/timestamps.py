@@ -1,19 +1,35 @@
-#   Operating System    Timestamps          Caveat
-#   Linux               Birth, Change       Cannot be manually edited.
-
+from contextlib import contextmanager
 from dataclasses import dataclass
 import platform
 import os
+import ctypes
+from ctypes import wintypes, byref     # ctypes requires explicit imports for wintypes
 
-PYWIN32_AVAILABLE = False
-if platform.system() == "Windows":
-    try:
-        import pywintypes
-        import win32file
-        import win32con
-        PYWIN32_AVAILABLE = True
-    except ImportError:
-        pass
+IS_WINDOWS = platform.system() == "Windows"
+
+if IS_WINDOWS:
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    GENERIC_WRITE       = 0x40000000
+    FILE_SHARE_READ     = 0x00000001
+    FILE_SHARE_WRITE    = 0x00000002
+    OPEN_EXISTING       = 3
+    EPOCH_AS_FILETIME   = 116444736000000000    # 100-ns ticks between 1601-01-01 and 1970-01-01.
+    INVALID_HANDLE      = wintypes.HANDLE(-1).value
+
+    class FILETIME(ctypes.Structure):
+        _fields_ = [
+            ("dwLowDateTime", wintypes.DWORD),
+            ("dwHighDateTime", wintypes.DWORD),
+        ]
+    
+    def _unix_to_filetime_ns(ns: int) -> FILETIME:
+        ticks = ns // 100
+        ft = ticks + EPOCH_AS_FILETIME
+        return FILETIME(
+            dwLowDateTime=ft & 0xFFFFFFFF,
+            dwHighDateTime=ft >> 32,
+        )
 
 @dataclass(frozen=True)
 class Timestamps:
@@ -44,52 +60,59 @@ def getTimestamps(src_path: str) -> Timestamps:
 
     try:
         stat = os.stat(src_path)
+    except OSError as e:
+        raise OSError(f"Cannot extract timestamps. {e}")
+
+    try:
         return Timestamps(
             accessed=stat.st_atime_ns,
             modified=stat.st_mtime_ns,
             created=getattr(stat, "st_birthtime_ns", None),     # None on Linux
         )
-    except (OSError, ValueError) as e:
-        raise Exception(f"getTimestamps failed. {e}")
+    except ValueError as e:
+        raise Exception(f"Timestamps validation failed. {e}")
+
+@contextmanager
+def _win32_handle(path: str):
+    handle = kernel32.CreateFileW(
+        path,
+        GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        None,
+        OPEN_EXISTING,
+        0,
+        None
+    )
+    if handle == INVALID_HANDLE:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        yield handle
+    finally:
+        kernel32.CloseHandle(handle)
 
 def applyTimestamps(dst_path: str, timestamps: Timestamps) -> None:
-    """Applies timestamps. Can raise OSError and Exception."""
+    """Applies timestamps. Can raise OSError."""
     if not os.path.isfile(dst_path):
         raise FileNotFoundError("File not found, cannot apply timestamps.")
     
     if (
-        platform.system() == "Windows" and
-        timestamps.created and
-        PYWIN32_AVAILABLE
+        IS_WINDOWS and
+        timestamps.created is not None
     ):
-        handle = None
-        try:
-            handle = win32file.CreateFile(
-                dst_path,
-                win32con.GENERIC_WRITE,
-                win32con.FILE_SHARE_READ | win32con.FILE_SHARE_WRITE,
-                None,
-                win32con.OPEN_EXISTING,
-                0,
-                None
+        with _win32_handle(dst_path) as h:
+            ok = kernel32.SetFileTime(
+                h,
+                byref(_unix_to_filetime_ns(timestamps.created)),
+                byref(_unix_to_filetime_ns(timestamps.accessed)),
+                byref(_unix_to_filetime_ns(timestamps.modified)),
             )
-            win32file.SetFileTime(
-                handle,
-                pywintypes.Time(timestamps.created / 1e9),
-                pywintypes.Time(timestamps.accessed / 1e9),
-                pywintypes.Time(timestamps.modified / 1e9),
-            )
-        except Exception as e:
-            raise OSError(f"Applying timestamps with win32file failed. {e}")
-        finally:
-            if handle:
-                handle.Close()
-    # elif platform.system() == "Darwin": # For future implementation.
-    else:       # Generic
+            if not ok:
+                raise ctypes.WinError(ctypes.get_last_error())
+    else:
         try:
             os.utime(
                 dst_path,
                 ns=(timestamps.accessed, timestamps.modified),
             )
         except OSError as e:
-            raise Exception(f"Applying timestamps with os.utime failed. {e}")
+            raise OSError(f"Applying timestamps with os.utime failed. {e}")

@@ -1,7 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import sys
-
 block_cipher = None
 
 
@@ -10,7 +8,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=['win32timezone'] if sys.platform == 'win32' else [],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
