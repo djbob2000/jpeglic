@@ -67,7 +67,7 @@ def applyTimestamps(dst_path: str, timestamps: Timestamps) -> None:
             handle = win32file.CreateFile(
                 dst_path,
                 win32con.GENERIC_WRITE,
-                0,
+                win32con.FILE_SHARE_READ | win32con.FILE_SHARE_WRITE,
                 None,
                 win32con.OPEN_EXISTING,
                 0,
