@@ -106,7 +106,7 @@ class ModifyTab(QWidget):
             "Default",
             *ALLOWED_RESAMPLING
         )))
-        self.keep_timestamps_cb = self.wm.addWidget("keep_timestamps_cb", QCheckBox("Preserve Timestamps"))
+        self.keep_timestamps_cb = self.wm.addWidget("keep_timestamps_cb", QCheckBox("Preserve Time Attributes"))
         self.metadata_l = self.wm.addWidget("metadata_l", QLabel("Metadata"))
         self.metadata_cmb = self.wm.addWidget("metadata_cmb", ComboBox((
             "Encoder - Wipe",
