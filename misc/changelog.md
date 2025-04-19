@@ -5,6 +5,7 @@
 ### Changed
 
 - Rework preserving timestamps (#92).
+- Lower bundle size of all builds.
 
 ### Fixed
 

@@ -206,6 +206,7 @@ class Builder():
         self.cleanup_resources = {
             "Linux": [
                 # "PySide6/QtNetwork*",     # QSoundEffect needs it.
+                # "PySide6/Qt/lib/Qt6Network*",
                 "PySide6/Qt/lib/libavcodec*",
                 "PySide6/Qt/lib/libavformat*",
                 "PySide6/Qt/lib/libavutil*",
@@ -213,7 +214,6 @@ class Builder():
                 "PySide6/Qt/lib/libQt6Pdf*",
                 "PySide6/Qt/lib/libQt6Qml*",
                 "PySide6/Qt/lib/libQt6Quick*",
-                # "PySide6/Qt/lib/Qt6Network*",
                 "PySide6/Qt/lib/libswscale*",
                 "PySide6/Qt/lib/libQt6VirtualKeyboard*",
 
@@ -251,7 +251,7 @@ class Builder():
 
         self._prepare()
         self._buildBinaries()
-        # self._reduceBundleSize()  # Note: experimental
+        self._reduceBundleSize()
         self._copyDependencies()
         self._copyAssets()
 
