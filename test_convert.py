@@ -218,7 +218,7 @@ class Interact:
         self.main_window.output_tab.format_cmb.setCurrentText(_format)
 
     def set_preserve_attributes(self, enabled):
-        self.main_window.modify_tab.date_time_cb.setChecked(enabled)
+        self.main_window.modify_tab.keep_timestamps_cb.setChecked(enabled)
     
     def set_jpg_encoder(self, encoder: str):
         self.main_window.settings_tab.jpg_encoder_cmb.setCurrentText(encoder)
