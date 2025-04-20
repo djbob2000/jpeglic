@@ -246,7 +246,7 @@ class Builder():
     def build(self):
         build_type = self.args.getArg('build_type')
 
-        if build_type is not None and build_type not in ("sh", "appimage", "innosetup", "portable"):
+        if build_type is not None and build_type not in ("sh", "appimage", "appimage-skip-packing", "innosetup", "portable"):
             raise Exception("build_type incorrect")
 
         self._prepare()
@@ -262,9 +262,9 @@ class Builder():
                         self._appendDesktopEntry()
                         self._appendInstaller()
                         self._build7z()
-                    case "appimage":
+                    case "appimage" | "appimage-skip-packing":
                         self._appendDesktopEntry()
-                        self._buildAppImage()
+                        self._buildAppImage(skip_packing=build_type == "appimage-skip-packing")
             case "Windows":
                 match build_type:
                     case "innosetup":
@@ -346,7 +346,7 @@ class Builder():
             f.write(config)
 
     # _build methods transform the directory!
-    def _buildAppImage(self):
+    def _buildAppImage(self, skip_packing=False):
         if platform.system() != "Linux":
             return
 
@@ -368,12 +368,16 @@ class Builder():
         addExecPerm(f"{appdir}/AppRun")
 
         # Add Icon
-        # makedirs(f"{appdir}/usr/share/icons/hicolor/scalable/apps")   # The icon does not work on some distros if placed in a deeply-nested directory.
         copy(f"./assets/icons/logo.svg", appdir)
 
         # Build
         move(f"{self.dst_dir}/{self.project_name}", f"{appdir}/usr/bin")    # Move the whole project folder
-        subprocess.run((self.appimagetool_path, appdir, f"{self.dst_dir}/{self.build_appimage_name}"))
+        
+        if skip_packing:
+            with open(f"{self.dst_dir}/build_name.txt", "w") as file:
+                file.write(self.build_appimage_name)
+        else:
+            subprocess.run((self.appimagetool_path, appdir, f"{self.dst_dir}/{self.build_appimage_name}"))
 
     def _build7z(self):
         if platform.system() != "Linux":

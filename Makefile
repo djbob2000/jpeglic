@@ -8,6 +8,18 @@ REQUIREMENTS_TEST 	= requirements_test.txt
 
 # Build / Misc.
 
+.PHONY: build-linux
+build-linux:
+	rm -rf ./dist
+	mkdir -p ./dist
+	docker build -f ./misc/linux_build.Dockerfile --progress=plain --iidfile tmp.txt . && \
+	image_id=$$(cat tmp.txt) && \
+	container_id=$$(docker create $${image_id}) && \
+	docker cp $${container_id}:/export/. ./dist && \
+	docker rm $${container_id} && \
+	docker rmi -f $${image_id}
+	rm tmp.txt
+
 .PHONY: clean
 clean:
 	rm -rf dist
