@@ -47,18 +47,24 @@ RUN apt update && apt install -y \
     libegl1 \
     libpipewire-0.3-0 \
     exiftool \
-    && rm -rf /var/lib/apt/lists/* && \
-    echo "user_allow_other" >> /etc/fuse.conf
-    
+    && rm -rf /var/lib/apt/lists/*
+
 # Install Python
 RUN curl -fsSL https://pyenv.run | bash
-    
 RUN pyenv install 3.13 && \
     pyenv global 3.13
 
 # Copy project files
 WORKDIR /build
-COPY . /build
+COPY assets /build/assets
+COPY core /build/core
+COPY data /build/data
+COPY ui /build/ui
+COPY bin /build/bin
+COPY misc /build/misc
+COPY tests /build/tests
+COPY LICENSE* main.py requirements* test.py test_convert.py build.py /build/
+RUN find /build/ -type d -name "__pycache__" -exec rm -rf {} +
 
 # Run unit tests
 RUN python -m venv /build/env_dev && \
