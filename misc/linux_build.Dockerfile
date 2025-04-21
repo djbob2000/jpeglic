@@ -45,9 +45,11 @@ RUN apt update && apt install -y \
     libdbus-1-3 \
     libpulse-dev \
     libegl1 \
+    libpipewire-0.3-0 \
+    exiftool \
     && rm -rf /var/lib/apt/lists/* && \
     echo "user_allow_other" >> /etc/fuse.conf
-
+    
 # Install Python
 RUN curl -fsSL https://pyenv.run | bash
     
@@ -62,8 +64,8 @@ COPY . /build
 RUN python -m venv /build/env_dev && \
     . /build/env_dev/bin/activate && \
     pip install -r /build/requirements.txt -r /build/requirements_test.txt && \
-    xvfb-run -a python test.py
-    # xvfb-run -a python test_convert.py
+    xvfb-run -a python test.py && \
+    xvfb-run -a python test_convert.py
     
 # Setup virtual environment
 RUN python -m venv /build/env_build && \

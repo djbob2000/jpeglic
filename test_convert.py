@@ -5,6 +5,7 @@ import hashlib
 from pathlib import Path
 import platform
 from unittest.mock import patch
+import os
 
 from PySide6.QtGui import (
     QDropEvent,
@@ -204,7 +205,7 @@ class Interact:
 
     def wait_for_done(self):
         while True:
-            sleep(100)
+            sleep(1)
             if self.main_window.controller.getCompletedItemCount() == self.main_window.controller.getItemCount():
                 break
 
@@ -428,16 +429,22 @@ class TestMainWindow(unittest.TestCase):
         assert test_dict(self.app.get_settings("settings_tab")), "settings.getSettings contains None"
 
     def test_preserve_attributes(self):
+        os.utime(self.data.get_sample_img(), times=(10, 20))
         self.app.set_preserve_attributes(True)
         self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
-        self.app.set_preserve_attributes(False)
-        self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
 
-        # If modification times are more than 15 sec apart
         files = self.data.get_tmp_folder_content()
-        assert abs(files[0].stat().st_mtime - files[1].stat().st_mtime) > 15, "Range too narrow"
+        assert int(self.data.get_sample_img().stat().st_mtime) == int(files[0].stat().st_mtime)
 
     def test_metadata_exiftool(self):
+        # Add metadata
+        img = Image.open(self.data.get_sample_img())
+        exif = img.getexif()
+        exif[0x010F] = "Test Camera"
+        exif[0x0110] = "Test Model"
+        img.save(self.data.get_sample_img(), exif=exif.tobytes())
+
+        # Test metadata
         self.app.set_metadata_mode("ExifTool - Preserve")
         self.app.convert_preset(self.data.get_sample_img(), self.data.get_tmp_folder_path(), "JPEG")
         self.app.set_metadata_mode("ExifTool - Wipe")
