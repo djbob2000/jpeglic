@@ -19,7 +19,7 @@ from PySide6.QtGui import (
     QKeySequence,
 )
 
-from core.controller import Controller, CheckFlags
+from core.controller import Controller
 from core.utils import clip
 from data.constants import ICON_SVG
 import data.font_loader as font_loader
@@ -144,10 +144,6 @@ class MainWindow(QMainWindow):
 
         if check_status.display_error:
             message_box.info(self, check_status.error_title, check_status.error_description)
-
-        if CheckFlags.DISABLE_DOWNSCALING in check_status.flags:
-            self.modify_tab.disableDownscaling()
-            modify_tab_settings = self.modify_tab.getSettings()
 
         if not check_status.allowed_to_proceed:
             return

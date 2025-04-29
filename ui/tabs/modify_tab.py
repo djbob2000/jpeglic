@@ -47,13 +47,11 @@ class ModifyTab(QWidget):
 
         # Set Default
         self.resetToDefault()
-        self.toggleDownscaleUI(False)
         self.wm.loadState()
         self.onModeChanged()
 
         # Apply Settings
-        if settings["disable_downscaling_startup"]:
-            self.disableDownscaling()
+        self.toggleDownscaleUI(not settings["disable_downscaling_startup"])
         self.toggleCustomResampling(settings["custom_resampling"])
         self._updateFileFormat()
 
@@ -232,7 +230,7 @@ class ModifyTab(QWidget):
             self.pixel_w_cb.setChecked(True)
             self.pixel_h_cb.setChecked(True)
         
-        self.disableDownscaling()
+        self.toggleDownscaleUI(False)
     
     def onModeChanged(self):
         """Enables or disables widgets based on the currently selected mode."""
@@ -249,9 +247,16 @@ class ModifyTab(QWidget):
         self._updateFileFormat()
     
     def _updateFileFormat(self) -> None:
-        enabled = self.file_format not in ("Lossless JPEG Transcoding", "JPEG Reconstruction")
-        self.metadata_cmb.setEnabled(enabled)
-        self.metadata_l.setEnabled(enabled)
+        metadata_enabled = self.file_format not in ("Lossless JPEG Transcoding", "JPEG Reconstruction")
+        downscaling_enabled = self.file_format not in ("Lossless JPEG Transcoding", "JPEG Reconstruction", "Smallest Lossless")
+        
+        self.metadata_cmb.setEnabled(metadata_enabled)
+        self.metadata_l.setEnabled(metadata_enabled)
+
+        self.pixel_h_sb.setEnabled(False)
+        self.pixel_w_sb.setEnabled(False)
+        self.downscale_cb.setEnabled(downscaling_enabled)
+        self.toggleDownscaleUI(downscaling_enabled)
 
     def _returnDownscalingEnabled(self) -> bool:
         if not self.downscale_cb.isChecked():

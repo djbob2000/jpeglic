@@ -23,7 +23,8 @@ from core.worker import Worker
 from core.pathing import UniquePathStore
 
 class CheckFlags(Enum):
-    DISABLE_DOWNSCALING = auto()
+    # Currently unused
+    DUMMY_FLAG = auto()
 
 @dataclass
 class CheckStatus:
@@ -107,18 +108,6 @@ class Controller(QObject):
                 "Format Error",
                 "Select at least one format."
             )
-            return output
-
-        if (
-            modify_tab_settings["downscaling"]["enabled"] and
-            output_tab_settings["format"] in ("Smallest Lossless", "Lossless JPEG Transcoding", "JPEG Reconstruction")
-        ):
-            output.setError(
-                "Downscaling Disabled",
-                f"Downscaling was set to disabled as it is not available for {output_tab_settings['format']}.",
-                allowed_to_proceed=True
-            )
-            output.addFlags(CheckFlags.DISABLE_DOWNSCALING)
             return output
 
         if self.items.getItemCount() == 0:
