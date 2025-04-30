@@ -1,11 +1,10 @@
 import logging
 import textwrap
 import os
-from typing import Dict, Any, Tuple, Union, List
+from typing import Any
 from pathlib import Path
 from dataclasses import dataclass, field
 from enum import Enum, auto
-import platform
 
 from PySide6.QtCore import (
     QThreadPool,
@@ -34,7 +33,7 @@ class CheckStatus:
     display_error: bool = False
     error_title: str = ""
     error_description: str = ""
-    flags: List[CheckFlags] = field(default_factory=list)
+    flags: list[CheckFlags] = field(default_factory=list)
 
     def setError(self, title: str, description: str, allowed_to_proceed: bool = False, display_error: bool = True) -> None:
         self.display_error = display_error
@@ -42,7 +41,7 @@ class CheckStatus:
         self.error_description = description
         self.allowed_to_proceed = allowed_to_proceed
     
-    def addFlags(self, *new_flags: List[CheckFlags]) -> None:
+    def addFlags(self, *new_flags: CheckFlags) -> None:
         for new_flag in new_flags:
             if new_flag not in self.flags:
                 self.flags.append(new_flag)
@@ -131,7 +130,7 @@ class Controller(QObject):
         if modify_tab_settings["misc"]["keep_metadata"].startswith("ExifTool"):
             # ExifTool available
             exiftool_available = isExifToolAvailable()
-            if exiftool_available[1] == False:
+            if not exiftool_available[0]:
                 output.setError(
                     "ExifTool Unavailable",
                     exiftool_available[1],
