@@ -5,6 +5,7 @@ from typing import Dict, Any, Tuple, Union, List
 from pathlib import Path
 from dataclasses import dataclass, field
 from enum import Enum, auto
+import platform
 
 from PySide6.QtCore import (
     QThreadPool,
@@ -21,6 +22,7 @@ from data.process_manager import ProcessManager
 import data.task_status as task_status
 from core.worker import Worker
 from core.pathing import UniquePathStore
+from core.metadata import isExifToolAvailable
 
 class CheckFlags(Enum):
     # Currently unused
@@ -73,6 +75,7 @@ class Controller(QObject):
         sm_is_format_pool_empty: bool,
         output_tab_settings: dict[str, Any],
         modify_tab_settings: dict[str, Any],
+        settings_tab_settings: dict[str, Any],
     ) -> CheckStatus:
         """Performs pre-conversion checks. Remember to parse data before."""
         output = CheckStatus()
@@ -124,6 +127,28 @@ class Controller(QObject):
                 f"{'A thread' if thread_count == 1 else str(thread_count) + ' threads'} from the last session {'is' if thread_count == 1 else 'are'} still finishing.\nWait a moment before trying again."
             )
             return output
+
+        if modify_tab_settings["misc"]["keep_metadata"].startswith("ExifTool"):
+            # ExifTool available
+            exiftool_available = isExifToolAvailable()
+            if exiftool_available[1] == False:
+                output.setError(
+                    "ExifTool Unavailable",
+                    exiftool_available[1],
+                )
+                return output
+            
+            # ExifTool args empty
+            cur_mode = modify_tab_settings["misc"]["keep_metadata"]
+            et_args = settings_tab_settings["exiftool_args"][cur_mode].strip().split(" ")
+            if len(et_args) == 1 and et_args[0] == "":
+                msg = f"Argument list for \"{cur_mode}\" is empty."
+                msg += "\nChange metadata mode or add arguments in Settings -> ExifTool." if cur_mode == "ExifTool - Custom" else "\nReset it to default in Settings -> ExifTool."
+                output.setError(
+                    "ExifTool Error",
+                    msg,
+                )
+                return output
 
         return output
 

@@ -140,6 +140,7 @@ class MainWindow(QMainWindow):
             self.output_tab.smIsFormatPoolEmpty(),
             output_tab_settings,
             modify_tab_settings,
+            settings_tab_settings,
         )
 
         if check_status.display_error:

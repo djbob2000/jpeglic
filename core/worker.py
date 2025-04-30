@@ -394,23 +394,15 @@ class Worker(QRunnable):
             not self.lossless_jpeg and
             self.params["misc"]["keep_metadata"].startswith("ExifTool")
         ):
-            exiftool_available = metadata.isExifToolAvailable(self.mutex)
-            if exiftool_available[0] == False:
-                self.logException("E0", exiftool_available[1])
-            else:
-                cur_mode = self.params["misc"]["keep_metadata"]
-                try:
-                    et_args = self.settings["exiftool_args"][cur_mode].strip().split(" ")
-                    if len(et_args) == 1 and et_args[0] == "":
-                        self.logException("E1", f"Argument list for \"{cur_mode}\" is empty.\nPlease add arguments in Settings -> Advanced -> ExifTool Arguments")
-                    else:
-                        metadata.runExifTool(
-                            self.org_item_abs_path,
-                            self.output,
-                            et_args,
-                        )
-                except KeyError as e:
-                    self.logException("E2", f"ExifTool mode not mapped. {e}")
+            cur_mode = self.params["misc"]["keep_metadata"]
+            try:
+                metadata.runExifTool(
+                    self.org_item_abs_path,
+                    self.output,
+                    self.settings["exiftool_args"][cur_mode].strip().split(" "),
+                )
+            except KeyError as e:
+                self.logException("E2", f"ExifTool mode not mapped. {e}")
 
     def finishConversion(self):
         if self.proxy.proxyExists():

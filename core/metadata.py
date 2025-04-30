@@ -3,11 +3,6 @@ import tempfile
 import os
 import logging
 
-from PySide6.QtCore import (
-    QMutexLocker,
-    QMutex,
-)
-
 from data.constants import (
     EXIFTOOL_PATH,
     IMAGE_MAGICK_PATH,
@@ -19,8 +14,8 @@ from core.process import runProcess, runProcessOutput
 from core.exceptions import GenericException, FileException
 
 class Data:
-    exiftool_available = None   # None - unchecked; False - not available; True - available;
-    exiftool_err_msg = ""
+    exiftool_available: None | bool = None   # None - unchecked; False - not available; True - available;
+    exiftool_err_msg: str = ""
 
 def runExifTool(src: str, dst: str, et_args: list[str]) -> None:
     """Runs ExifTool.
@@ -78,39 +73,33 @@ def _runExifTool(*args):
     else:
         logging.error("[metadata - _runExifTool] Not implemented")
 
-def isExifToolAvailable(mutex: QMutex) -> (bool, str):
-    """Checks if ExifTool is available.
+def isExifToolAvailable() -> tuple[bool, str]:
+    """Checks if ExifTool is available and caches the result.
 
-        Returns: (is_available, error_msg)
+    Returns:
+        tuple[bool, str]: (is_available, error_msg)
     """
-    # Return cached data
     if Data.exiftool_available is not None:
         return (Data.exiftool_available, Data.exiftool_err_msg)
-    
-    with QMutexLocker(mutex):
-        # Return cached data for blocked thread
-        if Data.exiftool_available is not None:
-            return (Data.exiftool_available, Data.exiftool_err_msg)
 
-        # Perform check
-        match platform.system():
-            case "Linux":
-                Data.exiftool_available = not "not found" in runProcessOutput("bash", "-c", "type exiftool")[1]
-                if Data.exiftool_available == False:
-                    Data.exiftool_err_msg = "ExifTool not found. Please install ExifTool on your system and restart the program."
-            case "Windows":
-                proc_output = runProcessOutput(EXIFTOOL_PATH, "-ver")
-                if proc_output[0].strip() == "" or "assertion failed" in proc_output[1]:
-                    Data.exiftool_available = False
-                    Data.exiftool_err_msg = "Please reinstall this program in a location without special characters to use ExifTool."
-                else:
-                    Data.exiftool_available = True
-            case _:
+    match platform.system():
+        case "Linux":
+            Data.exiftool_available = not "not found" in runProcessOutput("bash", "-c", "type exiftool")[1]
+            if Data.exiftool_available == False:
+                Data.exiftool_err_msg = "ExifTool not found. Please install ExifTool on your system and restart the program."
+        case "Windows":
+            proc_output = runProcessOutput(EXIFTOOL_PATH, "-ver")
+            if proc_output[0].strip() == "" or "assertion failed" in proc_output[1]:
+                Data.exiftool_available = False
+                Data.exiftool_err_msg = "Please reinstall this program in a location without special characters to use ExifTool."
+            else:
                 Data.exiftool_available = True
+        case _:
+            Data.exiftool_available = True
    
     return (Data.exiftool_available, Data.exiftool_err_msg)
         
-def getArgs(encoder, mode, jpg_to_jxl_lossless=False) -> list:
+def getArgs(encoder, mode, jpg_to_jxl_lossless=False) -> list[str]:
     """Return metadata arguments for the specified encoder.
 
     Example Usage:
