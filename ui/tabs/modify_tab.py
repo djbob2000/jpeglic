@@ -56,7 +56,10 @@ class ModifyTab(QWidget):
 
         # Apply settings and update UI
         self._onModeChanged()
-        self.setDownscalingEnabled(not settings["disable_downscaling_startup"])     # If you remove it, call self._updateDownscalingWidgets() instead
+        if settings["disable_downscaling_startup"]:
+            self.setDownscalingEnabled(False)
+        else:
+            self._updateDownscalingWidgets()
         self.setCustomResamplingEnabled(settings["custom_resampling"])
 
         # Vars
