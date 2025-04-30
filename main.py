@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         self.modify_tab.convert.connect(self.convert)
         self.settings_tab.signals.sorting_toggled.connect(self.input_tab.disableSorting)
         self.settings_tab.signals.jxl_effort_10_toggled.connect(self.output_tab.onJXLEffort10Enabled)
-        self.settings_tab.signals.custom_resampling_toggled.connect(self.modify_tab.toggleCustomResampling)
+        self.settings_tab.signals.custom_resampling_toggled.connect(self.modify_tab.setCustomResamplingEnabled)
         self.settings_tab.signals.quality_prec_snap_toggled.connect(self.output_tab.onQualityPrecisionSnappingEnabled)
         self.settings_tab.signals.jpeg_encoder_changed.connect(self.output_tab.onJPEGEncoderChanged)
         self.settings_tab.signals.jxl_lossy_modular_toggled.connect(self.output_tab.onJXLLossyModularVisibleToggled)

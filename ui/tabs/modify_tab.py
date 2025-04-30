@@ -1,6 +1,7 @@
 import platform
 from typing import Optional, Dict
 from copy import deepcopy
+from functools import partial
 
 from PySide6.QtWidgets import(
     QWidget,
@@ -33,6 +34,10 @@ MAX_FILE_SIZE = 1024**2   # KiB
 class ModifyTab(QWidget):
     convert = Signal()
 
+    # ---------------------------------------------
+    # /                 Init
+    # ---------------------------------------------
+
     def __init__(self, settings, output_tab_settings):
         super(ModifyTab, self).__init__()
         self.wm = WidgetManager("ModifyTab")
@@ -45,15 +50,14 @@ class ModifyTab(QWidget):
         self._setupSignals()
         self._setToolTips()
 
-        # Set Default
+        # Load
         self.resetToDefault()
         self.wm.loadState()
-        self.onModeChanged()
 
-        # Apply Settings
-        self.toggleDownscaleUI(not settings["disable_downscaling_startup"])
-        self.toggleCustomResampling(settings["custom_resampling"])
-        self._updateFileFormat()
+        # Apply settings and update UI
+        self._onModeChanged()
+        self.setDownscalingEnabled(not settings["disable_downscaling_startup"])     # If you remove it, call self._updateDownscalingWidgets() instead
+        self.setCustomResamplingEnabled(settings["custom_resampling"])
 
         # Vars
         self.resample_visible = False
@@ -178,12 +182,12 @@ class ModifyTab(QWidget):
         self.wm.addTags("resample_cmb", "downscale_ui", "resample")
 
     def _setupSignals(self):
-        self.downscale_cb.stateChanged.connect(self.toggleDownscaleUI)
-        self.mode_cmb.currentIndexChanged.connect(self.onModeChanged)
+        self.downscale_cb.stateChanged.connect(self.setDownscalingEnabled)
+        self.mode_cmb.currentIndexChanged.connect(self._onModeChanged)
         self.default_btn.clicked.connect(self.resetToDefault)
         self.convert_btn.clicked.connect(self.convert.emit)
-        self.pixel_w_cb.toggled.connect(self._onResWidthToggled)
-        self.pixel_h_cb.toggled.connect(self._onResHeightToggled)
+        self.pixel_w_cb.toggled.connect(partial(self._onResWidgetToggled, self.pixel_w_sb))
+        self.pixel_h_cb.toggled.connect(partial(self._onResWidgetToggled, self.pixel_h_sb))
 
     def _setToolTips(self):
         setToolTip("metadata", self.metadata_cmb)
@@ -198,21 +202,46 @@ class ModifyTab(QWidget):
         setToolTip("downscaling_resolution_height", self.pixel_h_sb)
         setToolTip("downscaling_sides", self.shortest_sb, self.longest_sb)
 
-    def _onResWidthToggled(self, enabled: bool) -> None:
-        if self.downscale_cb.isEnabled():
-            self.pixel_w_sb.setEnabled(enabled)
-    
-    def _onResHeightToggled(self, enabled: bool) -> None:
-        if self.downscale_cb.isEnabled():
-            self.pixel_h_sb.setEnabled(enabled)
+    # ---------------------------------------------
+    # /                 Public
+    # ---------------------------------------------
 
-    def toggleDownscaleUI(self, enabled: bool) -> None:
-        self.wm.setEnabledByTag("downscale_ui", enabled)
-        self._onResWidthToggled(self.pixel_w_cb.isChecked() if enabled else False)
-        self._onResHeightToggled(self.pixel_h_cb.isChecked() if enabled else False)
+    def getSettings(self):
+        return {
+            "downscaling": {
+                "enabled": self._isDownscalingEnabled(),
+                "mode": self.mode_cmb.currentText(),
+                "percent": self.percent_sb.value(),
+                "width": self.pixel_w_sb.value() if self.pixel_w_cb.isChecked() else float("inf"),
+                "height": self.pixel_h_sb.value() if self.pixel_h_cb.isChecked() else float("inf"),
+                "file_size": self.file_size_sb.value(),
+                "shortest_side": self.shortest_sb.value(),
+                "longest_side": self.longest_sb.value(),
+                "megapixels": self.megapixels_sb.value(),
+                "resample": self._getResampling(),
+            },
+            "misc": {
+                "keep_metadata": self.metadata_cmb.currentText(),
+                "keep_timestamps": self.keep_timestamps_cb.isChecked(),
+            }
+        }
     
-    def disableDownscaling(self):
-        self.downscale_cb.setChecked(False)
+    def saveState(self, new_states: Optional[Dict] = None) -> None:
+        if new_states is None or new_states != self.cached_states:
+            self.wm.saveState()
+            self.cached_states = deepcopy(new_states)
+
+    def setDownscalingEnabled(self, enabled: bool) -> None:
+        self.downscale_cb.setChecked(enabled)
+        self._updateDownscalingWidgets()
+
+    def setCustomResamplingEnabled(self, enabled=False):
+        self.resample_visible = enabled
+        self.wm.setVisibleByTag("resample", enabled)
+
+    def onFileFormatChanged(self, new_file_format: str) -> None:
+        self.file_format = new_file_format
+        self._updateDownscalingWidgets()
 
     def resetToDefault(self):
         self.metadata_cmb.setCurrentIndex(0)
@@ -230,9 +259,31 @@ class ModifyTab(QWidget):
             self.pixel_w_cb.setChecked(True)
             self.pixel_h_cb.setChecked(True)
         
-        self.toggleDownscaleUI(False)
+        self.setDownscalingEnabled(False)
+
+    # ---------------------------------------------
+    # /                 Private
+    # ---------------------------------------------
     
-    def onModeChanged(self):
+    def _onResWidgetToggled(self, widget: QWidget, enabled: bool) -> None:
+        if self.downscale_cb.isEnabled():
+            widget.setEnabled(enabled)
+
+    def _updateDownscalingWidgets(self) -> None:
+        metadata_allowed = self.file_format not in ("Lossless JPEG Transcoding", "JPEG Reconstruction")
+        downscaling_allowed = self.file_format not in ("Lossless JPEG Transcoding", "JPEG Reconstruction", "Smallest Lossless")
+        downscaling_enabled = downscaling_allowed and self.downscale_cb.isChecked()
+
+        self.metadata_cmb.setEnabled(metadata_allowed)
+        self.metadata_l.setEnabled(metadata_allowed)
+
+        self.downscale_cb.setEnabled(downscaling_allowed)
+        self.pixel_h_sb.setEnabled(downscaling_enabled and self.pixel_h_cb.isChecked())
+        self.pixel_w_sb.setEnabled(downscaling_enabled and self.pixel_w_cb.isChecked())
+
+        self.wm.setEnabledByTag("downscale_ui", downscaling_enabled)
+    
+    def _onModeChanged(self):
         """Enables or disables widgets based on the currently selected mode."""
         index = self.mode_cmb.currentText()
         self.wm.setVisibleByTag("pixel", index == "Resolution")
@@ -242,23 +293,7 @@ class ModifyTab(QWidget):
         self.wm.setVisibleByTag("longest", index == "Longest Side")
         self.wm.setVisibleByTag("megapixels", index == "Megapixels")
 
-    def onFileFormatChanged(self, new_file_format: str) -> None:
-        self.file_format = new_file_format
-        self._updateFileFormat()
-    
-    def _updateFileFormat(self) -> None:
-        metadata_enabled = self.file_format not in ("Lossless JPEG Transcoding", "JPEG Reconstruction")
-        downscaling_enabled = self.file_format not in ("Lossless JPEG Transcoding", "JPEG Reconstruction", "Smallest Lossless")
-        
-        self.metadata_cmb.setEnabled(metadata_enabled)
-        self.metadata_l.setEnabled(metadata_enabled)
-
-        self.pixel_h_sb.setEnabled(False)
-        self.pixel_w_sb.setEnabled(False)
-        self.downscale_cb.setEnabled(downscaling_enabled)
-        self.toggleDownscaleUI(downscaling_enabled)
-
-    def _returnDownscalingEnabled(self) -> bool:
+    def _isDownscalingEnabled(self) -> bool:
         if not self.downscale_cb.isChecked():
             return False
         
@@ -271,37 +306,8 @@ class ModifyTab(QWidget):
         
         return True
     
-    def getSettings(self):
-        return {
-            "downscaling": {
-                "enabled": self._returnDownscalingEnabled(),
-                "mode": self.mode_cmb.currentText(),
-                "percent": self.percent_sb.value(),
-                "width": self.pixel_w_sb.value() if self.pixel_w_cb.isChecked() else float("inf"),
-                "height": self.pixel_h_sb.value() if self.pixel_h_cb.isChecked() else float("inf"),
-                "file_size": self.file_size_sb.value(),
-                "shortest_side": self.shortest_sb.value(),
-                "longest_side": self.longest_sb.value(),
-                "megapixels": self.megapixels_sb.value(),
-                "resample": self.getResampling(),
-            },
-            "misc": {
-                "keep_metadata": self.metadata_cmb.currentText(),
-                "keep_timestamps": self.keep_timestamps_cb.isChecked(),
-            }
-        }
-    
-    def saveState(self, new_states: Optional[Dict] = None) -> None:
-        if new_states is None or new_states != self.cached_states:
-            self.wm.saveState()
-            self.cached_states = deepcopy(new_states)
-
-    def getResampling(self):
+    def _getResampling(self):
         if self.resample_visible:
             return self.resample_cmb.currentText()
         else:
             return "Default"
-
-    def toggleCustomResampling(self, enabled=False):
-        self.resample_visible = enabled
-        self.wm.setVisibleByTag("resample", enabled)
