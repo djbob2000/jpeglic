@@ -234,19 +234,7 @@ class ModifyTab(QWidget):
             self.wm.saveState()
             self.cached_states = deepcopy(new_states)
 
-    def setDownscalingEnabled(self, enabled: bool) -> None:
-        self.downscale_cb.setChecked(enabled)
-        self._updateDownscalingWidgets()
-
-    def setCustomResamplingEnabled(self, enabled=False):
-        self.resample_visible = enabled
-        self.wm.setVisibleByTag("resample", enabled)
-
-    def onFileFormatChanged(self, new_file_format: str) -> None:
-        self.file_format = new_file_format
-        self._updateDownscalingWidgets()
-
-    def resetToDefault(self):
+    def resetToDefault(self) -> None:
         self.metadata_cmb.setCurrentIndex(0)
         self.keep_timestamps_cb.setChecked(False)
         self.mode_cmb.setCurrentIndex(0)
@@ -263,6 +251,18 @@ class ModifyTab(QWidget):
             self.pixel_h_cb.setChecked(True)
         
         self.setDownscalingEnabled(False)
+
+    def setDownscalingEnabled(self, enabled: bool) -> None:
+        self.downscale_cb.setChecked(enabled)
+        self._updateDownscalingWidgets()
+
+    def setCustomResamplingEnabled(self, enabled=False) -> None:
+        self.resample_visible = enabled
+        self.wm.setVisibleByTag("resample", enabled)
+
+    def onFileFormatChanged(self, new_file_format: str) -> None:
+        self.file_format = new_file_format
+        self._updateDownscalingWidgets()
 
     # ---------------------------------------------
     # /                 Private
