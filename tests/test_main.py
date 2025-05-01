@@ -46,8 +46,7 @@ class MockOutputTab(MockTab):
 class MockModifyTab(MockTab):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.toggleCustomResampling = MagicMock()
-        self.disableDownscaling = MagicMock()
+        self.setCustomResamplingEnabled = MagicMock()
         self.onFileFormatChanged = MagicMock()
 
 class MockTabWidget(QTabWidget):
@@ -116,7 +115,6 @@ def main_window_patched(main_window):
         "controller_checkProcessingRequirements": patch.object(main_window.controller, "checkProcessingRequirements", return_value=CheckStatus()),
         "input_tab_getItems": patch.object(main_window.input_tab, "getItems", return_value=["item_0", "item_1"]),
         "message_box_info": patch("ui.tabs.output_tab.message_box.info"),
-        "modify_tab_disableDownscaling": patch.object(main_window.modify_tab, "disableDownscaling"),
         "output_tab_getUsedThreadCount": patch.object(main_window.output_tab, "getUsedThreadCount"),
     }    
 
@@ -223,21 +221,6 @@ def test_convert_display_error(display, main_window_patched):
         mocks["message_box_info"].assert_called_once_with(main_window, check_status.error_title, check_status.error_description)
     else:
         mocks["message_box_info"].assert_not_called()
-
-@pytest.mark.parametrize("include_flag", [True, False])
-def test_convert_disable_downscaling(include_flag, main_window_patched):
-    main_window, mocks, *_ = main_window_patched
-    check_status = CheckStatus()
-    if include_flag:
-        check_status.addFlags(CheckFlags.DISABLE_DOWNSCALING)
-    mocks["controller_checkProcessingRequirements"].return_value = check_status
-
-    main_window.convert()
-
-    if include_flag:
-        mocks["modify_tab_disableDownscaling"].assert_called_once()
-    else:
-        mocks["modify_tab_disableDownscaling"].assert_not_called()
 
 @pytest.mark.parametrize("allowed_to_proceed", [True, False])
 def test_convert_allowed_to_proceed(allowed_to_proceed, main_window_patched):

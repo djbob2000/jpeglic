@@ -39,7 +39,10 @@ def modify_tab_settings():
     return {
        "downscaling": {
             "enabled": False,
-       } 
+       },
+       "misc": {
+            "keep_metadata": "ExifTool - Wipe",
+       }
     }
 
 @pytest.fixture
@@ -49,6 +52,9 @@ def settings_tab_settings():
         "ram_optimizer_rules": '("all", 14, "1")',
         "jxl_optimizer": False,
         "avif_encoder": "AOM AV1",
+        "exiftool_args": {
+            "ExifTool - Wipe": "some args"
+        }
     }
 
 @pytest.fixture
@@ -58,75 +64,110 @@ def controller_checkProcessingRequirements_patched(controller):
         "is_absolute": patch("core.controller.Path.is_absolute", return_value=True),
         "getItemCount": patch.object(controller.items, "getItemCount", return_value=100),
         "activeThreadCount": patch.object(controller.threadpool, "activeThreadCount", return_value=0),
+        "isExifToolAvailable": patch("core.controller.isExifToolAvailable", return_value=(True, ""),)
     }
 
     with ExitStack() as stack:
         mocks = {name: stack.enter_context(patcher) for name, patcher in patches.items()}
         yield controller, mocks
 
-def test_checkProcessingRequirements_happy_path(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings):
+def test_checkProcessingRequirements_happy_path(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
     controller, mocks = controller_checkProcessingRequirements_patched
   
-    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings)
+    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
     assert cs.allowed_to_proceed
     assert not cs.display_error
 
-def test_checkProcessingRequirements_fail_item_count(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings):
+def test_checkProcessingRequirements_fail_item_count(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
     controller, mocks = controller_checkProcessingRequirements_patched
-    cs = controller.checkProcessingRequirements(0, False, output_tab_settings, modify_tab_settings)
+    cs = controller.checkProcessingRequirements(0, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
     assert not cs.allowed_to_proceed
     assert cs.display_error
 
-def test_checkProcessingRequirements_fail_path_conflict(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings):
+def test_checkProcessingRequirements_fail_path_conflict(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
     controller, mocks = controller_checkProcessingRequirements_patched
     output_tab_settings["custom_output_dir"] = True
     output_tab_settings["keep_dir_struct"] = True
     mocks["is_absolute"].return_value = False
 
-    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings)
+    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
     assert not cs.allowed_to_proceed
     assert cs.display_error
 
-def test_checkProcessingRequirements_fail_empty_format_pool(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings):
+def test_checkProcessingRequirements_fail_empty_format_pool(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
     controller, mocks = controller_checkProcessingRequirements_patched
     output_tab_settings["format"] = "Smallest Lossless"
 
-    cs = controller.checkProcessingRequirements(100, True, output_tab_settings, modify_tab_settings)
+    cs = controller.checkProcessingRequirements(100, True, output_tab_settings, modify_tab_settings, settings_tab_settings)
     assert not cs.allowed_to_proceed
     assert cs.display_error
 
-@pytest.mark.parametrize("mode", [
-    "Smallest Lossless",
-    "Lossless JPEG Transcoding",
-    "JPEG Reconstruction",
-])
-def test_checkProcessingRequirements_disable_downscaling(mode, controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings):
-    controller, mocks = controller_checkProcessingRequirements_patched
-    modify_tab_settings["downscaling"]["enabled"] = True
-    output_tab_settings["format"] = mode
-
-    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings)
-    assert cs.allowed_to_proceed
-    assert cs.display_error
-    assert CheckFlags.DISABLE_DOWNSCALING in cs.flags
-
-def test_checkProcessingRequirements_parsing_error(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings):
+def test_checkProcessingRequirements_parsing_error(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
     controller, mocks = controller_checkProcessingRequirements_patched
     mocks["getItemCount"].return_value = 0
 
-    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings)
+    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
     assert not cs.allowed_to_proceed
     assert cs.display_error
     assert cs.error_title == "Data Error"
 
-def test_checkProcessingRequirements_active_threads_error(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings):
+def test_checkProcessingRequirements_active_threads_error(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
     controller, mocks = controller_checkProcessingRequirements_patched
     mocks["activeThreadCount"].return_value = 1
 
-    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings)
+    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
     assert not cs.allowed_to_proceed
     assert cs.display_error
     assert cs.error_title == "Still Processing"
+
+def test_checkProcessingRequirements_exiftool_available_happy_path(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
+    controller, mocks = controller_checkProcessingRequirements_patched
+    modify_tab_settings["misc"]["keep_metadata"] = "ExifTool - Wipe"
+    mocks["isExifToolAvailable"].return_value = (True, "")
+
+    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
+
+    assert cs.allowed_to_proceed
+    assert not cs.display_error
+
+def test_checkProcessingRequirements_exiftool_available_sad_path(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
+    controller, mocks = controller_checkProcessingRequirements_patched
+    modify_tab_settings["misc"]["keep_metadata"] = "ExifTool - Wipe"
+    mocks["isExifToolAvailable"].return_value = (False, "ExifTool not installed")
+
+    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
+
+    assert not cs.allowed_to_proceed
+    assert cs.display_error
+    assert cs.error_title == "ExifTool Unavailable"
+    assert cs.error_description == "ExifTool not installed"
+
+@pytest.mark.parametrize("metadata_mode, error_msg", [
+    ("ExifTool - Wipe", "Reset it to default in Settings -> ExifTool"),
+    ("ExifTool - Custom", "Change metadata mode or add arguments in Settings -> ExifTool."),
+])
+def test_checkProcessingRequirements_exiftool_empty_args_sad_path(metadata_mode, error_msg, controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
+    controller, mocks = controller_checkProcessingRequirements_patched
+    modify_tab_settings["misc"]["keep_metadata"] = metadata_mode
+    settings_tab_settings["exiftool_args"][metadata_mode] = ""
+
+    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
+
+    assert not cs.allowed_to_proceed
+    assert cs.error_title == "ExifTool Error"
+    assert cs.display_error
+    assert f"Argument list for \"{metadata_mode}\" is empty." in cs.error_description
+    assert error_msg in cs.error_description
+
+def test_checkProcessingRequirements_exiftool_empty_args_happy_path(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
+    controller, mocks = controller_checkProcessingRequirements_patched
+    modify_tab_settings["misc"]["keep_metadata"] = "ExifTool - Wipe"
+    settings_tab_settings["exiftool_args"]["ExifTool - Wipe"] = "some args"
+
+    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
+
+    assert cs.allowed_to_proceed
+    assert not cs.display_error
 
 def test_parseData(controller):
     items = ["item0", "item1"]
@@ -340,9 +381,3 @@ def test_CheckStatus_setError():
     assert cs.error_description == description
     assert cs.allowed_to_proceed == allowed_to_proceed
     assert cs.display_error == display_error
-
-def test_CheckStatus_addFlags():
-    cs = CheckStatus()
-    cs.addFlags(CheckFlags.DISABLE_DOWNSCALING)
-    assert CheckFlags.DISABLE_DOWNSCALING in cs.flags
-    assert len(cs.flags) == 1

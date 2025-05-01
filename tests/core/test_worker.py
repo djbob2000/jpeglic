@@ -613,24 +613,6 @@ def test_runExifTool_dont_run(mock_exiftool_env):
     worker.runExifTool()
     mocks["runExifTool"].assert_not_called()
 
-def test_runExifTool_not_available(mock_exiftool_env):
-    worker, mocks = mock_exiftool_env
-    mocks["isExifToolAvailable"].return_value = (False, "error msg")
-
-    worker.runExifTool()
-
-    mocks["logException"].assert_called_once()
-    assert "error msg" == mocks["logException"].call_args[0][1]
-
-def test_runExifTool_args_empty(mock_exiftool_env):
-    worker, mocks = mock_exiftool_env
-    worker.settings["exiftool_args"]["ExifTool - Wipe"] = ""
-
-    worker.runExifTool()
-    
-    mocks["logException"].assert_called_once()
-    assert "Argument list for \"ExifTool - Wipe\" is empty." in mocks["logException"].call_args[0][1]
-
 @pytest.fixture
 def postConversionRoutines_patched(worker):
     mocks = {
