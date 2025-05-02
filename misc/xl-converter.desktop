@@ -6,3 +6,5 @@ Exec=/opt/xl-converter/xl-converter
 Icon=/opt/xl-converter/_internal/assets/icons/logo.svg
 Terminal=false
 Categories=Graphics;ImageProcessing;
+StartupWMClass=xl-converter
+StartupNotify=true

@@ -17,6 +17,7 @@ from PySide6.QtGui import (
     QIcon,
     QShortcut,
     QKeySequence,
+    QGuiApplication,
 )
 
 from core.controller import Controller
@@ -30,6 +31,7 @@ from data.logging_manager import LoggingManager
 from data.process_manager import ProcessManager
 from ui.tabs import InputTab, AboutTab, ModifyTab, OutputTab, SettingsTab
 from ui.dialogs import message_box, ProgressDialog, ExceptionView
+from data.constants import FLATPAK
 
 class MainWindow(QMainWindow):
     moved = Signal()
@@ -196,6 +198,7 @@ class MainWindow(QMainWindow):
         self.moved.emit()
 
 if __name__ == "__main__":
+    QGuiApplication.setDesktopFileName("eu.codepoems.xl-converter" if FLATPAK else "xl-converter")
     app = QApplication(sys.argv)
     font_loader.init()
     main_window = MainWindow()
