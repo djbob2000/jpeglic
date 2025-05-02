@@ -8,6 +8,7 @@
 - Lower bundle size of all builds.
 - Disable downscaling without a dialog when unsupported.
 - Move ExifTool validation before transcoding starts.
+- Improve desktop integration on Linux (#103).
 
 ### Fixed
 

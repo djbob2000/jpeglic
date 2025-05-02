@@ -2,9 +2,10 @@
 Type=Application
 Name=XL Converter
 Comment=Easy-to-use image converter for modern formats
-Exec=/opt/xl-converter/xl-converter
+Exec=/opt/xl-converter/xl-converter %F
 Icon=/opt/xl-converter/_internal/assets/icons/logo.svg
 Terminal=false
 Categories=Graphics;ImageProcessing;
 StartupWMClass=xl-converter
 StartupNotify=true
+MimeType=image/png;image/jpeg;image/jxl;image/avif;image/bmp;image/gif;image/apng;image/jp2;image/webp;
