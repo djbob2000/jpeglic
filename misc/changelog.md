@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Rework preserving timestamps (#92).
+- Rework preserving file time attributes (#92).
 - Lower bundle size of all builds.
 - Disable downscaling without a dialog when unsupported.
 - Move ExifTool validation before transcoding starts.
