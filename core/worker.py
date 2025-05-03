@@ -386,8 +386,13 @@ class Worker(QRunnable):
             else:   # Regular conversion
                 stdout, stderr = runBinary(encoder, args, self.item_abs_path, self.output, args_after_input=(encoder == IMAGE_MAGICK_PATH))
                 if not os.path.isfile(self.output):
-                    raise FileException("C3", f"[{os.path.basename(encoder)}] {stderr}")
-    
+                    if self.lossless_jpeg and "JPEG bitstream reconstruction data could not be created" in stderr:
+                        err_msg = 'The JPEG image could not be transcoded (unsupported type or too much tail data). Enabling the "Normalize" option may help. Set "Format / Mode" to "Lossless JPEG Transcoding" to use it.'
+                    else:
+                        err_msg = f"[{os.path.basename(encoder)}] {stderr}"
+
+                    raise FileException("C3", err_msg)
+
     def runExifTool(self):
         # Apply metadata (ExifTool)
         if (

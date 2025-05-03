@@ -327,6 +327,34 @@ def test_convert_args_jpeg_xl(
     assert mocks["runBinary"].call_args[0][1] == expected_args
     assert worker.lossless_jpeg == expected_jpg_to_jxl_lossless
 
+def test_convert_jpeg_xl_error_auto_jpeg_transcoding(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+
+    worker.params["format"] = "JPEG XL"
+    worker.params["lossless"] = True
+    worker.settings["jxl_auto_lossless_jpeg"] = True
+    worker.item_ext = "jpg"
+    mocks["runBinary"].return_value = ("JPEG XL encoder", "JPEG bitstream reconstruction data could not be created")
+    mocks["isfile"].return_value = False
+
+    with pytest.raises(FileException) as exc_info:
+        worker.convert()
+    
+    assert "The JPEG image could not be transcoded" in exc_info.value.msg 
+    
+def test_convert_jpeg_xl_error_default(worker_convert_patches):
+    worker, mocks = worker_convert_patches
+
+    worker.params["format"] = "JPEG XL"
+    worker.params["lossless"] = True
+    mocks["runBinary"].return_value = ("JPEG XL encoder", "Error message")
+    mocks["isfile"].return_value = False
+
+    with pytest.raises(FileException) as exc_info:
+        worker.convert()
+    
+    assert "Error message" in exc_info.value.msg 
+
 @pytest.mark.parametrize("encoder, quality, speed, chroma_subsampling, expected_args", [
     ("AOM AV1", 80, 6, "Default", ["-q 80", "-s 6", "-j 4", "-c aom"]),
     ("AOM AV1", 80, 6, "4:4:4", ["-q 80", "-s 6", "-j 4", "-c aom", "-y 444"]),
