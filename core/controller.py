@@ -148,6 +148,16 @@ class Controller(QObject):
                     msg,
                 )
                 return output
+        elif (
+            output_tab_settings["format"] == "JPEG" and
+            settings_tab_settings["jpg_encoder"] == "JPEGLI" and
+            modify_tab_settings["misc"]["keep_metadata"] == "Encoder - Preserve"
+        ):
+            output.setError(
+                "Metadata Mode Unavailable",
+                "The `Encoder - Preserve` metadata mode is unavailable for JPEGLI.\nGo to Modify tab, and pick `ExifTool - Preserve` to keep metadata."
+            )
+            return output
 
         return output
 

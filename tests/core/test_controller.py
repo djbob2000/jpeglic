@@ -169,6 +169,18 @@ def test_checkProcessingRequirements_exiftool_empty_args_happy_path(controller_c
     assert cs.allowed_to_proceed
     assert not cs.display_error
 
+def test_checkProcessingRequirements_jpegli_mode_unavailable(controller_checkProcessingRequirements_patched, output_tab_settings, modify_tab_settings, settings_tab_settings):
+    controller, mocks = controller_checkProcessingRequirements_patched
+    output_tab_settings["format"] = "JPEG"
+    settings_tab_settings["jpg_encoder"] = "JPEGLI"
+    modify_tab_settings["misc"]["keep_metadata"] = "Encoder - Preserve"
+
+    cs = controller.checkProcessingRequirements(100, False, output_tab_settings, modify_tab_settings, settings_tab_settings)
+
+    assert not cs.allowed_to_proceed
+    assert cs.display_error
+    assert "The `Encoder - Preserve` metadata mode is unavailable for JPEGLI" in cs.error_description
+
 def test_parseData(controller):
     items = ["item0", "item1"]
 
