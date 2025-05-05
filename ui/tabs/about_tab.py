@@ -50,7 +50,6 @@ class AboutTab(QWidget):
         self.update_checker.finished.connect(lambda: self.update_btn.setEnabled(True))
         self.manual_btn = QPushButton("Manual", clicked=lambda: openRemoteUrl("https://xl-docs.codepoems.eu/"))
         self.report_bug_btn = QPushButton("Report Bug", clicked=lambda: openRemoteUrl("https://github.com/JacobDev1/xl-converter/issues"))
-        self.donate_btn = QPushButton("Donate", clicked=lambda: openRemoteUrl("https://codepoems.eu/donate"))
 
     def setupLayouts(self):
         # Labels
@@ -66,7 +65,6 @@ class AboutTab(QWidget):
         buttons_vb.addWidget(self.update_btn)
         buttons_vb.addWidget(self.manual_btn)
         buttons_vb.addWidget(self.report_bug_btn)
-        buttons_vb.addWidget(self.donate_btn)
         self.update_btn.setEnabled(constants.UPDATE_CHECKER_ENABLED)
         
         # Main

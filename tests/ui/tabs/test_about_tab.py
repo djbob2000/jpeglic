@@ -41,7 +41,6 @@ def test_update_btn_reenabled(about_tab, qtbot):
 @pytest.mark.parametrize("button", [
     "manual_btn",
     "report_bug_btn",
-    "donate_btn",
 ])
 def test_openExternalLinks(button, about_tab, qtbot):
     with patch("PySide6.QtGui.QDesktopServices.openUrl") as mock_openUrl:
