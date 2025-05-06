@@ -26,16 +26,12 @@ build:
 
 .PHONY: build-libjxl
 build-libjxl:
-	rm -f ./bin/linux/cjxl
-	rm -f ./bin/linux/djxl
-	rm -f ./bin/linux/jxlinfo
-	rm -f ./bin/linux/cjpegli
+	cd ./bin/linux && rm -f cjxl djxl jxlinfo cjpegli
 	$(call docker_build,./misc/build_scripts/linux/Dockerfile.libjxl,/src/bin/.,./bin/linux)
 
 .PHONY: build-libavif
 build-libavif:
-	rm -f ./bin/linux/avifenc
-	rm -f ./bin/linux/avifdec
+	cd ./bin/linux && rm -f avifenc avifdec 
 	$(call docker_build,./misc/build_scripts/linux/Dockerfile.libavif,/src/bin/.,./bin/linux)
 
 .PHONY: build-imagemagick
