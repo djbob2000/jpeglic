@@ -1,5 +1,4 @@
 # Using oldest maintained version for best GLIBC compatibility.
-# `debian:11-slim` will also work, but QFileDialog does not support platform-native dialog out of the box there. `test_convert.py` also breaks.
 FROM ubuntu:22.04
 
 ARG PYINSTALLER_TAG=v6.11.1

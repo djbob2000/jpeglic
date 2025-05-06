@@ -8,17 +8,56 @@ REQUIREMENTS_TEST 	= requirements_test.txt
 
 # Build / Misc.
 
-.PHONY: build-linux
-build-linux:
-	rm -rf ./dist
-	mkdir -p ./dist
-	docker build -f ./misc/linux_build.Dockerfile --progress=plain --iidfile tmp.txt . && \
+define docker_build
+	mkdir -p $(3)
+	docker build -f $(1) --progress=plain --iidfile tmp.txt . && \
 	image_id=$$(cat tmp.txt) && \
 	container_id=$$(docker create $${image_id}) && \
-	docker cp $${container_id}:/export/. ./dist && \
+	docker cp $${container_id}:$(2) $(3) && \
 	docker rm $${container_id} && \
 	docker rmi -f $${image_id}
 	rm tmp.txt
+endef
+
+.PHONY: build
+build:
+	rm -rf ./dist
+	$(call docker_build,./misc/build_scripts/linux/Dockerfile.build,/export/.,./dist)
+
+.PHONY: build-libjxl
+build-libjxl:
+	rm -f ./bin/linux/cjxl
+	rm -f ./bin/linux/djxl
+	rm -f ./bin/linux/jxlinfo
+	rm -f ./bin/linux/cjpegli
+	$(call docker_build,./misc/build_scripts/linux/Dockerfile.libjxl,/src/bin/.,./bin/linux)
+
+.PHONY: build-libavif
+build-libavif:
+	rm -f ./bin/linux/avifenc
+	rm -f ./bin/linux/avifdec
+	$(call docker_build,./misc/build_scripts/linux/Dockerfile.libavif,/src/bin/.,./bin/linux)
+
+.PHONY: build-imagemagick
+build-imagemagick:
+	rm -rf ./bin/linux/imagemagick
+	$(call docker_build,./misc/build_scripts/linux/Dockerfile.imagemagick,/src/bin/.,./bin/linux/imagemagick)
+
+.PHONY: build-libjpeg-turbo
+build-libjpeg-turbo:
+	rm -f ./bin/linux/jpegtran
+	$(call docker_build,./misc/build_scripts/linux/Dockerfile.libjpeg-turbo,/src/bin/.,./bin/linux)
+
+.PHONY: build-oxipng
+build-oxipng:
+	rm -f ./bin/linux/oxipng
+	$(call docker_build,./misc/build_scripts/linux/Dockerfile.oxipng,/src/bin/.,./bin/linux)
+
+.PHONY: deps
+deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
+
+.PHONY: build-all
+build-all: deps build
 
 .PHONY: clean
 clean:

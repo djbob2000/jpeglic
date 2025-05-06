@@ -1,0 +1,56 @@
+# Reference: https://github.com/libjxl/libjxl/blob/main/.github/workflows/release.yaml
+
+FROM ubuntu:22.04
+
+ARG LIBJXL_TAG=v0.11.1
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt install -y \
+    git \
+    asciidoc \
+    clang \
+    cmake \
+    doxygen \
+    graphviz \
+    libbrotli-dev \
+    libgdk-pixbuf2.0-dev \
+    libgif-dev \
+    libgtest-dev \
+    libgtk2.0-dev  \
+    libjpeg-dev \
+    libopenexr-dev \
+    libpng-dev \
+    libwebp-dev \
+    ninja-build \
+    pkg-config \
+    python3 \
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+    
+# Prevents zlib errors
+SHELL ["/bin/bash", "-c"]
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+WORKDIR /src
+RUN git clone -b ${LIBJXL_TAG} --depth 1 https://github.com/libjxl/libjxl.git libjxl
+WORKDIR /src/libjxl/
+RUN ./deps.sh && \
+    python -m venv env && \
+    source env/bin/activate && \
+    pip install asciidoc
+RUN source env/bin/activate && \
+    ./ci.sh release \
+        -DJPEGXL_STATIC=ON \
+        -DBUILD_TESTING=OFF \
+        -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF \
+        -DJPEGXL_ENABLE_VIEWERS=OFF \
+        -DJPEGXL_ENABLE_PLUGINS=OFF \
+        -DJPEGXL_ENABLE_OPENEXR=OFF \
+        -DJPEGXL_ENABLE_DEVTOOLS=OFF
+
+WORKDIR /src/libjxl/build/tools/
+RUN mkdir /src/bin/ && \
+    cp cjxl djxl jxlinfo cjpegli /src/bin/
+WORKDIR /src/bin/
+CMD ["/bin/bash"]

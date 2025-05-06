@@ -1,0 +1,21 @@
+FROM ubuntu:22.04
+
+ARG OXIPNG_TAG="v9.1.4"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt install -y \
+    git \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+WORKDIR /src
+RUN git clone -b "$OXIPNG_TAG" --depth 1 https://github.com/shssoichiro/oxipng.git
+WORKDIR /src/oxipng
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo build --release
+WORKDIR /src/bin
+RUN cp /src/oxipng/target/release/oxipng /src/bin/
+CMD ["/bin/bash"]
