@@ -22,14 +22,11 @@ build-linux:
 
 .PHONY: clean
 clean:
-	rm -rf dist
-
-.PHONY: clean-all
-clean-all: clean
-	rm -rf build __pycache__
+	rm -rf _pyinstaller __pycache__ htmlcov .coverage .pytest_cache
 
 .PHONY: src
-src: clean
+src:
+	rm -rf ./dist
 	mkdir -p dist/src
 	
 	cp .gitignore .rsync-exclude
