@@ -2,6 +2,7 @@
 FROM ubuntu:22.04
 
 ARG PYINSTALLER_TAG=v6.11.1
+ARG RUN_TESTS=True
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV PYENV_ROOT="$HOME/.pyenv"
@@ -66,12 +67,14 @@ COPY LICENSE* main.py requirements* test.py test_convert.py build.py /build/
 RUN find /build/ -type d -name "__pycache__" -exec rm -rf {} +
 
 # Run unit tests
-RUN python -m venv /build/env_dev && \
-    . /build/env_dev/bin/activate && \
-    pip install -r /build/requirements.txt -r /build/requirements_test.txt && \
-    xvfb-run -a python test.py && \
-    xvfb-run -a python test_convert.py
-    
+RUN if [ "${RUN_TESTS}" = "True" ]; then \
+        python -m venv /build/env_dev && \
+        . /build/env_dev/bin/activate && \
+        pip install -r /build/requirements.txt -r /build/requirements_test.txt && \
+        xvfb-run -a python test.py && \
+        xvfb-run -a python test_convert.py; \
+    fi
+
 # Setup virtual environment
 RUN python -m venv /build/env_build && \
     . /build/env_build/bin/activate && \
