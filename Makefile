@@ -54,6 +54,11 @@ build-oxipng-win:
 	rm -rf ./bin/win/oxipng
 	$(call docker_build,./misc/build_scripts/windows/Dockerfile.oxipng,/src/bin/.,./bin/win/oxipng)
 
+.PHONY: download-exiftool-win
+download-exiftool-win:
+	rm -rf ./bin/win/exiftool
+	bash ./misc/build_scripts/windows/exiftool.sh
+
 .PHONY: deps
 deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
 
