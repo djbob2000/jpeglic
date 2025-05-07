@@ -59,6 +59,11 @@ download-exiftool-win:
 	rm -rf ./bin/win/exiftool
 	bash ./misc/build_scripts/windows/exiftool.sh
 
+.PHONY: build-libavif-win
+build-libavif-win:
+	rm -rf ./bin/win/libavif
+	bash ./misc/build_scripts/windows/libavif.sh
+
 .PHONY: deps
 deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
 
