@@ -49,6 +49,11 @@ build-oxipng:
 	rm -f ./bin/linux/oxipng
 	$(call docker_build,./misc/build_scripts/linux/Dockerfile.oxipng,/src/bin/.,./bin/linux)
 
+.PHONY: build-oxipng-win
+build-oxipng-win:
+	rm -rf ./bin/win/oxipng
+	$(call docker_build,./misc/build_scripts/windows/Dockerfile.oxipng,/src/bin/.,./bin/win/oxipng)
+
 .PHONY: deps
 deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
 

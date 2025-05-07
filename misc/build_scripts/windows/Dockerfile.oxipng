@@ -1,0 +1,23 @@
+FROM ubuntu:22.04
+
+ARG OXIPNG_TAG="v9.1.4"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt install -y \
+    git \
+    curl \
+    build-essential \
+    mingw-w64 \ 
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+WORKDIR /src
+RUN git clone -b "$OXIPNG_TAG" --depth 1 https://github.com/shssoichiro/oxipng.git
+WORKDIR /src/oxipng
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup target add x86_64-pc-windows-gnu
+RUN cargo build --release --target x86_64-pc-windows-gnu
+WORKDIR /src/bin
+RUN cp /src/oxipng/target/x86_64-pc-windows-gnu/release/oxipng.exe /src/bin/
+CMD ["/bin/bash"]
