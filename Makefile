@@ -69,8 +69,21 @@ build-libjpeg-turbo-win:
 	rm -rf ./bin/win/jpegtran
 	bash ./misc/build_scripts/windows/libjpeg-turbo.sh
 
+.PHONY: build-imagemagick-win
+build-imagemagick-win:
+	rm -rf ./bin/win/imagemagick
+	bash ./misc/build_scripts/windows/imagemagick.sh
+
+.PHONY: build-libjxl-win
+build-libjxl-win:
+	rm -rf ./bin/win/libjxl
+	bash ./misc/build_scripts/windows/libjxl.sh
+
 .PHONY: deps
 deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
+
+.PHONY: deps-win
+deps: build-libjpeg-turbo-win build-libjxl-win build-libavif-win build-imagemagick-win build-oxipng-win download-exiftool
 
 .PHONY: build-all
 build-all: deps build
