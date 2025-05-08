@@ -49,8 +49,8 @@ build-oxipng:
 	rm -f ./bin/linux/oxipng
 	$(call docker_build,./misc/build_scripts/linux/Dockerfile.oxipng,/src/bin/.,./bin/linux)
 
-.PHONY: build-oxipng-win
-build-oxipng-win:
+.PHONY: build-oxipng-win-docker
+build-oxipng-win-docker:
 	rm -rf ./bin/win/oxipng
 	$(call docker_build,./misc/build_scripts/windows/Dockerfile.oxipng,/src/bin/.,./bin/win/oxipng)
 
@@ -78,6 +78,11 @@ build-imagemagick-win:
 build-libjxl-win:
 	rm -rf ./bin/win/libjxl
 	bash ./misc/build_scripts/windows/libjxl.sh
+
+.PHONY: build-oxipng-win
+build-oxipng-win:
+	rm -rf ./bin/win/oxipng
+	bash ./misc/build_scripts/windows/oxipng.sh
 
 .PHONY: deps
 deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
