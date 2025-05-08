@@ -64,6 +64,11 @@ build-libavif-win:
 	rm -rf ./bin/win/libavif
 	bash ./misc/build_scripts/windows/libavif.sh
 
+.PHONY: build-libjpeg-turbo-win
+build-libjpeg-turbo-win:
+	rm -rf ./bin/win/jpegtran
+	bash ./misc/build_scripts/windows/libjpeg-turbo.sh
+
 .PHONY: deps
 deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
 
