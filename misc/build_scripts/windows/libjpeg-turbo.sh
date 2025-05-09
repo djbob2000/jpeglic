@@ -6,6 +6,13 @@ RUN_DIR=$(pwd)
 OUTPUT_DIR="${RUN_DIR}/bin/jpegtran"
 TEMP_DIR=$(mktemp -d)
 
+cleanup() {
+    echo "Cleaning up..."
+    cd "${RUN_DIR}"
+    rm -rf "${TEMP_DIR}"
+}
+trap cleanup EXIT
+
 set -e
 
 # Verify prerequisites
@@ -88,5 +95,4 @@ find "${OUTPUT_DIR}" -type f -name "*.exe" | while read -r exe; do
     "${MT_PATH}" -manifest "${TEMP_DIR}/manifest.xml" -outputresource:"${exe}";#1
 done
 
-rm -rf "${TEMP_DIR}"
 echo "Binaries copied to: ${OUTPUT_DIR}"

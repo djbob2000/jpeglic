@@ -5,6 +5,13 @@ RUN_DIR=$(pwd)
 OUTPUT_DIR="${RUN_DIR}/bin/win/oxipng"
 TEMP_DIR=$(mktemp -d)
 
+cleanup() {
+    echo "Cleaning up..."
+    cd "${RUN_DIR}"
+    rm -rf "${TEMP_DIR}"
+}
+trap cleanup EXIT
+
 set -e
 
 # Verify prerequisites
@@ -46,5 +53,4 @@ mkdir -p "${OUTPUT_DIR}"
 cp target/x86_64-pc-windows-gnu/release/oxipng.exe "${OUTPUT_DIR}"
 cd "${OUTPUT_DIR}"
 
-rm -rf "${TEMP_DIR}"
 echo "Binaries copied to: ${OUTPUT_DIR}"

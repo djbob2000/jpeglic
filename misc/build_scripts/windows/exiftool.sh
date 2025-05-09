@@ -7,6 +7,13 @@ RUN_DIR=$(pwd)
 OUTPUT_DIR="${RUN_DIR}/bin/win/exiftool"
 TMP_DIR=$(mktemp -d)
 
+cleanup() {
+    echo "Cleaning up..."
+    cd "${RUN_DIR}"
+    rm -rf "${TEMP_DIR}"
+}
+trap cleanup EXIT
+
 set -e
 
 # Check pre-requisites
@@ -33,6 +40,3 @@ rm -f ./README.txt
 cd "$RUN_DIR"
 mkdir -p "$OUTPUT_DIR"
 mv "${TMP_DIR}"/exiftool-"${EXIFTOOL_TAG}"_64/* "${OUTPUT_DIR}"
-
-# Clean up
-rm -rf "$TMP_DIR"

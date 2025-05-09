@@ -6,6 +6,13 @@ RUN_DIR=$(pwd)
 OUTPUT_DIR="${RUN_DIR}/bin/win/imagemagick"
 TEMP_DIR=$(mktemp -d)
 
+cleanup() {
+    echo "Cleaning up ${TEMP_DIR}"
+    cd "${RUN_DIR}"
+    rm -rf "${TEMP_DIR}"
+}
+trap cleanup EXIT
+
 set -e
 
 # Verify prerequisites
@@ -131,5 +138,4 @@ find . -type f -name "*.exe" | while read -r exe; do
     done
 done
 
-rm -rf "${TEMP_DIR}"
 echo "Binaries copied to: ${OUTPUT_DIR}"
