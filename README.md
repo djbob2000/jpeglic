@@ -40,7 +40,7 @@ Scale down images to resolution, percent, shortest (and longest) side, and megap
 ## Building from Source
 
 > [!NOTE]
-> The recommended way of using XL Converter is through the [official binary releases](https://codepoems.eu/xl-converter). The building process is time-consuming and tedious.
+> The recommended way of using XL Converter is through the [official binary releases](https://codepoems.eu/xl-converter). The building process is time-consuming.
 
 ### Windows 10
 
@@ -85,6 +85,9 @@ pacman -S --needed git cmake mingw-w64-x86_64-gcc
 ```
 
 Close the MSYS2 terminal and launch CMD inside project's root directory.
+
+> [!IMPORTANT]
+> If you upgraded any package, restart the MSYS2 environment. Otherwise, building will start failing for random reasons.
 
 Clone PyInstaller.
 
