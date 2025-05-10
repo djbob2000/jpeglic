@@ -5,54 +5,25 @@ LIBHEIF_TAG="v1.19.7"
 RUN_DIR=$(pwd)
 OUTPUT_DIR="${RUN_DIR}/bin/win/imagemagick"
 TEMP_DIR=$(mktemp -d)
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd )"
 
-cleanup() {
-    echo "Cleaning up ${TEMP_DIR}"
-    cd "${RUN_DIR}"
-    rm -rf "${TEMP_DIR}"
-}
-trap cleanup EXIT
+source "${SCRIPT_DIR}/_shared.sh"
 
-set -e
-
-# Verify prerequisites
-if [ "${MSYSTEM}" != "MINGW64" ]; then
-    echo "MSYS2 MINGW64 environment is required to run this script."
-    exit 1
-fi
-
-required_packages=(
-    git
-    base-devel
-    mingw-w64-x86_64-toolchain
-    mingw-w64-x86_64-imagemagick
-    mingw-w64-x86_64-libjxl
-    mingw-w64-x86_64-aom
-    cmake
-    autoconf
-    automake
-    libtool
-)
-installed_packages=$(pacman -Q 2>/dev/null)
-installed_groups=$(pacman -Qg 2>/dev/null)
-missing_packages="false"
-missing_package_list=()
-
-for pkg in "${required_packages[@]}"; do
-    if ! echo "${installed_packages}" | grep -q "^${pkg}" && \
-        ! echo "${installed_groups}" | grep -q "^${pkg}"; then
-        missing_packages="true"
-        missing_package_list+=("${pkg}")
-    fi
-done
-
-if [ "${missing_packages}" = "true" ]; then
-    echo -e "Missing packages.\nInstall the following packages and try again:\n${missing_package_list[@]}"
-    exit 1
-fi
+trap 'cleanup "${TEMP_DIR}"' EXIT
+set -euo pipefail
+check_msys2
+check_packages \
+    base-devel \
+    mingw-w64-x86_64-toolchain \
+    mingw-w64-x86_64-imagemagick \
+    mingw-w64-x86_64-libjxl \
+    mingw-w64-x86_64-aom \
+    cmake \
+    autoconf \
+    automake \
+    libtool 
 
 # Build
-
 # Compile libheif without proprietary standards (like HEVC) to avoid licensing issues.
 # This was very tricky to get working. Expect things to break. `magick -list format` can be wrong. Use `ldd` for debugging.
 # I've spent multiple hours on this. Do not mess with it without a good reason. The integration can and will break.
@@ -94,7 +65,7 @@ make -j $(nproc)
 make install
 
 # ImageMagick
-cd "${SCRIPT_DIR}"
+cd "${TEMP_DIR}"
 git clone --depth 1 -b "${IMAGEMAGICK_TAG}" https://github.com/ImageMagick/ImageMagick.git ImageMagick
 cd ImageMagick/
 ./configure \
@@ -128,14 +99,5 @@ make -j$(nproc)
 # Bundle
 mkdir -p "${OUTPUT_DIR}"
 cp ./utilities/magick "${OUTPUT_DIR}"
-cd "${OUTPUT_DIR}"
-
-find . -type f -name "*.exe" | while read -r exe; do
-    ldd "${exe}" | awk '/\/mingw64\// {print $3}' | while read -r dll; do
-        if [ ! -f "./$(basename "${dll}")" ]; then
-            cp "${dll}" .
-        fi
-    done
-done
-
+bundle_dlls "${OUTPUT_DIR}"
 echo "Binaries copied to: ${OUTPUT_DIR}"

@@ -88,7 +88,7 @@ build-oxipng-win:
 deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
 
 .PHONY: deps-win
-deps: build-libjpeg-turbo-win build-libjxl-win build-libavif-win build-imagemagick-win build-oxipng-win download-exiftool
+deps-win: build-libjpeg-turbo-win build-libjxl-win build-libavif-win build-imagemagick-win build-oxipng-win download-exiftool-win
 
 .PHONY: build-all
 build-all: deps build
