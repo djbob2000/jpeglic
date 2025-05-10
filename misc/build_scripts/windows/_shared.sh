@@ -11,16 +11,18 @@ check_msys2() {
 # Cleans up a temp dir.
 cleanup() {
     echo "Cleaning up..."
-    cd /tmp     # Avoid "device or resource busy" error.
+    cd / || return 1	# Avoid "device or resource busy" error.
     rm -rf "$1"
 }
 
 # Checks if packages or groups are present. Returns `exit 1` with a message in case some are missing. 
 check_packages() {
     local required_packages=("$@")
-    local installed_packages=$(pacman -Q 2>/dev/null)
-    local installed_groups=$(pacman -Qg 2>/dev/null)
+    local installed_packages installed_groups
     local missing_packages=()
+    
+    installed_packages=$(pacman -Q 2>/dev/null)
+    installed_groups=$(pacman -Qg 2>/dev/null)
 
     for pkg in "${required_packages[@]}"; do
         if ! echo "${installed_packages}" | grep -q "^${pkg}" && \
@@ -30,7 +32,7 @@ check_packages() {
     done
 
     if [[ ${#missing_packages[@]} -gt 0 ]]; then
-        echo -e "Missing packages.\nInstall them with: pacman -S ${missing_packages[@]}"
+        echo -e "Missing packages.\nInstall them with: pacman -S ${missing_packages[*]}"
         exit 1
     fi
 }
@@ -47,7 +49,7 @@ check_commands() {
     done
 
     if [[ ${#missing_commands[@]} -gt 0 ]]; then
-        echo -e "Missing command-line tools: ${required_commands[@]}\nInstall them and try again."
+        echo -e "Missing command-line tools: ${required_commands[*]}\nInstall them and try again."
         exit 1
     fi
 }

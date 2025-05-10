@@ -61,7 +61,7 @@ cmake -G "MSYS Makefiles" \
     -DWITH_SvtEnc_PLUGIN=OFF \
     -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
     ..
-make -j $(nproc)
+make -j$(nproc)
 make install
 
 # ImageMagick
