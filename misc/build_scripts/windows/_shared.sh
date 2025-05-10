@@ -2,7 +2,7 @@
 
 # Checks if running on MSYS2.
 check_msys2() {
-    if [ "${MSYSTEM}" != "MINGW64" ]; then
+    if [ "${MSYSTEM:-}" != "MINGW64" ]; then
         echo "MSYS2 MINGW64 environment is required to run this script."
         exit 1
     fi
