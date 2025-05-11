@@ -32,7 +32,7 @@ if [ ! -f "$PYTHON_PATH" ]; then
     exit 1
 fi
 
-python -c "import sys; assert sys.version_info >= (3, 12) and sys.version_info < (3, 14), 'Python 3.12 or 3.13 required.'" || {
+python -c "import sys; assert sys.version_info >= (3, 12) and sys.version_info < (3, 14)" || {
     echo "Version mismatch. Python 3.13 or 3.12 is required. Current version: $(${PYTHON_PATH} --version 2>&1)"
     exit 1
 }
@@ -63,18 +63,20 @@ source "${ENV_BUILD}/Scripts/activate"
 pip install -r requirements.txt
 
 # Setup PyInstaller
-echo "Setting up PyInstaller..."
-if [ ! -d "$PYINSTALLER_DIR" ]; then
-    git clone -b "$PYINSTALLER_TAG" --depth 1 https://github.com/pyinstaller/pyinstaller.git "${PYINSTALLER_DIR}"
+if ! pip show pyinstaller &> /dev/null; then
+    echo "Setting up PyInstaller..."
+    if [ ! -d "$PYINSTALLER_DIR" ]; then
+        git clone -b "$PYINSTALLER_TAG" --depth 1 https://github.com/pyinstaller/pyinstaller.git "${PYINSTALLER_DIR}"
+    fi
+    cd "${PYINSTALLER_DIR}/bootloader"
+    python waf all --gcc
+    cd "${PYINSTALLER_DIR}"
+    pip install .
 fi
-cd "${PYINSTALLER_DIR}/bootloader"
-python waf all --gcc
-cd ..
-pip install .
-cd "$RUN_DIR"
 
 # Building
 echo "Building..."
+cd "$RUN_DIR"
 mkdir -p "${TEMP_DIR}/dist"
 python build.py -b portable
 mv "${RUN_DIR}/dist/"*.7z "${TEMP_DIR}/dist"

@@ -43,7 +43,7 @@ check_commands() {
     local missing_commands=()
 
     for cmd in "${required_commands[@]}"; do
-        if ! command -v "${cmd}"; then
+        if ! command -v "${cmd}" &> /dev/null; then
             missing_commands+=("${pkg}")
         fi
     done
