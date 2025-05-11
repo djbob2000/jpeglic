@@ -6,7 +6,7 @@ ENV_DEV 			= ./env_dev
 REQUIREMENTS_BUILD 	= requirements.txt
 REQUIREMENTS_TEST 	= requirements_test.txt
 
-# Build / Misc.
+# Building on Linux
 
 define docker_build
 	mkdir -p $(3)
@@ -18,11 +18,6 @@ define docker_build
 	docker rmi -f $${image_id}
 	rm tmp.txt
 endef
-
-.PHONY: build
-build:
-	rm -rf ./dist
-	$(call docker_build,./misc/build_scripts/linux/Dockerfile.build,/export/.,./dist)
 
 .PHONY: build-libjxl
 build-libjxl:
@@ -54,6 +49,19 @@ build-oxipng-win-docker:
 	rm -rf ./bin/win/oxipng
 	$(call docker_build,./misc/build_scripts/windows/Dockerfile.oxipng,/src/bin/.,./bin/win/oxipng)
 
+.PHONY: deps
+deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
+
+.PHONY: build
+build:
+	rm -rf ./dist
+	$(call docker_build,./misc/build_scripts/linux/Dockerfile.build,/export/.,./dist)
+
+.PHONY: build-all
+build-all: deps build
+
+# Building on Windows
+
 .PHONY: download-exiftool-win
 download-exiftool-win:
 	rm -rf ./bin/win/exiftool
@@ -84,14 +92,14 @@ build-oxipng-win:
 	rm -rf ./bin/win/oxipng
 	bash ./misc/build_scripts/windows/oxipng.sh
 
-.PHONY: deps
-deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
-
 .PHONY: deps-win
 deps-win: build-libjpeg-turbo-win build-libjxl-win build-libavif-win build-imagemagick-win build-oxipng-win download-exiftool-win
 
-.PHONY: build-all
-build-all: deps build
+.PHONY: build-win
+build-win:
+	bash ./misc/build_scripts/windows/build.sh
+
+# Misc.
 
 .PHONY: clean
 clean:
