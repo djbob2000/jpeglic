@@ -1,10 +1,13 @@
 #!/bin/bash
 
+# Config
+# Note: Remember to use the latest vc_redist and a supported version of Python.
 PYINSTALLER_TAG="v6.11.1"
 RUN_TESTS="True"
-
-PYTHON_PATH="/c/Users/user/AppData/Local/Programs/Python/Python313/python.exe"
+FORCE_CLEAN="False"
+PYTHON_PATH="${LOCALAPPDATA}/Programs/Python/Python313/python.exe"
 INNOSETUP_PATH="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
+
 RUN_DIR=$(pwd)
 TEMP_DIR=$(mktemp -d)
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd )"
@@ -41,6 +44,12 @@ python -c "import sys; assert sys.version_info >= (3, 12) and sys.version_info <
 if [ ! -f "$INNOSETUP_PATH" ]; then
     echo "InnoSetup not found at INNOSETUP_PATH"
     exit 1
+fi
+
+# Clean
+if [ "$FORCE_CLEAN" = "True" ]; then
+    echo "Cleaning up files from previous builds..."
+    rm -rf "$ENV_BUILD" "$ENV_DEV" "$PYINSTALLER_DIR"
 fi
 
 # Setup environments
