@@ -116,6 +116,7 @@ src:
 	rm .rsync-exclude
 
 	cd dist && 7z a -t7z -mx1 src_`date +%Y%m%d_%H%M%S`.7z src/
+	rm -rf ./dist/src
 
 .PHONY: venv-build
 venv-build:
