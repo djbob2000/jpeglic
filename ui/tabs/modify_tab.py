@@ -63,7 +63,7 @@ class ModifyTab(QWidget):
         self.setCustomResamplingEnabled(settings["custom_resampling"])
 
         # Vars
-        self.resample_visible = False
+        self.resample_visible = settings["custom_resampling"]
         self.cached_states = self.getSettings()
     
     def _setupWidgets(self):
@@ -309,7 +309,7 @@ class ModifyTab(QWidget):
         
         return True
     
-    def _getResampling(self):
+    def _getResampling(self) -> str:
         if self.resample_visible:
             return self.resample_cmb.currentText()
         else:

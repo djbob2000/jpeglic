@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Fix custom resampling not being applied (#106).
+
 ### Deprecated
 
 ### Removed
