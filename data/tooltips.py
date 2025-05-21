@@ -71,7 +71,11 @@ Always - all sources will be normalized.""",
     "keep_if_larger": "Prevents \"Delete Original\" and \"Replace\" options (output tab) from deleting the original image if the result is larger",
     "copy_if_larger": "If the processed image is larger than the original, the result is discarded, and the original is copied instead.\n\nExcluded: Lossless JPEG Transcoding, JPEG Reconstruction, PNG",
     "jxl_effort_10": "Raises Effort limit from 9 to 10. Effort 10 is experimental and very slow.\n\n- Lossy: provides a very small visual improvement.\n\n- Lossless: lowers file size.\n\n- Lossless JPEG Transcoding: has a tendency to increase file size. Not recommended.",
-    "resample": "Enables resampling mode selection in the modify tab.\n\nThe default (Lanczos) is usually the best. Make sure you know what you're doing.",
+    "resample": """Enables resampling algorithm selection in the Modify tab.
+
+The default lets ImageMagick choose -- using Lanczos for images without transparency and Mitchell for images with transparency.
+
+Changing resampling can worsen the quality. Make sure you know what you are doing.""",
     "jxl_int_effort": "Shows or hides the JPEG XL Intelligent Effort option in the Output tab.\n\nThis functionality picks Effort based on context.\n\nIt aimed at providing lower file size but made only a marginal difference.\n\nThis feature will be removed in the future.",
     "exiftool_args": "Arguments used for handling metadata, correspond to the options is the modify tab.\n\nSupported variables:\n\n$src - source image path.\n\n$dst - destination image path.\n\nRemember to add \"-overwrite_original\" to avoid leftover files.",
     "encoder_args": "Additional arguments for the encoders.\n\nAll arguments must be valid and can not conflict with already used ones. Inspect logs for more details.",
