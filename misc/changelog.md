@@ -11,6 +11,7 @@
 - Improve desktop integration on Linux (#103).
 - Improve error messages for Automatic Lossless JPEG Transcoding.
 - Add a check for an unsupported metadata mode.
+- Update `SVT-AV1-PSY` to `v3.0.2`.
 
 ### Fixed
 

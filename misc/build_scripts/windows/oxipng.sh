@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OXIPNG_TAG="v9.1.4"
+OXIPNG_TAG="v9.1.5"
 
 RUN_DIR=$(pwd)
 OUTPUT_DIR="${RUN_DIR}/bin/win/oxipng"

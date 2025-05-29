@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-ARG OXIPNG_TAG="v9.1.4"
+ARG OXIPNG_TAG="v9.1.5"
 
 ENV DEBIAN_FRONTEND=noninteractive
 

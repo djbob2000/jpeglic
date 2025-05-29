@@ -215,12 +215,12 @@ To build XL Converter, you need to provide various binaries. This can be quite c
 > Use [the official builds](https://github.com/JacobDev1/xl-converter/releases) as a reference.
 
 Libraries:
-- [libjxl](https://github.com/libjxl/libjxl) `v0.11.1`
-- [libavif](https://github.com/AOMediaCodec/libavif) `v1.2.1` (`libaom` minimum: `v3.12.0` and [SVT-AV1-PSY](https://github.com/psy-ex/svt-av1-psy.git) `v2.3.0-B`)
+- [libjxl](https://github.com/libjxl/libjxl) `v0.11.x`
+- [libavif](https://github.com/AOMediaCodec/libavif) `v1.3.x` (`libaom` minimum: `v3.12.x` and [SVT-AV1-PSY](https://github.com/psy-ex/svt-av1-psy.git) `v3.0.2`)
 - [imagemagick](https://imagemagick.org/) `7.x Q16-HDRI`
 - [exiftool](https://exiftool.org/) `13.x`
-- [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) `3.1.0`
-- [oxipng](https://github.com/shssoichiro/oxipng) `v9.1.4`
+- [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) `3.1.x`
+- [oxipng](https://github.com/shssoichiro/oxipng) `v9.1.x`
 
 Below you'll find references on how to arrange the binaries. You will also need to add dependencies alongside them.
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-LIBAVIF_TAG="v1.2.1"
-AOM_AV1_TAG="v3.12.0"
-SVT_AV1_PSY_TAG="v2.3.0-B"
+LIBAVIF_TAG="v1.3.0"
+AOM_AV1_TAG="v3.12.1"
+SVT_AV1_PSY_TAG="v3.0.2"
 
 RUN_DIR=$(pwd)
 OUTPUT_DIR="${RUN_DIR}/bin/win/libavif"
