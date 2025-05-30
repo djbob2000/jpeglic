@@ -84,6 +84,12 @@
         </screenshot>
     </screenshots>
     <releases>
+        <release version="1.2.2" date="2025-05-31">
+            <url type="details">https://github.com/JacobDev1/xl-converter/blob/v1.2.2/misc/changelog.md</url>
+            <description>
+                <p>Lowers bundle size, updates `SVT-AV1-PSY`, makes small UX improvements, and fixes resampling selector.</p>
+            </description>
+        </release>
         <release version="1.2.1" date="2025-04-02">
             <url type="details">https://github.com/JacobDev1/xl-converter/blob/v1.2.1/misc/changelog.md</url>
             <description>

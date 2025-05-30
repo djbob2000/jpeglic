@@ -1,4 +1,4 @@
-## 1.2.2 - TBA
+## 1.2.2 - 2025-05-31
 
 ### Added
 
@@ -7,7 +7,7 @@
 - Rework preserving file time attributes (#92).
 - Lower bundle size of all builds.
 - Disable downscaling without a dialog when unsupported.
-- Move ExifTool validation before transcoding starts.
+- Move ExifTool validation before transcoding.
 - Improve desktop integration on Linux (#103).
 - Improve error messages for Automatic Lossless JPEG Transcoding.
 - Add a check for an unsupported metadata mode.
