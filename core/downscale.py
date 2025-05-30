@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from PySide6.QtCore import (
     QMutexLocker,
@@ -142,13 +143,19 @@ def _downscaleToFileSize(params, mutex):
             raise FileException("D13", err)
         raise GenericException("D14", f"Extrapolated scale cannot be negative ({extrapolated_scale})")
     elif extrapolated_scale >= 100:     # Non-downscaled conversion
-        
-        convert(params["enc"], params["src"], params["dst"], params["args"])
-        try:
-            os.remove(proxy_src)
-        except OSError as err:
-            raise FileException("D15", err)
-        return True
+        if Path(params["src"]).suffix[1:].lower() in ("png", "jpeg", "jpg"):
+            convert(params["enc"], params["src"], params["dst"], params["args"])
+        else:
+            try:
+                os.remove(proxy_src)
+            except OSError as err:
+                raise FileException("D21", err)
+            convert(IMAGE_MAGICK_PATH, params["src"], proxy_src, [])
+            convert(params["enc"], proxy_src, params["dst"], params["args"])
+            try:
+                os.remove(proxy_src)
+            except OSError as err:
+                raise FileException("D22", err)
     else:
         while True:
             _downscaleToPercent(params["src"], proxy_src, extrapolated_scale, params["resample"])
