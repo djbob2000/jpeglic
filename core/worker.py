@@ -551,7 +551,8 @@ class Worker(QRunnable):
 
         # Generate files
         delete_if_canceled = list(path_pool.values())
-        delete_if_canceled.append(self.item_abs_path)   # Points to proxy
+        if self.proxy.proxyExists():
+            delete_if_canceled.append(self.proxy.getPath())
 
         def _runBinary(encoder_path: str, args: str, src: str, dst: str | None = None, args_after_input=False, delete_if_canceled: list[str] = []) -> None:
             out, err = runBinary(encoder_path, args, src, dst, args_after_input=args_after_input, delete_if_canceled=delete_if_canceled)
