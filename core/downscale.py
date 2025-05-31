@@ -157,11 +157,13 @@ def _downscaleToFileSize(params, mutex):
             except OSError as err:
                 raise FileException("D22", err)
     else:
-        while True:
+        while extrapolated_scale > 1:
             _downscaleToPercent(params["src"], proxy_src, extrapolated_scale, params["resample"])
             convert(params["enc"], proxy_src, params["dst"], params["args"])
 
             extrapolated_scale -= 10
+            if extrapolated_scale < 1:
+                extrapolated_scale = 1
             
             try:
                 size = os.path.getsize(params["dst"])
