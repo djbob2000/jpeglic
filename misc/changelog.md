@@ -1,7 +1,5 @@
 ## 1.2.2 - 2025-05-31
 
-### Added
-
 ### Changed
 
 - Rework preserving file time attributes (#92).
@@ -16,10 +14,6 @@
 ### Fixed
 
 - Fix custom resampling not being applied (#106).
-
-### Deprecated
-
-### Removed
 
 ## 1.2.1 - 2025-04-02
 
