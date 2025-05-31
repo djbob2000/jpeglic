@@ -16,7 +16,6 @@
 ### Fixed
 
 - Fix custom resampling not being applied (#106).
-- Fix bug where source is deleted when Smallest Lossless fails.
 
 ### Deprecated
 

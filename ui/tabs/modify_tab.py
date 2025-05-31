@@ -297,7 +297,7 @@ class ModifyTab(QWidget):
         self.wm.setVisibleByTag("megapixels", index == "Megapixels")
 
     def _isDownscalingEnabled(self) -> bool:
-        if not self.downscale_cb.isChecked():
+        if not self.downscale_cb.isChecked() or not self.downscale_cb.isEnabled():
             return False
         
         if (

@@ -21,6 +21,9 @@ class Proxy():
         self.proxy_path = None
 
     def isProxyNeeded(self, _format: str, src_ext: str, jpegli: bool = False, downscaling_enabled: bool = False) -> bool:
+        if _format == "Smallest Lossless":
+            return True
+
         if _format == "PNG":
             return False
 
@@ -47,8 +50,6 @@ class Proxy():
                 else:
                     if src_ext in ALLOWED_INPUT_IMAGE_MAGICK:
                         return False
-            case "Smallest Lossless":
-                return True
             case "Lossless JPEG Transcoding":
                 return False
             case "JPEG Reconstruction":
