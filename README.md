@@ -107,7 +107,7 @@ pip install .
 cd ..\..
 ```
 
-> ![NOTE]
+> [!NOTE]
 > The following error may occur `C:\msys64\mingw64\bin\strip.exe: unable to copy file 'runw.exe'; reason: Permission denied`. You can fix it by adding `C:/msys64` to Windows Defender exclusions.
 
 Reload the environment to avoid the `ModuleNotFoundError` error.
