@@ -26,7 +26,7 @@ from data.constants import (
 )
 
 from core.proxy import Proxy
-from core.pathing import getUniqueFilePath, getExtension, getOutputDir, getUniqueTmpFilePath
+from core.pathing import getUniqueFilePath, getExtension, getOutputDir, getUniqueTmpFilePath, removeFile
 from core.convert import convert, getDecoder, getDecoderArgs, getExtensionJxl, runBinary, cleanUp
 from core.downscale import downscale, decodeAndDownscale
 import core.metadata as metadata
@@ -447,7 +447,7 @@ class Worker(QRunnable):
                             self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext)
                         else:
                             if os.path.isfile(self.final_output):
-                                os.remove(self.final_output)
+                                removeFile(self.final_output)
                     elif mode == "Rename" or mode == "Skip":
                         self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext)
                     
@@ -480,7 +480,7 @@ class Worker(QRunnable):
                     if self.params["delete_original_mode"] == "To Trash":
                         send2trash(self.org_item_abs_path)
                     elif self.params["delete_original_mode"] == "Permanently":
-                        os.remove(self.org_item_abs_path)
+                        removeFile(self.org_item_abs_path)
             except OSError as err:
                 raise FileException("P1", f"Failed to delete original file. {err}")
 

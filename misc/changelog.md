@@ -1,3 +1,9 @@
+## 1.2.3 - TBA
+
+### Changed
+
+- Ignore "Read-only" on Windows (#106).
+
 ## 1.2.2 - 2025-05-31
 
 ### Changed

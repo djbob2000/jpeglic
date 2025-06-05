@@ -1,10 +1,12 @@
 import re
 import os
+import stat
 from pathlib import Path
 import logging
 import string
 from threading import Lock
 import secrets
+import platform
 
 from core.exceptions import GenericException
 
@@ -118,3 +120,14 @@ def isANSICompatible(path: str) -> bool:
         return True
     except UnicodeEncodeError:
         return False
+
+def removeFile(path: str) -> None:
+    """Removes a single file. Ignores the Read-only attribute. Raises the same exceptions as `os.remove`."""
+    try:
+        os.remove(path)
+    except PermissionError:
+        if platform.system() == "Windows":
+            # Clear Read-only and try again
+            os.chmod(path, stat.S_IWRITE)
+            os.remove(path)
+
