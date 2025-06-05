@@ -91,19 +91,6 @@ def normalizePath(path: str):
 def getSuffix(path: str):
     return Path(path).suffix[1:]
 
-@pytest.fixture
-def finishConversion_patches():
-    with (
-        patch("core.worker.os.remove") as mock_remove,
-        patch("core.worker.os.rename") as mock_rename,
-        patch("core.worker.os.path.getsize", return_value=300_000) as mock_getsize,
-        patch("core.worker.os.path.isfile", side_effect=[True, True, True]) as mock_isfile,
-        patch("core.worker.getUniqueFilePath", return_value="final/path/img.jpg") as mock_getUniqueFilePath,
-    ):
-        yield mock_remove, mock_rename, mock_getsize, mock_isfile, mock_getUniqueFilePath 
-
-
-
 def test_logException(worker):
     id_str, msg, source = "ID0", "Exception", str(Path("/test/path/image.png"))
 
@@ -534,7 +521,24 @@ def test_convert_regular(worker_convert_patches):
 
     mocks["runBinary"].assert_called_once()
 
-def test_finishConversion_proxy(finishConversion_patches, worker):
+@pytest.fixture
+def finishConversion_patches(worker):
+    mocks = {
+        "remove": patch("core.worker.os.remove"),
+        "rename": patch("core.worker.os.rename"),
+        "removeFile": patch("core.worker.removeFile"),
+        "getsize": patch("core.worker.os.path.getsize", return_value=300_000),
+        "isfile": patch("core.worker.os.path.isfile", side_effect=[True, True, True]),
+        "getUniqueFilePath": patch("core.worker.getUniqueFilePath", return_value="final/path/img.jpg"),
+    }
+
+    with ExitStack() as stack:
+        _mocks = { name: stack.enter_context(patcher) for name, patcher in mocks.items() }
+        yield worker, _mocks
+
+def test_finishConversion_proxy(finishConversion_patches):
+    worker, mocks = finishConversion_patches
+
     worker.item_abs_path = "item_abs_path"
     worker.org_item_abs_path = "org_item_abs_path"
     worker.proxy.proxyExists = MagicMock(return_value=True)
@@ -545,51 +549,53 @@ def test_finishConversion_proxy(finishConversion_patches, worker):
     worker.proxy.cleanup.assert_called_once()
     assert worker.item_abs_path == "org_item_abs_path"
 
-def test_finishConversion_no_proxy(finishConversion_patches, worker):
+def test_finishConversion_no_proxy(finishConversion_patches):
+    worker, mocks = finishConversion_patches
+    
     worker.proxy.proxyExists = MagicMock(return_value=False)
 
     worker.finishConversion()
-    
+
     worker.proxy.proxyExists.assert_called_once()
     worker.proxy.cleanup.assert_not_called()
 
-def test_finishConversion_no_output(finishConversion_patches, worker):
-    _, _, _, mock_isfile, *_ = finishConversion_patches
-    mock_isfile.side_effect = [False, True, True]
+def test_finishConversion_no_output(finishConversion_patches):
+    worker, mocks = finishConversion_patches
+    mocks["isfile"].side_effect = [False, True, True]
 
     with pytest.raises(FileException) as exc:
         worker.finishConversion()
-        
+
     assert "output not found" in exc.value.msg
 
-def test_finishConversion_empty_output(finishConversion_patches, worker):
-    _, _, mock_getsize, *_ = finishConversion_patches
-    mock_getsize.return_value = 0
+def test_finishConversion_empty_output(finishConversion_patches):
+    worker, mocks = finishConversion_patches
+    mocks["getsize"].return_value = 0
 
     with pytest.raises(FileException) as exc:
         worker.finishConversion()
-        
+
     assert "output is empty" in exc.value.msg
 
 @pytest.mark.parametrize("mode", ["Rename", "Skip"])
-def test_finishConversion_rename_or_skip(finishConversion_patches, mode, worker):
-    _, mock_rename, *_ = finishConversion_patches
+def test_finishConversion_rename_or_skip(finishConversion_patches, mode):
+    worker, mocks = finishConversion_patches
     worker.params["if_file_exists"] = mode
 
     worker.finishConversion()
-    
-    mock_rename.assert_called_once_with(worker.output, "final/path/img.jpg")
 
-def test_finishConversion_replace(finishConversion_patches, worker):
-    mock_remove, mock_rename, *_ = finishConversion_patches
+    mocks["rename"].assert_called_once_with(worker.output, "final/path/img.jpg")
+
+def test_finishConversion_replace(finishConversion_patches):
+    worker, mocks = finishConversion_patches
     worker.output = "temp/path/img.jpg"
     worker.final_output = "final/path/img.jpg"
     worker.params["if_file_exists"] = "Replace"
 
     worker.finishConversion()
-    
-    mock_remove.assert_called_once_with("final/path/img.jpg")
-    mock_rename.assert_called_once_with("temp/path/img.jpg", "final/path/img.jpg")
+
+    mocks["removeFile"].assert_called_once_with("final/path/img.jpg")
+    mocks["rename"].assert_called_once_with("temp/path/img.jpg", "final/path/img.jpg")
 
 @pytest.fixture
 def mock_exiftool_env(worker):
@@ -648,6 +654,7 @@ def postConversionRoutines_patched(worker):
         "runExifTool": patch("core.worker.metadata.runExifTool", return_value=[]),
         "applyTimestamps": patch("core.worker.timestamps.applyTimestamps"),
         "remove": patch("core.worker.os.remove"),
+        "removeFile": patch("core.worker.removeFile"),
         "send2trash": patch("core.worker.send2trash"),
         "samefile": patch("core.worker.os.path.samefile", return_value=False),
     }
@@ -721,7 +728,7 @@ def test_postConversionRoutines_delete_to_trash(
     worker.postConversionRoutines()
 
     assert mocks["send2trash"].called == send2trash_called
-    assert mocks["remove"].called == remove_called
+    assert mocks["removeFile"].called == remove_called
 
 def test_postConversionRoutines_delete_failed(postConversionRoutines_patched):
     worker, mocks = postConversionRoutines_patched
