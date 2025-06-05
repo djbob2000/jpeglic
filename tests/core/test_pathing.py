@@ -175,9 +175,18 @@ def test_removeFile_happy_path():
 def test_removeFile_sad_path():
     with (
         patch("core.pathing.os.remove", side_effect=OSError) as mock_remove,
-        pytest.raises(OSError),
     ):
-        pathing.removeFile("/tmp/sample_file.jpg")
+        with pytest.raises(OSError):
+            pathing.removeFile("/tmp/sample_file.jpg")
+        mock_remove.assert_called_once_with("/tmp/sample_file.jpg")
+
+def test_removeFile_re_raise_permission_exc():
+    with (
+        patch("core.pathing.os.remove", side_effect=PermissionError) as mock_remove,
+        patch("core.pathing.platform.system", return_value="Linux"),
+    ):
+        with pytest.raises(PermissionError):
+            pathing.removeFile("/tmp/sample_file.jpg")
         mock_remove.assert_called_once_with("/tmp/sample_file.jpg")
 
 def test_removeFile_clear_read_only_win():

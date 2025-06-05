@@ -130,4 +130,6 @@ def removeFile(path: str) -> None:
             # Clear Read-only and try again
             os.chmod(path, stat.S_IWRITE)
             os.remove(path)
+        else:
+            raise
 
