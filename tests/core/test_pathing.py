@@ -2,6 +2,7 @@ import time
 from unittest.mock import patch
 from pathlib import Path
 import threading
+import stat
 
 import pytest
 
@@ -165,3 +166,28 @@ def test_isANSICompatible_compatible():
 
 def test_isANSICompatible_not_compatible():
     assert not pathing.isANSICompatible("D:\\画像")
+
+def test_removeFile_happy_path():
+    with patch("core.pathing.os.remove") as mock_remove:
+        pathing.removeFile("/tmp/sample_file.jpg")
+        mock_remove.assert_called_once_with("/tmp/sample_file.jpg")
+
+def test_removeFile_sad_path():
+    with (
+        patch("core.pathing.os.remove", side_effect=OSError) as mock_remove,
+        pytest.raises(OSError),
+    ):
+        pathing.removeFile("/tmp/sample_file.jpg")
+        mock_remove.assert_called_once_with("/tmp/sample_file.jpg")
+
+def test_removeFile_clear_read_only_win():
+    with (
+        patch("core.pathing.os.remove", side_effect=[PermissionError, None]) as mock_remove,
+        patch("core.pathing.os.chmod") as mock_chmod,
+        patch("core.pathing.platform.system", return_value="Windows"),
+    ):
+        pathing.removeFile("/tmp/sample_file.jpg")
+        mock_remove.call_count == 2
+        for i in range(2):
+            assert mock_remove.call_args_list[i][0][0] == "/tmp/sample_file.jpg"
+        mock_chmod.assert_called_once_with("/tmp/sample_file.jpg", stat.S_IWRITE)
