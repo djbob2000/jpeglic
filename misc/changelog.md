@@ -2,7 +2,7 @@
 
 ### Changed
 
-- Ignore "Read-only" on Windows (#106).
+- Clear "Read-only" file attributes on Windows (#108).
 
 ## 1.2.2 - 2025-05-31
 
