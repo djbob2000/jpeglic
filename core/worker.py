@@ -461,7 +461,7 @@ class Worker(QRunnable):
                 ):
                     os.remove(self.final_output)
                     self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.item_ext)
-                    shutil.copy(self.org_item_abs_path, self.final_output)
+                    shutil.copyfile(self.org_item_abs_path, self.final_output)  # Avoid preserving "Read-only" attribute on Windows, as it will conflict with preserving time attributes later on.
         except OSError as err:
             raise FileException("F1", f"Conversion could not finish. {err}")
 
