@@ -530,6 +530,7 @@ def finishConversion_patches(worker):
         "getsize": patch("core.worker.os.path.getsize", return_value=300_000),
         "isfile": patch("core.worker.os.path.isfile", side_effect=[True, True, True]),
         "getUniqueFilePath": patch("core.worker.getUniqueFilePath", return_value="final/path/img.jpg"),
+        "copyfile": patch("core.worker.shutil.copyfile"),
     }
 
     with ExitStack() as stack:
@@ -596,6 +597,29 @@ def test_finishConversion_replace(finishConversion_patches):
 
     mocks["removeFile"].assert_called_once_with("final/path/img.jpg")
     mocks["rename"].assert_called_once_with("temp/path/img.jpg", "final/path/img.jpg")
+
+@pytest.mark.parametrize("file_format, getsize_side_effect, copy_if_larger_enabled, expected_to_run", [
+    ("JPEG XL", [300_000, 300_000, 400_000], True, True),
+    ("JPEG XL", [300_000, 300_000, 300_000], True, False),
+    ("JPEG XL", [300_000, 300_000, 299_000], True, False),
+    ("JPEG XL", [300_000, 300_000, 400_000], False, False),
+    ("PNG", [300_000, 300_000, 400_000], True, False),
+    ("Lossless JPEG Transcoding", [300_000, 300_000, 400_000], True, False),
+    ("JPEG Reconstruction", [300_000, 300_000, 400_000], True, False),
+])
+def test_finishConversion_copy_if_larger(finishConversion_patches, file_format, getsize_side_effect, copy_if_larger_enabled, expected_to_run):
+    worker, mocks = finishConversion_patches
+    worker.params["format"] = file_format
+    worker.settings["copy_if_larger"] = copy_if_larger_enabled
+    mocks["getsize"].side_effect = getsize_side_effect
+    
+    worker.finishConversion()
+
+    assert mocks["remove"].call_count == (1 if expected_to_run else 0)
+    assert mocks["copyfile"].call_count == (1 if expected_to_run else 0)
+    if expected_to_run:
+        assert mocks["remove"].call_args[0][0] == mocks["getUniqueFilePath"].return_value
+        assert mocks["copyfile"].call_args[0] == (worker.org_item_abs_path, worker.final_output)
 
 @pytest.fixture
 def mock_exiftool_env(worker):
