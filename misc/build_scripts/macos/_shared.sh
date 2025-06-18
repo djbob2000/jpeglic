@@ -16,9 +16,11 @@ check_env() {
 
 # Checks if packages are present.
 check_packages() {
-    local pkg missing=()
+    local pkg missing=() installed
+    installed=$(brew ls --formula)
+
     for pkg in "$@"; do
-        if ! brew ls --version "${pkg}" &>/dev/null; then
+        if ! grep -Fxq -- "$pkg" <<<"$installed"; then
             missing+=("${pkg}")
         fi
     done
