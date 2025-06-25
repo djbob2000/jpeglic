@@ -6,19 +6,25 @@ import pytest
 
 import core.process as process
 
-def test___getStartupInfo_windows():
-    if os.name == "nt":
-        with patch("core.process.subprocess.STARTUPINFO") as mock_startupinfo:
-            startupinfo_instance = MagicMock()
-            mock_startupinfo.return_value = startupinfo_instance
-            startupinfo_instance.dwFlags = subprocess.STARTF_USESHOWWINDOW
-            startupinfo_instance.wShowWindow = subprocess.SW_HIDE
-
-            assert startupinfo_instance.dwFlags == subprocess.STARTF_USESHOWWINDOW
-            assert startupinfo_instance.wShowWindow == subprocess.SW_HIDE
-            assert process._getStartupInfo() is startupinfo_instance
-    else:
+def test___getStartupInfo_posix():
+    with patch("core.process.platform.system", return_value="Linux"):
         assert process._getStartupInfo() is None
+
+def test___getStartupInfo_windows():
+    startupinfo_instance = MagicMock()
+    startupinfo_instance.dwFlags = 0
+    startupinfo_instance.wShowWindow = 0
+
+    with (
+        patch("core.process.subprocess.STARTUPINFO", return_value=startupinfo_instance, create=True) as mock_startupinfo,
+        patch("core.process.subprocess.STARTF_USESHOWWINDOW", 1, create=True),
+        patch("core.process.subprocess.SW_HIDE", 2, create=True),
+        patch("core.process.platform.system", return_value="Windows"),
+    ):
+        assert process._getStartupInfo() is startupinfo_instance
+        assert startupinfo_instance.dwFlags == 1
+        assert startupinfo_instance.wShowWindow == 2
+        mock_startupinfo.assert_called_once()
 
 def test_runProcess():
     cmd = ("echo", "Hello world")

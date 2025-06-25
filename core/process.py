@@ -1,5 +1,5 @@
 import subprocess
-import os
+import platform
 import logging
 
 from data.process_manager import ProcessManager
@@ -34,7 +34,7 @@ def runProcess2(*cmd: str, cwd: str | None = None) -> (str, str):
 def _getStartupInfo():
     """Get startup info for Windows. Prevents console window from showing."""
     startupinfo = None
-    if os.name == 'nt':
+    if platform.system() == 'Windows':
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         startupinfo.wShowWindow = subprocess.SW_HIDE
