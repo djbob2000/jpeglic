@@ -71,6 +71,21 @@ elif platform.system() == "Linux":
         CONFIG_LOCATION = os.path.join(xdg_config_home, "xl-converter")
     else:
         CONFIG_LOCATION = os.path.expanduser('~/.config/xl-converter')
+elif platform.system() == "Darwin":
+    BASE_PATH = os.path.join(PROGRAM_FOLDER, "bin", "macos")
+
+    CJXL_PATH = os.path.join(BASE_PATH, "cjxl")
+    DJXL_PATH = os.path.join(BASE_PATH, "djxl")
+    JXLINFO_PATH = os.path.join(BASE_PATH, "jxlinfo")
+    CJPEGLI_PATH = os.path.join(BASE_PATH, "cjpegli")
+    IMAGE_MAGICK_PATH = os.path.join(BASE_PATH, "imagemagick", "magick")
+    AVIFENC_PATH = os.path.join(BASE_PATH, "libavif", "avifenc")
+    AVIFDEC_PATH = os.path.join(BASE_PATH, "libavif", "avifdec")
+    OXIPNG_PATH = os.path.join(BASE_PATH, "oxipng")
+    EXIFTOOL_PATH = os.path.join(BASE_PATH, "exiftool", "exiftool")
+    JPEGTRAN_PATH = os.path.join(BASE_PATH, "jpegtran")
+
+    CONFIG_LOCATION = os.path.normpath(os.path.expanduser("~/Library/Application Support/eu.codepoems.xl-converter"))
 
 LOGS_DIR = os.path.join(CONFIG_LOCATION, "logs")
 
