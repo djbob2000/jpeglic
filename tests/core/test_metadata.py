@@ -21,15 +21,25 @@ def test_runExifTool():
             "/path/to/dst.jpg",
             "-overwrite_original"
         )
-
+        
 def test__runExifTool_linux():
     with (
         patch("platform.system", return_value="Linux"),
-        patch("core.metadata._runExifTool") as mock_run,
+        patch("core.metadata.runProcess") as mock_runProcess,
     ):
         et_args = "-arg1", "-arg2"
         metadata._runExifTool(et_args)
-        mock_run.assert_called_once_with(et_args)
+        mock_runProcess.assert_called_once_with("exiftool", et_args)
+
+# def test__runExifTool_darwin():
+#     with (
+#         patch("platform.system", return_value="Darwin"),
+#         patch("core.metadata.runProcess") as mock_runProcess,
+#         patch("core.metadata.EXIFTOOL_PATH", "/tmp/exiftool") as var_EXIFTOOL_PATH,
+#     ):
+#         et_args = "-arg1", "-arg2"
+#         metadata._runExifTool(et_args)
+#         mock_runProcess.assert_called_once_with(var_EXIFTOOL_PATH, et_args)
 
 def test__runExifTool_windows():
     with (

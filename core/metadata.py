@@ -46,32 +46,36 @@ def runExifTool(src: str, dst: str, et_args: list[str]) -> None:
 
 def _runExifTool(*args):
     """For internal use only."""
-    if platform.system() == "Windows":
-        try:
-            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False, suffix=".txt") as tmp_file:
-                tmp_file_path = tmp_file.name
-                tmp_file_name = os.path.basename(tmp_file_path)
-                tmp_file_dir = os.path.dirname(tmp_file_path)
+    match platform.system():
+        case "Windows":
+            try:
+                with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False, suffix=".txt") as tmp_file:
+                    tmp_file_path = tmp_file.name
+                    tmp_file_name = os.path.basename(tmp_file_path)
+                    tmp_file_dir = os.path.dirname(tmp_file_path)
 
-                tmp_file.write("\n".join(args))
-        except Exception as e:
-            raise FileException("M0", f"Failed to create an argfile. {e}")
-        
-        runProcess(EXIFTOOL_PATH, "-charset", "filename=UTF8", "-@", tmp_file_name, cwd=tmp_file_dir)
+                    tmp_file.write("\n".join(args))
+            except Exception as e:
+                raise FileException("M0", f"Failed to create an argfile. {e}")
+            
+            runProcess(EXIFTOOL_PATH, "-charset", "filename=UTF8", "-@", tmp_file_name, cwd=tmp_file_dir)
 
-        try:
-            os.unlink(tmp_file_path)
-        except Exception as e:
-            raise FileException("M1", f"Failed to clean up an argfile. {e}")
-        # ExifTool does not support UTF-8 paths on Windows, unless you put them in an argfile.
-    elif platform.system() == "Linux":
-        runProcess("exiftool", *args)
-        # ExifTool is no longer included due to a bug in its handling of JPEG XL on Linux.
-        # If you try to process JPEG XL from Worker using the standalone ExifTool build, you get:
-        # (stderr): Warning: Install IO::Uncompress::Brotli to decode Brotli-compressed metadata
-        # To reproduce it, checkout `v1.0.1` tag and copy the binaries over from the official release.
-    else:
-        logging.error("[metadata - _runExifTool] Not implemented")
+            try:
+                os.unlink(tmp_file_path)
+            except Exception as e:
+                raise FileException("M1", f"Failed to clean up an argfile. {e}")
+            # ExifTool does not support UTF-8 paths on Windows, unless you put them in an argfile.
+        case "Linux":
+            runProcess("exiftool", *args)
+            # ExifTool is no longer included due to a bug in its handling of JPEG XL in the platform-independent Perl library.
+            # If you try to process JPEG XL from Worker via an absolute path, you get:
+            # (stderr): Warning: Install IO::Uncompress::Brotli to decode Brotli-compressed metadata
+        # case "Darwin":
+            # The problem described above is still an issue on macOS.
+            # Do not enable unless it's fixed.
+            # runProcess(EXIFTOOL_PATH, *args)
+        case _:
+            logging.error("[metadata - _runExifTool] Not implemented")
 
 def isExifToolAvailable() -> tuple[bool, str]:
     """Checks if ExifTool is available and caches the result.
@@ -94,7 +98,7 @@ def isExifToolAvailable() -> tuple[bool, str]:
                 Data.exiftool_err_msg = "Please reinstall this program in a location without special characters to use ExifTool."
             else:
                 Data.exiftool_available = True
-        case _:
+        case _:     # Darwin
             Data.exiftool_available = True
    
     return (Data.exiftool_available, Data.exiftool_err_msg)
