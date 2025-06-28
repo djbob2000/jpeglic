@@ -99,6 +99,45 @@ deps-win: build-libjpeg-turbo-win build-libjxl-win build-libavif-win build-image
 build-win:
 	bash ./misc/build_scripts/windows/build.sh
 
+# Building on macOS
+
+# .PHONY: download-exiftool-macos
+# download-exiftool-macos:
+# 	rm -rf ./bin/macos/exiftool
+# 	bash ./misc/build_scripts/macos/exiftool.sh
+
+.PHONY: build-libavif-macos
+build-libavif-macos:
+	rm -rf ./bin/macos/libavif
+	bash ./misc/build_scripts/macos/libavif.sh
+
+.PHONY: build-libjpeg-turbo-macos
+build-libjpeg-turbo-macos:
+	rm -rf ./bin/macos/jpegtran
+	bash ./misc/build_scripts/macos/libjpeg-turbo.sh
+
+.PHONY: build-imagemagick-macos
+build-imagemagick-macos:
+	rm -rf ./bin/macos/imagemagick
+	bash ./misc/build_scripts/macos/imagemagick.sh
+
+.PHONY: build-libjxl-macos
+build-libjxl-macos:
+	cd ./bin/macos && rm -f cjxl djxl jxlinfo cjpegli
+	bash ./misc/build_scripts/macos/libjxl.sh
+
+.PHONY: build-oxipng-macos
+build-oxipng-macos:
+	rm -rf ./bin/macos/oxipng
+	bash ./misc/build_scripts/macos/oxipng.sh
+
+# .PHONY: deps-macos
+# deps-macos: build-libjpeg-turbo-macos build-libjxl-macos build-libavif-macos build-imagemagick-macos build-oxipng-macos download-exiftool-macos
+
+# .PHONY: build-macos
+# build-macos:
+# 	bash ./misc/build_scripts/macos/build.sh
+
 # Misc.
 
 .PHONY: clean
