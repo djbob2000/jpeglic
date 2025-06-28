@@ -12,7 +12,7 @@ source "${SCRIPT_DIR}/_shared.sh"
 trap 'cleanup "${TEMP_DIR}"' EXIT
 set -euo pipefail
 check_msys2
-check_commands 7z git
+check_commands 7z git wget
 
 # Prepare
 cd "$TEMP_DIR"
