@@ -1,6 +1,7 @@
 import logging
 from unittest.mock import patch, MagicMock
 from contextlib import ExitStack
+import os
 
 from PySide6.QtWidgets import QWidget, QLabel, QComboBox
 from PySide6.QtCore import QUrl, QObject
@@ -62,32 +63,55 @@ def test_setToolTip_invalid_widget_types(caplog, setToolTip_patches):
         for record in caplog.records:
             assert "Failed to apply tooltip, expected QWidget" == record.message
 
-@pytest.fixture
-def mock_environ():
-    with patch("os.environ", {
-        "LD_LIBRARY_PATH": "/opt/app/_internal",
-        "QT_PLUGIN_PATH": "/opt/app/_internal/PySide6/Qt/plugins",
-        "QT_QPA_PLATFORM_PLUGIN_PATH": "/opt/app/_internal",
-        "QML2_IMPORT_PATH": "/opt/app/_internal/PySide6/Qt/qml",
-    }) as mock_env:
-        yield mock_env
+@pytest.mark.parametrize(
+    "system, init_vars, keys_to_remove",
+    [
+        (
+            "Linux",
+            {
+                "LD_LIBRARY_PATH": "/opt/app/_internal",
+                "QT_PLUGIN_PATH": "/opt/app/_internal/PySide6/Qt/plugins",
+                "QT_QPA_PLATFORM_PLUGIN_PATH": "/opt/app/_internal",
+                "QML2_IMPORT_PATH": "/opt/app/_internal/PySide6/Qt/qml",
+            },
+            [
+                "LD_LIBRARY_PATH",
+                "QT_PLUGIN_PATH",
+                "QT_QPA_PLATFORM_PLUGIN_PATH",
+                "QML2_IMPORT_PATH",
+            ],
+        ),
+        (
+            "Darwin",
+            {
+                "DYLD_LIBRARY_PATH": "/opt/app/_internal",
+            },
+            [
+                "DYLD_LIBRARY_PATH",
+            ],
+        ),
+    ],
+)
+def test__sanitizeEnviron(system, init_vars, keys_to_remove):
+    with (
+        patch("ui.lib.utils.platform.system", return_value=system),
+        patch.dict(os.environ, init_vars, clear=False),
+    ):
+        original = {k: os.environ.get(k) for k in init_vars}
+        with utils._sanitizeEnviron():
+            for key in keys_to_remove:
+                assert key not in os.environ
+        
+        for key, val in original.items():
+            assert os.environ.get(key) == val
 
-def test__sanitizeEnviron(mock_environ):
-    assert mock_environ["LD_LIBRARY_PATH"] == "/opt/app/_internal"
-    assert mock_environ["QT_PLUGIN_PATH"] == "/opt/app/_internal/PySide6/Qt/plugins"
-    assert mock_environ["QT_QPA_PLATFORM_PLUGIN_PATH"] == "/opt/app/_internal"
-    assert mock_environ["QML2_IMPORT_PATH"] == "/opt/app/_internal/PySide6/Qt/qml"
-
-    with utils._sanitizeEnviron():
-        assert "LD_LIBRARY_PATH" not in mock_environ
-        assert "QT_PLUGIN_PATH" not in mock_environ
-        assert "QT_QPA_PLATFORM_PLUGIN_PATH" not in mock_environ
-        assert "QML2_IMPORT_PATH" not in mock_environ
-
-    assert mock_environ["LD_LIBRARY_PATH"] == "/opt/app/_internal"
-    assert mock_environ["QT_PLUGIN_PATH"] == "/opt/app/_internal/PySide6/Qt/plugins"
-    assert mock_environ["QT_QPA_PLATFORM_PLUGIN_PATH"] == "/opt/app/_internal"
-    assert mock_environ["QML2_IMPORT_PATH"] == "/opt/app/_internal/PySide6/Qt/qml"
+def test__sanitizeEnviron_win():
+    with (
+        patch("ui.lib.utils.os.environ.get") as mock_os_environ_get,
+        patch("ui.lib.utils.platform.system", return_value="Windows"),
+        utils._sanitizeEnviron(),
+    ):
+        mock_os_environ_get.assert_not_called()
 
 def test_openRemoteUrl():
     with patch("ui.lib.utils.openUrl") as mock_openUrl:
@@ -104,7 +128,6 @@ def test_openLocalUrl():
 @pytest.fixture
 def mock_openUrl():
     patches = {
-        "system": patch("ui.lib.utils.platform.system", return_value="Linux"),
         "openUrl": patch("ui.lib.utils.QDesktopServices.openUrl"),
         "sanitize": patch("ui.lib.utils._sanitizeEnviron"),
     }
@@ -112,19 +135,13 @@ def mock_openUrl():
     with ExitStack() as stack:
         yield { name: stack.enter_context(patcher) for name, patcher in patches.items() }
 
-@pytest.mark.parametrize("platform_name, use_sanitize",[
-    ("Linux", True),
-    ("Windows", False),
-    ("Darwin", False),
-])
-def test_openUrl_sanitize(platform_name, use_sanitize, mock_openUrl):
-    mock_openUrl["system"].return_value = platform_name
+def test_openUrl_happy_path(mock_openUrl):
     url = QUrl("https://example.com")
 
     utils.openUrl(url)
 
     mock_openUrl["openUrl"].assert_called_once_with(url)
-    assert mock_openUrl["sanitize"].called == use_sanitize
+    assert mock_openUrl["sanitize"].called
 
 def test_openUrl_exception(caplog, mock_openUrl):
     mock_openUrl["openUrl"].side_effect = Exception("test")

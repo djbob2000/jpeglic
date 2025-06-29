@@ -40,12 +40,22 @@ def setToolTip(tooltip: str, *widget_ids: QWidget) -> None:
 @contextmanager
 def _sanitizeEnviron() -> dict[str, str]:
     """Sanitizes os.environ as a context manager."""
-    keys_to_sanitize = [
-        "LD_LIBRARY_PATH",
-        "QT_PLUGIN_PATH",
-        "QT_QPA_PLATFORM_PLUGIN_PATH",
-        "QML2_IMPORT_PATH",
-    ]
+    system = platform.system()
+    if system == "Linux":
+        keys_to_sanitize = [
+            "LD_LIBRARY_PATH",
+            "QT_PLUGIN_PATH",
+            "QT_QPA_PLATFORM_PLUGIN_PATH",
+            "QML2_IMPORT_PATH",
+        ]
+    elif system == "Darwin":
+        keys_to_sanitize = [
+            "DYLD_LIBRARY_PATH",
+        ]
+    else:   # Windows
+        yield
+        return
+    
     backup = {}
 
     try:
@@ -70,10 +80,7 @@ def openLocalUrl(url: str) -> None:
 
 def openUrl(qurl: QUrl) -> None:
     try:
-        if platform.system() == "Linux":
-            with _sanitizeEnviron():
-                QDesktopServices.openUrl(qurl)
-        else:
+        with _sanitizeEnviron():
             QDesktopServices.openUrl(qurl)
     except Exception as e:
         logger.error(f"[ui.utils.openUrl] Failed to open URL. {e}")
