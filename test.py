@@ -25,6 +25,11 @@ Example Usage:
             action="store",
             help="Run tests from the specified file."
         )
+        self.parser.add_argument(
+            "-lf", "--last-failed",
+            action="store_true",
+            help="Re-run only test failures."
+        )
     
     def parseArgs(self):
         return self.parser.parse_args()
@@ -41,5 +46,8 @@ if __name__ == "__main__":
 
     if args.keyword:
         pytest_args.extend(["-k", args.keyword])
+
+    if args.last_failed:
+        pytest_args.extend(["--last-failed"])
 
     pytest.main(pytest_args)
