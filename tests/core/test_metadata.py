@@ -21,15 +21,25 @@ def test_runExifTool():
             "/path/to/dst.jpg",
             "-overwrite_original"
         )
-        
-def test__runExifTool_linux():
+
+@pytest.mark.parametrize("system", [ "Linux", "Darwin" ])
+def test__runExifTool_posix(system):
     with (
-        patch("platform.system", return_value="Linux"),
+        patch("platform.system", return_value=system),
         patch("core.metadata.runProcess") as mock_runProcess,
     ):
         et_args = "-arg1", "-arg2"
         metadata._runExifTool(et_args)
         mock_runProcess.assert_called_once_with("exiftool", et_args)
+
+# def test__runExifTool_linux():
+#     with (
+#         patch("platform.system", return_value="Linux"),
+#         patch("core.metadata.runProcess") as mock_runProcess,
+#     ):
+#         et_args = "-arg1", "-arg2"
+#         metadata._runExifTool(et_args)
+#         mock_runProcess.assert_called_once_with("exiftool", et_args)
 
 # def test__runExifTool_darwin():
 #     with (
@@ -107,10 +117,11 @@ def reset_data():
 @pytest.mark.parametrize("system, output, expected", [
     ("Linux", ("", "exiftool is /usr/bin/exiftool"), (True, "")),
     ("Linux", ("", "bash: type: exiftool: not found"), (False, "ExifTool not found.")),
+    ("Darwin", ("", "exiftool is /usr/bin/exiftool"), (True, "")),
+    ("Darwin", ("", "bash: type: exiftool: not found"), (False, "ExifTool not found.")),
     ("Windows", ("12.40",""), (True, "")),
     ("Windows", ("",""), (False, "Please reinstall this program")),
     ("Windows", ("","assertion failed"), (False, "Please reinstall this program")),
-    ("Darwin", ("", ""), (True, "")),
 ])
 def test_isExifToolAvailable(reset_data, system, output, expected):
     with (
