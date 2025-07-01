@@ -183,7 +183,7 @@ python main.py
 
 #### Building
 
-Recompile the bootloader:
+Clone PyInstaller, recompile the bootloader, and install:
 
 ```bash
 source env_build/bin/activate
@@ -249,6 +249,19 @@ Run the application.
 
 ```bash
 python main.py
+```
+
+Bundling support is experimental. Exported bundle will not work on another machine.
+
+Clone PyInstaller, recompile the bootloader, and install:
+
+```bash
+git clone -b v6.11.1 --depth 1 https://github.com/pyinstaller/pyinstaller.git misc/pyinstaller
+cd misc/pyinstaller/bootloader
+python waf all --clang
+cd ..
+pip install .
+cd ../..
 ```
 
 ### Providing Tool Binaries

@@ -167,7 +167,8 @@ class Builder():
         # Shared
         self.bin_dir = {
             "Windows": "bin/win",
-            "Linux": "bin/linux"
+            "Linux": "bin/linux",
+            "Darwin": "bin/macos",
         }
 
         self.installer_path = {
@@ -200,6 +201,8 @@ class Builder():
         
         self.build_7z_name = f"xl-converter-linux-{self.version_sanitized}-x86_64"
         self.build_appimage_name = f"xl-converter-linux-{self.version_sanitized}-x86_64.AppImage"
+
+        self.build_macos_universal_name = f"xl-converter-macos-{self.version_sanitized}-experimental"
 
         # Clean up
         # base path: xl-converter/_internal
@@ -240,6 +243,21 @@ class Builder():
                 "PySide6\\plugins\\imageformats",
                 "PySide6\\Qt6MultimediaWidgets",
                 "PySide6\\translations",
+            ],
+            "Darwin": [
+                "PySide6/Qt/lib/libavcodec*",
+                "PySide6/Qt/lib/libavformat*",
+                "PySide6/Qt/lib/libavutil*",
+                "PySide6/Qt/lib/QtOpenGL*",
+                "PySide6/Qt/lib/QtPdf*",
+                "PySide6/Qt/lib/QtQml*",
+                "PySide6/Qt/lib/QtQuick*",
+                "PySide6/Qt/lib/libswscale*",
+                "PySide6/Qt/lib/QtVirtualKeyboard*",
+
+                "PySide6/Qt/plugins/imageformats",
+                "PySide6/Qt/plugins/multimedia",
+                "PySide6/Qt/translations",
             ]
         }
 
@@ -277,6 +295,8 @@ class Builder():
             self._appendUpdateFile()
         
         print(f"[Building] Finished (built to {self.dst_dir}/{self.project_name})")
+        if platform.system() == "Darwin":
+            print("[Warning] macOS build support is experimental. Some tools in ./bin/macos are not self-contained. This bundle will not work on another machine! Use for testing only.")
 
     def _prepare(self):
         if platform.system() == "Windows":
