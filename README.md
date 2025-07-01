@@ -207,6 +207,50 @@ Build:
 python build.py
 ```
 
+### macOS
+
+> [!NOTE]
+> The native macOS support is experimental. Use Wine instead.
+
+Install:
+- [Homebrew](https://brew.sh/)
+- [Rust](https://www.rust-lang.org/)
+- [Python 3.13 Universal2 build](https://www.python.org/downloads/macos/)
+
+Open a new terminal and install the necessary packages:
+
+```bash
+brew install nasm cmake llvm coreutils giflib jpeg-turbo libpng ninja zlib wget brotli make gnu-sed  pkgconf libomp imath glib gettext webp openjpeg little-cms2 fontconfig freetype jpeg-xl libheif liblqr libtiff libtool
+```
+
+Make sure `clang` is pointing to the one from Homebrew.
+
+Run each target individually. Some targets may require additional setup.
+- `make build-libjpeg-turbo-macos`
+- `make build-libavif-macos`
+- `make build-imagemagick-macos`
+- `make build-libjxl-macos`
+- `make build-oxipng-macos`
+
+Create and activate a virtual environment.
+
+```bash
+python -m venv env_build
+source env_build/bin/activate
+```
+
+Install Python dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the application.
+
+```bash
+python main.py
+```
+
 ### Providing Tool Binaries
 
 To build XL Converter, you need to provide various binaries. This can be quite challenging.
