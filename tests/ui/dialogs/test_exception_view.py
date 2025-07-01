@@ -81,6 +81,25 @@ def test_saveToFile_happy_path(exception_view):
         mock__writeCsv.assert_called_once_with(mock_dlg.toLocalFile.return_value, expected_rows)
         
 
+@pytest.mark.parametrize("system, native_dlg", (
+    ["Darwin", False],
+    ["Linux", True],
+    ["Windows", True],
+))
+def test_saveToFile_darwin_dlg(system, native_dlg, exception_view):
+    mock_dlg = MagicMock()
+    mock_dlg.isValid.return_value = False
+    with (
+        patch.object(exception_view, "isEmpty", return_value=False),
+        patch.object(exception_view, "_writeCsv") as mock__writeCsv,
+        patch("ui.dialogs.exception_view.platform.system", return_value=system),
+        patch("ui.dialogs.exception_view.QFileDialog.getSaveFileUrl", return_value=(mock_dlg, None)) as mock_getSaveFileUrl,
+    ):
+        exception_view.saveToFile()
+
+        mock__writeCsv.assert_not_called()
+        assert bool(mock_getSaveFileUrl.call_args[1]["options"] & QFileDialog.DontUseNativeDialog) != native_dlg
+
 def test_saveToFile_empty(exception_view):
     with (
         patch.object(exception_view, "isEmpty", return_value=True),

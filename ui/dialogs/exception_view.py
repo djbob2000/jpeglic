@@ -61,7 +61,7 @@ class ExceptionView(QDialog):
         self._setupLayouts()
     
     def _setupWidgets(self):
-        self.exceptions_t = QTreeWidget(self.parent)
+        self.exceptions_t = QTreeWidget(self)
         self.exceptions_t.setRootIsDecorated(False)
         self.exceptions_t.setHeaderLabels(("ID", "Exception", "Source",))
         self.exceptions_t.setItemDelegate(ItemDelegate())
@@ -118,11 +118,19 @@ class ExceptionView(QDialog):
             message_box.info(self, "Empty List", "Exception list is empty, there is nothing to save.")
             return
 
+        options = QFileDialog.Options()
+        if platform.system() == "Darwin":
+            # On macOS, clicking "Cancel" on a file dialog, automatically closes the parent widget if it's modal.
+            # Using self.setModal(False) prevents the parent from being closed, but the focus returns to the main window, not to the previous dialog.
+            # Linux and Windows are fine. This problem is caused by a macOS feature.
+            options |= QFileDialog.DontUseNativeDialog
+
         dlg, _ = QFileDialog.getSaveFileUrl(
             parent=self,
             caption="Save Exceptions",
             dir=QUrl.fromLocalFile(os.path.expanduser("~/xl_converter_exceptions.csv")),
             filter="CSV (*.csv)",
+            options=options,
         )
 
         if not dlg.isValid():
