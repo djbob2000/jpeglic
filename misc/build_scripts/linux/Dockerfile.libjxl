@@ -6,6 +6,7 @@ ARG LIBJXL_TAG=v0.11.1
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+COPY ./misc/build_scripts/linux/sources.list /etc/apt/sources.list
 RUN apt update && apt install -y \
     git \
     asciidoc \
