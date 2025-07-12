@@ -142,10 +142,15 @@ build-%-macos:
 	$(call build_cleanup,$*)
 	bash $(SCRIPT_DIR)/macos/$*.sh
 
-.PHONY: build-exiftool-win
-build-exiftool-win:
+.PHONY: exiftool
+ifeq ($(PLAT),win)
+exiftool:
 	@rm -rf ./bin/win/exiftool
 	bash $(SCRIPT_DIR)/windows/exiftool.sh
+else
+exiftool:
+	$(error The 'exiftool' target is only available on Windows)
+endif
 
 # Misc.
 
