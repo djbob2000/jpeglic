@@ -1,13 +1,78 @@
-# Config
+SHELL               := bash
+PYTHON              := python
+ENV_BUILD           := ./env_build
+ENV_DEV             := ./env_dev
+REQUIREMENTS_BUILD  := requirements.txt
+REQUIREMENTS_TEST   := requirements_test.txt
+BIN_DIR             := bin
+SCRIPT_DIR          := misc/build_scripts
 
-PYTHON 				= python
-ENV_BUILD 			= ./env_build
-ENV_DEV 			= ./env_dev
-REQUIREMENTS_BUILD 	= requirements.txt
-REQUIREMENTS_TEST 	= requirements_test.txt
+# Detect host OS
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+  PLAT ?= linux
+else ifeq ($(UNAME_S),Darwin)
+  PLAT ?= macos
+else ifneq (,$(MSYSTEM))
+	ifneq ($(MSYSTEM),MINGW64)
+	  $(error Please run this Makefile in a MINGW64 shell. Current shell: $(MSYSTEM))
+	endif
+	PLAT ?= win
+else ifneq (,$(findstring CYGWIN,$(UNAME_S)))
+  PLAT ?= win
+else
+  PLAT ?= linux
+endif
 
-# Building on Linux
+# Tool list
+TOOLS := libjxl libavif imagemagick libjpeg-turbo oxipng
 
+# Tool layout
+bin_dir_linux := $(BIN_DIR)/linux
+bin_dir_win   := $(BIN_DIR)/win
+bin_dir_macos := $(BIN_DIR)/macos
+
+bins_linux_libjxl        := cjxl djxl jxlinfo cjpegli
+dest_linux_libjxl        :=
+bins_linux_libavif       := avifenc avifdec
+dest_linux_libavif       :=
+bins_linux_imagemagick   :=
+dest_linux_imagemagick   := imagemagick
+bins_linux_libjpeg-turbo := jpegtran
+dest_linux_libjpeg-turbo :=
+bins_linux_oxipng        := oxipng
+dest_linux_oxipng        :=
+
+bins_win_libjxl          :=
+dest_win_libjxl          := libjxl
+bins_win_libavif         :=
+dest_win_libavif         := libavif
+bins_win_imagemagick     :=
+dest_win_imagemagick     := imagemagick
+bins_win_libjpeg-turbo   := jpegtran
+dest_win_libjpeg-turbo   :=
+bins_win_oxipng          :=
+dest_win_oxipng          := oxipng
+
+bins_macos_libjxl        := cjxl djxl jxlinfo cjpegli
+dest_macos_libjxl        :=
+bins_macos_libavif       :=
+dest_macos_libavif       := libavif
+bins_macos_imagemagick   :=
+dest_macos_imagemagick   := imagemagick
+bins_macos_libjpeg-turbo := jpegtran
+dest_macos_libjpeg-turbo :=
+bins_macos_oxipng        :=
+dest_macos_oxipng        := oxipng
+
+# Help
+.PHONY: help
+help:
+	@echo "Usage: make <tool> [PLAT=linux|win|macos]"
+	@echo "    tools: $(TOOLS)"
+	@echo "    other: deps build build-all"
+
+# Usage: docker_build <Dockerfile> <src> <dst>
 define docker_build
 	mkdir -p $(3)
 	docker build -f $(1) --progress=plain --iidfile tmp.txt . && \
@@ -19,124 +84,68 @@ define docker_build
 	rm tmp.txt
 endef
 
-.PHONY: build-libjxl
-build-libjxl:
-	cd ./bin/linux && rm -f cjxl djxl jxlinfo cjpegli
-	$(call docker_build,./misc/build_scripts/linux/Dockerfile.libjxl,/src/bin/.,./bin/linux)
-
-.PHONY: build-libavif
-build-libavif:
-	cd ./bin/linux && rm -f avifenc avifdec 
-	$(call docker_build,./misc/build_scripts/linux/Dockerfile.libavif,/src/bin/.,./bin/linux)
-
-.PHONY: build-imagemagick
-build-imagemagick:
-	rm -rf ./bin/linux/imagemagick
-	$(call docker_build,./misc/build_scripts/linux/Dockerfile.imagemagick,/src/bin/.,./bin/linux/imagemagick)
-
-.PHONY: build-libjpeg-turbo
-build-libjpeg-turbo:
-	rm -f ./bin/linux/jpegtran
-	$(call docker_build,./misc/build_scripts/linux/Dockerfile.libjpeg-turbo,/src/bin/.,./bin/linux)
-
-.PHONY: build-oxipng
-build-oxipng:
-	rm -f ./bin/linux/oxipng
-	$(call docker_build,./misc/build_scripts/linux/Dockerfile.oxipng,/src/bin/.,./bin/linux)
-
-.PHONY: build-oxipng-win-docker
-build-oxipng-win-docker:
-	rm -rf ./bin/win/oxipng
-	$(call docker_build,./misc/build_scripts/windows/Dockerfile.oxipng,/src/bin/.,./bin/win/oxipng)
+.PHONY: $(TOOLS)
+$(TOOLS): %: build-%-$(PLAT)
 
 .PHONY: deps
-deps: build-libjxl build-libavif build-imagemagick build-libjpeg-turbo build-oxipng
+deps: $(TOOLS)
+ifeq ($(PLAT),win)
+	deps += build-exiftool-win
+endif
+# ifeq ($(PLAT),macos)
+# 	deps += build-exiftool-macos
+# endif
 
 .PHONY: build
-build:
-	rm -rf ./dist
-	$(call docker_build,./misc/build_scripts/linux/Dockerfile.build,/export/.,./dist)
+build: build-$(PLAT)
+
+.PHONY: build-linux
+build-linux:
+	rm -rf dist
+	$(call docker_build,$(SCRIPT_DIR)/linux/Dockerfile.build,/export/.,dist)
+
+.PHONY: build-win
+build-win:
+	rm -rf dist
+	bash $(SCRIPT_DIR)/windows/build.sh
+
+.PHONY: build-macos
+build-macos:
+	rm -rf dist
+	bash $(SCRIPT_DIR)/macos/build.sh
 
 .PHONY: build-all
 build-all: deps build
 
-# Building on Windows
+define build_cleanup
+	@rm -rf \
+		$(addprefix $(bin_dir_$(PLAT))/, $(bins_$(PLAT)_$(1))) \
+		$(if $(dest_$(PLAT)_$(1)),\
+			$(bin_dir_$(PLAT))/$(dest_$(PLAT)_$(1)))
+endef
 
-.PHONY: download-exiftool-win
-download-exiftool-win:
-	rm -rf ./bin/win/exiftool
-	bash ./misc/build_scripts/windows/exiftool.sh
+.PHONY: build-%-win
+build-%-win:
+	@echo "Building $*"
+	$(call build_cleanup,$*)
+	bash $(SCRIPT_DIR)/windows/$*.sh
 
-.PHONY: build-libavif-win
-build-libavif-win:
-	rm -rf ./bin/win/libavif
-	bash ./misc/build_scripts/windows/libavif.sh
+.PHONY: build-%-linux
+build-%-linux:
+	@echo "Building $*"
+	$(call build_cleanup,$*)
+	$(call docker_build,$(SCRIPT_DIR)/linux/Dockerfile.$*,/src/bin/.,$(bin_dir_linux)$(if $(dest_linux_$*),/$(dest_linux_$*),))
 
-.PHONY: build-libjpeg-turbo-win
-build-libjpeg-turbo-win:
-	rm -rf ./bin/win/jpegtran
-	bash ./misc/build_scripts/windows/libjpeg-turbo.sh
+.PHONY: build-%-macos
+build-%-macos:
+	@echo "Building $*"
+	$(call build_cleanup,$*)
+	bash $(SCRIPT_DIR)/macos/$*.sh
 
-.PHONY: build-imagemagick-win
-build-imagemagick-win:
-	rm -rf ./bin/win/imagemagick
-	bash ./misc/build_scripts/windows/imagemagick.sh
-
-.PHONY: build-libjxl-win
-build-libjxl-win:
-	rm -rf ./bin/win/libjxl
-	bash ./misc/build_scripts/windows/libjxl.sh
-
-.PHONY: build-oxipng-win
-build-oxipng-win:
-	rm -rf ./bin/win/oxipng
-	bash ./misc/build_scripts/windows/oxipng.sh
-
-.PHONY: deps-win
-deps-win: build-libjpeg-turbo-win build-libjxl-win build-libavif-win build-imagemagick-win build-oxipng-win download-exiftool-win
-
-.PHONY: build-win
-build-win:
-	bash ./misc/build_scripts/windows/build.sh
-
-# Building on macOS
-
-# .PHONY: download-exiftool-macos
-# download-exiftool-macos:
-# 	rm -rf ./bin/macos/exiftool
-# 	bash ./misc/build_scripts/macos/exiftool.sh
-
-.PHONY: build-libavif-macos
-build-libavif-macos:
-	rm -rf ./bin/macos/libavif
-	bash ./misc/build_scripts/macos/libavif.sh
-
-.PHONY: build-libjpeg-turbo-macos
-build-libjpeg-turbo-macos:
-	rm -rf ./bin/macos/jpegtran
-	bash ./misc/build_scripts/macos/libjpeg-turbo.sh
-
-.PHONY: build-imagemagick-macos
-build-imagemagick-macos:
-	rm -rf ./bin/macos/imagemagick
-	bash ./misc/build_scripts/macos/imagemagick.sh
-
-.PHONY: build-libjxl-macos
-build-libjxl-macos:
-	cd ./bin/macos && rm -f cjxl djxl jxlinfo cjpegli
-	bash ./misc/build_scripts/macos/libjxl.sh
-
-.PHONY: build-oxipng-macos
-build-oxipng-macos:
-	rm -rf ./bin/macos/oxipng
-	bash ./misc/build_scripts/macos/oxipng.sh
-
-# .PHONY: deps-macos
-# deps-macos: build-libjpeg-turbo-macos build-libjxl-macos build-libavif-macos build-imagemagick-macos build-oxipng-macos download-exiftool-macos
-
-# .PHONY: build-macos
-# build-macos:
-# 	bash ./misc/build_scripts/macos/build.sh
+.PHONY: build-exiftool-win
+build-exiftool-win:
+	@rm -rf ./bin/win/exiftool
+	bash $(SCRIPT_DIR)/windows/exiftool.sh
 
 # Misc.
 
