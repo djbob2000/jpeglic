@@ -44,30 +44,48 @@ Scale down images to resolution, percent, shortest (and longest) side, and megap
 
 ### Windows 10
 
-Install:
+Prerequisites:
 - [Python 3.13](https://python.org/downloads/) (check `Add python.exe to PATH`)
 - [git](https://git-scm.com/)
+- [MSYS2](https://msys2.org/)
+- Visual Studio 2022 (with Windows 10 or 11 SDK)
+- Latest [vc_redist](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
-Clone the repo.
+Launch MSYS2 MINGW64:
 
-```cmd
+```bash
+pacman -Syu
+pacman -S --needed git cmake mingw-w64-x86_64-gcc
+```
+
+Clone the repo:
+
+```bash
 git clone -b stable --depth 1 https://github.com/JacobDev1/xl-converter.git
 cd xl-converter
 ```
 
-[Provide tool binaries](#providing-tool-binaries).
+> [!IMPORTANT]
+> If you installed or upgraded any package, restart the MSYS2 environment. Otherwise, building will start failing for random reasons.
 
-Setup `venv`.
+Run each target individually; each has additional requirements:
+- `make libjpeg-turbo`
+- `make libavif`
+- `make imagemagick`
+- `make libjxl`
+- `make oxipng`
+- `make exiftool`
+
+Launch CMD, enter the project's directory, and setup a virtual environment:
 
 ```cmd
+cd C:\msys64\home\user\xl-converter
 python -m venv env_build
-env_build\Scripts\activate.bat
+env_build\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Install [redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe)
-
-Run the application.
+Run the application:
 
 ```cmd
 python main.py
@@ -75,46 +93,22 @@ python main.py
 
 #### Building
 
-Bundling requires recompiling the bootloader to prevent Windows from deleting the EXE (due to [false positives](https://github.com/pyinstaller/pyinstaller/blob/master/.github/ISSUE_TEMPLATE/antivirus.md)).
-
-Install MSYS2 and launch MINGW64.
-
-```bash
-pacman -Syu
-pacman -S --needed git cmake mingw-w64-x86_64-gcc
-```
-
-Close the MSYS2 terminal and launch CMD inside project's root directory.
-
-> [!IMPORTANT]
-> If you upgraded any package, restart the MSYS2 environment. Otherwise, building will start failing for random reasons.
-
-Clone PyInstaller.
+Launch CMD, and setup PyInstaller:
 
 ```cmd
+cd C:\msys64\home\user\xl-converter
 env_build\Scripts\activate
+%comspec% /k "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 git clone -b v6.11.1 --depth 1 https://github.com/pyinstaller/pyinstaller.git misc\pyinstaller
-```
-
-Recompile the bootloader.
-
-```cmd
 cd misc\pyinstaller\bootloader
-set PATH=C:\msys64\mingw64\bin;%PATH%
-python waf all --gcc
+python waf all
 cd ..
 pip install .
 cd ..\..
-```
-
-> [!NOTE]
-> The following error may occur `C:\msys64\mingw64\bin\strip.exe: unable to copy file 'runw.exe'; reason: Permission denied`. You can fix it by adding `C:/msys64` to Windows Defender exclusions.
-
-Reload the environment to avoid the `ModuleNotFoundError` error.
-
-```cmd
 env_build\Scripts\activate
 ```
+
+The last line reloads the environment to avoid the `ModuleNotFoundError`.
 
 Bundle:
 
@@ -124,58 +118,58 @@ python build.py
 
 ### Linux (Ubuntu-based)
 
-Install packages.
+Prerequisites:
+- Docker (set up to run without root)
+- [pyenv](https://github.com/pyenv/pyenv) ([add to shell](https://github.com/pyenv/pyenv?tab=readme-ov-file#set-up-your-shell-environment-for-pyenv))
+
+Install packages:
 
 ```bash
 sudo apt update
 sudo apt install git make curl fuse p7zip-full
 ```
 
-Install [xcb QPA](https://doc.qt.io/qt-6/linux-requirements.html) dependencies.
+Install [xcb QPA](https://doc.qt.io/qt-6/linux-requirements.html) dependencies:
 
 ```bash
 sudo apt install '^libxcb.*-dev' libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
 ```
 
-Install [pyenv](https://github.com/pyenv/pyenv) via [Automatic installer](https://github.com/pyenv/pyenv?tab=readme-ov-file#automatic-installer) then [add it to shell](https://github.com/pyenv/pyenv?tab=readme-ov-file#set-up-your-shell-environment-for-pyenv)
-
-Install Python build packages.
+Install Python build dependencies:
 
 ```bash
 sudo apt install wget build-essential libreadline-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev liblzma-dev
 ```
 
-Compile and setup Python `3.13`.
+Compile and setup Python `3.13`:
 
 ```bash
 pyenv install 3.13
 pyenv global 3.13
 ```
 
-Clone and set up the repo.
+Clone and set up the repo:
 
 ```bash
 git clone -b stable --depth 1 https://github.com/JacobDev1/xl-converter.git
-chmod -R +x xl-converter
 cd xl-converter
 ```
 
-[Provide tool binaries](#providing-tool-binaries).
+Compile dependencies:
 
-Create and activate a virtual environment.
+```bash
+make deps
+```
+
+Setup a virtual environment:
 
 ```bash
 python -m venv env_build
 source env_build/bin/activate
-```
-
-Install Python dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
-Now, you can run it.
+Run the program:
 
 ```bash
 python main.py
@@ -183,7 +177,7 @@ python main.py
 
 #### Building
 
-Clone PyInstaller, recompile the bootloader, and install:
+Setup PyInstaller:
 
 ```bash
 source env_build/bin/activate
@@ -193,13 +187,10 @@ python waf all --gcc
 cd ..
 pip install .
 cd ../..
-```
-
-Reload the environment to avoid the `ModuleNotFoundError` error.
-
-```bash
 source env_build/bin/activate
 ```
+
+The last line reloads the environment to avoid the `ModuleNotFoundError` error.
 
 Build:
 
@@ -223,35 +214,30 @@ Open a new terminal and install the necessary packages:
 brew install nasm cmake llvm coreutils giflib jpeg-turbo libpng ninja zlib wget brotli make gnu-sed  pkgconf libomp imath glib gettext webp openjpeg little-cms2 fontconfig freetype jpeg-xl libheif liblqr libtiff libtool
 ```
 
-Make sure `clang` is pointing to the one from Homebrew.
+Make sure `clang` is pointing to the one provided by Homebrew.
 
-Run each target individually. Some targets may require additional setup.
-- `make build-libjpeg-turbo-macos`
-- `make build-libavif-macos`
-- `make build-imagemagick-macos`
-- `make build-libjxl-macos`
-- `make build-oxipng-macos`
+Run each target individually; each has additional requirements:
+- `make libjpeg-turbo`
+- `make libavif`
+- `make imagemagick`
+- `make libjxl`
+- `make oxipng`
 
-Create and activate a virtual environment.
+Create and activate a virtual environment:
 
 ```bash
 python -m venv env_build
 source env_build/bin/activate
-```
-
-Install Python dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
-Run the application.
+Run the application:
 
 ```bash
 python main.py
 ```
 
-Bundling support is experimental. Exported bundle will not work on another machine.
+Bundling support is limited. The exported bundle will not work on another machine!
 
 Clone PyInstaller, recompile the bootloader, and install:
 
@@ -264,69 +250,11 @@ pip install .
 cd ../..
 ```
 
-### Providing Tool Binaries
-
-To build XL Converter, you need to provide various binaries. This can be quite challenging.
-
-> [!TIP]
-> Use [the official builds](https://github.com/JacobDev1/xl-converter/releases) as a reference.
-
-Libraries:
-- [libjxl](https://github.com/libjxl/libjxl) `v0.11.x`
-- [libavif](https://github.com/AOMediaCodec/libavif) `v1.3.x` (`libaom` minimum: `v3.12.x` and [SVT-AV1-PSY](https://github.com/psy-ex/svt-av1-psy.git) `v3.0.2`)
-- [imagemagick](https://imagemagick.org/) `7.x Q16-HDRI`
-- [exiftool](https://exiftool.org/) `13.x`
-- [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) `3.1.x`
-- [oxipng](https://github.com/shssoichiro/oxipng) `v9.1.x`
-
-Below you'll find references on how to arrange the binaries. You will also need to add dependencies alongside them.
-
-#### Linux (x86_64)
+Bundle:
 
 ```bash
-./xl-converter/bin/linux/
-├── avifdec
-├── avifenc
-├── cjpegli
-├── cjxl
-├── djxl
-├── imagemagick
-│   └── magick
-├── jpegtran
-├── jxlinfo
-└── oxipng
+python build.py
 ```
-
-#### Windows (x86_64)
-
-```bash
-./xl-converter/bin/win/
-├── exiftool
-│   ├── exiftool.exe
-│   └── exiftool_files
-├── imagemagick
-│   └── magick.exe
-├── jpegtran
-│   └── jpegtran.exe
-├── libavif
-│   ├── avifdec.exe
-│   └── avifenc.exe
-├── libjxl
-│   ├── cjpegli.exe
-│   ├── cjxl.exe
-│   ├── djxl.exe
-│   └── jxlinfo.exe
-└── oxipng
-    └── oxipng.exe
-```
-
-On Windows, I recommend using MSYS2 MINGW64 for building.
-
-> [!NOTE]
-> When building `libjpeg-turbo`, embed [this manifest](https://github.com/AOMediaCodec/libavif/blob/3ec01cefd1ddd266a622d5e114a0888581b68f4a/apps/utf8.manifest) into `jpegtran.exe` with `mt.exe` from Visual Studio. This enables a UTF-8 support in arguments.
-
-> [!TIP]
-> Use `ldd` in MSYS2 to check which DLLs need bundling alongside the executables.
 
 ## Info
 
