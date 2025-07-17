@@ -84,9 +84,8 @@ def pip_install(python_path: Path | str, *requirements_files: Path | str) -> Non
     subprocess.run([str(python_path), '-m', 'pip', 'install', '--upgrade', 'pip'], check=True)
     subprocess.run([str(python_path), '-m', 'pip', 'install', '-r'] + [str(r) for r in requirements_files], check=True)
 
-def main() -> None:
-    # ArgumentParser
-    parser = argparse.ArgumentParser()
+def build_cli(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description='Windows build orchestrator')
     parser.add_argument(
         '--run-tests',
         action='store_true',
@@ -112,7 +111,11 @@ def main() -> None:
         default=PYINSTALLER_TAG,
         help='PyInstaller git tag.'
     )
-    args = parser.parse_args()
+    return parser.parse_args(argv)
+
+def main() -> None:
+    # ArgumentParser
+    args = build_cli()
 
     # Prepare EXEs
     py_exe = Path(args.python_path)
