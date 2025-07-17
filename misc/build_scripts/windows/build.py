@@ -87,9 +87,9 @@ def pip_install(python_path: Path | str, *requirements_files: Path | str) -> Non
 def build_cli(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Windows build orchestrator')
     parser.add_argument(
-        '--run-tests',
+        '--skip-tests',
         action='store_true',
-        help='Run tests.'
+        help='Skip tests.'
     )
     parser.add_argument(
         '--force-clean',
@@ -136,7 +136,7 @@ def main() -> None:
                 shutil.rmtree(d)
 
     # Run tests
-    if args.run_tests:
+    if not args.skip_tests:
         if not ENV_DEV.exists():
             create_venv(py_exe, ENV_DEV)
         dev_py = ENV_DEV / 'Scripts' / 'python.exe'
