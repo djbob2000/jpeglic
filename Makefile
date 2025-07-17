@@ -106,8 +106,8 @@ build-linux:
 
 .PHONY: build-win
 build-win:
-	rm -rf dist
-	bash $(SCRIPT_DIR)/windows/build.sh
+	@echo "Cannot call from MSYS2 to avoid runtime mismatch when bundling. Open CMD and run:"
+	@echo "python misc\build_scripts\windows\build.py"
 
 .PHONY: build-macos
 build-macos:
