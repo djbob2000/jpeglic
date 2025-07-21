@@ -16,17 +16,16 @@ check_env() {
 
 # Checks if packages are present.
 check_packages() {
-    local pkg missing=() installed
-    installed=$(brew ls --formula)
+    local pkg missing=()
 
     for pkg in "$@"; do
-        if ! grep -Fxq -- "$pkg" <<<"$installed"; then
+        if ! port installed "$pkg" &>/dev/null; then
             missing+=("${pkg}")
         fi
     done
 
     if (( ${#missing[@]} > 0 )); then
-        echo -e "Missing packages.\nInstall them with: brew install ${missing[*]}"
+        echo -e "Missing packages.\nInstall them with: sudo port install ${missing[*]}"
         exit 1
     fi
 }

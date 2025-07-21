@@ -203,25 +203,31 @@ python build.py
 > [!NOTE]
 > The native macOS support is experimental. Use Wine instead.
 
-Install:
-- [Homebrew](https://brew.sh/)
+Prerequisites:
+- [MacPorts](https://macports.org/)
 - [Rust](https://www.rust-lang.org/)
 - [Python 3.13 Universal2 build](https://www.python.org/downloads/macos/)
 
-Open a new terminal and install the necessary packages:
+Add the following line to `/opt/local/etc/macports/macports.conf`:
 
-```bash
-brew install nasm cmake llvm coreutils giflib jpeg-turbo libpng ninja zlib wget brotli make gnu-sed  pkgconf libomp imath glib gettext webp openjpeg little-cms2 fontconfig freetype jpeg-xl libheif liblqr libtiff libtool
+```txt
+macosx_deployment_target 11.0
 ```
 
-Make sure `clang` is pointing to the one provided by Homebrew.
+Install dependencies:
 
-Run each target individually; each has additional requirements:
+```bash
+sudo port install nasm cmake git wget gtest coreutils ninja gmake gsed pkgconfig llvm-17 clang-17 giflib5 +universal libjpeg-turbo +universal libpng +universal zlib +universal brotli +universal
+```
+
+Run each target individually:
 - `make libjpeg-turbo`
-- `make libavif`
-- `make imagemagick`
 - `make libjxl`
 - `make oxipng`
+
+The following targets are a work-in-progress, and are not functional yet:
+- `make libavif`
+- `make imagemagick`
 
 Create and activate a virtual environment:
 

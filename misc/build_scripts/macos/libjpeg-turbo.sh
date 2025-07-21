@@ -23,8 +23,7 @@ cd "${TEMP_DIR}"
 git clone --depth 1 -b "${LIBJPEG_TURBO_TAG}" https://github.com/libjpeg-turbo/libjpeg-turbo.git "${TEMP_DIR}/libjpeg-turbo"
 
 # Compile one arch at a time. Cannot do both with one cmake call due to assembly code.
-ARCHS=(x86_64 arm64)
-for arch in "${ARCHS[@]}"; do
+for arch in x86_64 arm64; do
     build_dir="${TEMP_DIR}/build-${arch}"
     mkdir -p "${build_dir}"
     pushd "${build_dir}" > /dev/null
@@ -33,6 +32,7 @@ for arch in "${ARCHS[@]}"; do
         -DCMAKE_BUILD_TYPE=Release \
         -DENABLE_STATIC=TRUE \
         -DCMAKE_OSX_ARCHITECTURES="${arch}" \
+        -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
         "${TEMP_DIR}/libjpeg-turbo"
 
     ninja jpegtran-static
