@@ -217,7 +217,7 @@ macosx_deployment_target 11.0
 Install dependencies:
 
 ```bash
-sudo port install nasm cmake git wget gtest coreutils ninja gmake gsed pkgconfig llvm-17 clang-17 giflib5 +universal libjpeg-turbo +universal libpng +universal zlib +universal brotli +universal
+sudo port install nasm cmake git wget gtest coreutils ninja gmake gsed pkgconfig llvm-17 clang-17 giflib5 +universal libjpeg-turbo +universal libpng +universal zlib +universal brotli +universal webp +universal libxml2 +universal
 ```
 
 Run each target individually:
