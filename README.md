@@ -217,7 +217,7 @@ macosx_deployment_target 11.0
 Install dependencies:
 
 ```bash
-sudo port -s install nasm cmake git wget gtest coreutils ninja gmake gsed pkgconfig llvm-17 clang-17 giflib5 +universal libjpeg-turbo +universal libpng +universal zlib +universal brotli +universal webp +universal libiconv +universal
+sudo port -s install nasm cmake git wget gtest coreutils ninja gmake gsed pkgconfig +universal llvm-17 clang-17 giflib5 +universal libjpeg-turbo +universal libpng +universal zlib +universal brotli +universal webp +universal libiconv +universal libomp +universal imath +universal glib2 +universal gettext +universal openjpeg +universal lcms2 +universal fontconfig +universal freetype +universal libjxl +universal libheif +universal liblqr +universal tiff +universal libtool +universal
 ```
 
 Run each target individually:
@@ -225,8 +225,6 @@ Run each target individually:
 - `make libjxl`
 - `make libavif`
 - `make oxipng`
-
-The following targets are a work-in-progress, and are not functional yet:
 - `make imagemagick`
 
 Create and activate a virtual environment:
