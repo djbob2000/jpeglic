@@ -1,5 +1,9 @@
 ## 1.2.3 - TBA
 
+### Fixed
+
+- Fix Flatpak permission check false positive (#110).
+
 ### Changed
 
 - Clear "Read-only" file attributes on Windows (#108).

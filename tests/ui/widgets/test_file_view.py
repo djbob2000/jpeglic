@@ -192,8 +192,7 @@ def test_drop_event_flatpak_no_permissions(file_view):
     mock_event = MagicMock()
     mock_event.mimeData.return_value = mime_data
     with (
-        patch("ui.widgets.file_view.os.path.isdir", return_value=False),
-        patch("ui.widgets.file_view.os.path.isfile", return_value=False),
+        patch("ui.widgets.file_view.os.path.exists", return_value=False),
         patch("ui.widgets.file_view.scanDir") as mock_scanDir,
         patch("ui.widgets.file_view.FLATPAK", True),
         patch("ui.widgets.file_view.message_box.info") as mock_message_box_info,
@@ -214,6 +213,7 @@ def test_drop_event_flatpak_has_permissions(file_view):
     mock_event = MagicMock()
     mock_event.mimeData.return_value = mime_data
     with (
+        patch("ui.widgets.file_view.os.path.exists", return_value=True),
         patch("ui.widgets.file_view.os.path.isdir", side_effect=[False, True]),
         patch("ui.widgets.file_view.os.path.isfile", side_effect=[True, False]),
         patch("ui.widgets.file_view.scanDir") as mock_scanDir,

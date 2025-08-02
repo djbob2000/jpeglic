@@ -121,8 +121,13 @@ class FileView(QTreeWidget):
 
         items = []
         preserve_parent = len(event.mimeData().urls()) > 1
+        flatpak_permisssion_err = False
 
         for url in event.mimeData().urls():
+            if FLATPAK and url.isLocalFile() and not os.path.exists(url.toLocalFile()):
+                flatpak_permisssion_err = True
+                continue
+
             if url.isLocalFile():
                 path = str(url.toLocalFile())
                 if os.path.isdir(path):     # Directory
@@ -160,11 +165,11 @@ class FileView(QTreeWidget):
                             )
                         )
 
-        if FLATPAK and not items:
-            for url in event.mimeData().urls():
-                if url.isLocalFile():
-                    message_box.info(self, "Permission Error", "Insufficient Flatpak permissions.\nAdd filesystem permissions to the source directory or volume.")
-                    return
+        if flatpak_permisssion_err:
+            message_box.info(self, "Permission Error", "Insufficient Flatpak permissions.\nAdd filesystem permissions to the source directory or volume.")
+
+        if not items:
+            return
 
         self.startAddingItems()
         self.addItems(items)
