@@ -3,6 +3,7 @@
 ### Fixed
 
 - Fix Flatpak permission check false positive (#110).
+- Restore native file dialog on GTK-based desktop environments (Linux).
 
 ### Changed
 
