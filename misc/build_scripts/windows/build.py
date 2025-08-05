@@ -13,6 +13,8 @@ import subprocess
 from pathlib import Path
 import logging
 import os
+import platform
+import stat
 
 PYTHON_PATH = Path().home() / 'AppData' / 'Local' / 'Programs' / 'Python' / 'Python313' / 'python.exe'
 INNOSETUP_PATH = Path('C:/Program Files (x86)/Inno Setup 6/ISCC.exe')
@@ -36,6 +38,30 @@ def check_tools(*tools: str) -> None:
     for tool in tools:
         if shutil.which(tool) is None:
             raise Exception(f'{tool} was not found in PATH')
+
+def run(cmd: list[str], cwd: str | Path | None = None) -> subprocess.CompletedProcess:
+    try:
+        return subprocess.run(cmd, cwd=cwd, check=True, stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Command failed\n\t{cmd}\n\tstderr: {e.stderr}")
+        raise
+
+def remove_read_only(path: str) -> None:
+    """Removes "Read-only" attribute from files and folders recursively. Windows-only."""
+    if platform.system() != "Windows":
+        raise Exception("[removeReadOnly] Wrong OS")
+
+    for file_path in Path(path).rglob("*"):
+        if file_path.is_file():
+            try:
+                file_path.chmod(stat.S_IWRITE)
+            except Exception as e:
+                raise OSError(f"[removeReadOnly] Failed to remove \"Read-only\" attribute. {e}")
+
+def rmtree(path: str | Path) -> None:
+    """Wrapper for shutil.rmtree. Handles Read-only attributes."""
+    remove_read_only(path)
+    shutil.rmtree(path)
 
 def check_msvc_installed() -> None:
     try:
@@ -78,11 +104,14 @@ def check_python_version(python_path: Path | str, compatible_minor_ver: tuple[in
         raise Exception(f'Incompatible Python version. Supported versions: {supported_py_ver}')
 
 def create_venv(python_path: Path | str, target: Path | str) -> None:
-    subprocess.run([str(python_path), '-m', 'venv', str(target)], check=True)
+    run([str(python_path), '-m', 'venv', str(target)])
 
 def pip_install(python_path: Path | str, *requirements_files: Path | str) -> None:
-    subprocess.run([str(python_path), '-m', 'pip', 'install', '--upgrade', 'pip'], check=True)
-    subprocess.run([str(python_path), '-m', 'pip', 'install', '-r'] + [str(r) for r in requirements_files], check=True)
+    run([str(python_path), '-m', 'pip', 'install', '--upgrade', 'pip'])
+    req_args = []
+    for req_file in requirements_files:
+        req_args.extend(['-r', str(req_file)])
+    run([str(python_path), '-m', 'pip', 'install'] + req_args)
 
 def build_cli(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Windows build orchestrator')
@@ -133,7 +162,7 @@ def main() -> None:
     if args.force_clean:
         for d in (ENV_DEV, ENV_BUILD, PYINSTALLER_DIR):
             if d.exists():
-                shutil.rmtree(d)
+                rmtree(d)
 
     # Run tests
     if not args.skip_tests:
@@ -141,27 +170,25 @@ def main() -> None:
             create_venv(py_exe, ENV_DEV)
         dev_py = ENV_DEV / 'Scripts' / 'python.exe'
         pip_install(dev_py, Path('requirements.txt'), Path('requirements_test.txt'))
-        subprocess.run([str(dev_py), str(RUN_DIR / 'test.py')], check=True)
-        subprocess.run([str(dev_py), str(RUN_DIR / 'test_convert.py')], check=True)
+        run([str(dev_py), str(RUN_DIR / 'test.py')])
+        run([str(dev_py), str(RUN_DIR / 'test_convert.py')])
 
     # Create build environment
     if not ENV_BUILD.exists():
         create_venv(py_exe, ENV_BUILD)
     build_py = ENV_BUILD / 'Scripts' / 'python.exe'
     pip_install(build_py, Path('requirements.txt'))
-    if (        # PyInstaller not installed
-        subprocess.run(
-            [str(build_py), '-m', 'pip', 'show', 'pyinstaller'],
-            stdout=subprocess.DEVNULL
-        )
+    if subprocess.run(     # PyInstaller not installed
+        [str(build_py), '-m', 'pip', 'show', 'pyinstaller'],
+        stdout=subprocess.DEVNULL
     ).returncode != 0:
         if not PYINSTALLER_DIR.exists():
-            subprocess.run(['git', 'clone', '--depth', '1', '-b', PYINSTALLER_TAG, 'https://github.com/pyinstaller/pyinstaller.git', PYINSTALLER_DIR], check=True)
+            run(['git', 'clone', '--depth', '1', '-b', PYINSTALLER_TAG, 'https://github.com/pyinstaller/pyinstaller.git', PYINSTALLER_DIR])
         bootloader = PYINSTALLER_DIR / 'bootloader'
 
         # Build bootloader
-        subprocess.run([str(build_py), str(bootloader / 'waf'), 'all'], check=True, cwd=str(bootloader))
-        subprocess.run([str(build_py), '-m', 'pip', 'install', str(PYINSTALLER_DIR)], check=True)
+        run([str(build_py), str(bootloader / 'waf'), 'all'], cwd=str(bootloader))
+        run([str(build_py), '-m', 'pip', 'install', '.'], cwd=str(PYINSTALLER_DIR))
 
     # Build
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -170,20 +197,20 @@ def main() -> None:
         dist_dir = RUN_DIR / 'dist'
 
         # Portable
-        subprocess.run([str(build_py), str(RUN_DIR / 'build.py'), '-b', 'portable'], cwd=str(RUN_DIR))
+        run([str(build_py), str(RUN_DIR / 'build.py'), '-b', 'portable'], cwd=str(RUN_DIR))
         for f in dist_dir.glob('*.7z'):
             shutil.move(str(f), str(export_dir))
 
         # InnoSetup
-        subprocess.run([str(build_py), str(RUN_DIR / 'build.py'), '-b', 'innosetup', '-u'], cwd=str(RUN_DIR))
-        subprocess.run([str(inno_exe), 'install.iss'], cwd=str(dist_dir))
+        run([str(build_py), str(RUN_DIR / 'build.py'), '-b', 'innosetup', '-u'], cwd=str(RUN_DIR))
+        run([str(inno_exe), 'install.iss'], cwd=str(dist_dir))
         for f in (dist_dir / 'Output').glob('*.exe'):
             shutil.move(str(f), str(export_dir))
         for f in dist_dir.glob('*.json'):
             shutil.move(str(f), str(export_dir))
 
         # Move build artifacts
-        shutil.rmtree(dist_dir)
+        rmtree(dist_dir)
         dist_dir.mkdir()
         for i in export_dir.iterdir():
             shutil.move(str(i), str(dist_dir))
