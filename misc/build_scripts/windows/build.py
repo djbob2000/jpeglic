@@ -47,10 +47,7 @@ def run(cmd: list[str], cwd: str | Path | None = None) -> subprocess.CompletedPr
         raise
 
 def remove_read_only(path: str) -> None:
-    """Removes "Read-only" attribute from files and folders recursively. Windows-only."""
-    if platform.system() != "Windows":
-        raise Exception("[removeReadOnly] Wrong OS")
-
+    """Removes "Read-only" attribute from files and folders recursively."""
     for file_path in Path(path).rglob("*"):
         if file_path.is_file():
             try:
@@ -84,6 +81,9 @@ def check_msvc_installed() -> None:
         raise Exception('Visual Studio with Windows 10 or 11 SDK and C++ build tools is required.') from e
 
 def check_environ() -> None:
+    if platform.system() != "Windows":
+        raise Exception("Run this script on Windows.")
+
     if 'MSYSTEM' in os.environ:
         raise Exception('Run this script from CMD.')
 
@@ -187,8 +187,8 @@ def main() -> None:
         bootloader = PYINSTALLER_DIR / 'bootloader'
 
         # Build bootloader
-        run([str(build_py), str(bootloader / 'waf'), 'all'], cwd=str(bootloader))
-        run([str(build_py), '-m', 'pip', 'install', '.'], cwd=str(PYINSTALLER_DIR))
+        run([str(build_py), str(bootloader / 'waf'), 'all'], cwd=bootloader)
+        run([str(build_py), '-m', 'pip', 'install', '.'], cwd=PYINSTALLER_DIR)
 
     # Build
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -197,13 +197,13 @@ def main() -> None:
         dist_dir = RUN_DIR / 'dist'
 
         # Portable
-        run([str(build_py), str(RUN_DIR / 'build.py'), '-b', 'portable'], cwd=str(RUN_DIR))
+        run([str(build_py), str(RUN_DIR / 'build.py'), '-b', 'portable'], cwd=RUN_DIR)
         for f in dist_dir.glob('*.7z'):
             shutil.move(str(f), str(export_dir))
 
         # InnoSetup
-        run([str(build_py), str(RUN_DIR / 'build.py'), '-b', 'innosetup', '-u'], cwd=str(RUN_DIR))
-        run([str(inno_exe), 'install.iss'], cwd=str(dist_dir))
+        run([str(build_py), str(RUN_DIR / 'build.py'), '-b', 'innosetup', '-u'], cwd=RUN_DIR)
+        run([str(inno_exe), 'install.iss'], cwd=dist_dir)
         for f in (dist_dir / 'Output').glob('*.exe'):
             shutil.move(str(f), str(export_dir))
         for f in dist_dir.glob('*.json'):
