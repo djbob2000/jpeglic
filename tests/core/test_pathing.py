@@ -3,6 +3,7 @@ from unittest.mock import patch
 from pathlib import Path
 import threading
 import stat
+from contextlib import ExitStack
 
 import pytest
 
@@ -167,59 +168,59 @@ def test_isANSICompatible_compatible():
 def test_isANSICompatible_not_compatible():
     assert not pathing.isANSICompatible("D:\\画像")
 
-def test_removeFile_happy_path():
-    with (
-        patch("core.pathing.os.remove") as mock_remove,
-        patch("core.pathing.os.path.isfile", return_value=True),
-    ):
+@pytest.fixture
+def removeFile_patches():
+    mocks = {
+        "remove": patch("core.pathing.os.remove"),
+        "isfile": patch("core.pathing.os.path.isfile", return_value=True),
+        "chmod": patch("core.pathing.os.chmod"),
+        "system": patch("core.pathing.platform.system", return_value="Windows"),
+    }
+
+    with ExitStack() as stack:
+        _mocks = { name: stack.enter_context(patcher) for name, patcher in mocks.items() }
+        yield _mocks
+
+def test_removeFile_happy_path(removeFile_patches):
+    pathing.removeFile("/tmp/sample_file.jpg")
+    removeFile_patches["remove"].assert_called_once_with("/tmp/sample_file.jpg")
+
+def test_removeFile_sad_path(removeFile_patches):
+    removeFile_patches["remove"].side_effect = OSError
+    with pytest.raises(OSError):
         pathing.removeFile("/tmp/sample_file.jpg")
-        mock_remove.assert_called_once_with("/tmp/sample_file.jpg")
+    removeFile_patches["remove"].assert_called_once_with("/tmp/sample_file.jpg")
 
-def test_removeFile_sad_path():
-    with (
-        patch("core.pathing.os.remove", side_effect=OSError) as mock_remove,
-        patch("core.pathing.os.path.isfile", return_value=True),
-    ):
-        with pytest.raises(OSError):
-            pathing.removeFile("/tmp/sample_file.jpg")
-        mock_remove.assert_called_once_with("/tmp/sample_file.jpg")
+def test_removeFile_re_raise_permission_exc(removeFile_patches):
+    removeFile_patches["remove"].side_effect = PermissionError
+    removeFile_patches["system"].return_value = "Linux"
 
-def test_removeFile_re_raise_permission_exc():
-    with (
-        patch("core.pathing.os.remove", side_effect=PermissionError) as mock_remove,
-        patch("core.pathing.platform.system", return_value="Linux"),
-        patch("core.pathing.os.path.isfile", return_value=True),
-    ):
-        with pytest.raises(PermissionError):
-            pathing.removeFile("/tmp/sample_file.jpg")
-        mock_remove.assert_called_once_with("/tmp/sample_file.jpg")
-
-def test_removeFile_clear_read_only_win():
-    with (
-        patch("core.pathing.os.remove", side_effect=[PermissionError, None]) as mock_remove,
-        patch("core.pathing.os.chmod") as mock_chmod,
-        patch("core.pathing.platform.system", return_value="Windows"),
-        patch("core.pathing.os.path.isfile", return_value=True),
-    ):
+    with pytest.raises(PermissionError):
         pathing.removeFile("/tmp/sample_file.jpg")
-        mock_remove.call_count == 2
-        for i in range(2):
-            assert mock_remove.call_args_list[i][0][0] == "/tmp/sample_file.jpg"
-        mock_chmod.assert_called_once_with("/tmp/sample_file.jpg", stat.S_IWRITE)
 
-def test_removeFile_ignore_missing_true():
-    with (
-        patch("core.pathing.os.remove") as mock_remove,
-        patch("core.pathing.os.path.isfile", return_value=False),
-    ):
-        pathing.removeFile("/tmp/sample_file.jpg", ignore_missing=True)
-        mock_remove.assert_not_called()
+    removeFile_patches["remove"].assert_called_once_with("/tmp/sample_file.jpg")
+    removeFile_patches["chmod"].assert_not_called()
 
-def test_removeFile_ignore_missing_false():
-    with (
-        patch("core.pathing.os.remove", side_effect=[FileNotFoundError, None]) as mock_remove,
-        patch("core.pathing.os.path.isfile", return_value=False),
-    ):
-        with pytest.raises(FileNotFoundError):
-            pathing.removeFile("/tmp/sample_file.jpg", ignore_missing=False)
-        mock_remove.assert_called_once_with("/tmp/sample_file.jpg")
+def test_removeFile_clear_read_only_win(removeFile_patches):
+    removeFile_patches["remove"].side_effect = [PermissionError, None]
+    removeFile_patches["system"].return_value = "Windows"
+
+    pathing.removeFile("/tmp/sample_file.jpg")
+    assert removeFile_patches["remove"].call_count == 2
+    for i in range(2):
+        assert removeFile_patches["remove"].call_args_list[i][0][0] == "/tmp/sample_file.jpg"
+    removeFile_patches["chmod"].assert_called_once_with("/tmp/sample_file.jpg", stat.S_IWRITE)
+
+def test_removeFile_ignore_missing_true(removeFile_patches):
+    removeFile_patches["isfile"].return_value = False
+    pathing.removeFile("/tmp/sample_file.jpg", ignore_missing=True)
+    removeFile_patches["remove"].assert_not_called()
+
+def test_removeFile_ignore_missing_false(removeFile_patches):
+    removeFile_patches["remove"].side_effect = [FileNotFoundError, None]
+    removeFile_patches["isfile"].return_value = False
+
+    with pytest.raises(FileNotFoundError):
+        pathing.removeFile("/tmp/sample_file.jpg", ignore_missing=False)
+
+    removeFile_patches["remove"].assert_called_once_with("/tmp/sample_file.jpg")
