@@ -445,6 +445,15 @@ class Worker(QRunnable):
                             (os.path.isfile(self.final_output) and os.path.samefile(self.org_item_abs_path, self.final_output))
                         ):
                             self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext)
+                        elif (
+                            not self.params["custom_output_dir"] and
+                            self.params["delete_original"] and
+                            (os.path.isfile(self.final_output) and os.path.samefile(self.org_item_abs_path, self.final_output))
+                        ):
+                            if self.params["delete_original_mode"] == "To Trash":
+                                send2trash(self.final_output)
+                            elif self.params["delete_original_mode"] == "Permanently":
+                                removeFile(self.final_output)
                         else:
                             removeFile(self.final_output)
                     elif mode == "Rename" or mode == "Skip":
@@ -456,7 +465,8 @@ class Worker(QRunnable):
                 if (
                     self.settings["copy_if_larger"] and
                     os.path.getsize(self.org_item_abs_path) < os.path.getsize(self.final_output) and
-                    self.params["format"] not in ("Lossless JPEG Transcoding", "JPEG Reconstruction", "PNG")
+                    self.params["format"] not in ("Lossless JPEG Transcoding", "JPEG Reconstruction", "PNG") and
+                    not os.path.samefile(self.org_item_abs_path, self.final_output)
                 ):
                     os.remove(self.final_output)
                     self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.item_ext)
@@ -470,8 +480,10 @@ class Worker(QRunnable):
 
         # Delete original
         if (
-            (not self.settings["keep_if_larger"] or 
-            os.path.getsize(self.org_item_abs_path) > os.path.getsize(self.final_output)) and
+            (
+                not self.settings["keep_if_larger"] or
+                os.path.getsize(self.org_item_abs_path) > os.path.getsize(self.final_output)
+            ) and
             not os.path.samefile(self.org_item_abs_path, self.final_output)
         ):
             try:

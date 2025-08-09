@@ -525,12 +525,15 @@ def test_convert_regular(worker_convert_patches):
 def finishConversion_patches(worker):
     mocks = {
         "remove": patch("core.worker.os.remove"),
+        "removeFile": patch("core.worker.removeFile"),
+        "send2trash": patch("core.worker.send2trash"),
         "rename": patch("core.worker.os.rename"),
         "removeFile": patch("core.worker.removeFile"),
         "getsize": patch("core.worker.os.path.getsize", return_value=300_000),
         "isfile": patch("core.worker.os.path.isfile", side_effect=[True, True, True]),
         "getUniqueFilePath": patch("core.worker.getUniqueFilePath", return_value="final/path/img.jpg"),
         "copyfile": patch("core.worker.shutil.copyfile"),
+        "samefile": patch("core.worker.os.path.samefile", return_value=False),
     }
 
     with ExitStack() as stack:
@@ -597,6 +600,24 @@ def test_finishConversion_replace(finishConversion_patches):
 
     mocks["removeFile"].assert_called_once_with("final/path/img.jpg")
     mocks["rename"].assert_called_once_with("temp/path/img.jpg", "final/path/img.jpg")
+
+@pytest.mark.parametrize("delete_original_mode, delete_method ", (
+    ("To Trash", "send2trash"),
+    ("Permanently", "removeFile"),
+))
+def test_finishConversion_replace_edge_case_delete_original(delete_original_mode, delete_method, finishConversion_patches):
+    worker, mocks = finishConversion_patches
+    worker.output = "temp/path/img.jpg"
+    worker.final_output = "final/path/img.jpg"
+    worker.params["if_file_exists"] = "Replace"
+    worker.params["custom_output_dir"] = False
+    worker.params["delete_original"] = True
+    worker.params["delete_original_mode"] = delete_original_mode
+    mocks["samefile"].return_value = True
+
+    worker.finishConversion()
+
+    mocks[delete_method].assert_called_once_with("final/path/img.jpg")
 
 @pytest.mark.parametrize("file_format, getsize_side_effect, copy_if_larger_enabled, expected_to_run", [
     ("JPEG XL", [300_000, 300_000, 400_000], True, True),
