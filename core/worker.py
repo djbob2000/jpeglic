@@ -446,8 +446,7 @@ class Worker(QRunnable):
                         ):
                             self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext)
                         else:
-                            if os.path.isfile(self.final_output):
-                                removeFile(self.final_output)
+                            removeFile(self.final_output)
                     elif mode == "Rename" or mode == "Skip":
                         self.final_output = getUniqueFilePath(self.output_dir, self.item_name, self.output_ext)
                     

@@ -121,8 +121,10 @@ def isANSICompatible(path: str) -> bool:
     except UnicodeEncodeError:
         return False
 
-def removeFile(path: str) -> None:
-    """Removes a single file. Ignores the Read-only attribute. Raises the same exceptions as `os.remove`."""
+def removeFile(path: str, ignore_missing: bool = True) -> None:
+    """Removes a single file. Ignores the Read-only attribute and non-existent files. Raises the same exceptions as `os.remove`."""
+    if ignore_missing and not os.path.isfile(path):
+        return
     try:
         os.remove(path)
     except PermissionError:
@@ -132,4 +134,3 @@ def removeFile(path: str) -> None:
             os.remove(path)
         else:
             raise
-
