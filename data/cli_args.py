@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 import argparse
 from dataclasses import dataclass
+from typing import Callable
 
 from PySide6.QtCore import QMimeData, QUrl, QPointF, Qt
 from PySide6.QtGui import QDropEvent
@@ -9,6 +10,7 @@ from PySide6.QtGui import QDropEvent
 @dataclass
 class CliArgs:
     resources: list[str]
+    debug: bool = False
 
 def parseArgs() -> CliArgs:
     parser = argparse.ArgumentParser()
@@ -16,6 +18,11 @@ def parseArgs() -> CliArgs:
         "resources",
         nargs="*",
         help="Paths to local resources (files or directories) to add."
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable logging. Same as \"Start Logging\" in the advanced settings."
     )
     args = parser.parse_args()
 
@@ -27,10 +34,13 @@ def parseArgs() -> CliArgs:
             resources.append(path)
 
     return CliArgs(
-        resources=resources
+        resources=resources,
+        debug=args.debug,
     )
 
-def getArgsLocalResQDropEvent() -> QDropEvent | None:
+def getArgsLocalResQDropEvent(
+        debug_callable: Callable[[], None] | None = None
+) -> QDropEvent | None:
     """
     Returns a QDropEvent with mimeData containing URLs to local resources, or None. Requires QApplication to exist!
 
@@ -40,6 +50,10 @@ def getArgsLocalResQDropEvent() -> QDropEvent | None:
         return None
     
     cli_args = parseArgs()
+
+    if cli_args.debug and debug_callable is not None:
+        debug_callable()
+
     if cli_args.resources == []:
         return None
 

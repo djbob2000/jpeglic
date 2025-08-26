@@ -1,5 +1,9 @@
 ## 1.2.3 - TBA
 
+### Added
+
+- Add `--debug` CLI option.
+
 ### Fixed
 
 - Fix Flatpak permission check false positive (#110).

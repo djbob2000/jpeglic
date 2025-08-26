@@ -443,13 +443,23 @@ class SettingsTab(QWidget):
         self.ram_optimizer_rules_l.setEnabled(dynamic_ram_optimizer)
         self.ram_optimizer_rules_reset_btn.setEnabled(dynamic_ram_optimizer)
 
-    def toggleLogging(self):
+    def enableLogging(self) -> None:
+        if not self.logging_manager.isLoggingToFile():
+            self.logging_manager.startLoggingToFile("INFO")
+        self.start_logging_btn.setText("Stop Logging")
+        self.start_logging_btn.setChecked(True)
+
+    def disableLogging(self) -> None:
         if self.logging_manager.isLoggingToFile():
             self.logging_manager.stopLoggingToFile()
-            self.start_logging_btn.setText("Start Logging")
+        self.start_logging_btn.setText("Start Logging")
+        self.start_logging_btn.setChecked(False)
+
+    def toggleLogging(self):
+        if self.logging_manager.isLoggingToFile():
+            self.disableLogging()
         else:
-            self.logging_manager.startLoggingToFile("INFO")
-            self.start_logging_btn.setText("Stop Logging")
+            self.enableLogging()
 
     def openLogsDir(self):
         logs_dir = self.logging_manager.getLogsDir()
@@ -459,12 +469,7 @@ class SettingsTab(QWidget):
         openLocalUrl(logs_dir)
     
     def wipeLogsDir(self):
-        logging_to_file = self.logging_manager.isLoggingToFile()
-        if logging_to_file:
-            self.logging_manager.stopLoggingToFile()
-            self.start_logging_btn.setText("Start Logging")
-            self.start_logging_btn.setChecked(False)
-
+        self.disableLogging()
         message_box.info(self, "File Message", self.logging_manager.wipeLogsDir())
 
     def getSettings(self):

@@ -203,6 +203,8 @@ if __name__ == "__main__":
     font_loader.init()
     main_window = MainWindow()
     main_window.show()
-    if res_evt := cli_args.getArgsLocalResQDropEvent():
+    if res_evt := cli_args.getArgsLocalResQDropEvent(
+        debug_callable=main_window.settings_tab.enableLogging,
+    ):
         main_window.dropEvent(res_evt)
     sys.exit(app.exec())
