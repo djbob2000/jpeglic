@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable
 
 from PySide6.QtCore import QMimeData, QUrl, QPointF, Qt
@@ -9,7 +9,7 @@ from PySide6.QtGui import QDropEvent
 
 @dataclass
 class CliArgs:
-    resources: list[str]
+    resources: list[str] = field(default_factory=list)
     debug: bool = False
 
 def parseArgs() -> CliArgs:

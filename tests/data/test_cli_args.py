@@ -47,6 +47,11 @@ def test_parseArgs_resources(arguments, is_file, is_dir, expected_args):
         _args = cli_args.parseArgs()
         assert [str(path) for path in _args.resources] == expected_args
 
+def test_parseArgs_debug():
+    with patch.object(sys, "argv", ["script.py", "--debug"]):
+        _args = cli_args.parseArgs()
+        assert _args.debug == True
+
 def test_getArgsLocalResQDropEvent_no_args():
     with (
         patch.object(sys, "argv", ["script.py"]),
@@ -82,3 +87,35 @@ def test_getArgsLocalResQDropEvent_args_passed(app):
         assert drop_event.mimeData().urls() == [QUrl.fromLocalFile(res) for res in mock_args.resources]
         assert drop_event.buttons() == Qt.LeftButton
         assert drop_event.modifiers() == Qt.NoModifier
+
+@pytest.mark.parametrize(
+    "mock_args, expect_called, expected_result",
+    [
+        (cli_args.CliArgs(debug=True), True, None),
+        (cli_args.CliArgs(debug=False), False, None),
+        (
+            cli_args.CliArgs(resources=["/tmp/path/dir0", "/tmp/path/img.jpg"], debug=True),
+            True,
+            [QUrl.fromLocalFile("/tmp/path/dir0"), QUrl.fromLocalFile("/tmp/path/img.jpg")],
+        ),
+    ],
+)
+def test_getArgsLocalResQDropEvent_debug(mock_args, expect_called, expected_result):
+    mock_debug_callable = MagicMock()
+    argv = ["script.py"]
+    argv += (["--debug"] if expect_called else ["--sample-arg"])    # Ensures parseArgs is always called.
+    if mock_args.resources:
+        argv += mock_args.resources
+
+    with (
+        patch.object(sys, "argv", argv),
+        patch("data.cli_args.parseArgs", return_value=mock_args) as mock_parseArgs,
+    ):
+        drop_event = cli_args.getArgsLocalResQDropEvent(debug_callable=mock_debug_callable)
+        mock_parseArgs.assert_called_once()
+        assert mock_debug_callable.call_count == int(expect_called)
+        if expected_result is None:
+            assert drop_event is None
+        else:
+            assert drop_event is not None
+            assert drop_event.mimeData().urls() == expected_result
