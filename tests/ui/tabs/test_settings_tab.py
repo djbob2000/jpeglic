@@ -139,7 +139,7 @@ def test_onAVIFBitDepthChanged_unknown_encoder(caplog, onAVIFBitDepthChanged_pat
 
     app.onAVIFEncoderChanged()
 
-    caplog.records[0].message = "Unknown encoder"
+    assert "Unknown encoder" in caplog.records[0].message
     mocks["wm.getVar"].assert_not_called()
 
 def test_onAVIFBitDepthChanged_var_not_found(onAVIFBitDepthChanged_patches):
@@ -158,6 +158,93 @@ def test_onThemeChanged(app):
     ):
         app.onThemeChanged()
         mock_setTheme.assert_called_once_with(mock_currentText.return_value)
+
+@pytest.mark.parametrize("currently_logging", [True, False])
+def test_enableLogging(currently_logging, app):
+    with (
+        patch.object(app.logging_manager, "isLoggingToFile", return_value=currently_logging) as mock_isLoggingToFile,
+        patch.object(app.logging_manager, "startLoggingToFile") as mock_startLoggingToFile,
+        patch.object(app.start_logging_btn, "setText") as mock_setText,
+        patch.object(app.start_logging_btn, "setChecked") as mock_setChecked,
+    ):
+        app.enableLogging()
+        mock_isLoggingToFile.assert_called_once()
+        if currently_logging:
+            mock_startLoggingToFile.assert_not_called()
+        else:
+            mock_startLoggingToFile.assert_called_once_with("INFO")
+        mock_setText.assert_called_once_with("Stop Logging")
+        mock_setChecked.assert_called_once_with(True)
+
+@pytest.mark.parametrize("currently_logging", [True, False])
+def test_disableLogging(currently_logging, app):
+    with (
+        patch.object(app.logging_manager, "isLoggingToFile", return_value=currently_logging) as mock_isLoggingToFile,
+        patch.object(app.logging_manager, "stopLoggingToFile") as mock_stopLoggingToFile,
+        patch.object(app.start_logging_btn, "setText") as mock_setText,
+        patch.object(app.start_logging_btn, "setChecked") as mock_setChecked,
+    ):
+        app.disableLogging()
+        mock_isLoggingToFile.assert_called_once()
+        assert mock_stopLoggingToFile.call_count == int(currently_logging)
+        mock_setText.assert_called_once_with("Start Logging")
+        mock_setChecked.assert_called_once_with(False)
+
+@pytest.mark.parametrize("currently_logging", [True, False])
+def test_toggleLogging(currently_logging, app):
+    with (
+        patch.object(app.logging_manager, "isLoggingToFile", return_value=currently_logging) as mock_isLoggingToFile,
+        patch.object(app, "disableLogging") as mock_disableLogging,
+        patch.object(app, "enableLogging") as mock_enableLogging,
+    ):
+        app.toggleLogging()
+        mock_isLoggingToFile.assert_called_once()
+        assert mock_enableLogging.call_count == int(not currently_logging)
+        assert mock_disableLogging.call_count == int(currently_logging)
+
+def test_openLogsDir_dir_exists(app):
+    sample_logs_dir = "/tmp/logs_dir"
+    with (
+        patch.object(app.logging_manager, "getLogsDir", return_value=sample_logs_dir) as mock_getLogsDir,
+        patch("ui.tabs.settings_tab.os.path.isdir", return_value=True) as mock_isdir,
+        patch("ui.tabs.settings_tab.message_box.info") as mock_message_box_info,
+        patch("ui.tabs.settings_tab.openLocalUrl") as mock_openLocalUrl,
+    ):
+        app.openLogsDir()
+        mock_getLogsDir.assert_called_once()
+        mock_isdir.assert_called_once()
+        mock_message_box_info.assert_not_called()
+        mock_openLocalUrl.assert_called_once_with(sample_logs_dir)
+
+def test_openLogsDir_no_dir(app):
+    sample_logs_dir = "/tmp/logs_dir"
+    with (
+        patch.object(app.logging_manager, "getLogsDir", return_value=sample_logs_dir) as mock_getLogsDir,
+        patch("ui.tabs.settings_tab.os.path.isdir", return_value=False) as mock_isdir,
+        patch("ui.tabs.settings_tab.message_box.info") as mock_message_box_info,
+        patch("ui.tabs.settings_tab.openLocalUrl") as mock_openLocalUrl,
+    ):
+        app.openLogsDir()
+        mock_getLogsDir.assert_called_once()
+        mock_isdir.assert_called_once()
+        mock_message_box_info.assert_called_once_with(app, "No logs", "No logs have been found.")
+        # mock_message_box_info.assert_called_once()
+        # args, _ = mock_message_box_info.call_args
+        # assert args[0] == app
+        # assert isinstance(args[1], str)
+        # assert isinstance(args[2], str)
+        mock_openLocalUrl.assert_not_called()
+
+def test_wipeLogsDir(app):
+    with (
+        patch.object(app, "disableLogging") as mock_disableLogging,
+        patch.object(app.logging_manager, "wipeLogsDir", return_value="Wiped successfully") as mock_wipeLogsDir,
+        patch("ui.tabs.settings_tab.message_box.info") as mock_message_box_info,
+    ):
+        app.wipeLogsDir()
+        mock_disableLogging.assert_called_once()
+        mock_wipeLogsDir.assert_called_once()
+        mock_message_box_info.assert_called_once_with(app, "File Message", "Wiped successfully")
 
 def test_getSettings_no_key_error(app):
     app.getSettings()
