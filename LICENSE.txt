@@ -686,6 +686,6 @@ Public License instead of this License.  But first, please read
 
 WEB LINK FEATURE: This Software includes a feature that opens a link to our webpage or GitHub repository. By using this feature, you consent to the Software initiating an external connection to these sites. Be aware that these sites have their own terms of service and privacy policies, which you should review.
 
-UPDATE FEATURE: The Software includes a feature to check for updates, which requires the transmission of the user's Internet Protocol (IP) address to a server in order to obtain a text file for the update process. By using this feature, you acknowledge and consent to the transmission of your IP address for this purpose. The IP address is used solely for fetching the necessary update information and will not be used for any other purposes. While the IP address may be stored for a period of up to 12 months.
+UPDATE FEATURE: The Software includes a feature to check for updates, which requires the transmission of the user's Internet Protocol (IP) address to a server in order to obtain a text file for the update process. By using this feature, you acknowledge and consent to the transmission of your IP address for this purpose. The IP address is used solely for fetching the necessary update information and will not be used for any other purposes. The IP address may be stored for a period of up to 12 months.
 
 ----------------------- END PRIVACY POLICY ------------------------
