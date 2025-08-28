@@ -5,7 +5,7 @@ import pytest
 from PySide6.QtCore import QMutex
 
 from core.proxy import Proxy
-from core.exceptions import FileException
+from core.exceptions import FileException, CancellationException
 
 @pytest.fixture
 def proxy():
@@ -63,8 +63,16 @@ def test_generate_proxy_success(proxy_generate_patched):
         [],
         src,
         proxy_path,
+        delete_if_canceled=[proxy_path],
     )
     mocks["isfile"].assert_called_once_with(proxy_path)
+
+def test_generate_proxy_canceled(proxy_generate_patched):
+    proxy, mocks = proxy_generate_patched
+    mocks["runBinary"].side_effect = CancellationException()
+
+    with pytest.raises(CancellationException) as excinfo:
+        proxy.generate("/path/to/src.avif", "avif", "/proxy/dst", "src", 0, QMutex())
 
 def test_generate_proxy_failure(proxy_generate_patched):
     proxy, mocks = proxy_generate_patched

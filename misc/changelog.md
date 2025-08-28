@@ -9,6 +9,7 @@
 - Fix Flatpak permission check false positive (#110).
 - Restore native file dialog on GTK-based desktop environments (Linux).
 - Prioritize "Delete Original" when replacing files in source folder (#111).
+- Improve temp file cleanup on cancel.
 
 ### Changed
 

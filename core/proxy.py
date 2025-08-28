@@ -60,7 +60,7 @@ class Proxy():
         return True
 
     def generate(self, src: str, src_ext: str, dst_dir: str, file_name: str, n: int, mutex: QMutex) -> str:
-        """Generate a proxy image."""
+        """Generate a proxy image. Can raise CancellationException and FileException."""
         with QMutexLocker(mutex):
             self.proxy_path = getUniqueTmpFilePath(dst_dir, "png")
     
@@ -69,6 +69,7 @@ class Proxy():
             [],
             src,
             self.proxy_path,
+            delete_if_canceled=[self.proxy_path]
         )
 
         if not os.path.isfile(self.proxy_path):
