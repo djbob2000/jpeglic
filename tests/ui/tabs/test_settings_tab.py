@@ -46,7 +46,6 @@ def test_changeCategory_visibility(category, button, app):
             "copy_if_larger_cb",
         ],
         "ExifTool": [
-            "exiftool_l",
             "exiftool_reset_btn",
             "exiftool_wipe_l", "exiftool_wipe_te",
             "exiftool_preserve_l", "exiftool_preserve_te",

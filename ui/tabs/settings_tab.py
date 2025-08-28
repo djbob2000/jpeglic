@@ -128,7 +128,6 @@ class SettingsTab(QWidget):
         self.copy_if_larger_cb = self.wm.addWidget("copy_if_larger_cb", QCheckBox("Copy Original When Result is Larger"))
 
         # ExifTool
-        self.exiftool_l = QLabel("ExifTool Arguments")
         self.exiftool_wipe_l = QLabel("Wipe")
         self.exiftool_wipe_te = self.wm.addWidget("exiftool_wipe_te", QTextEdit())
         self.exiftool_preserve_l = QLabel("Preserve")
@@ -218,7 +217,6 @@ class SettingsTab(QWidget):
         self.settings_lt.addWidget(self.copy_if_larger_cb)
 
         # ExifTool
-        self.settings_lt.addWidget(self.exiftool_l)
         self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_wipe_l, self.exiftool_wipe_te))
         self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_preserve_l, self.exiftool_preserve_te))
         self.settings_lt.addLayout(createQHBoxLayout(self.exiftool_unsafe_wipe_l, self.exiftool_unsafe_wipe_te))
@@ -359,7 +357,6 @@ class SettingsTab(QWidget):
                 "copy_if_larger_cb",
             ],
             "ExifTool": [
-                "exiftool_l",
                 "exiftool_reset_btn",
                 "exiftool_wipe_l", "exiftool_wipe_te",
                 "exiftool_preserve_l", "exiftool_preserve_te",
