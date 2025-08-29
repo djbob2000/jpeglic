@@ -25,6 +25,7 @@ from PySide6.QtCore import(
 )
 
 from data.logging_manager import LoggingManager
+from data.utils import compareVersions, VersionParseErrorPolicy
 from ui.lib import WidgetManager
 from ui.lib.utils import setToolTip, openLocalUrl, createQHBoxLayout, blockSignals
 from ui.theme import setTheme
@@ -66,7 +67,7 @@ class SettingsTab(QWidget):
             self.theme_cmb,
         ):
             self.resetToDefault()
-            self.wm.loadState()
+            self.loadState()
 
         # Refresh states
         self.onCustomArgsToggled()
@@ -505,9 +506,9 @@ class SettingsTab(QWidget):
         }
     
     def resetExifTool(self):
-        self.exiftool_wipe_te.setText("-all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original")
-        self.exiftool_preserve_te.setText("-tagsFromFile $src $dst -overwrite_original")
-        self.exiftool_unsafe_wipe_te.setText("-all= $dst -overwrite_original")
+        self.exiftool_wipe_te.setText("-m -all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original")
+        self.exiftool_preserve_te.setText("-m -tagsFromFile $src $dst -overwrite_original")
+        self.exiftool_unsafe_wipe_te.setText("-m -all= $dst -overwrite_original")
         self.exiftool_custom_te.setText("")
 
     def resetOptimizationRules(self):
@@ -551,3 +552,15 @@ class SettingsTab(QWidget):
             )
             self.wm.saveState()
             self.cached_states = deepcopy(new_states)
+
+    def loadState(self) -> None:
+        """Loads widget states and applies migrations."""
+        self.wm.loadState()
+
+        # Migrations
+        if (
+            # v1.2.2 or older
+            compareVersions(self.wm.getLoadedVersion(), "1.2.2", VersionParseErrorPolicy.ASSUME_NEWER) <= 0 and
+            self.exiftool_preserve_te.toPlainText() == "-tagsFromFile $src $dst -overwrite_original"
+        ):
+            self.exiftool_preserve_te.setText("-m -tagsFromFile $src $dst -overwrite_original")

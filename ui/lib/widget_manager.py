@@ -21,6 +21,7 @@ class WidgetManager():
         self.tags = {}           # tag: [id]
         self.variables = {}      # var: value
         self.exceptions = []     # [id, id]... for manually saving 
+        self.loaded_version = None
 
         self.save_state_path = os.path.join(CONFIG_LOCATION, f"{name}.json")
 
@@ -258,12 +259,20 @@ class WidgetManager():
             with open(self.save_state_path, "r", encoding="utf-8") as f:
                 try:
                     loaded = json.load(f)
-                except:
+                except Exception:
                     self.error("Parsing JSON failed. Cannot load saved states.", "loadState")
                     return
         except OSError as err:
             self.error(f"Loading file failed ({err})", "loadState")
             return
+
+        # Load version
+        if "version" in loaded:
+            try:
+                self.loaded_version = str(loaded["version"])
+            except Exception as e:
+                self.error(f"Failed to load version: {e}", "loadState")
+                self.loaded_version = None
 
         # Load variables
         if "variables" in loaded:
@@ -297,11 +306,16 @@ class WidgetManager():
     def error(self, msg: str, func_name: str):
         logging.error(f"[WidgetManager - {func_name}] {msg}")
 
+    def getLoadedVersion(self) -> str | None:
+        """Returns the version of XL Converter used to save the state file."""
+        return self.loaded_version
+
     def exit(self):
         """Purges all widgets and other elements from memory."""
         for key in self.widgets:
             self.widgets[key].deleteLater()
         self.widgets = {}
         self.cleanVars()
-        self.exceptions = {}
+        self.exceptions = []
         self.tags = {}
+        self.loaded_version = None
