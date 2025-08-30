@@ -65,3 +65,44 @@ def test_isRunningInFlatpak_true():
 def test_isRunningInFlatpak_false():
     with patch("data.utils.os.environ.get", return_value=None):
         assert not utils.isRunningInFlatpak()
+
+@pytest.mark.parametrize(
+    "version,expected",
+    [
+        (None, None),
+        ("", None),
+        ("v1.2", None),
+        ("abc", None),
+        ("v1.2.3", (1, 2, 3)),
+        ("1.2.3", (1, 2, 3)),
+        ("1.0.11", (1, 0, 11)),
+    ]
+)
+def test_parseVersion(version, expected):
+    assert utils.parseVersion(version) == expected
+
+@pytest.mark.parametrize(
+    "base,candidate,expected",
+    [
+        ("v1.2.3", "v1.2.4", 1),
+        ("v1.2.3", "v1.2.3", 0),
+        ("v1.2.4", "v1.2.3", -1),
+    ]
+)
+def test_compareVersions_happy_path(base, candidate, expected):
+    assert utils.compareVersions(base, candidate) == expected
+
+@pytest.mark.parametrize(
+    "policy,expected",
+    [
+        (utils.VersionParseErrorPolicy.ASSUME_NEWER, 1),
+        (utils.VersionParseErrorPolicy.ASSUME_EQUAL, 0),
+        (utils.VersionParseErrorPolicy.ASSUME_OLDER, -1),
+    ]
+)
+def test_compareVersions_parse_error_policies(policy, expected):
+    assert utils.compareVersions(None, "v1.2.3", parse_error_policy=policy) == expected
+
+def test_compareVersions_raise_on_parse_error():
+    with pytest.raises(ValueError):
+        utils.compareVersions(None, "v1.2.3", parse_error_policy=utils.VersionParseErrorPolicy.RAISE)
