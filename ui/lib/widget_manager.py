@@ -57,12 +57,12 @@ class WidgetManager():
             self.error(f"Widget not found ({_id})", "addTag")
             return
 
-        if tag in self.tags:
-            self.tags[tag].extend([_id])
-        else:
+        if tag not in self.tags:
             self.tags[tag] = [_id]
+        elif _id not in self.tags[tag]:
+            self.tags[tag].append(_id)
     
-    def addTags(self, _id: str, *tags: list[str]):
+    def addTags(self, _id: str, *tags: str):
         if not _id in self.widgets:
             self.error(f"Widget not found ({_id})", "addTags")
             return
@@ -99,7 +99,7 @@ class WidgetManager():
             return
 
         for widget in self.getWidgetsByTag(tag):
-            if self._getWidgetSubclass(widget) in ("QCheckBox", "QRadioBox"):
+            if self._getWidgetSubclass(widget) in ("QCheckBox", "QRadioButton"):
                 widget.setChecked(checked)
 
     # VARIABLES
@@ -156,7 +156,7 @@ class WidgetManager():
         elif widget_class in ("QSlider", "QSpinBox"):
             if not type(val) is int:
                 val_mismatch = True
-        elif widget_class in ("QDoubleSpinBox"):
+        elif widget_class in ("QDoubleSpinBox",):
             if not type(val) is float:
                 val_mismatch = True
 
@@ -202,8 +202,8 @@ class WidgetManager():
         for _id in ids:
             if not _id in self.widgets:
                 self.error(f"Widget not found ({_id})", "disableAutoSaving")
-            else:
-                self.exceptions.extend(ids)
+            elif _id not in self.exceptions:
+                self.exceptions.append(_id)
 
     def saveState(self):
         if not os.path.isdir(CONFIG_LOCATION):
@@ -232,7 +232,7 @@ class WidgetManager():
                     widget_states[key] = self.widgets[key].text()
                 case "QTextEdit":
                     widget_states[key] = self.widgets[key].toPlainText()
-                # Unsupported widget get skipped when saving.
+                # Unsupported widgets get skipped when saving.
 
         if not widget_states and not self.variables:   # If empty
             return

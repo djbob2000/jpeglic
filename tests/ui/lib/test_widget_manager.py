@@ -90,12 +90,20 @@ def test_addTag_exists(app):
     assert "text_l" in tag_0
     assert "text_2_l" in tag_0
 
+def test_addTag_no_duplicates(app):
+    text_l = QLabel()
+    app.wm.addWidget("text_l", text_l)
+    app.wm.addTag("tag_0", "text_l")
+    app.wm.addTag("tag_0", "text_l")
+    assert "text_l" == app.wm.tags["tag_0"][0]
+    assert len(app.wm.tags) == 1
+
 def test_addTag_no_widget(caplog, app):
     app.wm.addTag("tag_0", "text_l")
     assert "Widget not found" in caplog.text
 
-def test_addTag(app):
-    text_l = QLabel() 
+def test_addTag_add_to_multiple_widgets(app):
+    text_l = QLabel()
     text_2_l = QLabel()
     app.wm.addWidget("text_l", text_l)
     app.wm.addWidget("text_2_l", text_2_l)
@@ -107,10 +115,6 @@ def test_addTag(app):
     assert "text_2_l" in tag_0
     assert "text_l" in tag_1
     assert "text_2_l" in tag_1
-
-def test_addTag_no_widget(caplog, app):
-    app.wm.addTags("text_l", "tag_0", "tag_1")
-    assert "Widget not found" in caplog.text
 
 def test_getWidgetsByTag(app):
     text_l = QLabel()
@@ -169,16 +173,21 @@ def test_setVisibleByTag_no_tag(caplog, app):
 def test_setCheckedByTag_qcheckbox(app):
     sample_cb = QCheckBox()
     app.wm.addWidget("sample_cb", sample_cb, "tag_0")
-    app.wm.setCheckedByTag("tag_0", True)
 
+    app.wm.setCheckedByTag("tag_0", True)
     assert app.wm.getWidget("sample_cb").isChecked()
+    app.wm.setCheckedByTag("tag_0", False)
+    assert not app.wm.getWidget("sample_cb").isChecked()
 
-def test_setCheckedByTag_qcombobox(app):
-    sample_cmb = QCheckBox()
-    app.wm.addWidget("sample_cmb", sample_cmb, "tag_0")
+def test_setCheckedByTag_qradiobutton(app):
+    sample_rb = QRadioButton()
+    sample_rb.setAutoExclusive(False)
+    app.wm.addWidget("sample_rb", sample_rb, "tag_0")
+
     app.wm.setCheckedByTag("tag_0", True)
-
-    assert app.wm.getWidget("sample_cmb").isChecked()
+    assert app.wm.getWidget("sample_rb").isChecked()
+    app.wm.setCheckedByTag("tag_0", False)
+    assert not app.wm.getWidget("sample_rb").isChecked()
 
 def test_setCheckedByTag_no_tag(caplog, app):
     app.wm.setCheckedByTag("tag_0", False)
@@ -281,6 +290,12 @@ def test_disableAutoSaving_no_widget(caplog, app):
     app.wm.disableAutoSaving("text_1_l", "text_2_l")
     assert "text_1_l" in app.wm.exceptions
     assert "Widget not found (text_2_l)" in caplog.text
+
+def test_disableAutoSaving_no_duplicates(app):
+    app.wm.addWidget("text_1_l", QLabel())
+    app.wm.disableAutoSaving("text_1_l", "text_1_l")
+    assert "text_1_l" in app.wm.exceptions
+    assert len(app.wm.exceptions) == 1
 
 @patch("ui.lib.widget_manager.os.path.isdir", return_value=False)
 def test_saveState_not_dir_CONFIG_LOCATION(mock_isdir, caplog, app):
@@ -413,5 +428,5 @@ def test_exit(app):
     mock_w2.deleteLater.assert_called_once()
     app.wm.cleanVars.assert_called_once()
     assert app.wm.widgets == {}
-    assert app.wm.exceptions == {}
+    assert app.wm.exceptions == []
     assert app.wm.tags == {}
