@@ -42,3 +42,18 @@ def info(
         detailed_text,
         QMessageBox.StandardButton.Ok
     )
+
+def confirm(
+    parent: QWidget,
+    title: str,
+    text: str,
+    detailed_text: str | None = None,
+) -> bool:
+    """Displays a dialog with "Yes" and "No" buttons. Returns True for "Yes", and False for "No"."""
+    return _displayMessageBox(
+        parent,
+        title,
+        text,
+        detailed_text,
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+    ) == QMessageBox.StandardButton.Yes

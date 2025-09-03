@@ -61,16 +61,28 @@ def test__displayMessageBox_ok_detailed_text(_displayMessageBox_patched):
 
 def test_info_default():
     mock_parent = MagicMock(spec=QWidget)
-    with patch("ui.dialogs.message_box._displayMessageBox") as mock_info:
+    with patch("ui.dialogs.message_box._displayMessageBox") as mock__displayMessageBox:
         message_box.info(mock_parent, "title", "text")
-        mock_info.assert_called_once_with(
+        mock__displayMessageBox.assert_called_once_with(
             mock_parent, "title", "text", None, QMessageBox.StandardButton.Ok
         )
 
 def test_info_all_args_specified():
     mock_parent = MagicMock(spec=QWidget)
-    with patch("ui.dialogs.message_box._displayMessageBox") as mock_info:
+    with patch("ui.dialogs.message_box._displayMessageBox") as mock__displayMessageBox:
         message_box.info(mock_parent, "title", "text", "detailed text")
-        mock_info.assert_called_once_with(
+        mock__displayMessageBox.assert_called_once_with(
             mock_parent, "title", "text", "detailed text", QMessageBox.StandardButton.Ok
+        )
+
+@pytest.mark.parametrize("button_pressed, expect_returned", [
+    (QMessageBox.StandardButton.Yes, True),
+    (QMessageBox.StandardButton.No, False),
+])
+def test_confirm_choices(button_pressed, expect_returned):
+    mock_parent = MagicMock(spec=QWidget)
+    with patch("ui.dialogs.message_box._displayMessageBox", return_value=button_pressed) as mock__displayMessageBox:
+        assert message_box.confirm(mock_parent, "title", "text", "detailed text") == expect_returned
+        mock__displayMessageBox.assert_called_once_with(
+            mock_parent, "title", "text", "detailed text", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
