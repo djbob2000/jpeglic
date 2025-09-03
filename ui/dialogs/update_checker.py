@@ -18,7 +18,7 @@ from PySide6.QtGui import(
 )
 
 from data.constants import VERSION, ICON_SVG, FLATPAK
-from core.update_checker import isVersionNewer, UpdateCheckerRunner, UpdateInfo
+from core.update_checker import isNewerVersionAvailable, UpdateCheckerRunner, UpdateInfo
 from ui.lib.utils import openRemoteUrl
 
 class Dialog(QDialog):
@@ -160,11 +160,13 @@ class UpdateChecker(QObject):
     def _jsonReceived(self, update_data: dict) -> None:
         try:
             self.update_info = UpdateInfo.fromJson(update_data)
+            is_new_ver_available = isNewerVersionAvailable(self.update_info.latest_version)
         except Exception as e:
-            self.dlg.show(str(e))
+            if not self.prompt_on_update_only:
+                self.dlg.show(str(e))
             return
-
-        if isVersionNewer(VERSION, self.update_info.latest_version):
+        
+        if is_new_ver_available:
             if FLATPAK:
                 self.dlg.show(f"New version is available ({self.update_info.latest_version}).")
             else:

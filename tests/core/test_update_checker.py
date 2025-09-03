@@ -1,5 +1,6 @@
 from unittest.mock import patch, MagicMock
 import requests
+import logging
 
 import pytest
 from PySide6.QtTest import QSignalSpy
@@ -143,17 +144,35 @@ def test_runner_run_already_running(runner):
 
         mock_QThread.start.assert_not_called()
 
+# More thorough tests are available in tests/data/test_data_utils.py
 @pytest.mark.parametrize("current_ver, remote_ver, expected", [
+    ("0.9.9", "0.9.8", False),
     ("1.0.0", "1.0.0", False),
-    ("1.0.0", "1.0.1", True),
-    ("0.0.0", "", True),
     ("1.0.0", "1.0.1", True),
     ("1.0.1", "1.1.0", True),
     ("1.0.0", "1.1.0", True),
     ("0.0.0", "1.0.0", True),
 ])
-def test_isVersionNewer(current_ver, remote_ver, expected):
-    assert update_checker.isVersionNewer(current_ver, remote_ver) == expected
+def test_isVersionNewer_happy_path(current_ver, remote_ver, expected):
+    with patch("core.update_checker.VERSION", current_ver):
+        assert update_checker.isNewerVersionAvailable(remote_ver) == expected
+
+def test_isVersionNewer_cur_ver_parsing_failed(caplog):
+    with (
+        patch("core.update_checker.VERSION", "invalid"),
+        pytest.raises(ValueError),
+        caplog.at_level(logging.ERROR),
+    ):
+        assert update_checker.isNewerVersionAvailable("v1.2.0")
+        assert "Failed to parse current version." in caplog.text
+
+def test_isVersionNewer_remote_ver_parsing_failed(caplog):
+    with (
+        patch("core.update_checker.VERSION", "v1.2.0"),
+        caplog.at_level(logging.INFO),
+    ):
+        assert update_checker.isNewerVersionAvailable("invalid") == True
+        assert "Failed to parse remote version." in caplog.text
 
 def test_UpdateInfo_happy_path():
     json_data = {

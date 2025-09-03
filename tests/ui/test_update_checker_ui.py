@@ -250,18 +250,29 @@ def test_update_checker_jsonReceived_update_info_exception(update_checker_object
         
         mock_dialog.show.assert_called_once_with("Key \"latest_version\" not found")
 
+def test_update_checker_jsonReceived_update_info_exception_prompt_on_update_only(update_checker_object):
+    mock_dialog = MagicMock(spec=update_checker.Dialog)
+    update_checker_object.dlg = mock_dialog
+    update_checker_object.prompt_on_update_only = True
+    with (
+        patch("ui.dialogs.update_checker.UpdateInfo.fromJson", side_effect=ValueError),
+    ):
+        update_checker_object._jsonReceived({})
+        
+        mock_dialog.show.assert_not_called()
+
 def test_update_checker_jsonReceived_up_to_date(update_checker_object):
     mock_update_info = update_checker.UpdateInfo(latest_version="1.0.0")
     mock_dialog = MagicMock(spec=update_checker.Dialog)
     update_checker_object.dlg = mock_dialog
     with (
         patch("ui.dialogs.update_checker.UpdateInfo.fromJson", return_value=mock_update_info),
-        patch("ui.dialogs.update_checker.isVersionNewer", return_value=False) as mock_isVersionNewer,
+        patch("ui.dialogs.update_checker.isNewerVersionAvailable", return_value=False) as mock_isNewerVersionAvailable,
         patch("ui.dialogs.update_checker.VERSION", "1.0.0") as mock_VERSION,
     ):
         update_checker_object._jsonReceived({})
         
-        mock_isVersionNewer.assert_called_once_with(mock_VERSION, mock_update_info.latest_version)
+        mock_isNewerVersionAvailable.assert_called_once_with(mock_update_info.latest_version)
         mock_dialog.show.assert_called_once_with("This version is up to date.")
 
 def test_update_checker_jsonReceived_new_ver_available(update_checker_object):
@@ -270,13 +281,13 @@ def test_update_checker_jsonReceived_new_ver_available(update_checker_object):
     update_checker_object.dlg = mock_dialog
     with (
         patch("ui.dialogs.update_checker.UpdateInfo.fromJson", return_value=mock_update_info),
-        patch("ui.dialogs.update_checker.isVersionNewer", return_value=True) as mock_isVersionNewer,
+        patch("ui.dialogs.update_checker.isNewerVersionAvailable", return_value=True) as mock_isNewerVersionAvailable,
         patch("ui.dialogs.update_checker.VERSION", "1.0.0") as mock_VERSION,
         patch("ui.dialogs.update_checker.FLATPAK", False),
     ):
         update_checker_object._jsonReceived({})
         
-        mock_isVersionNewer.assert_called_once_with(mock_VERSION, mock_update_info.latest_version)
+        mock_isNewerVersionAvailable.assert_called_once_with(mock_update_info.latest_version)
         mock_dialog.show.assert_called_once_with(
             "New version is available (1.0.0).",
             None,
@@ -289,13 +300,13 @@ def test_update_checker_jsonReceived_new_ver_available_flatpak(update_checker_ob
     update_checker_object.dlg = mock_dialog
     with (
         patch("ui.dialogs.update_checker.UpdateInfo.fromJson", return_value=mock_update_info),
-        patch("ui.dialogs.update_checker.isVersionNewer", return_value=True) as mock_isVersionNewer,
+        patch("ui.dialogs.update_checker.isNewerVersionAvailable", return_value=True) as mock_isNewerVersionAvailable,
         patch("ui.dialogs.update_checker.VERSION", "1.0.0") as mock_VERSION,
         patch("ui.dialogs.update_checker.FLATPAK", True),
     ):
         update_checker_object._jsonReceived({})
         
-        mock_isVersionNewer.assert_called_once_with(mock_VERSION, mock_update_info.latest_version)
+        mock_isNewerVersionAvailable.assert_called_once_with(mock_update_info.latest_version)
         mock_dialog.show.assert_called_once_with(
             "New version is available (1.0.0).",
         )

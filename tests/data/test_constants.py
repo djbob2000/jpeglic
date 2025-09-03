@@ -7,6 +7,7 @@ import os
 import pytest
 
 import data.constants as constants
+import data.utils as utils
 
 @pytest.fixture(autouse=True)
 def reload_constants():
@@ -109,3 +110,6 @@ def test_config_location_win_default():
     ):
         reload(constants)
         assert constants.CONFIG_LOCATION == os.path.normpath(os.path.expanduser("~/AppData/Local/xl-converter"))
+
+def test_VERSION_parsable():
+    assert utils.parseVersion(constants.VERSION) is not None, f"Current version ({constants.VERSION}) is not parsable. Update checker will not work correctly. Adjust data.utils.parseVersion to account for the new scheme."

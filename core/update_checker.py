@@ -1,5 +1,5 @@
-import re
 from dataclasses import dataclass
+import logging
 
 import requests
 from PySide6.QtCore import(
@@ -9,6 +9,9 @@ from PySide6.QtCore import(
 )
 
 from data.constants import UPDATE_CHECKER_VER_FILE_URL, VERSION
+from data.utils import parseVersion
+
+logger = logging.getLogger(__name__)
 
 # Debug
 SIMULATE_SERVER = False
@@ -85,25 +88,29 @@ class UpdateCheckerRunner(QObject):
         self.worker.finished.connect(self._cleanup)
         self.thread.start()
 
-def isVersionNewer(current_ver: str, remote_ver: str) -> bool:
-    """
-    Parses and compares two semver strings.
-    
-    Returns:
-        True - if remote_ver is newer than current_ver or cannot be parsed.
-        False - if remote_ver is older or identical to current_ver. 
-    """
-    pattern = r"(\d+)\.(\d+)\.(\d+)"
-    current_ver_match = re.fullmatch(pattern, current_ver)
-    remote_ver_match = re.fullmatch(pattern, remote_ver)
+def isNewerVersionAvailable(remote_ver: str) -> bool:
+    """Compares the current with the remote version.
 
-    if not current_ver or not remote_ver:
+    Returns:
+        True - if an update is available or the remote version cannot be parsed (e.g. due to a new version scheme).
+        False - if the current version is up to date.
+    
+    Raises:
+        ValueError - if the current version cannot be parsed.
+    """
+    cur_ver = parseVersion(VERSION)
+    remote_ver = parseVersion(remote_ver)
+
+    if cur_ver is None:
+        logger.error("Failed to parse current version.")
+        raise ValueError("Failed to parse current version.")
+
+    if remote_ver is None:
+        # In the future, version scheme may get more complex.
+        logger.info("Failed to parse remote version.")
         return True
     
-    current_parts = tuple(int(x) for x in current_ver_match.groups())
-    remote_parts = tuple(int(x) for x in remote_ver_match.groups())
-
-    return remote_parts > current_parts     # Compared lexicographically
+    return remote_ver > cur_ver
 
 @dataclass
 class UpdateInfo:
