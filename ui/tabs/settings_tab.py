@@ -290,7 +290,7 @@ class SettingsTab(QWidget):
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling_toggled.emit)
         self.quality_prec_snap_cb.toggled.connect(self.signals.quality_prec_snap_toggled)
         self.jpg_encoder_cmb.currentTextChanged.connect(self.signals.jpeg_encoder_changed)
-        self.exiftool_reset_btn.clicked.connect(lambda checked=False: self.resetExifTool(reset_custom=True))
+        self.exiftool_reset_btn.clicked.connect(lambda checked=False: self.resetExifTool(reset_custom=False))
         self.start_logging_btn.clicked.connect(self.toggleLogging)
         self.open_log_dir_btn.clicked.connect(self.openLogsDir)
         self.wipe_log_dir_btn.clicked.connect(self.wipeLogsDir)
