@@ -14,9 +14,23 @@ def app(qtbot):
         patch("ui.tabs.settings_tab.WidgetManager.loadState"),
         patch("ui.tabs.settings_tab.WidgetManager.saveState"),
         patch("ui.tabs.settings_tab.setTheme"),
+        patch.object(SettingsTab, "runMigrations"),
     ):
         tab = SettingsTab()
         qtbot.addWidget(tab)
+        return tab
+
+@pytest.fixture
+def app_migrations(qtbot):
+    """Version of app with unpatched runMigrations."""
+    with (
+        patch("ui.tabs.settings_tab.WidgetManager.loadState"),
+        patch("ui.tabs.settings_tab.WidgetManager.saveState"),
+        patch("ui.tabs.settings_tab.setTheme"),
+    ):
+        with patch.object(SettingsTab, "runMigrations"):    # Prevents running in __init__
+            tab = SettingsTab()
+            qtbot.addWidget(tab)
         return tab
 
 @pytest.mark.parametrize("category, button", [
@@ -245,8 +259,41 @@ def test_wipeLogsDir(app):
         mock_wipeLogsDir.assert_called_once()
         mock_message_box_info.assert_called_once_with(app, "File Message", "Wiped successfully")
 
+def test_resetExifTool(app):
+    with (
+        patch.object(app.exiftool_wipe_te, "setText") as mock_setText_wipe,
+        patch.object(app.exiftool_preserve_te, "setText") as mock_setText_preserve,
+        patch.object(app.exiftool_unsafe_wipe_te, "setText") as mock_setText_unsafe_wipe,
+    ):
+        app.resetExifTool()
+
+        mock_setText_wipe.assert_called_once_with("-m -all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original")
+        mock_setText_preserve.assert_called_once_with("-m -tagsFromFile $src $dst -overwrite_original")
+        mock_setText_unsafe_wipe.assert_called_once_with("-m -all= $dst -overwrite_original")
+
+@pytest.mark.parametrize("reset_custom", [True, False])
+def test_resetExifTool_reset_custom(reset_custom, app):
+    with (
+        patch.object(app.exiftool_wipe_te, "setText") as mock_setText_wipe,
+        patch.object(app.exiftool_preserve_te, "setText") as mock_setText_preserve,
+        patch.object(app.exiftool_unsafe_wipe_te, "setText") as mock_setText_unsafe_wipe,
+        patch.object(app.exiftool_custom_te, "setText") as mock_setText_custom,
+    ):
+        app.resetExifTool(reset_custom=reset_custom)
+
+        mock_setText_wipe.assert_called_once_with("-m -all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original")
+        mock_setText_preserve.assert_called_once_with("-m -tagsFromFile $src $dst -overwrite_original")
+        mock_setText_unsafe_wipe.assert_called_once_with("-m -all= $dst -overwrite_original")
+        assert bool(mock_setText_custom.call_count) == reset_custom
+
+
 def test_getSettings_no_key_error(app):
     app.getSettings()
+
+def test_resetOptimizationRules(app):
+    with patch.object(app.ram_optimizer_rules_te, "setText") as mock_setText:
+        app.resetOptimizationRules() 
+        mock_setText.assert_called_once()
 
 def test_resetToDefault(app):
     app.resetToDefault()
@@ -266,3 +313,65 @@ def test_resetToDefault(app):
     assert app.cjpegli_args_te.toPlainText() == ""
     assert app.im_args_te.toPlainText() == ""
     assert app.avifenc_args_te.toPlainText() == ""
+
+@pytest.mark.parametrize("version, expect_run", [
+    ("1.0.0", True),
+    ("1.2.2", True),
+    ("1.2.3", False),
+    ("1.2.4", False),
+    ("dev-build", True),
+])
+def test_runMigrations_version_check(version, expect_run, app_migrations):
+    with (
+        patch.object(app_migrations.wm, "getLoadedVersion", return_value=version),
+        patch.object(app_migrations, "resetExifTool") as mock_resetExifTool,
+        patch.object(app_migrations.exiftool_preserve_te, "toPlainText", return_value="custom"),
+        patch("ui.tabs.settings_tab.message_box.info") as mock_message_box_info,
+        patch("ui.tabs.settings_tab.message_box.confirm") as mock_message_box_confirm,
+    ):
+        app_migrations.runMigrations()
+        assert bool(mock_resetExifTool.call_count) == expect_run
+
+def test_runMigrations_automatic(app_migrations):
+    with (
+        patch.object(app_migrations.wm, "getLoadedVersion", return_value="1.2.2"),
+        patch.object(app_migrations, "resetExifTool") as mock_resetExifTool,
+        patch.object(app_migrations.exiftool_wipe_te, "toPlainText", return_value="-all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original"),
+        patch.object(app_migrations.exiftool_preserve_te, "toPlainText", return_value="-tagsFromFile $src $dst -overwrite_original"),
+        patch.object(app_migrations.exiftool_unsafe_wipe_te, "toPlainText", return_value="-all= $dst -overwrite_original"),
+        patch("ui.tabs.settings_tab.message_box.info") as mock_message_box_info,
+        patch("ui.tabs.settings_tab.message_box.confirm") as mock_message_box_confirm,
+    ):
+        app_migrations.runMigrations()
+
+        mock_resetExifTool.assert_called_once_with(reset_custom=False)
+        mock_message_box_info.assert_not_called()
+        mock_message_box_confirm.assert_not_called()
+
+def test_runMigrations_manual_accept(app_migrations):
+    with (
+        patch.object(app_migrations.wm, "getLoadedVersion", return_value="1.2.2"),
+        patch.object(app_migrations, "resetExifTool") as mock_resetExifTool,
+        patch.object(app_migrations.exiftool_wipe_te, "toPlainText", return_value="custom"),
+        patch("ui.tabs.settings_tab.message_box.info") as mock_message_box_info,
+        patch("ui.tabs.settings_tab.message_box.confirm", return_value=True) as mock_message_box_confirm,
+    ):
+        app_migrations.runMigrations()
+
+        mock_resetExifTool.assert_called_once_with(reset_custom=False)
+        mock_message_box_confirm.assert_called_once_with(app_migrations, "Settings Migration", "Recommended ExifTool presets changed. Apply them?")
+        mock_message_box_info.assert_not_called()
+
+def test_runMigrations_manual_reject(app_migrations):
+    with (
+        patch.object(app_migrations.wm, "getLoadedVersion", return_value="1.2.2"),
+        patch.object(app_migrations, "resetExifTool") as mock_resetExifTool,
+        patch.object(app_migrations.exiftool_wipe_te, "toPlainText", return_value="custom"),
+        patch("ui.tabs.settings_tab.message_box.info") as mock_message_box_info,
+        patch("ui.tabs.settings_tab.message_box.confirm", return_value=False) as mock_message_box_confirm,
+    ):
+        app_migrations.runMigrations()
+
+        mock_resetExifTool.assert_not_called()
+        mock_message_box_confirm.assert_called_once_with(app_migrations, "Settings Migration", "Recommended ExifTool presets changed. Apply them?")
+        mock_message_box_info.assert_called_once_with(app_migrations, "Settings Migration", "This change is highly recommended. To apply changes later, press \"Reset\" in Settings -> ExifTool.")

@@ -67,7 +67,7 @@ class SettingsTab(QWidget):
             self.theme_cmb,
         ):
             self.resetToDefault()
-            self.loadState()
+            self.wm.loadState()
 
         # Refresh states
         self.onCustomArgsToggled()
@@ -75,6 +75,9 @@ class SettingsTab(QWidget):
         self.onAVIFEncoderChanged()
         self.onThemeChanged()
         self.onRamOptimizerChanged()
+
+        # Misc.
+        self.runMigrations()
 
         # Vars
         self.cached_states = {}
@@ -287,7 +290,7 @@ class SettingsTab(QWidget):
         self.custom_resampling_cb.toggled.connect(self.signals.custom_resampling_toggled.emit)
         self.quality_prec_snap_cb.toggled.connect(self.signals.quality_prec_snap_toggled)
         self.jpg_encoder_cmb.currentTextChanged.connect(self.signals.jpeg_encoder_changed)
-        self.exiftool_reset_btn.clicked.connect(self.resetExifTool)
+        self.exiftool_reset_btn.clicked.connect(lambda checked=False: self.resetExifTool(reset_custom=True))
         self.start_logging_btn.clicked.connect(self.toggleLogging)
         self.open_log_dir_btn.clicked.connect(self.openLogsDir)
         self.wipe_log_dir_btn.clicked.connect(self.wipeLogsDir)
@@ -505,11 +508,13 @@ class SettingsTab(QWidget):
             "avif_aom_iq_tune": self.avif_aom_iq_tune_cb.isChecked(),
         }
     
-    def resetExifTool(self):
+    def resetExifTool(self, reset_custom=False):
         self.exiftool_wipe_te.setText("-m -all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original")
         self.exiftool_preserve_te.setText("-m -tagsFromFile $src $dst -overwrite_original")
         self.exiftool_unsafe_wipe_te.setText("-m -all= $dst -overwrite_original")
-        self.exiftool_custom_te.setText("")
+
+        if reset_custom:
+            self.exiftool_custom_te.setText("")
 
     def resetOptimizationRules(self):
         self.ram_optimizer_rules_te.setText("""("all", 3.5, "7/8"), ("all", 4.5, "6/8"), ("all", 5.5, "5/8"), ("all", 6.5, "4/8"), ("all", 7.5, "3/8"), ("all", 8.5, "2/8"), ("all", 9.5, "1/8"), ("all", 10.5, "1")""")
@@ -553,14 +558,24 @@ class SettingsTab(QWidget):
             self.wm.saveState()
             self.cached_states = deepcopy(new_states)
 
-    def loadState(self) -> None:
-        """Loads widget states and applies migrations."""
-        self.wm.loadState()
+    def runMigrations(self) -> None:
+        """Migrate old settings."""
+        if compareVersions("v1.2.3", self.wm.getLoadedVersion(), VersionParseErrorPolicy.ASSUME_OLDER) < 0:
+            user_edited_defaults = False
+            
+            # Note: If more are added, use `not in` with tuples.
+            if (
+                self.exiftool_wipe_te.toPlainText() != "-all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original" or
+                self.exiftool_preserve_te.toPlainText() != "-tagsFromFile $src $dst -overwrite_original" or
+                self.exiftool_unsafe_wipe_te.toPlainText() != "-all= $dst -overwrite_original"
+            ):
+               user_edited_defaults = True 
 
-        # Migrations
-        if (
-            # v1.2.2 or older
-            compareVersions(self.wm.getLoadedVersion(), "1.2.2", VersionParseErrorPolicy.ASSUME_NEWER) <= 0 and
-            self.exiftool_preserve_te.toPlainText() == "-tagsFromFile $src $dst -overwrite_original"
-        ):
-            self.exiftool_preserve_te.setText("-m -tagsFromFile $src $dst -overwrite_original")
+            if user_edited_defaults == False:   # Automatic migration
+                self.resetExifTool(reset_custom=False)
+            elif message_box.confirm(self, "Settings Migration", "Recommended ExifTool presets changed. Apply them?"):  # Manual migration
+                self.resetExifTool(reset_custom=False)
+            else:
+                message_box.info(self, "Settings Migration", "This change is highly recommended. To apply changes later, press \"Reset\" in Settings -> ExifTool.")
+
+
