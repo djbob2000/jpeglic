@@ -161,10 +161,10 @@ class Controller(QObject):
 
         return output
 
-    def parseData(self, input_tab_items) -> None:
+    def parseData(self, order: str, input_tab_items) -> None:
         """Prepares data for startProcessing(...)"""
         self.items.clear()
-        self.items.parseData(*input_tab_items)
+        self.items.parseData(order, *input_tab_items)
 
     def startProcessing(self,
         output_tab_settings: dict[str, Any],

@@ -78,6 +78,7 @@ def test_changeCategory_visibility(category, button, app):
             "cjxl_args_l", "cjxl_args_te",
             "cjpegli_args_l", "cjpegli_args_te",
             "im_args_l", "im_args_te",
+            "processing_order_l", "processing_order_cmb",
             "start_logging_btn", "open_log_dir_btn", "wipe_log_dir_btn",
         ],
     }

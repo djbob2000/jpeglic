@@ -3,6 +3,7 @@
 ### Added
 
 - Add `--debug` CLI option.
+- Add processing order option (#114).
 
 ### Fixed
 

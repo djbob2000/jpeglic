@@ -10,7 +10,7 @@ class Items():
         self.item_count = 0
         self.completed_item_count = 0
 
-    def parseData(self, *items):
+    def parseData(self, order: str = "Original", *items) -> None:
         """Populate the structure with proper data."""
         for abs_path, anchor_path in items:
             abs_path = Path(abs_path)
@@ -32,7 +32,13 @@ class Items():
             )
         
         self.item_count = len(self.items)
-        random.shuffle(self.items)      # Improves time left accuracy
+
+        if order == "Random":
+            # Improves time left accuracy
+            random.shuffle(self.items)
+        elif order == "Sequential":
+            # Improves file access times on HDDs
+            self.items.sort(key=lambda pair: (str(pair[0].parent).casefold(), pair[0].name.casefold()))
 
     def getItem(self, n) -> Path:
         return self.items[n]

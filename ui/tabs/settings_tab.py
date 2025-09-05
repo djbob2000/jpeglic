@@ -168,6 +168,8 @@ class SettingsTab(QWidget):
         self.cjpegli_args_te.setAcceptRichText(False)
         self.cjxl_args_te.setAcceptRichText(False)
         self.im_args_te.setAcceptRichText(False)
+        self.processing_order_l = self.wm.addWidget("processing_order_l", QLabel("Processing Order"))
+        self.processing_order_cmb = self.wm.addWidget("processing_order_cmb", ComboBox(("Random", "Sequential")))
         self.start_logging_btn = self.wm.addWidget("start_logging_btn", QPushButton("Start Logging"))
         self.open_log_dir_btn = self.wm.addWidget("open_log_dir_btn", QPushButton("Open Logs Folder"))
         self.wipe_log_dir_btn = self.wm.addWidget("wipe_log_dir_btn", QPushButton("Wipe Logs Folder"))
@@ -241,6 +243,8 @@ class SettingsTab(QWidget):
         self.settings_lt.addLayout(createQHBoxLayout(self.avifenc_args_l, self.avifenc_args_te))
         self.settings_lt.addLayout(createQHBoxLayout(self.cjpegli_args_l, self.cjpegli_args_te))
         self.settings_lt.addLayout(createQHBoxLayout(self.im_args_l, self.im_args_te))
+        self.processing_order_hb = createQHBoxLayout(self.processing_order_l, self.processing_order_cmb)
+        self.settings_lt.addLayout(self.processing_order_hb)
         self.settings_lt.addLayout(createQHBoxLayout(self.start_logging_btn, self.open_log_dir_btn, self.wipe_log_dir_btn))
 
         # All
@@ -268,6 +272,7 @@ class SettingsTab(QWidget):
             self.play_sound_on_finish_vol_hb,
             self.theme_hb,
             self.ram_optimizer_hb,
+            self.processing_order_hb,
             # self.avif_aom_tune_hb,
         ):
             hbox.setAlignment(Qt.AlignLeft)
@@ -278,6 +283,7 @@ class SettingsTab(QWidget):
             self.avif_bit_depth_cmb,
             self.theme_cmb,
             self.ram_optimizer_cmb,
+            self.processing_order_cmb,
             # self.avif_aom_tune_cmb,
         ):
             cmb.setMinimumWidth(150)
@@ -331,6 +337,7 @@ class SettingsTab(QWidget):
         setToolTip("avif_aom_iq_tune", self.avif_aom_iq_tune_cb)
         setToolTip("ram_optimizer", self.ram_optimizer_cmb)
         setToolTip("ram_optimizer_rules", self.ram_optimizer_rules_te)
+        setToolTip("processing_order", self.processing_order_cmb)
 
     def changeCategory(self, category):
         # Category buttons
@@ -379,6 +386,7 @@ class SettingsTab(QWidget):
                 "cjxl_args_l", "cjxl_args_te",
                 "cjpegli_args_l", "cjpegli_args_te",
                 "im_args_l", "im_args_te",
+                "processing_order_l", "processing_order_cmb",
                 "start_logging_btn", "open_log_dir_btn", "wipe_log_dir_btn",
             ],
         }
@@ -506,6 +514,7 @@ class SettingsTab(QWidget):
             "avif_encoder": self.avif_encoder_cmb.currentText(),
             "avif_bit_depth": self.avif_bit_depth_cmb.currentText(),
             "avif_aom_iq_tune": self.avif_aom_iq_tune_cb.isChecked(),
+            "processing_order": self.processing_order_cmb.currentText(),
         }
     
     def resetExifTool(self, reset_custom=False):
@@ -544,6 +553,7 @@ class SettingsTab(QWidget):
         self.resetOptimizationRules()
         self.jxl_int_effort_cb.setChecked(False)
         self.resetExifTool()
+        self.processing_order_cmb.setCurrentIndex(0)
         self.custom_args_cb.setChecked(False)
         self.cjxl_args_te.clear()
         self.cjpegli_args_te.clear()

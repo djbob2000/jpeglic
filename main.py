@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
         modify_tab_settings = self.modify_tab.getSettings()
         settings_tab_settings = self.settings_tab.getSettings()
 
-        self.controller.parseData(self.input_tab.getItems())
+        self.controller.parseData(settings_tab_settings["processing_order"], self.input_tab.getItems())
         
         check_status = self.controller.checkProcessingRequirements(
             self.input_tab.file_view.topLevelItemCount(),

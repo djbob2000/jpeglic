@@ -98,6 +98,7 @@ def main_window_patched(main_window):
         "settings_tab_getSettings": patch.object(main_window.settings_tab, "getSettings", return_value={
             "play_sound_on_finish": False,
             "play_sound_on_finish_vol": 50,
+            "processing_order": "Random",
         }),
         "finished_sound_play": patch("main.finished_sound.play"),
         "exception_view_isEmpty": patch.object(main_window.exception_view, "isEmpty", return_value=True),
@@ -192,7 +193,7 @@ def test_convert(main_window_patched):
 
     main_window.convert()
 
-    mocks["controller_parseData"].assert_called_once_with(mocks["input_tab_getItems"].return_value)
+    mocks["controller_parseData"].assert_called_once_with(mocks["settings_tab_getSettings"].return_value["processing_order"], mocks["input_tab_getItems"].return_value)
     mocks["exception_view_reset"].assert_called_once()
     main_window.settings_tab.saveState.assert_called_once_with(mocks["settings_tab_getSettings"].return_value)
     main_window.output_tab.saveState.assert_called_once_with(mocks["output_tab_getSettings"].return_value)

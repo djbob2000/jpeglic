@@ -188,9 +188,9 @@ def test_parseData(controller):
         patch.object(controller.items, "clear") as mock_clear,
         patch.object(controller.items, "parseData") as mock_parseData,
     ):
-        controller.parseData(items)
+        controller.parseData("Random", items)
         mock_clear.assert_called_once()
-        mock_parseData.assert_called_once_with(*items)
+        mock_parseData.assert_called_once_with("Random", *items)
 
 def test_startProcessing(controller, output_tab_settings, modify_tab_settings, settings_tab_settings):
     processing_started_spy = QSignalSpy(controller.processing_started)
