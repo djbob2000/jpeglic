@@ -570,6 +570,10 @@ class SettingsTab(QWidget):
 
     def runMigrations(self) -> None:
         """Migrate old settings."""
+        # No states loaded
+        if self.wm.getLoadedVersion() is None:
+            return
+
         if compareVersions("v1.2.3", self.wm.getLoadedVersion(), VersionParseErrorPolicy.ASSUME_OLDER) < 0:
             user_edited_defaults = False
             

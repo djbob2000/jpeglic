@@ -315,6 +315,20 @@ def test_resetToDefault(app):
     assert app.im_args_te.toPlainText() == ""
     assert app.avifenc_args_te.toPlainText() == ""
 
+def test_runMigrations_no_loaded_ver(app_migrations):
+    with (
+        patch.object(app_migrations.wm, "getLoadedVersion", return_value=None) as mock_getLoadedVersion,
+        patch.object(app_migrations, "resetExifTool") as mock_resetExifTool,
+        patch.object(app_migrations.exiftool_preserve_te, "toPlainText", return_value="custom"),
+        patch("ui.tabs.settings_tab.message_box.info") as mock_message_box_info,
+        patch("ui.tabs.settings_tab.message_box.confirm") as mock_message_box_confirm,
+    ):
+        app_migrations.runMigrations()
+        mock_getLoadedVersion.assert_called_once()
+        mock_resetExifTool.assert_not_called()
+        mock_message_box_info.assert_not_called()
+        mock_message_box_confirm.assert_not_called()
+
 @pytest.mark.parametrize("version, expect_run", [
     ("1.0.0", True),
     ("1.2.2", True),
