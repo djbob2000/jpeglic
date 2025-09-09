@@ -8,6 +8,7 @@
 ### Fixed
 
 - Improve preserving metadata with ExifTool for TIFF sources.
+- Fix GIF to JPEG XL conversion stalling on Windows (#115).
 - Fix Flatpak permission check false positive (#110).
 - Restore native file dialog on GTK-based desktop environments (Linux).
 - Prioritize "Delete Original" when replacing files in source folder (#111).

@@ -39,14 +39,12 @@ def test_runProcess():
     ):
         mock_process = mock_popen.return_value
         mock_process.communicate.return_value = (expected_stdout, expected_stderr)
-        mock_process.wait.return_value = None
 
         process.runProcess(*cmd)
 
         mock_popen.assert_called_once_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=ANY, cwd=None)
         mock_addProcess.assert_called_once_with(mock_process)
         mock_removeProcess.assert_called_once_with(mock_process)
-        mock_process.wait.assert_called_once()
         mock_process.communicate.assert_called_once()
         assert len(mock_logging_info.call_args_list) == 2
         assert mock_logging_info.call_args_list[0][0][0] == f"[runProcess] {cmd}"
@@ -74,14 +72,12 @@ def test_runProcess2_happy_path():
     ):
         mock_process = mock_popen.return_value
         mock_process.communicate.return_value = (stdout, stderr)
-        mock_process.wait.return_value = None
 
         process.runProcess2(*cmd)
 
         mock_popen.assert_called_once_with(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=ANY, cwd=None)
         mock_addProcess.assert_called_once_with(mock_process)
         mock_removeProcess.assert_called_once_with(mock_process)
-        mock_process.wait.assert_called_once()
         mock_process.communicate.assert_called_once()
         assert len(mock_logging_info.call_args_list) == 2
         assert mock_logging_info.call_args_list[0][0][0] == f"[runProcess2] {cmd}"

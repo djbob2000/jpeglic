@@ -14,7 +14,6 @@ def runProcess2(*cmd: str, cwd: str | None = None) -> (str, str):
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=_getStartupInfo(), cwd=cwd)
     ProcessManager.addProcess(process)
-    process.wait()
     stdout, stderr = process.communicate()
     ProcessManager.removeProcess(process)
 
@@ -46,7 +45,6 @@ def runProcess(*cmd, cwd=None):
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=_getStartupInfo(), cwd=cwd)
     ProcessManager.addProcess(process)
-    process.wait()
     stdout, stderr = process.communicate()
     ProcessManager.removeProcess(process)
 
