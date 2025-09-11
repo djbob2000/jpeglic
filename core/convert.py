@@ -142,8 +142,12 @@ def getDecoderArgs(decoder_path: str, threads: int) -> list:
 
 def getImageRes(image_path: str) -> (int, int):
     """Returns resolution of an image or (-1, -1) if one cannot be determined."""
-    out, err = runBinary(IMAGE_MAGICK_PATH, ["identify", "-ping", "-format", "%wx%h"], image_path)
-    res_match = re.fullmatch(r"(\d+)x(\d+)", out)
+    out, err = runBinary(
+        IMAGE_MAGICK_PATH,
+        ["identify", "-ping", "-format", "%[page]"],
+        f"{image_path}[0]",
+    )
+    res_match = re.match(r"^(\d+)x(\d+)(?=\D|$)", out)
 
     if not res_match:
         logging.error(f"[getImageResMp] Cannot determine resolution. {err}")

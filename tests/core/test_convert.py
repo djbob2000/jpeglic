@@ -227,12 +227,12 @@ def test_getImageRes_happy_path(getImageRes_patches):
     assert convert.getImageRes(image_path) == res
     mocks["runBinary"].assert_called_once_with(
         variables["IMAGE_MAGICK_PATH"],
-        ["identify", "-ping", "-format", "%wx%h"],
-        image_path
+        ["identify", "-ping", "-format", "%[page]"],
+        f"{image_path}[0]",
     )
 
 @pytest.mark.parametrize("invalid_process_output", [
-    "1a00x2000", "", "1000x2a000", "x2000", "2000x", "1a00x2000a"
+    "1a00x2000", "", "1000xa000", "x2000", "2000x", "1a00x2000a"
 ])
 def test_getImageRes_invalid_process_output(invalid_process_output, getImageRes_patches, caplog):
     mocks, variables = getImageRes_patches
@@ -247,7 +247,7 @@ def test_getImageRes_parsing_error(getImageRes_patches, caplog):
     mock_re_output = MagicMock()
     mock_re_output.group.side_effect = ("a", "b")
 
-    with patch("core.convert.re.fullmatch", return_value=mock_re_output) as mock_re:
+    with patch("core.convert.re.match", return_value=mock_re_output) as mock_re:
         assert convert.getImageRes("/tmp/file.jpg") == (-1, -1)
 
     assert "Failed to parse resolution" in caplog.records[0].message
