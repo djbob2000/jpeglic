@@ -129,7 +129,7 @@ class OutputTab(QWidget):
         self.jxl_normalize_when_cmb = self.wm.addWidget("jxl_normalize_when_cmb", ComboBox(("On Fail", "Always")))  # There is a quirk / bug in Qt which causes the popup opened by this specific widget in this particular layout combination on Windows to shrink. Overriding `showPopup` fixed it in Qt 6.6 but Qt 6.8 broke it.
 
         # Buttons
-        self.reset_to_default_btn = QPushButton("Reset to Default")
+        self.reset_to_default_btn = QPushButton("Reset to Defaults")
         self.convert_btn = QPushButton("Convert")
     
     def _setupLayouts(self):

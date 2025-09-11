@@ -121,7 +121,7 @@ class ModifyTab(QWidget):
             "ExifTool - Unsafe Wipe",
             "ExifTool - Custom"
         )))
-        self.default_btn = QPushButton("Reset to Default")
+        self.default_btn = QPushButton("Reset to Defaults")
         self.convert_btn = QPushButton("Convert")
 
     def _setupLayouts(self):

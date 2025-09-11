@@ -180,7 +180,7 @@ class SettingsTab(QWidget):
         self.conversion_btn = QPushButton("Conversion")
         self.exiftool_btn = QPushButton("ExifTool")
         self.advanced_btn = QPushButton("Advanced")
-        self.restore_defaults_btn = QPushButton("Reset to Default")
+        self.restore_defaults_btn = QPushButton("Reset to Defaults")
         
         self.general_btn.setCheckable(True)
         self.conversion_btn.setCheckable(True)
