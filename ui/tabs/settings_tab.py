@@ -2,6 +2,7 @@ import os
 import logging
 from typing import Optional, Dict
 from copy import deepcopy
+from dataclasses import dataclass
 
 from PySide6.QtWidgets import(
     QWidget,
@@ -31,6 +32,14 @@ from ui.lib.utils import setToolTip, openLocalUrl, createQHBoxLayout, blockSigna
 from ui.theme import setTheme
 from ui.widgets import ScrollArea, SpinBox, ComboBox
 from ui.dialogs import message_box
+
+@dataclass(frozen=True)
+class StockPresets:
+    exiftool_wipe: str = "-m -all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original"
+    exiftool_preserve: str = "-m -tagsFromFile $src $dst -overwrite_original"
+    exiftool_unsafe_wipe: str = "-m -all= $dst -overwrite_original"
+
+STOCK_PRESETS = StockPresets()
 
 class Signals(QObject):
     custom_resampling_toggled = Signal(bool)
@@ -518,9 +527,9 @@ class SettingsTab(QWidget):
         }
     
     def resetExifTool(self, reset_custom=False):
-        self.exiftool_wipe_te.setText("-m -all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original")
-        self.exiftool_preserve_te.setText("-m -tagsFromFile $src $dst -overwrite_original")
-        self.exiftool_unsafe_wipe_te.setText("-m -all= $dst -overwrite_original")
+        self.exiftool_wipe_te.setText(STOCK_PRESETS.exiftool_wipe)
+        self.exiftool_preserve_te.setText(STOCK_PRESETS.exiftool_preserve)
+        self.exiftool_unsafe_wipe_te.setText(STOCK_PRESETS.exiftool_unsafe_wipe)
 
         if reset_custom:
             self.exiftool_custom_te.setText("")
@@ -570,26 +579,46 @@ class SettingsTab(QWidget):
 
     def runMigrations(self) -> None:
         """Migrate old settings."""
-        # No states loaded
+        # Skip if no file is loaded (e.g. during the first launch).
         if self.wm.getLoadedVersion() is None:
             return
 
-        if compareVersions("v1.2.3", self.wm.getLoadedVersion(), VersionParseErrorPolicy.ASSUME_OLDER) < 0:
-            user_edited_defaults = False
-            
-            # Note: If more are added, use `not in` with tuples.
-            if (
-                self.exiftool_wipe_te.toPlainText() != "-all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original" or
-                self.exiftool_preserve_te.toPlainText() != "-tagsFromFile $src $dst -overwrite_original" or
-                self.exiftool_unsafe_wipe_te.toPlainText() != "-all= $dst -overwrite_original"
-            ):
-               user_edited_defaults = True 
+        # Skip if v1.2.3 or newer.
+        if compareVersions("v1.2.3", self.wm.getLoadedVersion(), VersionParseErrorPolicy.ASSUME_OLDER) >= 0:
+            return
 
-            if user_edited_defaults == False:   # Automatic migration
-                self.resetExifTool(reset_custom=False)
-            elif message_box.confirm(self, "Settings Migration", "Recommended ExifTool presets changed. Apply them?"):  # Manual migration
-                self.resetExifTool(reset_custom=False)
-            else:
-                message_box.info(self, "Settings Migration", "This change is highly recommended. To apply changes later, press \"Reset\" in Settings -> ExifTool.")
+        # Skip if current preset is detected (e.g. in case user changes versions).
+        if (
+            self.exiftool_wipe_te.toPlainText() == STOCK_PRESETS.exiftool_wipe and
+            self.exiftool_preserve_te.toPlainText() == STOCK_PRESETS.exiftool_preserve and
+            self.exiftool_unsafe_wipe_te.toPlainText() == STOCK_PRESETS.exiftool_unsafe_wipe
+        ):
+            return
+
+        automatic_migration = False
+        legacy_presets = [
+            {
+                "version": "v1.2.2",
+                "wipe": "-all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original",
+                "preserve": "-tagsFromFile $src $dst -overwrite_original",
+                "unsafe_wipe": "-all= $dst -overwrite_original",
+            },
+        ]
+
+        if any(
+            self.exiftool_wipe_te.toPlainText() == legacy_preset["wipe"] and
+            self.exiftool_preserve_te.toPlainText() == legacy_preset["preserve"] and
+            self.exiftool_unsafe_wipe_te.toPlainText() == legacy_preset["unsafe_wipe"]
+            for legacy_preset in legacy_presets
+        ):
+            automatic_migration = True
+
+        # Perform migration
+        if automatic_migration == True:
+            self.resetExifTool(reset_custom=False)
+        elif message_box.confirm(self, "Settings Migration", "Recommended ExifTool presets changed. Apply them?"):
+            self.resetExifTool(reset_custom=False)
+        else:
+            message_box.info(self, "Settings Migration", "This change is highly recommended. To apply changes later, press \"Reset\" in Settings -> ExifTool.")
 
 

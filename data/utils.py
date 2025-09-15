@@ -62,7 +62,7 @@ def compareVersions(
     candidate_version: str | None,
     parse_error_policy: VersionParseErrorPolicy = VersionParseErrorPolicy.RAISE,
 ) -> int:
-    """Returns 1 if candidate is newer, 0 if it's equal, and -1 if it's older. on_parse_error controls fallback behavior when parsing fails."""
+    """Returns 1 if candidate is newer, 0 if it's equal, and -1 if it's older. parse_error_policy controls fallback behavior when parsing fails."""
     base = parseVersion(base_version)
     cand = parseVersion(candidate_version)
 

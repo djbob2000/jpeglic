@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox
 from PySide6.QtCore import Qt
 
-from ui.tabs.settings_tab import SettingsTab
+from ui.tabs.settings_tab import SettingsTab, STOCK_PRESETS
 
 @pytest.fixture
 def app(qtbot):
@@ -268,9 +268,9 @@ def test_resetExifTool(app):
     ):
         app.resetExifTool()
 
-        mock_setText_wipe.assert_called_once_with("-m -all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original")
-        mock_setText_preserve.assert_called_once_with("-m -tagsFromFile $src $dst -overwrite_original")
-        mock_setText_unsafe_wipe.assert_called_once_with("-m -all= $dst -overwrite_original")
+        mock_setText_wipe.assert_called_once_with(STOCK_PRESETS.exiftool_wipe)
+        mock_setText_preserve.assert_called_once_with(STOCK_PRESETS.exiftool_preserve)
+        mock_setText_unsafe_wipe.assert_called_once_with(STOCK_PRESETS.exiftool_unsafe_wipe)
 
 @pytest.mark.parametrize("reset_custom", [True, False])
 def test_resetExifTool_reset_custom(reset_custom, app):
@@ -282,11 +282,10 @@ def test_resetExifTool_reset_custom(reset_custom, app):
     ):
         app.resetExifTool(reset_custom=reset_custom)
 
-        mock_setText_wipe.assert_called_once_with("-m -all= -tagsFromFile @ -icc_profile:all -ColorSpace:all -Orientation $dst -overwrite_original")
-        mock_setText_preserve.assert_called_once_with("-m -tagsFromFile $src $dst -overwrite_original")
-        mock_setText_unsafe_wipe.assert_called_once_with("-m -all= $dst -overwrite_original")
+        mock_setText_wipe.assert_called_once_with(STOCK_PRESETS.exiftool_wipe)
+        mock_setText_preserve.assert_called_once_with(STOCK_PRESETS.exiftool_preserve)
+        mock_setText_unsafe_wipe.assert_called_once_with(STOCK_PRESETS.exiftool_unsafe_wipe)
         assert bool(mock_setText_custom.call_count) == reset_custom
-
 
 def test_getSettings_no_key_error(app):
     app.getSettings()
@@ -325,6 +324,21 @@ def test_runMigrations_no_loaded_ver(app_migrations):
     ):
         app_migrations.runMigrations()
         mock_getLoadedVersion.assert_called_once()
+        mock_resetExifTool.assert_not_called()
+        mock_message_box_info.assert_not_called()
+        mock_message_box_confirm.assert_not_called()
+
+def test_runMigrations_skip_if_already_set_to_stock(app_migrations):
+    with (
+        patch.object(app_migrations.wm, "getLoadedVersion", return_value="v1.2.2") as mock_getLoadedVersion,
+        patch.object(app_migrations, "resetExifTool") as mock_resetExifTool,
+        patch.object(app_migrations.exiftool_wipe_te, "toPlainText", return_value=STOCK_PRESETS.exiftool_wipe),
+        patch.object(app_migrations.exiftool_preserve_te, "toPlainText", return_value=STOCK_PRESETS.exiftool_preserve),
+        patch.object(app_migrations.exiftool_unsafe_wipe_te, "toPlainText", return_value=STOCK_PRESETS.exiftool_unsafe_wipe),
+        patch("ui.tabs.settings_tab.message_box.info") as mock_message_box_info,
+        patch("ui.tabs.settings_tab.message_box.confirm") as mock_message_box_confirm,
+    ):
+        app_migrations.runMigrations()
         mock_resetExifTool.assert_not_called()
         mock_message_box_info.assert_not_called()
         mock_message_box_confirm.assert_not_called()
