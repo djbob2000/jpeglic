@@ -204,6 +204,7 @@ class ModifyTab(QWidget):
         setToolTip("downscaling_resolution_height_enabled", self.pixel_h_cb)
         setToolTip("downscaling_resolution_height", self.pixel_h_sb)
         setToolTip("downscaling_sides", self.shortest_sb, self.longest_sb)
+        setToolTip("modify_tab_resample", self.resample_cmb)
 
     # ---------------------------------------------
     # /                 Public

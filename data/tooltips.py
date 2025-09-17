@@ -52,6 +52,7 @@ Always - all sources will be normalized.""",
     "downscaling_sides": "Makes a particular side fit to the specified pixel count.",
     "downscaling_percent": "Scales to the specified percentage of each dimension.\n\nFor example, 50% of 1920 x 1080 will result in 960 x 540.",
     "downscaling_megapixels": "Scales down to megapixel count.\n\nA megapixel is the total pixel count of an image divided by a million.\n\nFormula: (width * height) / 1 000 000\n\nReference (rounded):\n\n- 0.9 MP - 1280 x 720 (HD)\n\n- 2.1 MP - 1920 x 1080 (Full HD)\n\n- 8.3 MP - 3840 x 2160 (4K)\n\n- 33.2 MP - 7680 x 4320 (8K)",
+    "modify_tab_resample": "Controls the resampling method used for downscaling.\n\nDefault:\n\n  - Lanczos for images without transparency.\n\n  - Mitchell for colormapped images or images with transparency.",
 
     # Settings tab
     "disable_delete_startup": "Disables \"delete original\" (output tab) when you launch the application.",
