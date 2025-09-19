@@ -957,6 +957,7 @@ def test_smallestLossless_args(jxl_auto_lossless_jpeg, smallestLossless_patches_
     assert mocks["runBinary"].call_args_list[0][0][1] == [
         "-o 2",
         "-t 4",
+        "--np", "--nc",
         "--metadata_arg"
     ]
     assert mocks["runBinary"].call_args_list[1][0][1] == [
@@ -969,9 +970,38 @@ def test_smallestLossless_args(jxl_auto_lossless_jpeg, smallestLossless_patches_
         "-q 100",
         "-e 7",
         "--num_threads=4",
+        "--override_bitdepth=8",
         f"--lossless_jpeg={1 if jxl_auto_lossless_jpeg else 0}",
         "--metadata_arg"
     ]
+
+def test_smallestLossless_allow_reducing_bit_depth(
+    smallestLossless_patches_v2,
+    worker
+):
+    mocks = smallestLossless_patches_v2
+    worker.params["smallest_format_pool"]["png"] = True
+    worker.params["smallest_format_pool"]["webp"] = True
+    worker.params["smallest_format_pool"]["jxl"] = True
+
+    worker.smallestLossless()
+
+    assert "--nb" not in mocks["runBinary"].call_args_list[0][0][1]
+    assert "--override_bitdepth=8" in mocks["runBinary"].call_args_list[2][0][1]
+
+def test_smallestLossless_disallow_reducing_bit_depth(
+    smallestLossless_patches_v2,
+    worker
+):
+    mocks = smallestLossless_patches_v2
+    worker.params["smallest_format_pool"]["png"] = True
+    worker.params["smallest_format_pool"]["webp"] = False
+    worker.params["smallest_format_pool"]["jxl"] = True
+
+    worker.smallestLossless()
+
+    assert "--nb" in mocks["runBinary"].call_args_list[0][0][1]
+    assert "--override_bitdepth=8" not in mocks["runBinary"].call_args_list[1][0][1]
 
 @pytest.fixture
 def worker_losslesslyTranscodeJPEG_patches(worker):

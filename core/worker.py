@@ -534,6 +534,7 @@ class Worker(QRunnable):
             "png": [
                 "-o 4" if self.params["max_compression"] else "-o 2",
                 f"-t {self.available_threads}",
+                "--np", "--nc",
                 ],
             "webp": [
                 f"-define webp:thread-level={1 if self.available_threads > 1 else 0}",
@@ -547,10 +548,12 @@ class Worker(QRunnable):
             ]
         }
 
-        if "webp" in self.params:
+        # Allow bit depth reduction
+        if self.params["smallest_format_pool"]["webp"]:
             args["jxl"].append("--override_bitdepth=8")
+        else:
             args["png"].append("--nb")
-
+        
         # Handle metadata
         if self.settings["jxl_auto_lossless_jpeg"]:
             self.lossless_jpeg = self.item_ext in JPEG_ALIASES
