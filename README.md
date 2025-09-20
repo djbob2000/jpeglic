@@ -51,12 +51,40 @@ Prerequisites:
 - Visual Studio 2022 (with Windows 10 or 11 SDK)
 - Latest [vc_redist](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
-Launch MSYS2 MINGW64:
+Launch MSYS2 MINGW64 and run:
 
 ```bash
 pacman -Syu
-pacman -S --needed git cmake mingw-w64-x86_64-gcc
 ```
+
+If MSYS2 asks to restart, agree, and relaunch it.
+
+Install packages:
+
+```bash
+pacman -S --needed \
+    git \
+    cmake \
+    wget \
+    make \
+    nasm \
+    base-devel \
+    mingw-w64-x86_64-gcc \
+    mingw-w64-x86_64-toolchain \
+    mingw-w64-x86_64-cmake \
+    mingw-w64-x86_64-ninja \
+    mingw-w64-x86_64-gtest \
+    mingw-w64-x86_64-giflib \
+    mingw-w64-x86_64-libpng \
+    mingw-w64-x86_64-libjpeg-turbo \
+    mingw-w64-x86_64-rust \
+    mingw-w64-x86_64-7zip
+```
+
+Relaunch MSYS2 MINGW64 again.
+
+> [!IMPORTANT]
+> If you installed or upgraded any package, restart the MSYS2 environment. Otherwise, building will start failing for random reasons.
 
 Clone the repo:
 
@@ -64,9 +92,6 @@ Clone the repo:
 git clone -b stable --depth 1 https://github.com/JacobDev1/xl-converter.git
 cd xl-converter
 ```
-
-> [!IMPORTANT]
-> If you installed or upgraded any package, restart the MSYS2 environment. Otherwise, building will start failing for random reasons.
 
 Run each target individually; each has additional requirements:
 - `make libjpeg-turbo`
