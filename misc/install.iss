@@ -45,3 +45,4 @@ Source: "xl-converter\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "https://xl-docs.codepoems.eu/"; Description: "Open the manual"; Flags: shellexec postinstall skipifsilent unchecked runasoriginaluser
