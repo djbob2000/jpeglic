@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="assets/icons/logo.svg" width="20%">
+    <img src="assets/icons/logo.svg" style="width: 120px; height: auto;">
 <h3 align="center">XL Converter</h3>
 
 Easy-to-use image converter for modern formats.
