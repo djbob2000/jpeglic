@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-EXIFTOOL_TAG="13.30"
+EXIFTOOL_TAG="13.37"
 
 RUN_DIR=$(pwd)
 OUTPUT_DIR="${RUN_DIR}/bin/macos"

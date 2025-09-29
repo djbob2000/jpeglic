@@ -1,7 +1,7 @@
 #!/bin/bash
 
-IMAGEMAGICK_TAG="7.1.1-46"
-LIBHEIF_TAG="v1.19.7"
+IMAGEMAGICK_TAG="7.1.2-3"
+LIBHEIF_TAG="v1.20.2"
 RUN_DIR=$(pwd)
 OUTPUT_DIR="${RUN_DIR}/bin/win/imagemagick"
 TEMP_DIR=$(mktemp -d)
