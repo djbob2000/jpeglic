@@ -102,10 +102,5 @@
                 <p>Adds IQ tune for AOM AV1, and Page Up / Down navigation. Improves "Add Files" and drag 'n drop behavior in Flatpak.</p>
             </description>
         </release>
-        <release version="1.2.0" date="2025-02-14">
-            <url type="details">https://github.com/JacobDev1/xl-converter/blob/v1.2.0/misc/changelog.md</url>
-            <description>
-            </description>
-        </release>
     </releases>
 </component>
