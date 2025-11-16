@@ -1,5 +1,0 @@
-# The archive.ubuntu.com/ubuntu/ sources can return a 403 error. This file can replace the original /etc/apt/sources.list
-deb http://ftp.uni-stuttgart.de/ubuntu/ jammy main restricted universe multiverse
-deb http://ftp.uni-stuttgart.de/ubuntu/ jammy-updates main restricted universe multiverse
-deb http://ftp.uni-stuttgart.de/ubuntu/ jammy-backports main restricted universe multiverse
-deb http://ftp.uni-stuttgart.de/ubuntu/ jammy-security main restricted universe multiverse

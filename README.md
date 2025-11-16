@@ -1,332 +1,180 @@
-<div align="center">
-    <img src="assets/icons/logo.svg" style="width: 120px; height: auto;">
-<h3 align="center">XL Converter</h3>
+# XL Converter (Electron + TypeScript)
 
-Easy-to-use image converter for modern formats.
+Easy-to-use image converter for modern formats, built with Electron and TypeScript.
 
-Available for Windows and Linux.
-
-![](misc/images/screenshot_0.png)
-
-Read the [Manual](https://xl-docs.codepoems.eu)
-</div>
+> **Note:** This is a complete rewrite from Python/PySide6 to TypeScript/Electron. See [MIGRATION.md](MIGRATION.md) for details.
 
 ## Features
 
-#### JPEGLI
+#### Modern Image Formats
 
-Generate fully compatible JPEG images with up to [35% better compression ratio](https://opensource.googleblog.com/2024/04/introducing-jpegli-new-jpeg-coding-library.html).
+Convert images between **JPEG XL**, **AVIF**, **WebP**, **JPEG**, and **PNG** formats with optimal compression.
 
-#### Format Support
+#### Parallel Processing
 
-Maximize image compression with **JPEG XL** and **AVIF**. Also available: **WebP**, **JPEG**, and **PNG**.
+Process multiple images simultaneously for faster batch conversions.
 
-#### Parallel Encoding
+#### Flexible Downscaling
 
-Run encoders in parallel for increased throughput.
+Scale images by dimensions, percentage, longest/shortest side, or megapixels.
 
-#### Lossless JPEG Transcoding
+#### Metadata Preservation
 
-Reduce the file size of your JPEG images by 16% - 22% with Lossless JPEG Transcoding. This process is reversible.
+Keep EXIF metadata and file timestamps intact during conversion.
 
-#### Downscaling
+#### Smart File Handling
 
-Scale down images to resolution, percent, shortest (and longest) side, and megapixels.
+Choose to overwrite, skip, or automatically rename duplicate files.
 
-## Download
+#### Settings Persistence
 
-[Official website](https://codepoems.eu/xl-converter)
+Automatically saves your preferences using `electron-store`, so your workflow continues where you left off.
 
-## Building from Source
+#### Auto-Updates
 
-> [!NOTE]
-> The recommended way of using XL Converter is through the [official binary releases](https://codepoems.eu/xl-converter). The building process is time-consuming.
+Integrated with `electron-updater` to check for new releases, download them, and install on restart.
 
-### Windows 10
+#### Custom Titlebar
 
-Prerequisites:
-- [Python 3.13](https://python.org/downloads/) (check `Add python.exe to PATH`)
-- [git](https://git-scm.com/)
-- [MSYS2](https://msys2.org/)
-- Visual Studio 2022 (with Windows 10 or 11 SDK)
-- Latest [vc_redist](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+A native-inspired titlebar with window controls that keeps the content area consistent across platforms.
 
-Launch MSYS2 MINGW64 and run:
+#### Live Preview
 
-```bash
-pacman -Syu
-```
+Preview input images directly inside the app, with React-powered components for richer interactivity.
 
-If MSYS2 asks to restart, agree, and relaunch it.
+## Technology Stack
 
-Install packages:
+- **Electron** - Cross-platform desktop framework
+- **TypeScript** - Type-safe JavaScript
+- **Sharp** - High-performance image processing (libvips-based)
+- **External Encoders**:
+  - `cjxl` (libjxl) for JPEG XL encoding
+  - Native Sharp support for AVIF, WebP, JPEG, PNG
 
-```bash
-pacman -S --needed \
-    git \
-    cmake \
-    wget \
-    make \
-    nasm \
-    base-devel \
-    mingw-w64-x86_64-gcc \
-    mingw-w64-x86_64-toolchain \
-    mingw-w64-x86_64-cmake \
-    mingw-w64-x86_64-ninja \
-    mingw-w64-x86_64-gtest \
-    mingw-w64-x86_64-giflib \
-    mingw-w64-x86_64-libpng \
-    mingw-w64-x86_64-libjpeg-turbo \
-    mingw-w64-x86_64-rust \
-    mingw-w64-x86_64-7zip
-```
+## Installation
 
-Relaunch MSYS2 MINGW64 again.
+### Prerequisites
 
-> [!IMPORTANT]
-> If you installed or upgraded any package, restart the MSYS2 environment. Otherwise, building will start failing for random reasons.
+- Node.js 18+ 
+- npm or yarn
+- External encoder binaries (optional, for JPEG XL):
+  - `cjxl` for JPEG XL encoding
 
-Clone the repo:
+### Install Dependencies
 
 ```bash
-git clone -b stable --depth 1 https://github.com/JacobDev1/xl-converter.git
-cd xl-converter
+npm install
 ```
 
-Run each target individually; each has additional requirements:
-- `make libjpeg-turbo`
-- `make libavif`
-- `make imagemagick`
-- `make libjxl`
-- `make oxipng`
-- `make exiftool`
+## Development
 
-Launch CMD, enter the project's directory, and setup a virtual environment:
-
-```cmd
-cd C:\msys64\home\user\xl-converter
-python -m venv env_build
-env_build\Scripts\activate
-pip install -r requirements.txt
-```
-
-Run the application:
-
-```cmd
-python main.py
-```
-
-#### Building
-
-Launch CMD, and setup PyInstaller:
-
-```cmd
-cd C:\msys64\home\user\xl-converter
-env_build\Scripts\activate
-%comspec% /k "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
-git clone -b v6.11.1 --depth 1 https://github.com/pyinstaller/pyinstaller.git misc\pyinstaller
-cd misc\pyinstaller\bootloader
-python waf all
-cd ..
-pip install .
-cd ..\..
-env_build\Scripts\activate
-```
-
-The last line reloads the environment to avoid the `ModuleNotFoundError`.
-
-Bundle:
-
-```cmd
-python build.py
-```
-
-### Linux (Ubuntu-based)
-
-Prerequisites:
-- Docker (set up to run without root)
-- [pyenv](https://github.com/pyenv/pyenv) ([add to shell](https://github.com/pyenv/pyenv?tab=readme-ov-file#set-up-your-shell-environment-for-pyenv))
-
-Install packages:
+### Run in Development Mode
 
 ```bash
-sudo apt update
-sudo apt install git make curl fuse p7zip-full
+npm run dev
 ```
 
-Install [xcb QPA](https://doc.qt.io/qt-6/linux-requirements.html) dependencies:
+### Build for Production
 
 ```bash
-sudo apt install '^libxcb.*-dev' libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+npm run build
+npm start
 ```
 
-Install Python build dependencies:
+## Packaging
+
+### Package for Current Platform
 
 ```bash
-sudo apt install wget build-essential libreadline-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev liblzma-dev
+npm run package
 ```
 
-Compile and setup Python `3.13`:
+### Package for Specific Platforms
 
 ```bash
-pyenv install 3.13
-pyenv global 3.13
+npm run package:win    # Windows
+npm run package:linux  # Linux
+npm run package:mac    # macOS
 ```
 
-Clone and set up the repo:
+Packaged apps will be in the `release/` directory.
 
+## Project Structure
+
+```
+src/
+├── main.ts              # Electron main process entry point
+├── preload.ts           # Preload script for IPC bridge
+├── common/
+│   └── types.ts         # Shared TypeScript types
+├── main/
+│   ├── controller.ts    # Processing orchestration
+│   ├── worker.ts        # Image conversion worker
+│   └── process-manager.ts  # External process management
+└── renderer/
+    ├── index.html       # UI structure
+    ├── styles.css       # Application styles
+    └── app.ts           # Frontend logic
+```
+
+## Configuration
+
+### Output Formats
+
+- **JPEG XL** - Best compression, modern format
+- **AVIF** - Excellent compression, broad support
+- **WebP** - Good compression, universal support
+- **JPEG** - Classic format with MozJPEG optimization
+- **PNG** - Lossless with high compression
+
+### Downscaling Modes
+
+- **None** - Keep original dimensions
+- **Dimensions** - Resize to specific width × height
+- **Percentage** - Scale by percentage (e.g., 50%)
+- **Longer Side** - Resize based on longer dimension
+- **Shorter Side** - Resize based on shorter dimension
+- **Megapixels** - Target specific megapixel count
+
+### Advanced Settings
+
+- **Concurrency** - Number of parallel conversions
+- **Preserve Metadata** - Keep EXIF data
+- **Preserve Timestamps** - Maintain file dates
+- **Delete Originals** - Remove source files after conversion
+- **Sound on Finish** - Audio notification when done
+
+## External Dependencies
+
+### Required for JPEG XL
+
+If you want JPEG XL support, install libjxl:
+
+**Ubuntu/Debian:**
 ```bash
-git clone -b stable --depth 1 https://github.com/JacobDev1/xl-converter.git
-cd xl-converter
+sudo apt install libjxl-tools
 ```
 
-Compile dependencies:
-
+**macOS (Homebrew):**
 ```bash
-make deps
+brew install jpeg-xl
 ```
 
-Setup a virtual environment:
+**Windows:**
+Download from [libjxl releases](https://github.com/libjxl/libjxl/releases) and add to PATH.
 
-```bash
-python -m venv env_build
-source env_build/bin/activate
-pip install -r requirements.txt
-```
+### Built-in via Sharp
 
-Run the program:
+The following formats are natively supported through Sharp:
+- AVIF
+- WebP
+- JPEG (with MozJPEG)
+- PNG
 
-```bash
-python main.py
-```
+## License
 
-#### Building
+See [LICENSE.txt](LICENSE.txt) for details.
 
-Setup PyInstaller:
+## Third-Party Licenses
 
-```bash
-source env_build/bin/activate
-git clone -b v6.11.1 --depth 1 https://github.com/pyinstaller/pyinstaller.git misc/pyinstaller
-cd misc/pyinstaller/bootloader
-python waf all --gcc
-cd ..
-pip install .
-cd ../..
-source env_build/bin/activate
-```
-
-The last line reloads the environment to avoid the `ModuleNotFoundError` error.
-
-Build:
-
-```bash
-python build.py
-```
-
-### macOS
-
-> [!NOTE]
-> The native macOS support is experimental. Use Wine instead.
-
-Prerequisites:
-- [MacPorts](https://macports.org/)
-- [Rust](https://www.rust-lang.org/)
-- [Python 3.13 Universal2 build](https://www.python.org/downloads/macos/)
-
-Add the following line to `/opt/local/etc/macports/macports.conf`:
-
-```txt
-macosx_deployment_target 11.0
-```
-
-Install dependencies:
-
-```bash
-sudo port -s install nasm cmake git wget gtest coreutils ninja gmake gsed pkgconfig +universal llvm-17 clang-17 giflib5 +universal libjpeg-turbo +universal libpng +universal zlib +universal brotli +universal webp +universal libiconv +universal libomp +universal imath +universal glib2 +universal gettext +universal openjpeg +universal lcms2 +universal fontconfig +universal freetype +universal libjxl +universal libheif +universal liblqr +universal tiff +universal libtool +universal
-```
-
-Run each target individually:
-- `make libjpeg-turbo`
-- `make libjxl`
-- `make libavif`
-- `make oxipng`
-- `make imagemagick`
-
-Create and activate a virtual environment:
-
-```bash
-python -m venv env_build
-source env_build/bin/activate
-pip install -r requirements.txt
-```
-
-Run the application:
-
-```bash
-python main.py
-```
-
-Bundling support is limited. The exported bundle will not work on another machine!
-
-Clone PyInstaller, recompile the bootloader, and install:
-
-```bash
-git clone -b v6.11.1 --depth 1 https://github.com/pyinstaller/pyinstaller.git misc/pyinstaller
-cd misc/pyinstaller/bootloader
-python waf all --clang
-cd ..
-pip install .
-cd ../..
-```
-
-Bundle:
-
-```bash
-python build.py
-```
-
-## Info
-
-> [!TIP]
-> To manage multiple Python versions on Windows, you can use: the `py` launcher or pyenv-win.
-
-## Testing
-
-[Setup repo](#building-from-source).
-
-Create a test environment.
-
-```bash
-python -m venv env_dev
-source env_dev/bin/activate
-pip install -r requirements.txt -r requirements_test.txt
-```
-
-### Unit Tests
-
-```cmd
-python test.py
-```
-
-You can control which tests to run. Run `python test.py --help` to learn more.
-
-### Functional Tests
-
-`test_convert.py` is a separate test suite focusing on validating program's output.
-
-#### Linux
-
-```bash
-sudo apt install xvfb
-make test-convert
-```
-
-#### Windows
-
-```bash
-python test_convert.py
-```
-
-## Contributing
-
-Before contributing to issues or sending pull requests, please review [CONTRIBUTING.md](./.github/CONTRIBUTING.md).
+See [LICENSE_3RD_PARTY.txt](LICENSE_3RD_PARTY.txt) for dependencies.

@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "lib": ["ES2020"]
+  },
+  "include": [
+    "src/main.ts",
+    "src/preload.ts",
+    "src/main/**/*.ts"
+  ]
+}
