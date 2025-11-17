@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs';
 import { existsSync, mkdirSync } from 'fs';
 import * as path from 'path';
-import sharp, { Sharp } from 'sharp';
-import { execa, ExecaChildProcess } from 'execa';
+import sharp, { type Sharp } from 'sharp';
+import { execa, type ResultPromise } from 'execa';
 import trash from 'trash';
 import { InputItem, OutputFormat, ProcessingSettings } from '../common/types';
 import { ProcessManager } from './process-manager';
@@ -20,7 +20,7 @@ interface PrepareOutputResult {
 
 export class Worker {
   private aborted = false;
-  private externalProcess: ExecaChildProcess | null = null;
+  private externalProcess: ResultPromise | null = null;
 
   constructor(
     private readonly item: InputItem,
@@ -99,15 +99,15 @@ export class Worker {
       return;
     }
 
-    const options = {
+    const resizeOptions: sharp.ResizeOptions = {
       withoutEnlargement: !ds.allowEnlarge,
       kernel: this.getKernel(ds.resampling)
-    } as const;
+    };
 
     switch (ds.mode) {
       case 'dimensions':
         if (ds.width || ds.height) {
-          pipeline.resize(ds.width, ds.height, options);
+          pipeline.resize(ds.width, ds.height, resizeOptions);
         }
         break;
       case 'percentage':
@@ -116,18 +116,18 @@ export class Worker {
           pipeline.resize(
             Math.max(1, Math.round(width * factor)),
             Math.max(1, Math.round(height * factor)),
-            options
+            resizeOptions
           );
         }
         break;
       case 'longer-side':
         if (ds.value) {
-          pipeline.resize(ds.value, ds.value, { ...options, fit: 'inside' });
+          pipeline.resize(ds.value, ds.value, { ...resizeOptions, fit: 'inside' });
         }
         break;
       case 'shorter-side':
         if (ds.value) {
-          pipeline.resize(ds.value, ds.value, { ...options, fit: 'outside' });
+          pipeline.resize(ds.value, ds.value, { ...resizeOptions, fit: 'outside' });
         }
         break;
       case 'megapixels':
@@ -140,7 +140,7 @@ export class Worker {
             pipeline.resize(
               Math.max(1, Math.round(width * factor)),
               Math.max(1, Math.round(height * factor)),
-              options
+              resizeOptions
             );
           }
         }
@@ -148,17 +148,17 @@ export class Worker {
     }
   }
 
-  private getKernel(resampling: string): sharp.Kernel {
+  private getKernel(resampling: string): keyof sharp.KernelEnum {
     switch (resampling) {
       case 'catmullRom':
-        return sharp.kernel.cubic;
+        return 'cubic';
       case 'mitchell':
-        return sharp.kernel.mitchell;
+        return 'mitchell';
       case 'nearest':
-        return sharp.kernel.nearest;
+        return 'nearest';
       case 'lanczos3':
       default:
-        return sharp.kernel.lanczos3;
+        return 'lanczos3';
     }
   }
 
@@ -181,10 +181,10 @@ export class Worker {
         }).toFile(targetPath);
         break;
       case 'avif': {
-        const speed = this.mapEffortToSpeed(this.settings.output.effort);
+        const effort = this.normalizeEffort(this.settings.output.effort);
         await pipeline.avif({
           quality: this.settings.output.quality,
-          speed,
+          effort,
           lossless: this.settings.output.lossless
         }).toFile(targetPath);
         break;
@@ -194,14 +194,11 @@ export class Worker {
         break;
       default:
         throw new Error(`Unsupported format: ${this.settings.output.format}`);
-      }
     }
   }
 
-  private mapEffortToSpeed(effort: number): number {
-    const clamped = Math.max(1, Math.min(9, effort));
-    const speed = 10 - clamped;
-    return Math.max(0, Math.min(8, speed));
+  private normalizeEffort(effort: number): number {
+    return Math.max(0, Math.min(9, Math.round(effort)));
   }
 
   private async exportWithCJXL(pipeline: Sharp, targetPath: string): Promise<void> {
