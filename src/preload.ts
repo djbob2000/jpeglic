@@ -43,5 +43,9 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.on('update-status', listener);
       return () => ipcRenderer.removeListener('update-status', listener);
     },
+  },
+  fs: {
+    stat: (path: string) => ipcRenderer.invoke('fs:stat', path),
+    readdir: (path: string) => ipcRenderer.invoke('fs:readdir', path),
   }
 });

@@ -170,3 +170,32 @@ ipcMain.handle('update:install', () => {
     updateManager.quitAndInstall();
   }
 });
+
+ipcMain.handle('fs:stat', async (_, path: string) => {
+  try {
+    const fs = await import('fs');
+    const stats = fs.statSync(path);
+    return {
+      isFile: stats.isFile(),
+      isDirectory: stats.isDirectory(),
+      size: stats.size,
+      mtime: stats.mtime.getTime(),
+    };
+  } catch (error) {
+    throw error;
+  }
+});
+
+ipcMain.handle('fs:readdir', async (_, path: string) => {
+  try {
+    const fs = await import('fs');
+    const entries = fs.readdirSync(path, { withFileTypes: true });
+    return entries.map(entry => ({
+      name: entry.name,
+      isFile: entry.isFile(),
+      isDirectory: entry.isDirectory(),
+    }));
+  } catch (error) {
+    throw error;
+  }
+});

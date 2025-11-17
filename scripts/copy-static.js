@@ -20,3 +20,33 @@ for (const file of files) {
     console.warn(`Warning: ${source} not found`);
   }
 }
+
+// Copy assets directory
+const assetsSourceDir = path.resolve(__dirname, '../assets');
+const assetsTargetDir = path.resolve(__dirname, '../dist/assets');
+
+function copyDirectory(src, dest) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDirectory(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+if (fs.existsSync(assetsSourceDir)) {
+  copyDirectory(assetsSourceDir, assetsTargetDir);
+  console.log('Copied assets directory to dist/assets');
+} else {
+  console.warn('Warning: assets directory not found');
+}
