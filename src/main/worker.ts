@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import { existsSync, mkdirSync } from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import sharp, { type Sharp } from 'sharp';
 import { execa, type ResultPromise } from 'execa';
 import trash from 'trash';
@@ -165,11 +166,7 @@ export class Worker {
   private async export(pipeline: Sharp, targetPath: string): Promise<void> {
     switch (this.settings.output.format) {
       case 'jpeg':
-        await pipeline.jpeg({
-          quality: this.settings.output.quality,
-          mozjpeg: true,
-          chromaSubsampling: '4:4:4'
-        }).toFile(targetPath);
+        await this.exportWithJpegli(pipeline, targetPath);
         break;
       case 'png':
         await pipeline.png({ compressionLevel: 9 }).toFile(targetPath);
@@ -199,6 +196,27 @@ export class Worker {
 
   private normalizeEffort(effort: number): number {
     return Math.max(0, Math.min(9, Math.round(effort)));
+  }
+
+  private async exportWithJpegli(pipeline: Sharp, targetPath: string): Promise<void> {
+    const bin = this.resolveBinary('cjpegli');
+    if (bin) {
+      const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tmp-jpegli-'));
+      const tmpInput = path.join(tmpDir, `${path.basename(this.item.sourcePath)}.png`);
+      try {
+        const pngBuffer = await pipeline.png({ compressionLevel: 0 }).toBuffer();
+        await fs.writeFile(tmpInput, pngBuffer);
+        const args: string[] = [tmpInput, targetPath, '-q', String(this.settings.output.quality)];
+        args.push('-p', '2');
+        this.externalProcess = execa(bin, args);
+        ProcessManager.register(this.externalProcess);
+        await this.externalProcess;
+      } finally {
+        try { await fs.rm(tmpDir, { recursive: true, force: true }); } catch {}
+      }
+      return;
+    }
+    await pipeline.jpeg({ quality: this.settings.output.quality, progressive: true }).toFile(targetPath);
   }
 
   private async exportWithCJXL(pipeline: Sharp, targetPath: string): Promise<void> {
@@ -294,5 +312,26 @@ export class Worker {
     }
 
     return target;
+  }
+
+  private resolveBinary(name: string): string | null {
+    const isWin = process.platform === 'win32';
+    const exe = isWin ? `${name}.exe` : name;
+    const platformDir = process.platform === 'darwin' ? 'mac' : isWin ? 'win' : 'linux';
+    const envPath = process.env.CJEGLI_PATH;
+    if (envPath && existsSync(envPath)) return envPath;
+    const candidates: string[] = [];
+    const res = (process as any).resourcesPath as string | undefined;
+    if (res) candidates.push(path.join(res, 'binaries', platformDir, exe));
+    candidates.push(path.join(__dirname, '..', '..', 'binaries', platformDir, exe));
+    const pathVar = process.env.PATH || '';
+    for (const dir of pathVar.split(path.delimiter)) {
+      if (!dir) continue;
+      candidates.push(path.join(dir, exe));
+    }
+    for (const p of candidates) {
+      if (existsSync(p)) return p;
+    }
+    return null;
   }
 }

@@ -1,14 +1,12 @@
 export const AboutTab = () => (
-	<div className="mx-auto w-full max-w-3xl px-4 py-6">
-		<div className="rounded-xl bg-white p-8 shadow-sm">
-			<h2 className="text-2xl font-semibold text-blue-600">XL Converter</h2>
-			<p className="mt-2 text-sm text-slate-500">Version 1.0.0</p>
-			<p className="mt-4 text-base text-slate-600">
-				Easy-to-use image converter for modern formats.
-			</p>
+	<div className="panel-container">
+		<div className="panel">
+			<h2 className="text-2xl font-semibold text-accent mb-2">XL Converter</h2>
+			<p className="panel-text mb-4">Version 1.0.0</p>
+			<p className="panel-text mb-8">Easy-to-use image converter for modern formats.</p>
 
-			<h3 className="mt-8 text-lg font-semibold text-slate-700">Features</h3>
-			<ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600">
+			<h3 className="panel-title">Features</h3>
+			<ul className="mt-3 list-disc space-y-2 pl-5 panel-text">
 				<li>Support for JPEG XL, AVIF, WebP, JPEG, PNG formats</li>
 				<li>Parallel encoding for faster processing</li>
 				<li>Lossless JPEG transcoding</li>
@@ -16,11 +14,9 @@ export const AboutTab = () => (
 				<li>Metadata and timestamp preservation</li>
 			</ul>
 
-			<h3 className="mt-8 text-lg font-semibold text-slate-700">External Tools</h3>
-			<p className="mt-2 text-sm text-slate-600">
-				This application uses the following external encoders:
-			</p>
-			<ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600">
+			<h3 className="panel-title mt-8">External Tools</h3>
+			<p className="mt-2 panel-text">This application uses the following external encoders:</p>
+			<ul className="mt-3 list-disc space-y-2 pl-5 panel-text">
 				<li>libjxl (JPEG XL)</li>
 				<li>avifenc (AVIF)</li>
 				<li>cwebp (WebP)</li>

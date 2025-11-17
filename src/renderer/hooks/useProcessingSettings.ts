@@ -3,6 +3,20 @@ import type { ProcessingSettings } from "../../common/types";
 import { defaultSettings } from "../constants/defaultSettings";
 import { mergeSettings } from "../utils/settings";
 
+// Function to detect CPU cores
+const detectCpuCores = (): number => {
+	try {
+		// Try to use the hardware concurrency API
+		if (navigator.hardwareConcurrency) {
+			return Math.min(navigator.hardwareConcurrency, 32); // Cap at 32 for safety
+		}
+		// Fallback to a reasonable default
+		return 4;
+	} catch {
+		return 4;
+	}
+};
+
 export const useProcessingSettings = () => {
 	const [settings, setSettings] = useState<ProcessingSettings>(defaultSettings);
 	const [initializing, setInitializing] = useState(true);
@@ -19,7 +33,28 @@ export const useProcessingSettings = () => {
 				}
 
 				if (stored && typeof stored === "object") {
-					setSettings((previous) => mergeSettings(previous, stored as Partial<ProcessingSettings>));
+					// Always ensure concurrency is set to CPU cores if not explicitly set
+					setSettings((previous) => {
+						const mergedSettings = mergeSettings(previous, stored as Partial<ProcessingSettings>);
+						const cpuCores = detectCpuCores();
+
+						// If concurrency is not set or is the old default (4), update it to CPU cores
+						if (!mergedSettings.advanced.concurrency || mergedSettings.advanced.concurrency === 4) {
+							mergedSettings.advanced.concurrency = cpuCores;
+						}
+
+						return mergedSettings;
+					});
+				} else {
+					// No stored settings, auto-detect CPU cores for concurrency
+					const cpuCores = detectCpuCores();
+					setSettings((previous) => ({
+						...previous,
+						advanced: {
+							...previous.advanced,
+							concurrency: cpuCores,
+						},
+					}));
 				}
 			} catch (error) {
 				console.error("Failed to load settings", error);

@@ -1,3 +1,4 @@
+import { cpus } from "node:os";
 import Store, { type Schema } from "electron-store";
 
 export interface AppSettings {
@@ -92,7 +93,7 @@ const schema: Schema<AppSettings> = {
 	advanced: {
 		type: "object",
 		properties: {
-			concurrency: { type: "number", default: 4 },
+			concurrency: { type: "number", default: Math.max(1, cpus().length) },
 			preserveMetadata: { type: "boolean", default: true },
 			preserveTimestamps: { type: "boolean", default: true },
 			deleteOriginals: { type: "boolean", default: false },
@@ -101,7 +102,7 @@ const schema: Schema<AppSettings> = {
 			clearInputAfterConversion: { type: "boolean", default: true },
 		},
 		default: {
-			concurrency: 4,
+			concurrency: Math.max(1, cpus().length),
 			preserveMetadata: true,
 			preserveTimestamps: true,
 			deleteOriginals: false,

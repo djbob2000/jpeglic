@@ -32,7 +32,21 @@ function createWindow(): void {
     mainWindow.maximize();
   }
 
-  mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'));
+  console.log('Loading HTML file from:', path.join(__dirname, 'renderer/src/renderer/index.html'));
+  
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('HTML file loaded successfully');
+    // Открываем DevTools после загрузки
+    setTimeout(() => {
+      mainWindow?.webContents.openDevTools();
+    }, 1000);
+  });
+  
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Failed to load HTML:', errorCode, errorDescription);
+  });
+  
+  mainWindow.loadFile(path.join(__dirname, 'renderer/src/renderer/index.html'));
 
   controller = new Controller(mainWindow);
   updateManager = new UpdateManager(mainWindow);
@@ -197,5 +211,24 @@ ipcMain.handle('fs:readdir', async (_, path: string) => {
     }));
   } catch (error) {
     throw error;
+  }
+});
+
+ipcMain.handle('preview:get', async (_, filePath: string) => {
+  try {
+    const sharp = await import('sharp');
+    const { execa } = await import('execa');
+    
+    // Use sharp for resizing but export as PNG for preview
+    // This avoids using Sharp's JPEG encoder and provides better quality
+    const buffer = await sharp.default(filePath)
+      .resize(300, 300, { fit: 'inside' })
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+    
+    return `data:image/png;base64,${buffer.toString('base64')}`;
+  } catch (error) {
+    console.error('Preview generation failed:', error);
+    return null;
   }
 });

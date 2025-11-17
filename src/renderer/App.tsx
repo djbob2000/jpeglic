@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { ProgressModal } from "./components/ProgressModal";
 import { TabNavigation } from "./components/TabNavigation";
 import { Titlebar } from "./components/Titlebar";
@@ -9,18 +9,18 @@ import { useUpdateNotifications } from "./hooks/useUpdateNotifications";
 import type { TabKey } from "./types";
 import { AboutTab } from "./views/AboutTab";
 import { InputTab } from "./views/InputTab";
-import { ModifyTab } from "./views/ModifyTab";
-import { OutputTab } from "./views/OutputTab";
+
 import { SettingsTab } from "./views/SettingsTab";
 
 const App = () => {
+	console.log("App component rendering...");
 	const [activeTab, setActiveTab] = useState<TabKey>("input");
 	const { items, addFiles, removeItem, clearItems, hasItems } = useInputItems();
 	const { settings, updateOutputSetting, updateDownscaleSetting, updateAdvancedSetting } =
 		useProcessingSettings();
-	const handlePostConversion = useCallback(() => {
+	const handlePostConversion = () => {
 		clearItems();
-	}, [clearItems]);
+	};
 
 	const { startConversion, cancelConversion, isProgressOpen, progress, statusText, percentage } =
 		useConversion({
@@ -30,55 +30,43 @@ const App = () => {
 		});
 
 	useUpdateNotifications();
+	console.log("App component state initialized");
 
-	const tabs = useMemo(
-		() =>
-			[
-				{ id: "input", label: "Input" },
-				{ id: "output", label: "Output" },
-				{ id: "modify", label: "Modify" },
-				{ id: "settings", label: "Settings" },
-				{ id: "about", label: "About" },
-			] satisfies Array<{ id: TabKey; label: string }>,
-		[],
-	);
+	const tabs = [
+		{ id: "input", label: "Input" },
+		{ id: "settings", label: "Settings" },
+		{ id: "about", label: "About" },
+	] satisfies Array<{ id: TabKey; label: string }>;
 
+	console.log("App component rendering JSX...");
 	return (
-		<div className="flex h-full flex-col font-sans">
+		<div className="flex h-full flex-col font-sans dark-theme bg-dark">
 			<Titlebar />
 
 			<div className="flex flex-col overflow-hidden">
 				<TabNavigation tabs={tabs} activeTab={activeTab} onChange={(tab) => setActiveTab(tab)} />
 
-				<main className="flex-1 overflow-y-auto bg-slate-100">
-					{activeTab === "input" && (
-						<InputTab
-							items={items}
-							onAddFiles={addFiles}
-							onRemove={removeItem}
-							onClear={clearItems}
-							onStartConversion={startConversion}
-							hasItems={hasItems}
-						/>
-					)}
-					{activeTab === "output" && (
-						<OutputTab
-							settings={settings.output}
-							onChange={updateOutputSetting}
-							onStartConversion={startConversion}
-							hasItems={hasItems}
-						/>
-					)}
-					{activeTab === "modify" && (
-						<ModifyTab
-							settings={settings}
-							onDownscaleChange={updateDownscaleSetting}
-							onStartConversion={startConversion}
-							hasItems={hasItems}
-						/>
-					)}
+				<main className="flex-1 overflow-y-auto bg-dark p-4">
+                    {activeTab === "input" && (
+                        <InputTab
+                            items={items}
+                            onAddFiles={addFiles}
+                            onRemove={removeItem}
+                            onClear={clearItems}
+                            onStartConversion={startConversion}
+                            hasItems={hasItems}
+                            processing={progress}
+                        />
+                    )}
 					{activeTab === "settings" && (
-						<SettingsTab settings={settings.advanced} onChange={updateAdvancedSetting} />
+						<SettingsTab
+							settings={settings}
+							onOutputChange={updateOutputSetting}
+							onDownscaleChange={updateDownscaleSetting}
+							onAdvancedChange={updateAdvancedSetting}
+							onStartConversion={startConversion}
+							hasItems={hasItems}
+						/>
 					)}
 					{activeTab === "about" && <AboutTab />}
 				</main>

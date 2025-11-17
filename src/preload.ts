@@ -47,5 +47,8 @@ contextBridge.exposeInMainWorld('electron', {
   fs: {
     stat: (path: string) => ipcRenderer.invoke('fs:stat', path),
     readdir: (path: string) => ipcRenderer.invoke('fs:readdir', path),
+  },
+  preview: {
+    get: (filePath: string) => ipcRenderer.invoke('preview:get', filePath),
   }
 });
