@@ -48,6 +48,10 @@ export const useProcessingSettings = () => {
 						mergedSettings.output.format = "jpeg";
 						mergedSettings.advanced.soundVolume = 100;
 						mergedSettings.downscale.resampling = "lanczos3";
+						mergedSettings.advanced.skipProcessed = true;
+						mergedSettings.advanced.preserveMetadata = true;
+						mergedSettings.advanced.preserveTimestamps = true;
+						mergedSettings.advanced.playSoundOnFinish = false;
 
 						return mergedSettings;
 					});

@@ -138,11 +138,11 @@ src/
 
 ### Advanced Settings
 
-- **Concurrency** - Number of parallel conversions
-- **Preserve Metadata** - Keep EXIF data
-- **Preserve Timestamps** - Maintain file dates
+- **Concurrency** - Number of parallel conversions (auto-detected)
+- **Preserve Metadata** - Always enabled (keeps EXIF data)
+- **Preserve Timestamps** - Always enabled (maintains file dates)
 - **Delete Originals** - Remove source files after conversion
-- **Sound on Finish** - Audio notification when done
+- **Skip Processed** - Always enabled (skips already compressed files)
 
 ## External Dependencies
 

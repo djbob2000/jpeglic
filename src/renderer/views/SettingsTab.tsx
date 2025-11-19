@@ -53,11 +53,11 @@ export const SettingsTab = ({
 		onOutputChange("suffix", "");
 		// Concurrency is handled by backend/defaults, but we can reset it to default if needed, though UI is gone.
 		// onAdvancedChange("concurrency", 4);
-		onAdvancedChange("skipProcessed", false);
+		onAdvancedChange("skipProcessed", true);
 		onAdvancedChange("preserveMetadata", true);
 		onAdvancedChange("preserveTimestamps", true);
 		onAdvancedChange("deleteOriginals", false);
-		onAdvancedChange("playSoundOnFinish", true);
+		onAdvancedChange("playSoundOnFinish", false);
 		onAdvancedChange("soundVolume", 100);
 		onAdvancedChange("clearInputAfterConversion", true);
 		onDownscaleChange("mode", "none");
@@ -363,39 +363,6 @@ export const SettingsTab = ({
 									<span className="text-text-secondary">Allow enlarge</span>
 								</label>
 								)}
-								<label className="flex items-center gap-3">
-									<input
-										type="checkbox"
-										checked={settings.advanced.skipProcessed}
-										onChange={(event) =>
-											onAdvancedChange("skipProcessed", event.target.checked)
-										}
-										className="checkbox-input"
-									/>
-									<span className="text-text-secondary">Skip already compressed files</span>
-								</label>
-								<label className="flex items-center gap-3">
-									<input
-										type="checkbox"
-										checked={settings.advanced.preserveMetadata}
-										onChange={(event) =>
-											onAdvancedChange("preserveMetadata", event.target.checked)
-										}
-										className="checkbox-input"
-									/>
-									<span className="text-text-secondary">Preserve metadata (recommended)</span>
-								</label>
-								<label className="flex items-center gap-3">
-									<input
-										type="checkbox"
-										checked={settings.advanced.preserveTimestamps}
-										onChange={(event) =>
-											onAdvancedChange("preserveTimestamps", event.target.checked)
-										}
-										className="checkbox-input"
-									/>
-									<span className="text-text-secondary">Preserve timestamps (recommended)</span>
-								</label>
 								<label
 									className={`flex items-center gap-3 rounded-lg px-2 py-1.5 -mx-2 transition-all ${
 										settings.advanced.deleteOriginals
@@ -422,17 +389,6 @@ export const SettingsTab = ({
 									>
 										Delete originals
 									</span>
-								</label>
-								<label className="flex items-center gap-3">
-									<input
-										type="checkbox"
-										checked={settings.advanced.playSoundOnFinish}
-										onChange={(event) =>
-											onAdvancedChange("playSoundOnFinish", event.target.checked)
-										}
-										className="checkbox-input"
-									/>
-									<span className="text-text-secondary">Play sound on finish</span>
 								</label>
 								<label className="flex items-center gap-3">
 									<input

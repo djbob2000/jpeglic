@@ -42,9 +42,7 @@ export const useConversion = ({
 
 		const activeSettings = settingsRef.current;
 
-		if (activeSettings.advanced.playSoundOnFinish) {
-			playNotification(activeSettings.advanced.soundVolume);
-		}
+
 
 		setResult(conversionResult);
 		// Clear current item from progress so preview doesn't show "Processing..."
