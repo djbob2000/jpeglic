@@ -22,6 +22,7 @@ export const useConversion = ({
 	const [isProgressOpen, setProgressOpen] = useState(false);
 	const [progress, setProgress] = useState<ProcessingProgress>({ completed: 0, total: 0 });
 	const [statusText, setStatusText] = useState("");
+	const [result, setResult] = useState<ProcessingResult | null>(null);
 	const settingsRef = useRef(settings);
 	const successCallbackRef = useRef(onSuccessfulConversion);
 
@@ -33,11 +34,9 @@ export const useConversion = ({
 		successCallbackRef.current = onSuccessfulConversion;
 	}, [onSuccessfulConversion]);
 
-	const handleConversionComplete = useCallback((result: ProcessingResult) => {
-		setProgressOpen(false);
-
-		if (result.canceled) {
-			window.alert("Conversion was canceled.");
+	const handleConversionComplete = useCallback((conversionResult: ProcessingResult) => {
+		if (conversionResult.canceled) {
+			setProgressOpen(false);
 			return;
 		}
 
@@ -47,26 +46,9 @@ export const useConversion = ({
 			playNotification(activeSettings.advanced.soundVolume);
 		}
 
-		const messageLines = [
-			"Conversion finished!",
-			`Successful: ${result.successCount}`,
-			`Skipped: ${result.skippedCount}`,
-			`Failed: ${result.failedCount}`,
-		];
+		setResult(conversionResult);
 
-		if (result.errors.length > 0) {
-			messageLines.push("", "Errors:");
-			result.errors.slice(0, 5).forEach((entry) => {
-				messageLines.push(`• ${entry.item.displayName}: ${entry.error}`);
-			});
-			if (result.errors.length > 5) {
-				messageLines.push(`...and ${result.errors.length - 5} more`);
-			}
-		}
-
-		window.alert(messageLines.join("\n"));
-
-		if (activeSettings.advanced.clearInputAfterConversion && result.successCount > 0) {
+		if (activeSettings.advanced.clearInputAfterConversion && conversionResult.successCount > 0) {
 			successCallbackRef.current?.();
 		}
 	}, []);
@@ -83,8 +65,8 @@ export const useConversion = ({
 			}
 		});
 
-		const unsubscribeComplete = window.electron.convert.onComplete((result) => {
-			handleConversionComplete(result);
+		const unsubscribeComplete = window.electron.convert.onComplete((res) => {
+			handleConversionComplete(res);
 		});
 
 		const unsubscribeError = window.electron.convert.onError((error) => {
@@ -111,6 +93,7 @@ export const useConversion = ({
 		};
 
 		setProgressOpen(true);
+		setResult(null);
 		setProgress({ completed: 0, total: inputItems.length });
 		setStatusText("");
 
@@ -129,6 +112,11 @@ export const useConversion = ({
 
 	const cancelConversion = useCallback(() => window.electron.convert.cancel(), []);
 
+	const closeProgress = useCallback(() => {
+		setProgressOpen(false);
+		setResult(null);
+	}, []);
+
 	const normalizedStatusText = useMemo(() => statusText.trim(), [statusText]);
 
 	const percentage = useMemo(() => {
@@ -141,8 +129,10 @@ export const useConversion = ({
 	return {
 		startConversion,
 		cancelConversion,
+		closeProgress,
 		isProgressOpen,
 		progress,
+		result,
 		statusText: normalizedStatusText,
 		percentage,
 	};

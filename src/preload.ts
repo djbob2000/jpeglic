@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electron', {
+  platform: process.platform,
+  isMac: process.platform === 'darwin',
   convert: {
     start: (data: any) => ipcRenderer.invoke('convert:start', data),
     cancel: () => ipcRenderer.invoke('convert:cancel'),

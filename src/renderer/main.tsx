@@ -10,7 +10,15 @@ if (!container) {
 const root = createRoot(container);
 
 root.render(
-	<StrictMode>
-		<App />
-	</StrictMode>
+    <StrictMode>
+        <App />
+    </StrictMode>
 );
+
+window.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+window.addEventListener('drop', (e) => {
+    e.preventDefault();
+});

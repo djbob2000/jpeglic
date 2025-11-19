@@ -3,6 +3,8 @@ import type { ProcessingProgress, ProcessingRequest, ProcessingResult } from "..
 declare global {
     interface Window {
         electron: {
+            platform: NodeJS.Platform;
+            isMac: boolean;
             convert: {
                 start: (data: ProcessingRequest) => Promise<{ success: boolean; error?: string }>;
                 cancel: () => Promise<void>;
@@ -31,7 +33,17 @@ declare global {
                 onStatus: (callback: (status: { event: string; data?: unknown }) => void) => () => void;
             };
             preview: {
-                get: (filePath: string) => Promise<string | null>;
+                get: (filePath: string) => Promise<{
+                    data: string;
+                    metadata: {
+                        width?: number;
+                        height?: number;
+                        format?: string;
+                        size?: number;
+                        birthtime?: number;
+                        exif?: Record<string, any>;
+                    };
+                } | null>;
             };
             fs: {
                 stat: (path: string) => Promise<{

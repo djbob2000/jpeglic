@@ -1,13 +1,17 @@
 {
-  "name": "xl-converter",
-  "version": "1.0.0",
+  "name": "home-archive-converter",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/djbob2000/home-archive-converter.git"
+  },
+  "version": "0.0.1",
   "description": "Easy-to-use image converter for modern formats",
   "main": "dist/main.js",
   "scripts": {
     "start": "npm run build && electron .",
     "dev": "concurrently \"npm run watch:main\" \"npm run watch:renderer\" \"wait-on dist/main.js dist/renderer/index.html && electron .\"",
     "watch:main": "tsc -p tsconfig.main.json --watch",
-    "watch:renderer": "npm run copy:static && tsc -p tsconfig.renderer.json --watch",
+    "watch:renderer": "vite build --watch",
     "copy:static": "node scripts/copy-static.js",
     "build": "npm run build:main && npm run build:renderer",
     "build:main": "tsc -p tsconfig.main.json",
@@ -31,7 +35,7 @@
     "avif",
     "webp"
   ],
-  "author": "XL Converter Team",
+  "author": "Home Archive Converter Team",
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.3.5",
@@ -54,6 +58,7 @@
     "electron-store": "^11.0.2",
     "electron-updater": "^6.6.2",
     "execa": "^9.6.0",
+    "exiftool-vendored": "^33.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "sharp": "^0.34.5",

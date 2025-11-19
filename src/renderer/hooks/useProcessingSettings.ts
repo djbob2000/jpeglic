@@ -43,16 +43,31 @@ export const useProcessingSettings = () => {
 							mergedSettings.advanced.concurrency = cpuCores;
 						}
 
+						// Enforce simplified defaults even if stored values exist (for this refactor)
+						// This ensures users migrating from the old version get the new simplified behavior
+						mergedSettings.output.format = "jpeg";
+						mergedSettings.advanced.soundVolume = 100;
+						mergedSettings.downscale.resampling = "lanczos3";
+
 						return mergedSettings;
 					});
 				} else {
-					// No stored settings, auto-detect CPU cores for concurrency
+					// No stored settings, auto-detect CPU cores for concurrency and set defaults
 					const cpuCores = detectCpuCores();
 					setSettings((previous) => ({
 						...previous,
+						output: {
+							...previous.output,
+							format: "jpeg",
+						},
+						downscale: {
+							...previous.downscale,
+							resampling: "lanczos3",
+						},
 						advanced: {
 							...previous.advanced,
 							concurrency: cpuCores,
+							soundVolume: 100,
 						},
 					}));
 				}

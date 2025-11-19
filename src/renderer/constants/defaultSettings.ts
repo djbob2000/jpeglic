@@ -12,6 +12,7 @@ export const defaultSettings: ProcessingSettings = {
 		keepFolderStructure: true,
 		renameStrategy: "skip",
 		suffix: "",
+		visuallyLossless: false,
 	},
 	downscale: {
 		mode: "none",
@@ -26,6 +27,7 @@ export const defaultSettings: ProcessingSettings = {
 		preserveMetadata: true,
 		preserveTimestamps: true,
 		deleteOriginals: false,
+		skipProcessed: false,
 		playSoundOnFinish: true,
 		soundVolume: 50,
 		clearInputAfterConversion: true,

@@ -3,6 +3,8 @@ interface File {
 }
 
 interface ElectronAPI {
+  platform: NodeJS.Platform;
+  isMac: boolean;
   convert: {
     start: (data: any) => Promise<{ success: boolean; error?: string }>;
     cancel: () => Promise<void>;
@@ -49,4 +51,9 @@ declare global {
   interface Window {
     electron: ElectronAPI;
   }
+}
+
+declare module '*.svg' {
+  const src: string;
+  export default src;
 }

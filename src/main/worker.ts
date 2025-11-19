@@ -198,26 +198,39 @@ export class Worker {
     return Math.max(0, Math.min(9, Math.round(effort)));
   }
 
-  private async exportWithJpegli(pipeline: Sharp, targetPath: string): Promise<void> {
-    const bin = this.resolveBinary('cjpegli');
-    if (bin) {
-      const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tmp-jpegli-'));
-      const tmpInput = path.join(tmpDir, `${path.basename(this.item.sourcePath)}.png`);
-      try {
-        const pngBuffer = await pipeline.png({ compressionLevel: 0 }).toBuffer();
-        await fs.writeFile(tmpInput, pngBuffer);
-        const args: string[] = [tmpInput, targetPath, '-q', String(this.settings.output.quality)];
-        args.push('-p', '2');
-        this.externalProcess = execa(bin, args);
-        ProcessManager.register(this.externalProcess);
-        await this.externalProcess;
-      } finally {
-        try { await fs.rm(tmpDir, { recursive: true, force: true }); } catch {}
-      }
-      return;
-    }
-    await pipeline.jpeg({ quality: this.settings.output.quality, progressive: true }).toFile(targetPath);
+private async exportWithJpegli(pipeline: Sharp, targetPath: string): Promise<void> {
+  const bin = this.resolveBinary('cjpegli');
+
+  if (!bin) {
+    throw new Error('cjpegli binary not found');
   }
+
+  const { data, info } = await pipeline.removeAlpha().raw().toBuffer({ resolveWithObject: true });
+
+  const ppmHeader = `P6\n${info.width} ${info.height}\n255\n`;
+  const ppmBuffer = Buffer.concat([Buffer.from(ppmHeader), data]);
+
+  const args: string[] = ['-', targetPath];
+
+  if (this.settings.output.visuallyLossless) {
+    args.push('-d', '1');
+    args.push('--chroma_subsampling', '420');
+    args.push('-p', '2');
+  } else {
+    args.push('-q', String(this.settings.output.quality));
+    args.push('-p', '2');
+  }
+
+  try {
+    this.externalProcess = execa(bin, args, { input: ppmBuffer });
+    ProcessManager.register(this.externalProcess);
+    await this.externalProcess;
+  } catch (error) {
+    console.error('Jpegli conversion failed:', error);
+    throw error;
+  }
+}
+
 
   private async exportWithCJXL(pipeline: Sharp, targetPath: string): Promise<void> {
     const buffer = await pipeline.png({ compressionLevel: 0 }).toBuffer();
@@ -236,18 +249,61 @@ export class Worker {
     await this.externalProcess;
   }
 
+  private async isAlreadyProcessed(filePath: string): Promise<boolean> {
+    try {
+      const { exiftool } = await import('exiftool-vendored');
+      const tags: any = await exiftool.read(filePath);
+
+      // ExifTool flattens: XMP:HomeArchiveConverter:Processed -> HomeArchiveConverterProcessed
+      const processed = tags["HomeArchiveConverterProcessed"];
+
+      return processed === "true" || processed === true;
+    } catch {
+      return false;
+    }
+  }
+
   private async applyPostProcessing(targetPath: string): Promise<void> {
+    // Only JPEG supports XMP here
+    if (this.settings.output.format === 'jpeg') {
+      try {
+        const { exiftool } = await import('exiftool-vendored');
+
+        // If overwriting → remove old tag to avoid duplicates
+        await exiftool.write(targetPath, {
+          "XMP:HomeArchiveConverter:Processed": null
+        } as any);
+
+        // Write fresh tags
+        await exiftool.write(targetPath, {
+          "XMP:HomeArchiveConverter:Processed": "true",
+          "XMP:HomeArchiveConverter:Version": "1.0",
+          "XMP:HomeArchiveConverter:Date": new Date().toISOString(),
+          "XMP:HomeArchiveConverter:Tool": "image-optimizer"
+        } as any);
+      } catch (error) {
+        console.warn("Failed to write XMP metadata", error);
+      }
+    }
+
+    // Preserve timestamps
     if (this.settings.advanced.preserveTimestamps) {
       try {
         const stats = await fs.stat(this.item.sourcePath);
         await fs.utimes(targetPath, stats.atime, stats.mtime);
       } catch (error) {
-        console.warn('Failed to copy timestamps', error);
+        console.warn("Failed to copy timestamps", error);
       }
     }
   }
 
   private async prepareOutputPath(): Promise<PrepareOutputResult | null> {
+    // Check if file is already processed if skipProcessed is enabled
+    if (this.settings.advanced.skipProcessed) {
+      const processed = await this.isAlreadyProcessed(this.item.sourcePath);
+      if (processed) return null;
+    }
+
     const format = this.settings.output.format;
     const ext = this.getExtension(format);
 

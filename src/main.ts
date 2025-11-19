@@ -12,35 +12,27 @@ let updateManager: UpdateManager | null = null;
 function createWindow(): void {
   const settingsManager = SettingsManager.getInstance();
   const windowState = settingsManager.get('window');
+  const isMac = process.platform === 'darwin';
 
   mainWindow = new BrowserWindow({
     width: windowState?.width ?? 900,
     height: windowState?.height ?? 600,
     x: windowState?.x,
     y: windowState?.y,
-    title: 'XL Converter',
+    title: 'Home Archive Converter',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js')
     },
-    frame: false,
-    titleBarStyle: 'hidden',
+    frame: isMac ? true : false,
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
   });
 
   if (windowState?.maximized) {
     mainWindow.maximize();
   }
 
-  console.log('Loading HTML file from:', path.join(__dirname, 'renderer/src/renderer/index.html'));
-  
-  mainWindow.webContents.on('did-finish-load', () => {
-    console.log('HTML file loaded successfully');
-    // Открываем DevTools после загрузки
-    setTimeout(() => {
-      mainWindow?.webContents.openDevTools();
-    }, 1000);
-  });
   
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
     console.error('Failed to load HTML:', errorCode, errorDescription);
@@ -217,18 +209,46 @@ ipcMain.handle('fs:readdir', async (_, path: string) => {
 ipcMain.handle('preview:get', async (_, filePath: string) => {
   try {
     const sharp = await import('sharp');
-    const { execa } = await import('execa');
+    const fs = await import('fs');
+    const { exiftool } = await import('exiftool-vendored');
     
+    const stats = fs.statSync(filePath);
+    const image = sharp.default(filePath);
+    const metadata = await image.metadata();
+    
+    let exifData = {};
+    try {
+      exifData = await exiftool.read(filePath);
+    } catch (e) {
+      console.error('Failed to read EXIF with exiftool:', e);
+    }
+
     // Use sharp for resizing but export as PNG for preview
     // This avoids using Sharp's JPEG encoder and provides better quality
-    const buffer = await sharp.default(filePath)
+    const buffer = await image
       .resize(300, 300, { fit: 'inside' })
       .png({ compressionLevel: 9 })
       .toBuffer();
     
-    return `data:image/png;base64,${buffer.toString('base64')}`;
+    return {
+      data: `data:image/png;base64,${buffer.toString('base64')}`,
+      metadata: {
+        width: metadata.width,
+        height: metadata.height,
+        format: metadata.format,
+        size: stats.size,
+        birthtime: stats.birthtime.getTime(),
+        exif: exifData
+      }
+    };
   } catch (error) {
     console.error('Preview generation failed:', error);
     return null;
   }
+});
+
+// Ensure exiftool is properly closed when app quits
+app.on('before-quit', async () => {
+  const { exiftool } = await import('exiftool-vendored');
+  await exiftool.end();
 });

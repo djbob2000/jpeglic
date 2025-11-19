@@ -1,34 +1,34 @@
-import { type DragEvent, type KeyboardEvent, useCallback, useState, useEffect } from "react";
+import { type DragEvent, type KeyboardEvent, useCallback, useState } from "react";
 import type { InputItem, ProcessingProgress } from "../../common/types";
 import { formatSize } from "../utils/format";
 
 type FileWithPath = File & { path?: string };
 
 interface InputTabProps {
-    items: InputItem[];
-    onAddFiles: (paths: string[]) => Promise<void> | void;
-    onRemove: (id: string) => void;
-    onClear: () => void;
-    onStartConversion: () => void;
-    hasItems: boolean;
-    processing?: ProcessingProgress;
+	items: InputItem[];
+	onAddFiles: (paths: string[]) => Promise<void> | void;
+	onRemove: (id: string) => void;
+	onClear: () => void;
+	hasItems: boolean;
+	processing?: ProcessingProgress;
+	selectedItemId: string | null;
+	onSelect: (id: string) => void;
 }
 
 export const InputTab = ({
-    items,
-    onAddFiles,
-    onRemove,
-    onClear,
-    onStartConversion,
-    hasItems,
-    processing,
+	items,
+	onAddFiles,
+	onRemove,
+	onClear,
+	hasItems,
+	processing,
+	selectedItemId,
+	onSelect,
 }: InputTabProps) => {
 	const [isDragOver, setDragOver] = useState(false);
-	const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
 	const handleDrop = useCallback(
-		async (event: DragEvent<HTMLDivElement>) => {
+		async (event: DragEvent<HTMLButtonElement>) => {
 			event.preventDefault();
 			setDragOver(false);
 
@@ -48,7 +48,7 @@ export const InputTab = ({
 	}, [onAddFiles]);
 
 	const handleKeyDown = useCallback(
-		(event: KeyboardEvent<HTMLDivElement>) => {
+		(event: KeyboardEvent<HTMLButtonElement>) => {
 			if (event.key === "Enter" || event.key === " ") {
 				event.preventDefault();
 				void handleBrowse();
@@ -57,30 +57,8 @@ export const InputTab = ({
 		[handleBrowse],
 	);
 
-	const handleFileSelect = useCallback((itemId: string) => {
-		setSelectedItemId(itemId);
-	}, []);
-
-    const selectedItem = items.find(item => item.id === selectedItemId);
-    const activePreviewItem = (processing?.currentItem ?? selectedItem) ?? null;
-
-    useEffect(() => {
-        if (activePreviewItem) {
-            const filePath = activePreviewItem.sourcePath;
-            window.electron.preview.get(filePath)
-                .then((imageData: string) => {
-                    setPreviewImage(imageData);
-                })
-                .catch(() => {
-                    setPreviewImage(null);
-                });
-        } else {
-            setPreviewImage(null);
-        }
-    }, [activePreviewItem]);
-
 	return (
-		<div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 p-4">
+		<div className="flex h-full w-full flex-col gap-4 p-4">
 			{/* Drop Zone */}
 			<button
 				type="button"
@@ -94,169 +72,117 @@ export const InputTab = ({
 				}}
 				onDragLeave={() => setDragOver(false)}
 				onDrop={handleDrop}
-				className={`drop-zone flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border p-12 text-center transition-all hover:border-accent ${
-					isDragOver ? "border-accent bg-accent/10 text-accent" : "text-secondary"
+				className={`group relative flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 transition-all hover:border-primary/50 hover:bg-primary/5 ${
+					isDragOver
+						? "border-primary bg-primary/10"
+						: "border-border bg-surface-2"
 				}`}
 			>
-				<svg aria-hidden="true" className="h-16 w-16 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75m-7.5 6.75h12a1.5 1.5 0 001.5-1.5v-9a1.5 1.5 0 00-1.5-1.5h-12a1.5 1.5 0 00-1.5 1.5v9a1.5 1.5 0 001.5 1.5z" />
-				</svg>
-                <div className="text-xl font-semibold mb-2">
-                        Drop files here
-                    </div>
-					<div className="text-sm text-secondary">
+				<div className="rounded-full bg-surface-1 p-3 shadow-sm group-hover:scale-110 transition-transform">
+					<svg
+						aria-hidden="true"
+						className="h-6 w-6 text-primary"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={1.5}
+							d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75m-7.5 6.75h12a1.5 1.5 0 001.5-1.5v-9a1.5 1.5 0 00-1.5-1.5h-12a1.5 1.5 0 00-1.5 1.5v9a1.5 1.5 0 001.5 1.5z"
+						/>
+					</svg>
+				</div>
+				<div className="text-center">
+					<div className="text-sm font-medium text-text-primary">
+						Drop files here
+					</div>
+					<div className="text-xs text-text-tertiary">
 						or click to browse
 					</div>
+				</div>
 			</button>
 
-			{/* File List and Preview */}
-			<div className="grid flex-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-				{/* File List Panel */}
-                <div className="panel h-full">
-                    <div className="panel-header-centered">
-                        <span className="panel-title">Files ({items.length})</span>
-                    </div>
-                    {hasItems && (
-                        <div className="flex justify-end mb-2">
-                            <button type="button" onClick={onClear} className="btn-secondary px-3 py-1 text-xs">
-                                Clear All
-                            </button>
-                        </div>
-                    )}
-                    <div className="flex-1 overflow-y-auto">
-                        {items.length === 0 ? (
-                            <div className="flex h-full items-center justify-center p-8 text-sm text-secondary">
-                                No files added yet
-                            </div>
-                        ) : (
-                            <ul className="divide-y divide-border">
-                                {items.map((item) => (
-                                    <li
-                                    key={item.id}
-                                        className={`file-item flex items-center justify-between gap-4 px-4 py-3 text-sm hover:bg-accent/5 transition-colors cursor-pointer ${
-                                            selectedItemId === item.id ? 'bg-accent/10 border-l-2 border-accent' : ''
-                                        }`}
-                                        onClick={() => handleFileSelect(item.id)}
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <div className="truncate font-medium text-primary">{item.displayName} — {formatSize(item.sizeBytes)}</div>
-                                            {(() => {
-                                                const rp = item.relativePath;
-                                                const name = item.displayName;
-                                                let dir = '';
-                                                if (rp && rp.toLowerCase().endsWith(name.toLowerCase())) {
-                                                    dir = rp.slice(0, rp.length - name.length).replace(/[\\/]+$/, '');
-                                                }
-                                                return dir ? (
-                                                    <div className="truncate text-xs text-secondary">{dir}</div>
-                                                ) : null;
-                                            })()}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => onRemove(item.id)}
-                                            className="btn-secondary px-2 py-1 text-xs"
-                                        >
-                                            Remove
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                </div>
-
-				{/* Preview Panel */}
-                <div className="panel h-full">
-                    <div className="panel-header-centered">
-                        <span className="panel-title">Preview</span>
-                    </div>
-                    <div className="flex h-full flex-col text-secondary">
-                        {(() => {
-                            const activeItem = processing?.currentItem ?? selectedItem;
-                            return activeItem ? (
-                            <div className="space-y-4 p-4">
-                                <div className="flex items-center justify-center mb-4">
-                                    <div className="w-32 h-32 bg-border rounded-lg flex items-center justify-center overflow-hidden">
-                                        {previewImage ? (
-                                            <img 
-                                                src={previewImage} 
-                                                alt={activeItem.displayName}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <svg className="w-16 h-16 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 16.5v-9a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.121 1.12a1.5 1.5 0 0 0 1.061.44h6.379A1.5 1.5 0 0 1 20.5 9v7.5A1.5 1.5 0 0 1 19 18H4.5A1.5 1.5 0 0 1 3 16.5Z" />
-                                            </svg>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <div>
-                                        <div className="text-xs text-secondary mb-1">File Name</div>
-                                        <div className="text-sm font-medium text-primary">{activeItem.displayName}</div>
-                                    </div>
-                                    {activeItem.relativePath && activeItem.relativePath !== activeItem.displayName && (
-                                        <div>
-                                            <div className="text-xs text-secondary mb-1">Path</div>
-                                            <div className="text-sm text-secondary">{activeItem.relativePath}</div>
-                                        </div>
-                                    )}
-                                    <div>
-                                        <div className="text-xs text-secondary mb-1">Size</div>
-                                        <div className="text-sm text-secondary">{formatSize(activeItem.sizeBytes)}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-secondary mb-1">Status</div>
-                                        <div className="text-sm text-accent">{processing?.currentItem && processing.currentItem.id === activeItem.id ? 'Processing' : 'Ready for conversion'}</div>
-                                    </div>
-                                </div>
-                            </div>
-                            ) : (
-                            <div className="flex h-full flex-col items-center justify-center text-center">
-                                <svg
-                                    aria-hidden="true"
-                                    className="mb-4 h-12 w-12"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="1.5"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M3 16.5v-9a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.121 1.12a1.5 1.5 0 0 0 1.061.44h6.379A1.5 1.5 0 0 1 20.5 9v7.5A1.5 1.5 0 0 1 19 18H4.5A1.5 1.5 0 0 1 3 16.5Z"
-                                    />
-                                </svg>
-                                <div className="font-medium text-primary">Preview</div>
-                                <p className="mt-2 max-w-[14rem] text-xs text-secondary">
-                                    Select a file to view its details
-                                </p>
-                            </div>
-                            );
-                        })()}
-                    </div>
-                </div>
+			{/* File List Header */}
+			<div className="flex items-center justify-between px-1">
+				<span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+					Files ({items.length})
+				</span>
+				{hasItems && (
+					<button
+						type="button"
+						onClick={onClear}
+						className="text-xs font-medium text-text-secondary hover:text-red-500 transition-colors"
+					>
+						Clear All
+					</button>
+				)}
 			</div>
 
-			{/* Action Buttons */}
-			<div className="flex justify-end gap-3">
-				<button
-					type="button"
-					onClick={onClear}
-					disabled={!hasItems}
-					className="btn-secondary rounded-lg px-5 py-2 text-sm font-semibold disabled:opacity-50"
-				>
-					Clear
-				</button>
-				<button
-					type="button"
-					onClick={onStartConversion}
-					disabled={!hasItems}
-					className="btn-primary rounded-lg px-5 py-2 text-sm font-semibold disabled:opacity-50"
-				>
-					Convert
-				</button>
+			{/* File List */}
+			<div className="flex-1 overflow-y-auto -mx-2 px-2">
+				{items.length === 0 ? (
+					<div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-border/50 bg-surface-1/50 p-4 text-center text-xs text-text-tertiary">
+						No files added yet
+					</div>
+				) : (
+					<ul className="space-y-1">
+						{items.map((item) => (
+							<li
+								key={item.id}
+								className={`group relative flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+									selectedItemId === item.id
+										? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
+										: "text-text-secondary hover:bg-surface-2 hover:text-text-primary"
+								}`}
+								onClick={() => onSelect(item.id)}
+							>
+								{/* Status Indicator */}
+								<div
+									className={`h-2 w-2 rounded-full ${
+										processing?.currentItem?.id === item.id
+											? "bg-primary animate-pulse"
+											: "bg-border group-hover:bg-text-tertiary"
+									}`}
+								/>
+
+								<div className="min-w-0 flex-1">
+									<div className="truncate text-sm font-medium">
+										{item.displayName}
+									</div>
+									<div className="flex items-center gap-2 text-xs opacity-70">
+										<span>{formatSize(item.sizeBytes)}</span>
+									</div>
+								</div>
+
+								<button
+									type="button"
+									onClick={(e) => {
+										e.stopPropagation();
+										onRemove(item.id);
+									}}
+									className="hidden rounded p-1 text-text-tertiary hover:bg-surface-3 hover:text-red-500 group-hover:block"
+									title="Remove file"
+								>
+									<svg
+										className="h-4 w-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M6 18L18 6M6 6l12 12"
+										/>
+									</svg>
+								</button>
+							</li>
+						))}
+					</ul>
+				)}
 			</div>
 		</div>
 	);

@@ -14,8 +14,6 @@ interface SettingsTabProps {
 		key: K,
 		value: ProcessingSettings["advanced"][K],
 	) => void;
-	onStartConversion: () => void;
-	hasItems: boolean;
 }
 
 export const SettingsTab = ({
@@ -23,8 +21,6 @@ export const SettingsTab = ({
 	onOutputChange,
 	onDownscaleChange,
 	onAdvancedChange,
-	onStartConversion,
-	hasItems,
 }: SettingsTabProps) => {
 	const { downscale } = settings;
 	const showDimensions = downscale.mode === "dimensions";
@@ -47,18 +43,39 @@ export const SettingsTab = ({
 		}
 	};
 
+	const handleReset = () => {
+		onOutputChange("format", "jpeg");
+		onOutputChange("quality", 80);
+		onOutputChange("visuallyLossless", false);
+		onOutputChange("destination", "source");
+		onOutputChange("keepFolderStructure", true);
+		onOutputChange("renameStrategy", "rename");
+		onOutputChange("suffix", "");
+		// Concurrency is handled by backend/defaults, but we can reset it to default if needed, though UI is gone.
+		// onAdvancedChange("concurrency", 4);
+		onAdvancedChange("skipProcessed", false);
+		onAdvancedChange("preserveMetadata", true);
+		onAdvancedChange("preserveTimestamps", true);
+		onAdvancedChange("deleteOriginals", false);
+		onAdvancedChange("playSoundOnFinish", true);
+		onAdvancedChange("soundVolume", 100);
+		onAdvancedChange("clearInputAfterConversion", true);
+		onDownscaleChange("mode", "none");
+		onDownscaleChange("allowEnlarge", false);
+		onDownscaleChange("resampling", "lanczos3");
+	};
+
 	return (
-		<div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 p-4">
-			{/* Output Settings Section */}
+		<div className="flex flex-col gap-6 p-6">
 			<div className="panel">
-				<div className="panel-header-centered">
-					<span className="panel-title">Output Settings</span>
-				</div>
-				<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-					{/* Save To Settings */}
-					<div>
+				<div className="p-6 space-y-8">
+					{/* Top Section: Save To & Format/Quality */}
+					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
+						{/* Left Column: Save To Settings */}
 						<fieldset className="space-y-3">
-							<legend className="block text-sm text-secondary mb-3">Save To</legend>
+							<legend className="mb-3 block text-sm font-medium text-text-secondary uppercase tracking-wider">
+								Save To
+							</legend>
 							<label className="flex items-center gap-3">
 								<input
 									id="destination-source"
@@ -69,7 +86,7 @@ export const SettingsTab = ({
 									onChange={() => handleDestinationChange("source")}
 									className="radio-input"
 								/>
-								<span className="text-secondary">Source Folder</span>
+								<span className="text-text-secondary">Source Folder</span>
 							</label>
 							<label className="flex items-center gap-3">
 								<input
@@ -81,7 +98,7 @@ export const SettingsTab = ({
 									onChange={() => handleDestinationChange("custom")}
 									className="radio-input"
 								/>
-								<span className="text-secondary">Custom</span>
+								<span className="text-text-secondary">Custom</span>
 							</label>
 							<div className="flex gap-2 pl-6">
 								<input
@@ -107,357 +124,345 @@ export const SettingsTab = ({
 								<input
 									type="checkbox"
 									checked={settings.output.keepFolderStructure}
-									onChange={(event) => onOutputChange("keepFolderStructure", event.target.checked)}
+									onChange={(event) =>
+										onOutputChange("keepFolderStructure", event.target.checked)
+									}
 									className="checkbox-input"
 								/>
-								<span className="text-secondary">Keep Folder Structure</span>
+								<span className="text-text-secondary">Keep Folder Structure</span>
 							</label>
 						</fieldset>
-					</div>
 
-					{/* Format Settings */}
-					<div>
-						<fieldset className="space-y-4">
-							<legend className="block text-sm text-secondary mb-3">Format Settings</legend>
+						{/* Right Column: Format & Quality */}
+						<div className="space-y-4">
 							<div>
-								<label htmlFor="format-select" className="block text-sm text-secondary mb-2">Format</label>
-								<select id="format-select"
-									value={settings.output.format}
-									onChange={(event) =>
-										onOutputChange(
-											"format",
-											event.target.value as ProcessingSettings["output"]["format"],
-										)
-									}
-									className="form-control w-full"
-								>
-									<option value="jxl">JPEG XL</option>
-									<option value="avif">AVIF</option>
-									<option value="webp">WebP</option>
-									<option value="jpeg">JPEG</option>
-									<option value="png">PNG</option>
-								</select>
+								<label className="mb-2 block text-sm font-medium text-text-secondary uppercase tracking-wider">
+									Format
+								</label>
+								<div className="form-control w-full flex items-center text-text-primary bg-surface-3/50 cursor-not-allowed opacity-75">
+									JPEG (Codec JPEGli)
+								</div>
 							</div>
-							<div>
-								<label htmlFor="quality-range" className="block text-sm text-secondary mb-2">Quality</label>
+
+							{/* Visually Lossless Switch */}
+							<label className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-2 p-3 transition-colors hover:bg-surface-3">
+								<span className="text-sm font-medium text-text-primary">
+									Visually Lossless (recommended)
+								</span>
+								<div className="relative inline-flex items-center cursor-pointer">
+									<input
+										type="checkbox"
+										checked={settings.output.visuallyLossless}
+										onChange={(event) =>
+											onOutputChange("visuallyLossless", event.target.checked)
+										}
+										className="peer sr-only"
+									/>
+									<div className="h-6 w-11 rounded-full bg-surface-4 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+								</div>
+							</label>
+
+							<div className={settings.output.visuallyLossless ? "opacity-50 pointer-events-none" : ""}>
+								<label
+									htmlFor="quality-range"
+									className="mb-2 block text-sm font-medium text-text-secondary uppercase tracking-wider"
+								>
+									Quality
+								</label>
 								<div className="flex items-center gap-4">
-									<input id="quality-range"
+									<input
+										id="quality-range"
 										type="range"
 										min={1}
 										max={100}
 										value={settings.output.quality}
-										onChange={(event) => onOutputChange("quality", Number(event.target.value))}
+										onChange={(event) =>
+											onOutputChange("quality", Number(event.target.value))
+										}
+										disabled={settings.output.visuallyLossless}
 										className="range-input flex-1"
 									/>
-									<span className="text-primary font-semibold w-8 text-right">
+									<span className="w-8 text-right font-semibold text-primary">
 										{settings.output.quality}
 									</span>
 								</div>
 							</div>
+						</div>
+					</div>
+
+					<div className="border-t border-border" />
+
+					{/* Downscale & Rename Strategy Combined Grid */}
+					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 items-start">
+						{/* Left Column: Downscale Settings */}
+						<div className="space-y-6">
 							<div>
-								<label htmlFor="effort-range" className="block text-sm text-secondary mb-2">Effort</label>
-								<div className="flex items-center gap-4">
-									<input id="effort-range"
-										type="range"
-										min={1}
-										max={9}
-										value={settings.output.effort}
-										onChange={(event) => onOutputChange("effort", Number(event.target.value))}
-										className="range-input flex-1"
-									/>
-									<span className="text-primary font-semibold w-8 text-right">
-										{settings.output.effort}
-									</span>
-								</div>
+								<label
+									htmlFor="downscale-mode-select"
+									className="mb-2 block text-sm font-medium text-text-secondary uppercase tracking-wider"
+								>
+									Downscale Mode
+								</label>
+								<select
+									id="downscale-mode-select"
+									value={downscale.mode}
+									onChange={(event) =>
+										onDownscaleChange(
+											"mode",
+											event.target.value as typeof downscale.mode,
+										)
+									}
+									className="form-control w-full"
+								>
+									<option value="none">None</option>
+									<option value="dimensions">Dimensions</option>
+									<option value="percentage">Percentage</option>
+									<option value="longer-side">Longer Side</option>
+									<option value="shorter-side">Shorter Side</option>
+									<option value="megapixels">Megapixels</option>
+								</select>
 							</div>
-							<label className="flex items-center gap-3">
-								<input
-									type="checkbox"
-									checked={settings.output.lossless}
-									onChange={(event) => onOutputChange("lossless", event.target.checked)}
-									className="checkbox-input"
-								/>
-								<span className="text-secondary">Lossless</span>
-							</label>
-							<label className="flex items-center gap-3">
-								<input
-									type="checkbox"
-									checked={settings.output.keepAlpha}
-									onChange={(event) => onOutputChange("keepAlpha", event.target.checked)}
-									className="checkbox-input"
-								/>
-								<span className="text-secondary">Keep Alpha Channel</span>
-							</label>
-						</fieldset>
-					</div>
-				</div>
 
-				{/* Rename and Output Options */}
-				<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-					<div>
-						<label htmlFor="rename-strategy-select" className="block text-sm text-secondary mb-2">If Output Exists</label>
-						<select id="rename-strategy-select"
-							value={settings.output.renameStrategy}
-							onChange={(event) =>
-								onOutputChange(
-									"renameStrategy",
-									event.target.value as ProcessingSettings["output"]["renameStrategy"],
-								)
-							}
-							className="form-control w-full"
-						>
-							<option value="rename">Rename</option>
-							<option value="overwrite">Overwrite existing</option>
-							<option value="skip">Skip existing</option>
-						</select>
-					</div>
-					<div>
-						<label htmlFor="suffix-input" className="block text-sm text-secondary mb-2">Suffix</label>
-						<input id="suffix-input"
-							type="text"
-							value={settings.output.suffix}
-							onChange={(event) => onOutputChange("suffix", event.target.value)}
-							placeholder="e.g., _converted"
-							className="form-control w-full"
-						/>
-					</div>
-				</div>
-			</div>
-
-			{/* Modify Settings Section */}
-			<div className="panel">
-				<div className="panel-header-centered">
-					<span className="panel-title">Modify Settings</span>
-				</div>
-				<div className="space-y-6">
-					<div>
-						<label htmlFor="downscale-mode-select" className="block text-sm text-secondary mb-2">Downscale Mode</label>
-						<select id="downscale-mode-select"
-							value={downscale.mode}
-							onChange={(event) =>
-								onDownscaleChange("mode", event.target.value as typeof downscale.mode)
-							}
-							className="form-control w-full"
-						>
-							<option value="none">None</option>
-							<option value="dimensions">Dimensions</option>
-							<option value="percentage">Percentage</option>
-							<option value="longer-side">Longer Side</option>
-							<option value="shorter-side">Shorter Side</option>
-							<option value="megapixels">Megapixels</option>
-						</select>
-					</div>
-
-					{(showDimensions || showValue) && (
-						<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-							{showDimensions && (
-								<>
-										<div>
-											<label htmlFor="width-input" className="block text-sm text-secondary mb-2">Width</label>
-											<input id="width-input"
-											type="number"
-											min={1}
-											value={downscale.width ?? ""}
-											onChange={(event) =>
-												onDownscaleChange(
-													"width",
-													event.target.value ? Number(event.target.value) : undefined,
-												)
-											}
-											className="form-control w-full"
-										/>
-										</div>
+							{(showDimensions || showValue) && (
+								<div className="grid grid-cols-2 gap-4">
+									{showDimensions && (
+										<>
 											<div>
-												<label htmlFor="height-input" className="block text-sm text-secondary mb-2">Height</label>
-												<input id="height-input"
+												<label
+													htmlFor="width-input"
+													className="mb-2 block text-sm text-text-secondary"
+												>
+													Width
+												</label>
+												<input
+													id="width-input"
+													type="number"
+													min={1}
+													value={downscale.width ?? ""}
+													onChange={(event) =>
+														onDownscaleChange(
+															"width",
+															event.target.value
+																? Number(event.target.value)
+																: undefined,
+														)
+													}
+													className="form-control w-full"
+												/>
+											</div>
+											<div>
+												<label
+													htmlFor="height-input"
+													className="mb-2 block text-sm text-text-secondary"
+												>
+													Height
+												</label>
+												<input
+													id="height-input"
+													type="number"
+													min={1}
+													value={downscale.height ?? ""}
+													onChange={(event) =>
+														onDownscaleChange(
+															"height",
+															event.target.value
+																? Number(event.target.value)
+																: undefined,
+														)
+													}
+													className="form-control w-full"
+												/>
+											</div>
+										</>
+									)}
+									{showValue && (
+										<div className="col-span-2">
+											<label
+												htmlFor="value-input"
+												className="mb-2 block text-sm text-text-secondary"
+											>
+												Value
+											</label>
+											<input
+												id="value-input"
 												type="number"
 												min={1}
-												value={downscale.height ?? ""}
+												value={downscale.value ?? ""}
 												onChange={(event) =>
 													onDownscaleChange(
-														"height",
-														event.target.value ? Number(event.target.value) : undefined,
+														"value",
+														event.target.value
+															? Number(event.target.value)
+															: undefined,
 													)
 												}
 												className="form-control w-full"
 											/>
 										</div>
-								</>
-							)}
-							{showValue && (
-								<div>
-												<label htmlFor="value-input" className="block text-sm text-secondary mb-2">Value</label>
-												<input id="value-input"
-											type="number"
-											min={1}
-											value={downscale.value ?? ""}
-											onChange={(event) =>
-												onDownscaleChange(
-													"value",
-													event.target.value ? Number(event.target.value) : undefined,
-												)
-											}
-											className="form-control w-full"
-										/>
+									)}
 								</div>
 							)}
 						</div>
-					)}
 
-					<div>
-							<label htmlFor="resampling-select" className="block text-sm text-secondary mb-2">Resampling</label>
-							<select id="resampling-select"
-								value={downscale.resampling}
-								onChange={(event) =>
-									onDownscaleChange("resampling", event.target.value as typeof downscale.resampling)
-								}
-								className="form-control w-full"
-							>
-								<option value="lanczos3">Lanczos3</option>
-								<option value="catmullRom">Catmull-Rom</option>
-								<option value="mitchell">Mitchell</option>
-								<option value="nearest">Nearest</option>
-							</select>
-					</div>
+						{/* Right Column: Rename Strategy & Checkboxes */}
+						<div className="space-y-6">
+							<div>
+								<label
+									htmlFor="rename-strategy-select"
+									className="mb-2 block text-sm font-medium text-text-secondary uppercase tracking-wider"
+								>
+									If Output Exists
+								</label>
+								<select
+									id="rename-strategy-select"
+									value={settings.output.renameStrategy}
+									onChange={(event) =>
+										onOutputChange(
+											"renameStrategy",
+											event.target.value as ProcessingSettings["output"]["renameStrategy"],
+										)
+									}
+									className="form-control w-full"
+								>
+									<option value="rename">Rename</option>
+									<option value="overwrite">Overwrite existing</option>
+									<option value="skip">Skip existing</option>
+								</select>
+							</div>
+							{settings.output.renameStrategy === "rename" && (
+								<div>
+									<label
+										htmlFor="suffix-input"
+										className="mb-2 block text-sm font-medium text-text-secondary uppercase tracking-wider"
+									>
+										Suffix
+									</label>
+									<input
+										id="suffix-input"
+										type="text"
+										value={settings.output.suffix}
+										onChange={(event) => onOutputChange("suffix", event.target.value)}
+										placeholder="e.g., _converted"
+										className="form-control w-full"
+									/>
+								</div>
+							)}
 
-					<label className="flex items-center gap-3">
-						<input
-							type="checkbox"
-							checked={downscale.allowEnlarge}
-							onChange={(event) => onDownscaleChange("allowEnlarge", event.target.checked)}
-							className="checkbox-input"
-						/>
-						<span className="text-secondary">Allow enlarge</span>
-					</label>
-				</div>
-			</div>
-
-			{/* Advanced Settings Section */}
-			<div className="panel">
-				<div className="panel-header-centered">
-					<span className="panel-title">Advanced Settings</span>
-				</div>
-				<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-					<div>
-						<label htmlFor="concurrency-input" className="block text-sm text-secondary mb-2">Concurrency</label>
-						<input id="concurrency-input"
-							type="number"
-							min={1}
-							max={32}
-							value={settings.advanced.concurrency}
-							onChange={(event) =>
-								onAdvancedChange("concurrency", Math.max(1, Number(event.target.value) || 1))
-							}
-							className="form-control w-full"
-						/>
-					</div>
-					<div>
-						<label htmlFor="sound-volume-range" className="block text-sm text-secondary mb-2">Sound Volume</label>
-						<div className="flex items-center gap-4">
-							<input id="sound-volume-range"
-								type="range"
-								min={0}
-								max={100}
-								value={settings.advanced.soundVolume}
-								onChange={(event) => onAdvancedChange("soundVolume", Number(event.target.value))}
-								className="range-input flex-1"
-							/>
-							<span className="text-primary font-semibold w-8 text-right">
-								{settings.advanced.soundVolume}
-							</span>
+							{/* Checkboxes */}
+							<div className="space-y-3 pt-2">
+								{downscale.mode !== "none" && (
+									<label className="flex items-center gap-3">
+										<input
+											type="checkbox"
+											checked={downscale.allowEnlarge}
+											onChange={(event) =>
+												onDownscaleChange("allowEnlarge", event.target.checked)
+											}
+											className="checkbox-input"
+										/>
+									<span className="text-text-secondary">Allow enlarge</span>
+								</label>
+								)}
+								<label className="flex items-center gap-3">
+									<input
+										type="checkbox"
+										checked={settings.advanced.skipProcessed}
+										onChange={(event) =>
+											onAdvancedChange("skipProcessed", event.target.checked)
+										}
+										className="checkbox-input"
+									/>
+									<span className="text-text-secondary">Skip already compressed files</span>
+								</label>
+								<label className="flex items-center gap-3">
+									<input
+										type="checkbox"
+										checked={settings.advanced.preserveMetadata}
+										onChange={(event) =>
+											onAdvancedChange("preserveMetadata", event.target.checked)
+										}
+										className="checkbox-input"
+									/>
+									<span className="text-text-secondary">Preserve metadata (recommended)</span>
+								</label>
+								<label className="flex items-center gap-3">
+									<input
+										type="checkbox"
+										checked={settings.advanced.preserveTimestamps}
+										onChange={(event) =>
+											onAdvancedChange("preserveTimestamps", event.target.checked)
+										}
+										className="checkbox-input"
+									/>
+									<span className="text-text-secondary">Preserve timestamps (recommended)</span>
+								</label>
+								<label
+									className={`flex items-center gap-3 rounded-lg px-2 py-1.5 -mx-2 transition-all ${
+										settings.advanced.deleteOriginals
+											? "bg-red-500/10"
+											: "hover:bg-surface-3"
+									}`}
+								>
+									<input
+										type="checkbox"
+										checked={settings.advanced.deleteOriginals}
+										onChange={(event) =>
+											onAdvancedChange("deleteOriginals", event.target.checked)
+										}
+										className={`checkbox-input ${
+											settings.advanced.deleteOriginals ? "accent-red-500" : ""
+										}`}
+									/>
+									<span
+										className={
+											settings.advanced.deleteOriginals
+												? "font-medium text-red-500"
+												: "text-text-secondary"
+										}
+									>
+										Delete originals
+									</span>
+								</label>
+								<label className="flex items-center gap-3">
+									<input
+										type="checkbox"
+										checked={settings.advanced.playSoundOnFinish}
+										onChange={(event) =>
+											onAdvancedChange("playSoundOnFinish", event.target.checked)
+										}
+										className="checkbox-input"
+									/>
+									<span className="text-text-secondary">Play sound on finish</span>
+								</label>
+								<label className="flex items-center gap-3">
+									<input
+										type="checkbox"
+										checked={settings.advanced.clearInputAfterConversion}
+										onChange={(event) =>
+											onAdvancedChange("clearInputAfterConversion", event.target.checked)
+										}
+										className="checkbox-input"
+									/>
+									<span className="text-text-secondary">
+										Clear input list after conversion
+									</span>
+								</label>
+							</div>
 						</div>
 					</div>
 				</div>
-				<div className="mt-4 space-y-3">
-					<label className="flex items-center gap-3">
-						<input
-							type="checkbox"
-							checked={settings.advanced.preserveMetadata}
-							onChange={(event) => onAdvancedChange("preserveMetadata", event.target.checked)}
-							className="checkbox-input"
-						/>
-						<span className="text-secondary">Preserve metadata</span>
-					</label>
-					<label className="flex items-center gap-3">
-						<input
-							type="checkbox"
-							checked={settings.advanced.preserveTimestamps}
-							onChange={(event) => onAdvancedChange("preserveTimestamps", event.target.checked)}
-							className="checkbox-input"
-						/>
-						<span className="text-secondary">Preserve timestamps</span>
-					</label>
-					<label className="flex items-center gap-3">
-						<input
-							type="checkbox"
-							checked={settings.advanced.deleteOriginals}
-							onChange={(event) => onAdvancedChange("deleteOriginals", event.target.checked)}
-							className="checkbox-input"
-						/>
-						<span className="text-secondary">Delete originals</span>
-					</label>
-					<label className="flex items-center gap-3">
-						<input
-							type="checkbox"
-							checked={settings.advanced.playSoundOnFinish}
-							onChange={(event) => onAdvancedChange("playSoundOnFinish", event.target.checked)}
-							className="checkbox-input"
-						/>
-						<span className="text-secondary">Play sound on finish</span>
-					</label>
-					<label className="flex items-center gap-3">
-						<input
-							type="checkbox"
-							checked={settings.advanced.clearInputAfterConversion}
-							onChange={(event) =>
-								onAdvancedChange("clearInputAfterConversion", event.target.checked)
-							}
-							className="checkbox-input"
-						/>
-						<span className="text-secondary">Clear input list after conversion</span>
-					</label>
-				</div>
 			</div>
 
-			{/* Action Buttons */}
-			<div className="flex justify-between">
+			{/* Reset Button */}
+			<div className="flex justify-start">
 				<button
 					type="button"
-					onClick={() => {
-						// Reset to default settings
-						onOutputChange("format", "jxl");
-						onOutputChange("quality", 80);
-						onOutputChange("effort", 7);
-						onOutputChange("lossless", false);
-						onOutputChange("keepAlpha", true);
-						onOutputChange("destination", "source");
-						onOutputChange("keepFolderStructure", true);
-						onOutputChange("renameStrategy", "rename");
-						onOutputChange("suffix", "");
-						onAdvancedChange("concurrency", 4);
-						onAdvancedChange("preserveMetadata", true);
-						onAdvancedChange("preserveTimestamps", true);
-						onAdvancedChange("deleteOriginals", false);
-						onAdvancedChange("playSoundOnFinish", true);
-						onAdvancedChange("soundVolume", 50);
-						onAdvancedChange("clearInputAfterConversion", true);
-						onDownscaleChange("mode", "none");
-						onDownscaleChange("allowEnlarge", false);
-						onDownscaleChange("resampling", "lanczos3");
-					}}
-					className="btn-secondary px-4 py-2"
+					onClick={handleReset}
+					className="btn-secondary px-4 py-2 text-sm"
 				>
 					Reset to Default
-				</button>
-				<button
-					type="button"
-					onClick={onStartConversion}
-					disabled={!hasItems}
-					className="btn-primary px-6 py-2"
-				>
-					Convert
 				</button>
 			</div>
 		</div>
 	);
-}
+};

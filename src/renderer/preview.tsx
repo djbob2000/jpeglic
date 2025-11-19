@@ -2,10 +2,22 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { InputItem } from "../common/types";
 
+type PreviewData = {
+    data: string;
+    metadata: {
+        width?: number;
+        height?: number;
+        format?: string;
+        size?: number;
+        birthtime?: number;
+        exif?: any;
+    };
+};
+
 type PreviewStatus =
     | { state: "idle" }
     | { state: "loading"; item: InputItem }
-    | { state: "ready"; item: InputItem; dataUrl: string }
+    | { state: "ready"; item: InputItem; data: PreviewData }
     | { state: "error"; item: InputItem; message: string };
 
 interface PreviewContext<T> {
@@ -44,17 +56,61 @@ const PreviewPanel: React.FC<{ status: PreviewStatus }> = ({ status }) => {
             return <Placeholder message="Select an image to preview." />;
         case "loading":
             return <Placeholder message={`Loading ${status.item.displayName}...`} />;
-        case "ready":
+        case "ready": {
+            const { metadata } = status.data;
+            const exif = metadata?.exif;
+            
+            // Extract useful info from exiftool data
+            const dateTaken = exif?.DateTimeOriginal || exif?.CreateDate || exif?.ModifyDate;
+            const cameraMake = exif?.Make;
+            const cameraModel = exif?.Model;
+            const camera = [cameraMake, cameraModel].filter(Boolean).join(" ");
+            
+            // Parse ExifTool date object or string
+            let creationDate: Date | null = null;
+            if (dateTaken) {
+                const dateStr = dateTaken.toString();
+                const exifDateRegex = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/;
+                const match = dateStr.match(exifDateRegex);
+                if (match) {
+                    creationDate = new Date(
+                        parseInt(match[1]),
+                        parseInt(match[2]) - 1,
+                        parseInt(match[3]),
+                        parseInt(match[4]),
+                        parseInt(match[5]),
+                        parseInt(match[6])
+                    );
+                } else {
+                    creationDate = new Date(dateStr);
+                }
+                
+                if (isNaN(creationDate.getTime())) {
+                    creationDate = null;
+                }
+            }
+            
+            if (!creationDate && metadata?.birthtime) {
+                creationDate = new Date(metadata.birthtime);
+            }
+
+            const dimensions = metadata?.width && metadata?.height ? `${metadata.width} × ${metadata.height}` : null;
+
             return (
                 <div className="preview-content">
-                    <img src={status.dataUrl} alt={status.item.displayName} />
+                    <img src={status.data.data} alt={status.item.displayName} />
                     <div className="preview-details">
                         <h4>{status.item.displayName}</h4>
                         <p>{new URL(status.item.sourcePath, "file://").pathname}</p>
                         <p>{(status.item.sizeBytes / 1024).toFixed(1)} KB</p>
+                        
+                        {dimensions && <p>Dimensions: {dimensions}</p>}
+                        {creationDate && <p>Date: {creationDate.toLocaleDateString()}</p>}
+                        {camera && <p>Camera: {camera}</p>}
                     </div>
                 </div>
             );
+        }
         case "error":
             return <Placeholder message={`Failed to load preview: ${status.message}`} />;
         default:
@@ -89,10 +145,10 @@ const PreviewApp: React.FC = () => {
 
             setStatus({ state: "loading", item: currentItem });
             try {
-                const dataUrl = await window.electron.preview.get(currentItem.sourcePath);
+                const result = await window.electron.preview.get(currentItem.sourcePath);
                 if (!cancelled) {
-                    if (dataUrl) {
-                        setStatus({ state: "ready", item: currentItem, dataUrl });
+                    if (result) {
+                        setStatus({ state: "ready", item: currentItem, data: result });
                     } else {
                         setStatus({ state: "error", item: currentItem, message: "Unsupported format" });
                     }

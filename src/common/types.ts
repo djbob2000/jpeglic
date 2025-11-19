@@ -16,6 +16,7 @@ export interface AdvancedSettings {
   preserveMetadata: boolean;
   preserveTimestamps: boolean;
   deleteOriginals: boolean;
+  skipProcessed: boolean;
   playSoundOnFinish: boolean;
   soundVolume: number;
   clearInputAfterConversion: boolean;
@@ -32,6 +33,7 @@ export interface OutputSettings {
   keepFolderStructure: boolean;
   renameStrategy: RenameStrategy;
   suffix: string;
+  visuallyLossless: boolean;
 }
 
 export interface WindowSettings {
