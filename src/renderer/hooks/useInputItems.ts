@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { InputItem } from "../../common/types";
 import type { InputState } from "../types";
 import {
@@ -22,7 +22,7 @@ const getBasename = (filePath: string): string => {
 export const useInputItems = () => {
 	const [state, setState] = useState<InputState>(resetInputState());
 
-	const addFiles = useCallback(async (paths: string[]) => {
+	const addFiles = async (paths: string[]) => {
 		if (paths.length === 0) {
 			return;
 		}
@@ -78,9 +78,9 @@ export const useInputItems = () => {
 
 			return previous;
 		});
-	}, []);
+	};
 
-	const removeItem = useCallback((id: string) => {
+	const removeItem = (id: string) => {
 		setState((previous) => {
 			const items = previous.items.filter((item) => item.id !== id);
 			const commonBase = items.length === 0 ? null : previous.commonBase;
@@ -89,11 +89,11 @@ export const useInputItems = () => {
 				commonBase,
 			};
 		});
-	}, []);
+	};
 
-	const clearItems = useCallback(() => {
+	const clearItems = () => {
 		setState(resetInputState());
-	}, []);
+	};
 
 	const hasItems = useMemo(() => state.items.length > 0, [state.items.length]);
 

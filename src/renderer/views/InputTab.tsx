@@ -1,4 +1,4 @@
-import { type DragEvent, type KeyboardEvent, useCallback, useState } from "react";
+import { type DragEvent, type KeyboardEvent, useState } from "react";
 import type { InputItem, ProcessingProgress } from "../../common/types";
 import { formatSize } from "../utils/format";
 
@@ -27,35 +27,29 @@ export const InputTab = ({
 }: InputTabProps) => {
 	const [isDragOver, setDragOver] = useState(false);
 
-	const handleDrop = useCallback(
-		async (event: DragEvent<HTMLButtonElement>) => {
-			event.preventDefault();
-			setDragOver(false);
+	const handleDrop = async (event: DragEvent<HTMLButtonElement>) => {
+		event.preventDefault();
+		setDragOver(false);
 
-			const files = Array.from(event.dataTransfer?.files ?? []);
-			const paths = files
-				.map((file) => (file as FileWithPath).path)
-				.filter((filePath): filePath is string => Boolean(filePath));
+		const files = Array.from(event.dataTransfer?.files ?? []);
+		const paths = files
+			.map((file) => (file as FileWithPath).path)
+			.filter((filePath): filePath is string => Boolean(filePath));
 
-			await onAddFiles(paths);
-		},
-		[onAddFiles],
-	);
+		await onAddFiles(paths);
+	};
 
-	const handleBrowse = useCallback(async () => {
+	const handleBrowse = async () => {
 		const paths = await window.electron.dialog.openFiles();
 		await onAddFiles(paths);
-	}, [onAddFiles]);
+	};
 
-	const handleKeyDown = useCallback(
-		(event: KeyboardEvent<HTMLButtonElement>) => {
-			if (event.key === "Enter" || event.key === " ") {
-				event.preventDefault();
-				void handleBrowse();
-			}
-		},
-		[handleBrowse],
-	);
+	const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+		if (event.key === "Enter" || event.key === " ") {
+			event.preventDefault();
+			void handleBrowse();
+		}
+	};
 
 	return (
 		<div className="flex h-full w-full flex-col gap-4 p-4">

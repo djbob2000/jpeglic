@@ -198,38 +198,38 @@ export class Worker {
     return Math.max(0, Math.min(9, Math.round(effort)));
   }
 
-private async exportWithJpegli(pipeline: Sharp, targetPath: string): Promise<void> {
-  const bin = this.resolveBinary('cjpegli');
+  private async exportWithJpegli(pipeline: Sharp, targetPath: string): Promise<void> {
+    const bin = this.resolveBinary('cjpegli');
 
-  if (!bin) {
-    throw new Error('cjpegli binary not found');
+    if (!bin) {
+      throw new Error('cjpegli binary not found');
+    }
+
+    const { data, info } = await pipeline.removeAlpha().raw().toBuffer({ resolveWithObject: true });
+
+    const ppmHeader = `P6\n${info.width} ${info.height}\n255\n`;
+    const ppmBuffer = Buffer.concat([Buffer.from(ppmHeader), data]);
+
+    const args: string[] = ['-', targetPath];
+
+    if (this.settings.output.visuallyLossless) {
+      args.push('-d', '1');
+      args.push('--chroma_subsampling', '420');
+      args.push('-p', '2');
+    } else {
+      args.push('-q', String(this.settings.output.quality));
+      args.push('-p', '2');
+    }
+
+    try {
+      this.externalProcess = execa(bin, args, { input: ppmBuffer });
+      ProcessManager.register(this.externalProcess);
+      await this.externalProcess;
+    } catch (error) {
+      console.error('Jpegli conversion failed:', error);
+      throw error;
+    }
   }
-
-  const { data, info } = await pipeline.removeAlpha().raw().toBuffer({ resolveWithObject: true });
-
-  const ppmHeader = `P6\n${info.width} ${info.height}\n255\n`;
-  const ppmBuffer = Buffer.concat([Buffer.from(ppmHeader), data]);
-
-  const args: string[] = ['-', targetPath];
-
-  if (this.settings.output.visuallyLossless) {
-    args.push('-d', '1');
-    args.push('--chroma_subsampling', '420');
-    args.push('-p', '2');
-  } else {
-    args.push('-q', String(this.settings.output.quality));
-    args.push('-p', '2');
-  }
-
-  try {
-    this.externalProcess = execa(bin, args, { input: ppmBuffer });
-    ProcessManager.register(this.externalProcess);
-    await this.externalProcess;
-  } catch (error) {
-    console.error('Jpegli conversion failed:', error);
-    throw error;
-  }
-}
 
 
   private async exportWithCJXL(pipeline: Sharp, targetPath: string): Promise<void> {
@@ -254,10 +254,11 @@ private async exportWithJpegli(pipeline: Sharp, targetPath: string): Promise<voi
       const { exiftool } = await import('exiftool-vendored');
       const tags: any = await exiftool.read(filePath);
 
-      // ExifTool flattens: XMP:HomeArchiveConverter:Processed -> HomeArchiveConverterProcessed
-      const processed = tags["HomeArchiveConverterProcessed"];
+      // Check standard XMP tags
+      const creatorTool = tags["CreatorTool"];
+      const label = tags["Label"];
 
-      return processed === "true" || processed === true;
+      return creatorTool === "HomeArchiveConverter" || label === "Processed";
     } catch {
       return false;
     }
@@ -269,18 +270,11 @@ private async exportWithJpegli(pipeline: Sharp, targetPath: string): Promise<voi
       try {
         const { exiftool } = await import('exiftool-vendored');
 
-        // If overwriting → remove old tag to avoid duplicates
-        await exiftool.write(targetPath, {
-          "XMP:HomeArchiveConverter:Processed": null
-        } as any);
-
-        // Write fresh tags
-        await exiftool.write(targetPath, {
-          "XMP:HomeArchiveConverter:Processed": "true",
-          "XMP:HomeArchiveConverter:Version": "1.0",
-          "XMP:HomeArchiveConverter:Date": new Date().toISOString(),
-          "XMP:HomeArchiveConverter:Tool": "image-optimizer"
-        } as any);
+        // Write standard XMP tags
+        await (exiftool as any).writeTags(targetPath, {
+          "XMP:CreatorTool": "HomeArchiveConverter",
+          "XMP:Label": "Processed"
+        });
       } catch (error) {
         console.warn("Failed to write XMP metadata", error);
       }

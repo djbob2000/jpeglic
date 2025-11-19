@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ProcessingSettings } from "../../common/types";
 import { defaultSettings } from "../constants/defaultSettings";
 import { mergeSettings } from "../utils/settings";
@@ -106,53 +106,44 @@ export const useProcessingSettings = () => {
 		return () => clearTimeout(timeout);
 	}, [settings, initializing]);
 
-	const updateOutputSetting = useCallback(
-		<K extends keyof ProcessingSettings["output"]>(
-			key: K,
-			value: ProcessingSettings["output"][K],
-		) => {
-			setSettings((previous) => ({
-				...previous,
-				output: {
-					...previous.output,
-					[key]: value,
-				},
-			}));
-		},
-		[],
-	);
+	const updateOutputSetting = <K extends keyof ProcessingSettings["output"]>(
+		key: K,
+		value: ProcessingSettings["output"][K],
+	) => {
+		setSettings((previous) => ({
+			...previous,
+			output: {
+				...previous.output,
+				[key]: value,
+			},
+		}));
+	};
 
-	const updateDownscaleSetting = useCallback(
-		<K extends keyof ProcessingSettings["downscale"]>(
-			key: K,
-			value: ProcessingSettings["downscale"][K],
-		) => {
-			setSettings((previous) => ({
-				...previous,
-				downscale: {
-					...previous.downscale,
-					[key]: value,
-				},
-			}));
-		},
-		[],
-	);
+	const updateDownscaleSetting = <K extends keyof ProcessingSettings["downscale"]>(
+		key: K,
+		value: ProcessingSettings["downscale"][K],
+	) => {
+		setSettings((previous) => ({
+			...previous,
+			downscale: {
+				...previous.downscale,
+				[key]: value,
+			},
+		}));
+	};
 
-	const updateAdvancedSetting = useCallback(
-		<K extends keyof ProcessingSettings["advanced"]>(
-			key: K,
-			value: ProcessingSettings["advanced"][K],
-		) => {
-			setSettings((previous) => ({
-				...previous,
-				advanced: {
-					...previous.advanced,
-					[key]: value,
-				},
-			}));
-		},
-		[],
-	);
+	const updateAdvancedSetting = <K extends keyof ProcessingSettings["advanced"]>(
+		key: K,
+		value: ProcessingSettings["advanced"][K],
+	) => {
+		setSettings((previous) => ({
+			...previous,
+			advanced: {
+				...previous.advanced,
+				[key]: value,
+			},
+		}));
+	};
 
 	return {
 		settings,

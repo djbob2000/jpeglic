@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
 	InputItem,
 	ProcessingProgress,
@@ -34,7 +34,7 @@ export const useConversion = ({
 		successCallbackRef.current = onSuccessfulConversion;
 	}, [onSuccessfulConversion]);
 
-	const handleConversionComplete = useCallback((conversionResult: ProcessingResult) => {
+	const handleConversionComplete = (conversionResult: ProcessingResult) => {
 		if (conversionResult.canceled) {
 			setProgressOpen(false);
 			return;
@@ -47,11 +47,13 @@ export const useConversion = ({
 		}
 
 		setResult(conversionResult);
+		// Clear current item from progress so preview doesn't show "Processing..."
+		setProgress((prev) => ({ ...prev, currentItem: undefined }));
 
 		if (activeSettings.advanced.clearInputAfterConversion && conversionResult.successCount > 0) {
 			successCallbackRef.current?.();
 		}
-	}, []);
+	};
 
 	useEffect(() => {
 		const unsubscribeProgress = window.electron.convert.onProgress((update) => {
@@ -81,7 +83,7 @@ export const useConversion = ({
 		};
 	}, [handleConversionComplete]);
 
-	const startConversion = useCallback(async () => {
+	const startConversion = async () => {
 		if (inputItems.length === 0) {
 			window.alert("Add files before starting conversion.");
 			return;
@@ -108,14 +110,16 @@ export const useConversion = ({
 			const message = error instanceof Error ? error.message : "Failed to start conversion.";
 			window.alert(message);
 		}
-	}, [inputItems, settings]);
+	};
 
-	const cancelConversion = useCallback(() => window.electron.convert.cancel(), []);
+	const cancelConversion = () => window.electron.convert.cancel();
 
-	const closeProgress = useCallback(() => {
+	const closeProgress = () => {
 		setProgressOpen(false);
 		setResult(null);
-	}, []);
+		setProgress({ completed: 0, total: 0 });
+		setStatusText("");
+	};
 
 	const normalizedStatusText = useMemo(() => statusText.trim(), [statusText]);
 
