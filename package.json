@@ -68,6 +68,9 @@
   "build": {
     "appId": "home-archive-converter",
     "productName": "Home Archive Converter",
+    "electronLanguages": [
+      "en"
+    ],
     "directories": {
       "output": "release"
     },
@@ -78,13 +81,19 @@
       "package.json"
     ],
     "asarUnpack": [
-      "binaries/**"
+      "binaries/**",
+      "node_modules/sharp/**",
+      "node_modules/@img/**"
     ],
+    "fileAssociations": [],
+    "npmRebuild": true,
+    "buildDependenciesFromSource": false,
     "win": {
       "target": [
         "nsis"
       ]
     },
+    "defaultArch": "x64",
     "linux": {
       "target": [
         "AppImage",

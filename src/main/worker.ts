@@ -241,7 +241,6 @@ export class Worker {
     ) {
       const processed = await this.isAlreadyProcessed(this.item.sourcePath);
       if (processed) {
-        console.log(`Skipping already optimized file: ${this.item.sourcePath}`);
         return null;
       }
     }
