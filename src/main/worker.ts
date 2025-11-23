@@ -1,12 +1,12 @@
-import { promises as fs } from 'fs';
-import { existsSync, mkdirSync } from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import sharp, { type Sharp } from 'sharp';
-import { execa, type ResultPromise } from 'execa';
-import trash from 'trash';
-import { InputItem, OutputFormat, ProcessingSettings } from '../common/types';
-import { ProcessManager } from './process-manager';
+import { promises as fs } from "fs";
+import { existsSync, mkdirSync } from "fs";
+import * as path from "path";
+import * as os from "os";
+import sharp, { type Sharp } from "sharp";
+import { execa, type ResultPromise } from "execa";
+import trash from "trash";
+import { InputItem, OutputFormat, ProcessingSettings } from "../common/types";
+import { ProcessManager } from "./process-manager";
 
 export interface WorkerResult {
   success: boolean;
@@ -30,7 +30,7 @@ export class Worker {
 
   async process(): Promise<WorkerResult> {
     if (this.aborted) {
-      return { success: false, skipped: false, error: 'Cancelled' };
+      return { success: false, skipped: false, error: "Cancelled" };
     }
 
     try {
@@ -59,17 +59,17 @@ export class Worker {
       return {
         success: true,
         skipped: false,
-        outputPath: outputInfo.targetPath
+        outputPath: outputInfo.targetPath,
       };
     } catch (error) {
       if (this.aborted) {
-        return { success: false, skipped: false, error: 'Cancelled' };
+        return { success: false, skipped: false, error: "Cancelled" };
       }
 
       return {
         success: false,
         skipped: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -78,115 +78,47 @@ export class Worker {
     this.aborted = true;
     if (this.externalProcess) {
       try {
-        this.externalProcess.kill('SIGTERM');
+        this.externalProcess.kill("SIGTERM");
       } catch (error) {
-        console.warn('Failed to kill external process', error);
+        console.warn("Failed to kill external process", error);
       }
     }
   }
 
   private async buildPipeline(): Promise<Sharp> {
-    const pipeline = sharp(this.item.sourcePath, { failOn: 'truncated' });
-    const metadata = await sharp(this.item.sourcePath).metadata();
-
-    await this.applyDownscale(pipeline, metadata.width, metadata.height);
-
+    const pipeline = sharp(this.item.sourcePath, { failOn: "truncated" });
+    // Downscale logic removed
     return pipeline;
-  }
-
-  private async applyDownscale(pipeline: Sharp, width?: number, height?: number): Promise<void> {
-    const ds = this.settings.downscale;
-    if (ds.mode === 'none') {
-      return;
-    }
-
-    const resizeOptions: sharp.ResizeOptions = {
-      withoutEnlargement: !ds.allowEnlarge,
-      kernel: this.getKernel(ds.resampling)
-    };
-
-    switch (ds.mode) {
-      case 'dimensions':
-        if (ds.width || ds.height) {
-          pipeline.resize(ds.width, ds.height, resizeOptions);
-        }
-        break;
-      case 'percentage':
-        if (width && height && ds.value) {
-          const factor = ds.value / 100;
-          pipeline.resize(
-            Math.max(1, Math.round(width * factor)),
-            Math.max(1, Math.round(height * factor)),
-            resizeOptions
-          );
-        }
-        break;
-      case 'longer-side':
-        if (ds.value) {
-          pipeline.resize(ds.value, ds.value, { ...resizeOptions, fit: 'inside' });
-        }
-        break;
-      case 'shorter-side':
-        if (ds.value) {
-          pipeline.resize(ds.value, ds.value, { ...resizeOptions, fit: 'outside' });
-        }
-        break;
-      case 'megapixels':
-        if (width && height && ds.value) {
-          const sourcePixels = width * height;
-          const targetPixels = ds.value * 1_000_000;
-          const factor = Math.sqrt(targetPixels / sourcePixels);
-
-          if (factor < 1 || ds.allowEnlarge) {
-            pipeline.resize(
-              Math.max(1, Math.round(width * factor)),
-              Math.max(1, Math.round(height * factor)),
-              resizeOptions
-            );
-          }
-        }
-        break;
-    }
-  }
-
-  private getKernel(resampling: string): keyof sharp.KernelEnum {
-    switch (resampling) {
-      case 'catmullRom':
-        return 'cubic';
-      case 'mitchell':
-        return 'mitchell';
-      case 'nearest':
-        return 'nearest';
-      case 'lanczos3':
-      default:
-        return 'lanczos3';
-    }
   }
 
   private async export(pipeline: Sharp, targetPath: string): Promise<void> {
     switch (this.settings.output.format) {
-      case 'jpeg':
+      case "jpeg":
         await this.exportWithJpegli(pipeline, targetPath);
         break;
-      case 'png':
+      case "png":
         await pipeline.png({ compressionLevel: 9 }).toFile(targetPath);
         break;
-      case 'webp':
-        await pipeline.webp({
-          quality: this.settings.output.quality,
-          lossless: this.settings.output.lossless
-        }).toFile(targetPath);
+      case "webp":
+        await pipeline
+          .webp({
+            quality: this.settings.output.quality,
+            lossless: this.settings.output.lossless,
+          })
+          .toFile(targetPath);
         break;
-      case 'avif': {
+      case "avif": {
         const effort = this.normalizeEffort(this.settings.output.effort);
-        await pipeline.avif({
-          quality: this.settings.output.quality,
-          effort,
-          lossless: this.settings.output.lossless
-        }).toFile(targetPath);
+        await pipeline
+          .avif({
+            quality: this.settings.output.quality,
+            effort,
+            lossless: this.settings.output.lossless,
+          })
+          .toFile(targetPath);
         break;
       }
-      case 'jxl':
+      case "jxl":
         await this.exportWithCJXL(pipeline, targetPath);
         break;
       default:
@@ -198,27 +130,33 @@ export class Worker {
     return Math.max(0, Math.min(9, Math.round(effort)));
   }
 
-  private async exportWithJpegli(pipeline: Sharp, targetPath: string): Promise<void> {
-    const bin = this.resolveBinary('cjpegli');
+  private async exportWithJpegli(
+    pipeline: Sharp,
+    targetPath: string
+  ): Promise<void> {
+    const bin = this.resolveBinary("cjpegli");
 
     if (!bin) {
-      throw new Error('cjpegli binary not found');
+      throw new Error("cjpegli binary not found");
     }
 
-    const { data, info } = await pipeline.removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    const { data, info } = await pipeline
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
 
     const ppmHeader = `P6\n${info.width} ${info.height}\n255\n`;
     const ppmBuffer = Buffer.concat([Buffer.from(ppmHeader), data]);
 
-    const args: string[] = ['-', targetPath];
+    const args: string[] = ["-", targetPath];
 
     if (this.settings.output.visuallyLossless) {
-      args.push('-d', '1');
-      args.push('--chroma_subsampling', '420');
-      args.push('-p', '2');
+      args.push("-d", "1");
+      args.push("--chroma_subsampling", "420");
+      args.push("-p", "2");
     } else {
-      args.push('-q', String(this.settings.output.quality));
-      args.push('-p', '2');
+      args.push("-q", String(this.settings.output.quality));
+      args.push("-p", "2");
     }
 
     try {
@@ -226,32 +164,34 @@ export class Worker {
       ProcessManager.register(this.externalProcess);
       await this.externalProcess;
     } catch (error) {
-      console.error('Jpegli conversion failed:', error);
+      console.error("Jpegli conversion failed:", error);
       throw error;
     }
   }
 
-
-  private async exportWithCJXL(pipeline: Sharp, targetPath: string): Promise<void> {
+  private async exportWithCJXL(
+    pipeline: Sharp,
+    targetPath: string
+  ): Promise<void> {
     const buffer = await pipeline.png({ compressionLevel: 0 }).toBuffer();
 
-    const args = ['-', targetPath];
+    const args = ["-", targetPath];
 
     if (this.settings.output.lossless) {
-      args.push('--lossless_jpeg=1');
+      args.push("--lossless_jpeg=1");
     } else {
-      args.push('-q', String(this.settings.output.quality));
-      args.push('-e', String(this.settings.output.effort));
+      args.push("-q", String(this.settings.output.quality));
+      args.push("-e", String(this.settings.output.effort));
     }
 
-    this.externalProcess = execa('cjxl', args, { input: buffer });
+    this.externalProcess = execa("cjxl", args, { input: buffer });
     ProcessManager.register(this.externalProcess);
     await this.externalProcess;
   }
 
   private async isAlreadyProcessed(filePath: string): Promise<boolean> {
     try {
-      const { exiftool } = await import('exiftool-vendored');
+      const { exiftool } = await import("exiftool-vendored");
       const tags: any = await exiftool.read(filePath);
 
       // Check standard XMP tags
@@ -266,14 +206,14 @@ export class Worker {
 
   private async applyPostProcessing(targetPath: string): Promise<void> {
     // Only JPEG supports XMP here
-    if (this.settings.output.format === 'jpeg') {
+    if (this.settings.output.format === "jpeg") {
       try {
-        const { exiftool } = await import('exiftool-vendored');
+        const { exiftool } = await import("exiftool-vendored");
 
         // Write standard XMP tags
-        await (exiftool as any).writeTags(targetPath, {
+        await (exiftool as any).write(targetPath, {
           "XMP:CreatorTool": "HomeArchiveConverter",
-          "XMP:Label": "Processed"
+          "XMP:Label": "Processed",
         });
       } catch (error) {
         console.warn("Failed to write XMP metadata", error);
@@ -292,26 +232,42 @@ export class Worker {
   }
 
   private async prepareOutputPath(): Promise<PrepareOutputResult | null> {
-    // Check if file is already processed if skipProcessed is enabled
-    if (this.settings.advanced.skipProcessed) {
+    // Check if SOURCE file is already processed if skipProcessed is enabled
+    // This happens when user drops an already converted file back into the app
+    // Only check when destination is "source" (replace mode), not "custom"
+    if (
+      this.settings.advanced.skipProcessed &&
+      this.settings.output.destination === "source"
+    ) {
       const processed = await this.isAlreadyProcessed(this.item.sourcePath);
-      if (processed) return null;
+      if (processed) {
+        console.log(`Skipping already optimized file: ${this.item.sourcePath}`);
+        return null;
+      }
     }
 
     const format = this.settings.output.format;
     const ext = this.getExtension(format);
 
-    const baseName = path.basename(this.item.sourcePath, path.extname(this.item.sourcePath));
-    const suffix = this.settings.output.suffix ?? '';
+    const baseName = path.basename(
+      this.item.sourcePath,
+      path.extname(this.item.sourcePath)
+    );
 
     let directory: string;
 
-    if (this.settings.output.destination === 'custom' && this.settings.output.customDirectory) {
+    if (
+      this.settings.output.destination === "custom" &&
+      this.settings.output.customDirectory
+    ) {
       directory = this.settings.output.customDirectory;
 
       if (this.settings.output.keepFolderStructure) {
         const relativeDir = path.dirname(this.item.relativePath);
-        directory = path.resolve(directory, relativeDir === '.' ? '' : relativeDir);
+        directory = path.resolve(
+          directory,
+          relativeDir === "." ? "" : relativeDir
+        );
       }
     } else {
       directory = path.dirname(this.item.sourcePath);
@@ -321,60 +277,42 @@ export class Worker {
       mkdirSync(directory, { recursive: true });
     }
 
-    const targetBase = path.join(directory, `${baseName}${suffix}.${ext}`);
+    const targetPath = path.join(directory, `${baseName}.${ext}`);
 
-    if (this.settings.output.renameStrategy === 'skip' && existsSync(targetBase)) {
-      return null;
-    }
-
-    if (this.settings.output.renameStrategy === 'rename') {
-      const unique = await this.getUniquePath(directory, `${baseName}${suffix}`, ext);
-      return { targetPath: unique };
-    }
-
-    return { targetPath: targetBase };
+    return { targetPath };
   }
 
   private getExtension(format: OutputFormat): string {
     switch (format) {
-      case 'jpeg':
-        return 'jpg';
-      case 'png':
-        return 'png';
-      case 'webp':
-        return 'webp';
-      case 'avif':
-        return 'avif';
-      case 'jxl':
-        return 'jxl';
+      case "jpeg":
+        return "jpg";
+      case "png":
+        return "png";
+      case "webp":
+        return "webp";
+      case "avif":
+        return "avif";
+      case "jxl":
+        return "jxl";
       default:
         return format;
     }
   }
 
-  private async getUniquePath(directory: string, baseName: string, extension: string): Promise<string> {
-    let counter = 1;
-    let target = path.join(directory, `${baseName}.${extension}`);
-
-    while (existsSync(target)) {
-      target = path.join(directory, `${baseName}_${counter}.${extension}`);
-      counter++;
-    }
-
-    return target;
-  }
-
   private resolveBinary(name: string): string | null {
-    const isWin = process.platform === 'win32';
+    const isWin = process.platform === "win32";
     const exe = isWin ? `${name}.exe` : name;
-    const platformDir = process.platform === 'darwin' ? 'mac' : isWin ? 'win' : 'linux';
+    const platformDir =
+      process.platform === "darwin" ? "mac" : isWin ? "win" : "linux";
     const envPath = process.env.CJEGLI_PATH;
     if (envPath && existsSync(envPath)) return envPath;
     const candidates: string[] = [];
     const res = (process as any).resourcesPath as string | undefined;
-    if (res) candidates.push(path.join(res, 'binaries', platformDir, exe));
-    candidates.push(path.join(__dirname, '..', '..', 'binaries', platformDir, exe));
-    const pathVar = process.env.PATH || '';
+    if (res) candidates.push(path.join(res, "binaries", platformDir, exe));
+    candidates.push(
+      path.join(__dirname, "..", "..", "binaries", platformDir, exe)
+    );
+    const pathVar = process.env.PATH || "";
     for (const dir of pathVar.split(path.delimiter)) {
       if (!dir) continue;
       candidates.push(path.join(dir, exe));

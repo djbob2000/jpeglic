@@ -1,6 +1,11 @@
-import { BrowserWindow } from 'electron';
-import { Worker } from './worker';
-import { ProcessingRequest, ProcessingProgress, ProcessingResult, InputItem } from '../common/types';
+import { BrowserWindow } from "electron";
+import { Worker } from "./worker";
+import {
+  ProcessingRequest,
+  ProcessingProgress,
+  ProcessingResult,
+  InputItem,
+} from "../common/types";
 
 export class Controller {
   private workers: Worker[] = [];
@@ -10,13 +15,13 @@ export class Controller {
 
   async startProcessing(request: ProcessingRequest): Promise<ProcessingResult> {
     this.cancelRequested = false;
-    
+
     const result: ProcessingResult = {
       successCount: 0,
       skippedCount: 0,
       failedCount: 0,
       errors: [],
-      canceled: false
+      canceled: false,
     };
 
     const concurrency = Math.max(1, request.settings.advanced.concurrency || 1);
@@ -26,12 +31,12 @@ export class Controller {
     const processQueue = async () => {
       while (items.length > 0 && !this.cancelRequested) {
         const item = items.shift()!;
-        
+
         this.sendProgress({
           completed,
           total: request.items.length,
           currentItem: item,
-          message: `Converting ${item.displayName}...`
+          message: `Converting ${item.displayName}...`,
         });
 
         const worker = new Worker(item, request.settings);
@@ -39,7 +44,7 @@ export class Controller {
 
         try {
           const workerResult = await worker.process();
-          
+
           if (workerResult.success) {
             result.successCount++;
           } else if (workerResult.skipped) {
@@ -48,7 +53,7 @@ export class Controller {
             result.failedCount++;
             result.errors.push({
               item,
-              error: workerResult.error || 'Unknown error'
+              error: workerResult.error || "Unknown error",
             });
           }
 
@@ -56,17 +61,23 @@ export class Controller {
           this.sendProgress({
             completed,
             total: request.items.length,
-            currentItem: item
+            currentItem: item,
+            processedItemId: item.id,
           });
         } catch (error) {
           result.failedCount++;
           result.errors.push({
             item,
-            error: error instanceof Error ? error.message : String(error)
+            error: error instanceof Error ? error.message : String(error),
           });
           completed++;
+          this.sendProgress({
+            completed,
+            total: request.items.length,
+            processedItemId: item.id,
+          });
         } finally {
-          this.workers = this.workers.filter(w => w !== worker);
+          this.workers = this.workers.filter((w) => w !== worker);
         }
       }
     };
@@ -82,17 +93,17 @@ export class Controller {
       result.canceled = true;
     }
 
-    this.window.webContents.send('convert:complete', result);
+    this.window.webContents.send("convert:complete", result);
     return result;
   }
 
   cancel(): void {
     this.cancelRequested = true;
-    this.workers.forEach(worker => worker.cancel());
+    this.workers.forEach((worker) => worker.cancel());
     this.workers = [];
   }
 
   private sendProgress(progress: ProcessingProgress): void {
-    this.window.webContents.send('convert:progress', progress);
+    this.window.webContents.send("convert:progress", progress);
   }
 }

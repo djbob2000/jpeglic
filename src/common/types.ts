@@ -1,15 +1,4 @@
-export type OutputFormat = 'jpeg' | 'png' | 'webp' | 'avif' | 'jxl';
-
-export type RenameStrategy = 'overwrite' | 'skip' | 'rename';
-
-export interface DownscaleSettings {
-  mode: 'none' | 'dimensions' | 'percentage' | 'longer-side' | 'shorter-side' | 'megapixels';
-  width?: number;
-  height?: number;
-  value?: number;
-  allowEnlarge: boolean;
-  resampling: 'lanczos3' | 'catmullRom' | 'mitchell' | 'nearest';
-}
+export type OutputFormat = "jpeg" | "png" | "webp" | "avif" | "jxl";
 
 export interface AdvancedSettings {
   concurrency: number;
@@ -20,6 +9,7 @@ export interface AdvancedSettings {
   playSoundOnFinish: boolean;
   soundVolume: number;
   clearInputAfterConversion: boolean;
+  warnBeforeReplace: boolean;
 }
 
 export interface OutputSettings {
@@ -28,11 +18,9 @@ export interface OutputSettings {
   effort: number;
   lossless: boolean;
   keepAlpha: boolean;
-  destination: 'source' | 'custom';
+  destination: "source" | "custom";
   customDirectory?: string;
   keepFolderStructure: boolean;
-  renameStrategy: RenameStrategy;
-  suffix: string;
   visuallyLossless: boolean;
 }
 
@@ -51,7 +39,6 @@ export interface AppState {
 
 export interface ProcessingSettings {
   output: OutputSettings;
-  downscale: DownscaleSettings;
   advanced: AdvancedSettings;
 }
 
@@ -62,6 +49,7 @@ export interface InputItem {
   relativePath: string;
   sizeBytes: number;
   lastModified: number;
+  isProcessed?: boolean;
 }
 
 export interface ProcessingRequest {
@@ -75,6 +63,7 @@ export interface ProcessingProgress {
   currentItem?: InputItem;
   currentOutputPath?: string;
   message?: string;
+  processedItemId?: string; // ID of item that was just processed (success or skipped)
 }
 
 export interface ProcessingResult {
@@ -89,9 +78,13 @@ export interface ElectronAPI {
   platform: NodeJS.Platform;
   isMac: boolean;
   convert: {
-    start: (data: ProcessingRequest) => Promise<{ success: boolean; error?: string }>;
+    start: (
+      data: ProcessingRequest
+    ) => Promise<{ success: boolean; error?: string }>;
     cancel: () => Promise<void>;
-    onProgress: (callback: (progress: ProcessingProgress) => void) => () => void;
+    onProgress: (
+      callback: (progress: ProcessingProgress) => void
+    ) => () => void;
     onComplete: (callback: (result: ProcessingResult) => void) => () => void;
     onError: (callback: (error: { message: string }) => void) => () => void;
   };
@@ -113,7 +106,9 @@ export interface ElectronAPI {
     check: () => Promise<void>;
     download: () => Promise<void>;
     install: () => Promise<void>;
-    onStatus: (callback: (status: { event: string; data?: unknown }) => void) => () => void;
+    onStatus: (
+      callback: (status: { event: string; data?: unknown }) => void
+    ) => () => void;
   };
   preview: {
     get: (filePath: string) => Promise<{
@@ -135,10 +130,16 @@ export interface ElectronAPI {
       size: number;
       mtime: number;
     }>;
-    readdir: (path: string) => Promise<Array<{
-      name: string;
-      isFile: boolean;
-      isDirectory: boolean;
-    }>>;
+    readdir: (path: string) => Promise<
+      Array<{
+        name: string;
+        isFile: boolean;
+        isDirectory: boolean;
+      }>
+    >;
+    checkProcessed: (path: string) => Promise<boolean>;
+  };
+  utils: {
+    getPathForFile: (file: File) => string;
   };
 }

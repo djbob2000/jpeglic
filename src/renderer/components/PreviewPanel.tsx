@@ -1,210 +1,395 @@
-import { useEffect, useState } from "react";
+import { type DragEvent, type KeyboardEvent, useEffect, useState } from "react";
 import type { InputItem, ProcessingProgress } from "../../common/types";
 import { formatSize } from "../utils/format";
 
+type FileWithPath = File & { path?: string };
+
 interface PreviewData {
-	data: string;
-	metadata: {
-		width?: number;
-		height?: number;
-		format?: string;
-		size?: number;
-		birthtime?: number;
-		exif?: any;
-	};
+  data: string;
+  metadata: {
+    width?: number;
+    height?: number;
+    format?: string;
+    size?: number;
+    birthtime?: number;
+    exif?: any;
+  };
 }
 
 interface PreviewPanelProps {
-	selectedItem: InputItem | undefined;
-	processing?: ProcessingProgress;
+  selectedItem: InputItem | undefined;
+  processing?: ProcessingProgress;
+  onAddFiles: (paths: string[]) => Promise<void> | void;
+  onOpenSettings: () => void;
 }
 
-export const PreviewPanel = ({ selectedItem, processing }: PreviewPanelProps) => {
-	const [previewData, setPreviewData] = useState<PreviewData | null>(null);
-	const activeItem = processing?.currentItem ?? selectedItem;
+export const PreviewPanel = ({
+  selectedItem,
+  processing,
+  onAddFiles,
+  onOpenSettings,
+}: PreviewPanelProps) => {
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [isDragOver, setDragOver] = useState(false);
+  const activeItem = processing?.currentItem ?? selectedItem;
 
-	useEffect(() => {
-		if (activeItem) {
-			const filePath = activeItem.sourcePath;
-			window.electron.preview
-				.get(filePath)
-				.then((data) => {
-					setPreviewData(data);
-				})
-				.catch(() => {
-					setPreviewData(null);
-				});
-		} else {
-			setPreviewData(null);
-		}
-	}, [activeItem]);
+  const handleDrop = async (
+    event: DragEvent<HTMLDivElement | HTMLButtonElement>
+  ) => {
+    event.preventDefault();
+    setDragOver(false);
 
-	if (!activeItem) {
-		return (
-			<div className="flex h-64 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-surface-1 text-center">
-				<svg
-					aria-hidden="true"
-					className="mb-4 h-12 w-12 text-text-tertiary"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="1.5"
-					viewBox="0 0 24 24"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						d="M3 16.5v-9a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.121 1.12a1.5 1.5 0 0 0 1.061.44h6.379A1.5 1.5 0 0 1 20.5 9v7.5A1.5 1.5 0 0 1 19 18H4.5A1.5 1.5 0 0 1 3 16.5Z"
-					/>
-				</svg>
-				<div className="font-medium text-text-secondary">No File Selected</div>
-				<p className="mt-2 max-w-[14rem] text-xs text-text-tertiary">
-					Select a file to view its details
-				</p>
-			</div>
-		);
-	}
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    const paths = files
+      .map((file) => window.electron.utils.getPathForFile(file))
+      .filter((filePath): filePath is string => Boolean(filePath));
 
-	const { metadata } = previewData || {};
-	const exif = metadata?.exif;
-	
-	// Extract useful info from exiftool data
-	// exiftool returns a flat structure with many potential date fields
-	const dateTaken = exif?.DateTimeOriginal || exif?.CreateDate || exif?.ModifyDate;
-	const cameraMake = exif?.Make;
-	const cameraModel = exif?.Model;
-	const camera = [cameraMake, cameraModel].filter(Boolean).join(" ");
-	
-	// Parse ExifTool date object or string
-	let creationDate: Date | null = null;
-	if (dateTaken) {
-		// ExifTool often returns ExifDateTime objects, but they stringify well or have properties
-		// If it's a string, it's usually "YYYY:MM:DD HH:MM:SS"
-		const dateStr = dateTaken.toString();
-		// Basic attempt to parse standard EXIF date format if standard Date parsing fails
-		const exifDateRegex = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/;
-		const match = dateStr.match(exifDateRegex);
-		if (match) {
-			creationDate = new Date(
-				parseInt(match[1]),
-				parseInt(match[2]) - 1,
-				parseInt(match[3]),
-				parseInt(match[4]),
-				parseInt(match[5]),
-				parseInt(match[6])
-			);
-		} else {
-			creationDate = new Date(dateStr);
-		}
-		
-		if (isNaN(creationDate.getTime())) {
-			creationDate = null;
-		}
-	}
-	
-	// Fallback to file birthtime if no valid EXIF date
-	if (!creationDate && metadata?.birthtime) {
-		creationDate = new Date(metadata.birthtime);
-	}
+    await onAddFiles(paths);
+  };
 
-	const dimensions = metadata?.width && metadata?.height ? `${metadata.width} × ${metadata.height}` : null;
+  const handleBrowse = async () => {
+    const paths = await window.electron.dialog.openFiles();
+    await onAddFiles(paths);
+  };
 
-	return (
-		<div className="flex gap-6 rounded-xl border border-border bg-surface-1 p-6 shadow-sm">
-			{/* Image Preview */}
-			<div className="flex h-48 w-48 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-2 shadow-inner">
-				{previewData?.data ? (
-					<img
-						src={previewData.data}
-						alt={activeItem.displayName}
-						className="h-full w-full object-contain"
-					/>
-				) : (
-					<svg
-						className="h-16 w-16 text-text-tertiary"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={1}
-							d="M3 16.5v-9a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.121 1.12a1.5 1.5 0 0 0 1.061.44h6.379A1.5 1.5 0 0 1 20.5 9v7.5A1.5 1.5 0 0 1 19 18H4.5A1.5 1.5 0 0 1 3 16.5Z"
-						/>
-					</svg>
-				)}
-			</div>
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      void handleBrowse();
+    }
+  };
 
-			{/* Details */}
-			<div className="flex flex-1 flex-col justify-center space-y-4">
-				<div>
-					<div className="mb-1 text-xs font-medium uppercase tracking-wider text-text-tertiary">
-						File Name
-					</div>
-					<div className="text-lg font-semibold text-text-primary truncate" title={activeItem.displayName}>
-						{activeItem.displayName}
-					</div>
-				</div>
+  useEffect(() => {
+    if (activeItem) {
+      const filePath = activeItem.sourcePath;
+      window.electron.preview
+        .get(filePath)
+        .then((data) => {
+          setPreviewData(data);
+        })
+        .catch(() => {
+          setPreviewData(null);
+        });
+    } else {
+      setPreviewData(null);
+    }
+  }, [activeItem]);
 
-				<div className="grid grid-cols-2 gap-x-8 gap-y-4">
-					{/* Size & Status */}
-					<div>
-						<div className="mb-1 text-xs font-medium uppercase tracking-wider text-text-tertiary">
-							Size
-						</div>
-						<div className="text-sm font-medium text-text-primary">
-							{formatSize(activeItem.sizeBytes)}
-						</div>
-					</div>
-					
-					<div>
-						<div className="mb-1 text-xs font-medium uppercase tracking-wider text-text-tertiary">
-							Status
-						</div>
-						<div className="text-sm font-medium text-primary">
-							{processing?.currentItem && processing.currentItem.id === activeItem.id
-								? "Processing..."
-								: "Ready"}
-						</div>
-					</div>
+  if (!activeItem) {
+    return (
+      <div className="relative h-full w-full p-4 flex items-center justify-center">
+        <button
+          type="button"
+          onClick={() => {
+            void handleBrowse();
+          }}
+          onKeyDown={handleKeyDown}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          className={`group relative flex h-80 w-full max-w-xl flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-all hover:border-primary/50 hover:bg-surface-3 hover:shadow-lg hover:shadow-primary/5 ${
+            isDragOver
+              ? "border-primary bg-primary/10 shadow-lg shadow-primary/10"
+              : "border-border bg-surface-2 shadow-md"
+          }`}
+        >
+          <div className="rounded-full bg-surface-2 p-4 shadow-sm group-hover:scale-110 transition-transform">
+            <svg
+              aria-hidden="true"
+              className="h-8 w-8 text-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75m-7.5 6.75h12a1.5 1.5 0 001.5-1.5v-9a1.5 1.5 0 00-1.5-1.5h-12a1.5 1.5 0 00-1.5 1.5v9a1.5 1.5 0 001.5 1.5z"
+              />
+            </svg>
+          </div>
+          <div className="text-center">
+            <div className="text-base font-medium text-text-primary">
+              Drop files here
+            </div>
+            <div className="text-sm text-text-tertiary">or click to browse</div>
+          </div>
+        </button>
 
-					{/* Dimensions */}
-					{dimensions && (
-						<div>
-							<div className="mb-1 text-xs font-medium uppercase tracking-wider text-text-tertiary">
-								Dimensions
-							</div>
-							<div className="text-sm font-medium text-text-primary">
-								{dimensions}
-							</div>
-						</div>
-					)}
+        {/* Settings Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenSettings();
+          }}
+          className="absolute top-4 right-4 p-3 rounded-full bg-surface-2 text-text-secondary hover:text-primary hover:bg-surface-3 shadow-lg transition-all z-10"
+          title="Open Configuration"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+        </button>
+      </div>
+    );
+  }
 
-					{/* Date */}
-					{creationDate && (
-						<div>
-							<div className="mb-1 text-xs font-medium uppercase tracking-wider text-text-tertiary">
-								{dateTaken ? "Date Taken" : "Created"}
-							</div>
-							<div className="text-sm font-medium text-text-primary">
-								{creationDate.toLocaleDateString()} {creationDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-							</div>
-						</div>
-					)}
+  const { metadata } = previewData || {};
+  const exif = metadata?.exif;
 
-					{/* Camera */}
-					{camera && (
-						<div className="col-span-2">
-							<div className="mb-1 text-xs font-medium uppercase tracking-wider text-text-tertiary">
-								Camera
-							</div>
-							<div className="text-sm font-medium text-text-primary truncate" title={camera}>
-								{camera}
-							</div>
-						</div>
-					)}
-				</div>
-			</div>
-		</div>
-	);
+  // Extract useful info from exiftool data
+  // exiftool returns a flat structure with many potential date fields
+  const dateTaken =
+    exif?.DateTimeOriginal || exif?.CreateDate || exif?.ModifyDate;
+  const cameraMake = exif?.Make;
+  const cameraModel = exif?.Model;
+  const camera = [cameraMake, cameraModel].filter(Boolean).join(" ");
+
+  // Parse ExifTool date object or string
+  let creationDate: Date | null = null;
+  if (dateTaken) {
+    // ExifTool often returns ExifDateTime objects, but they stringify well or have properties
+    // If it's a string, it's usually "YYYY:MM:DD HH:MM:SS"
+    const dateStr = dateTaken.toString();
+    // Basic attempt to parse standard EXIF date format if standard Date parsing fails
+    const exifDateRegex = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/;
+    const match = dateStr.match(exifDateRegex);
+    if (match) {
+      creationDate = new Date(
+        parseInt(match[1]),
+        parseInt(match[2]) - 1,
+        parseInt(match[3]),
+        parseInt(match[4]),
+        parseInt(match[5]),
+        parseInt(match[6])
+      );
+    } else {
+      creationDate = new Date(dateStr);
+    }
+
+    if (isNaN(creationDate.getTime())) {
+      creationDate = null;
+    }
+  }
+
+  // Fallback to file birthtime if no valid EXIF date
+  if (!creationDate && metadata?.birthtime) {
+    creationDate = new Date(metadata.birthtime);
+  }
+
+  const dimensions =
+    metadata?.width && metadata?.height
+      ? `${metadata.width} × ${metadata.height}`
+      : null;
+
+  const aperture = exif?.FNumber;
+  const shutterSpeed = exif?.ExposureTime;
+  const iso = exif?.ISO;
+  const lens = exif?.LensModel || exif?.Lens;
+
+  return (
+    <div
+      className={`flex h-full w-full flex-col overflow-hidden bg-surface-1 transition-colors ${
+        isDragOver ? "bg-primary/5" : ""
+      }`}
+      onDragOver={(event) => {
+        event.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+    >
+      {/* Settings Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenSettings();
+        }}
+        className="absolute top-4 right-4 p-3 rounded-full bg-surface-2 text-text-secondary hover:text-primary hover:bg-surface-3 shadow-lg transition-all z-10"
+        title="Open Configuration"
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      </button>
+
+      {/* Image Preview */}
+      <div className="flex-1 overflow-hidden bg-surface-2 relative flex items-center justify-center">
+        {previewData?.data ? (
+          <img
+            src={previewData.data}
+            alt={activeItem.displayName}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-text-tertiary">
+            <svg
+              className="h-24 w-24 opacity-20"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M3 16.5v-9a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.121 1.12a1.5 1.5 0 0 0 1.061.44h6.379A1.5 1.5 0 0 1 20.5 9v7.5A1.5 1.5 0 0 1 19 18H4.5A1.5 1.5 0 0 1 3 16.5Z"
+              />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* Details Bar */}
+      <div className="border-t border-border bg-surface-1 p-4">
+        <div className="flex flex-col items-center justify-center gap-4 text-center">
+          <div>
+            <div
+              className="text-lg font-semibold text-text-primary"
+              title={activeItem.displayName}
+            >
+              {activeItem.displayName}
+            </div>
+            <div className="flex items-center justify-center gap-3 text-sm text-text-secondary">
+              <span>{formatSize(activeItem.sizeBytes)}</span>
+              {dimensions && (
+                <>
+                  <span className="text-text-tertiary">•</span>
+                  <span>{dimensions}</span>
+                </>
+              )}
+              {creationDate && (
+                <>
+                  <span className="text-text-tertiary">•</span>
+                  <span>
+                    {creationDate.toLocaleDateString()}{" "}
+                    {creationDate.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* EXIF Data */}
+          {(camera || aperture || shutterSpeed || iso || lens) && (
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-text-secondary border-t border-border/50 pt-3 w-full max-w-2xl">
+              {camera && (
+                <div className="flex items-center gap-1.5" title="Camera">
+                  <svg
+                    className="w-4 h-4 text-text-tertiary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <span>{camera}</span>
+                </div>
+              )}
+              {lens && (
+                <div className="flex items-center gap-1.5" title="Lens">
+                  <svg
+                    className="w-4 h-4 text-text-tertiary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <span>{lens}</span>
+                </div>
+              )}
+              {aperture && (
+                <div className="flex items-center gap-1.5" title="Aperture">
+                  <span className="font-medium text-text-tertiary">ƒ/</span>
+                  <span>{aperture}</span>
+                </div>
+              )}
+              {shutterSpeed && (
+                <div
+                  className="flex items-center gap-1.5"
+                  title="Shutter Speed"
+                >
+                  <svg
+                    className="w-4 h-4 text-text-tertiary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>{shutterSpeed}s</span>
+                </div>
+              )}
+              {iso && (
+                <div className="flex items-center gap-1.5" title="ISO">
+                  <span className="font-medium text-text-tertiary">ISO</span>
+                  <span>{iso}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };

@@ -1,4 +1,4 @@
-# XL Converter (Electron + TypeScript)
+# Home Archive Converter (Electron + TypeScript)
 
 Easy-to-use image converter for modern formats, built with Electron and TypeScript.
 
@@ -55,7 +55,7 @@ Preview input images directly inside the app, with React-powered components for 
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - External encoder binaries (optional, for JPEG XL):
   - `cjxl` for JPEG XL encoding
@@ -151,11 +151,13 @@ src/
 If you want JPEG XL support, install libjxl:
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt install libjxl-tools
 ```
 
 **macOS (Homebrew):**
+
 ```bash
 brew install jpeg-xl
 ```
@@ -166,6 +168,7 @@ Download from [libjxl releases](https://github.com/libjxl/libjxl/releases) and a
 ### Built-in via Sharp
 
 The following formats are natively supported through Sharp:
+
 - AVIF
 - WebP
 - JPEG (with MozJPEG)

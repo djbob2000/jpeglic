@@ -66,8 +66,8 @@
     "trash": "^10.0.0"
   },
   "build": {
-    "appId": "eu.codepoems.xl-converter",
-    "productName": "XL Converter",
+    "appId": "home-archive-converter",
+    "productName": "Home Archive Converter",
     "directories": {
       "output": "release"
     },
