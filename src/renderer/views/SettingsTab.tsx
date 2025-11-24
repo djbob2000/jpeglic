@@ -17,12 +17,23 @@ export const SettingsTab = ({
   onOutputChange,
   onAdvancedChange,
 }: SettingsTabProps) => {
-  const handleDestinationChange = (
+  const handleDestinationChange = async (
     value: ProcessingSettings["output"]["destination"]
   ) => {
-    onOutputChange("destination", value);
     if (value === "source") {
+      onOutputChange("destination", value);
       onOutputChange("customDirectory", undefined);
+    } else if (value === "custom") {
+      // Automatically open directory picker when custom is selected
+      const directory = await window.electron.dialog.openDirectory();
+      if (directory) {
+        onOutputChange("customDirectory", directory);
+        onOutputChange("destination", "custom");
+      } else {
+        // User cancelled - revert to source
+        onOutputChange("destination", "source");
+        onOutputChange("customDirectory", undefined);
+      }
     }
   };
 

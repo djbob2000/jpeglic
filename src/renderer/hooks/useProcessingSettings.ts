@@ -59,6 +59,15 @@ export const useProcessingSettings = () => {
             mergedSettings.advanced.preserveTimestamps = true;
             mergedSettings.advanced.playSoundOnFinish = false;
 
+            // Validate destination settings - if custom is selected but no directory, revert to source
+            if (
+              mergedSettings.output.destination === "custom" &&
+              !mergedSettings.output.customDirectory
+            ) {
+              mergedSettings.output.destination = "source";
+              mergedSettings.output.customDirectory = undefined;
+            }
+
             return mergedSettings;
           });
         } else {

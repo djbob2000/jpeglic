@@ -141,6 +141,7 @@ const App = () => {
                 processing={progress}
                 onAddFiles={addFiles}
                 onOpenSettings={() => setIsSettingsOpen(true)}
+                settings={settings}
               />
             )}
           </div>
