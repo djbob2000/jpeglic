@@ -78,10 +78,7 @@
     "files": [
       "dist/**/*",
       "assets/**/*",
-      "package.json",
-      "!**/node_modules/**/*darwin*",
-      "!**/node_modules/**/*linux*",
-      "!**/node_modules/**/*mas*"
+      "package.json"
     ],
     "extraResources": [
       "binaries/${os}/**"
@@ -113,6 +110,11 @@
         "deb"
       ],
       "category": "Graphics",
+      "files": [
+        "!**/node_modules/**/*darwin*",
+        "!**/node_modules/**/*win32*",
+        "!**/node_modules/**/*mas*"
+      ],
       "asarUnpack": [
         "node_modules/@img/**/*linux*"
       ]
@@ -120,6 +122,10 @@
     "mac": {
       "target": [
         "dmg"
+      ],
+      "files": [
+        "!**/node_modules/**/*linux*",
+        "!**/node_modules/**/*win32*"
       ],
       "asarUnpack": [
         "node_modules/@img/**/*darwin*"
@@ -132,6 +138,10 @@
     ]
   },
   "optionalDependencies": {
+    "@img/sharp-darwin-arm64": "^0.34.5",
+    "@img/sharp-darwin-x64": "^0.34.5",
+    "@img/sharp-libvips-darwin-arm64": "^1.2.4",
+    "@img/sharp-libvips-darwin-x64": "^1.2.4",
     "@img/sharp-libvips-win32-x64": "^1.2.4",
     "@img/sharp-win32-x64": "^0.34.5"
   }

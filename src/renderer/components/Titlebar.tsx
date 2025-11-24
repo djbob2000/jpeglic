@@ -4,7 +4,7 @@ export const Titlebar = () => {
     <header className={`titlebar relative${isMac ? " mac" : ""}`}>
       <div className="titlebar-title absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <img
-          src="../../../assets/icons/logo.svg"
+          src="../../icons/logo.svg"
           alt="Home Archive Converter"
           className="titlebar-icon"
         />
