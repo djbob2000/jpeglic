@@ -1,5 +1,6 @@
 {
   "name": "home-archive-converter",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/djbob2000/home-archive-converter.git"
@@ -39,6 +40,7 @@
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.3.6",
+    "@tailwindcss/vite": "^4.1.17",
     "@types/jest": "30.0.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.6",
@@ -48,13 +50,13 @@
     "electron": "^39.2.2",
     "electron-builder": "^26.0.12",
     "jest": "30.2.0",
+    "tailwindcss": "^4.1.17",
     "ts-jest": "^29.4.5",
     "typescript": "^5.9.3",
     "vite": "^7.2.2",
     "wait-on": "^9.0.3"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.17",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.6.2",
     "execa": "^9.6.0",
@@ -62,7 +64,6 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "sharp": "^0.34.5",
-    "tailwindcss": "^4.1.17",
     "trash": "^10.0.0"
   },
   "build": {
@@ -77,13 +78,16 @@
     "files": [
       "dist/**/*",
       "assets/**/*",
-      "binaries/**/*",
-      "package.json"
+      "package.json",
+      "!**/node_modules/**/*darwin*",
+      "!**/node_modules/**/*linux*",
+      "!**/node_modules/**/*mas*"
+    ],
+    "extraResources": [
+      "binaries/${os}/**"
     ],
     "asarUnpack": [
-      "binaries/**",
-      "node_modules/sharp/**",
-      "node_modules/@img/**"
+      "node_modules/sharp/**"
     ],
     "fileAssociations": [],
     "npmRebuild": true,
@@ -91,6 +95,15 @@
     "win": {
       "target": [
         "nsis"
+      ],
+      "compression": "maximum",
+      "files": [
+        "!**/node_modules/**/*darwin*",
+        "!**/node_modules/**/*linux*",
+        "!**/node_modules/**/*mas*"
+      ],
+      "asarUnpack": [
+        "node_modules/@img/**/*win32*"
       ]
     },
     "defaultArch": "x64",
@@ -99,11 +112,17 @@
         "AppImage",
         "deb"
       ],
-      "category": "Graphics"
+      "category": "Graphics",
+      "asarUnpack": [
+        "node_modules/@img/**/*linux*"
+      ]
     },
     "mac": {
       "target": [
         "dmg"
+      ],
+      "asarUnpack": [
+        "node_modules/@img/**/*darwin*"
       ]
     },
     "publish": [
@@ -111,5 +130,9 @@
         "provider": "github"
       }
     ]
+  },
+  "optionalDependencies": {
+    "@img/sharp-libvips-win32-x64": "^1.2.4",
+    "@img/sharp-win32-x64": "^0.34.5"
   }
 }

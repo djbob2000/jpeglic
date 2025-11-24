@@ -1,11 +1,11 @@
 import { BrowserWindow } from "electron";
-import { Worker } from "./worker";
+import { Worker } from "./worker.js";
 import {
   ProcessingRequest,
   ProcessingProgress,
   ProcessingResult,
   InputItem,
-} from "../common/types";
+} from "../common/types.js";
 
 export class Controller {
   private workers: Worker[] = [];

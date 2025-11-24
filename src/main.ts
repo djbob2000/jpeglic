@@ -1,9 +1,9 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import * as path from "path";
-import { Controller } from "./main/controller";
-import { ProcessManager } from "./main/process-manager";
-import { SettingsManager, AppSettings } from "./main/settings-manager";
-import { UpdateManager } from "./main/updater";
+import { Controller } from "./main/controller.js";
+import { ProcessManager } from "./main/process-manager.js";
+import { SettingsManager, AppSettings } from "./main/settings-manager.js";
+import { UpdateManager } from "./main/updater.js";
 
 let mainWindow: BrowserWindow | null = null;
 let controller: Controller | null = null;

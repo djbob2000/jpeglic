@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
 
-import type { ElectronAPI } from "./common/types";
+import type { ElectronAPI } from "./common/types.js";
 
 const api: ElectronAPI = {
   platform: process.platform,

@@ -5,8 +5,12 @@ import * as os from "os";
 import sharp, { type Sharp } from "sharp";
 import { execa, type ResultPromise } from "execa";
 import trash from "trash";
-import { InputItem, OutputFormat, ProcessingSettings } from "../common/types";
-import { ProcessManager } from "./process-manager";
+import {
+  InputItem,
+  OutputFormat,
+  ProcessingSettings,
+} from "../common/types.js";
+import { ProcessManager } from "./process-manager.js";
 
 export interface WorkerResult {
   success: boolean;
@@ -161,7 +165,7 @@ export class Worker {
 
     try {
       this.externalProcess = execa(bin, args, { input: ppmBuffer });
-      ProcessManager.register(this.externalProcess);
+      ProcessManager.register(this.externalProcess as any);
       await this.externalProcess;
     } catch (error) {
       console.error("Jpegli conversion failed:", error);
@@ -185,7 +189,7 @@ export class Worker {
     }
 
     this.externalProcess = execa("cjxl", args, { input: buffer });
-    ProcessManager.register(this.externalProcess);
+    ProcessManager.register(this.externalProcess as any);
     await this.externalProcess;
   }
 
