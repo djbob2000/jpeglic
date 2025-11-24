@@ -1,5 +1,6 @@
-import { autoUpdater } from 'electron-updater';
-import { BrowserWindow } from 'electron';
+import pkg from "electron-updater";
+const { autoUpdater } = pkg;
+import { BrowserWindow } from "electron";
 
 export class UpdateManager {
   private mainWindow: BrowserWindow | null = null;
@@ -13,35 +14,35 @@ export class UpdateManager {
     autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = true;
 
-    autoUpdater.on('checking-for-update', () => {
-      this.sendStatus('Checking for updates...');
+    autoUpdater.on("checking-for-update", () => {
+      this.sendStatus("Checking for updates...");
     });
 
-    autoUpdater.on('update-available', (info) => {
-      this.sendStatus('update-available', {
+    autoUpdater.on("update-available", (info) => {
+      this.sendStatus("update-available", {
         version: info.version,
         releaseDate: info.releaseDate,
       });
     });
 
-    autoUpdater.on('update-not-available', () => {
-      this.sendStatus('update-not-available');
+    autoUpdater.on("update-not-available", () => {
+      this.sendStatus("update-not-available");
     });
 
-    autoUpdater.on('error', (error) => {
-      this.sendStatus('update-error', { message: error.message });
+    autoUpdater.on("error", (error) => {
+      this.sendStatus("update-error", { message: error.message });
     });
 
-    autoUpdater.on('download-progress', (progress) => {
-      this.sendStatus('download-progress', {
+    autoUpdater.on("download-progress", (progress) => {
+      this.sendStatus("download-progress", {
         percent: progress.percent,
         transferred: progress.transferred,
         total: progress.total,
       });
     });
 
-    autoUpdater.on('update-downloaded', (info) => {
-      this.sendStatus('update-downloaded', {
+    autoUpdater.on("update-downloaded", (info) => {
+      this.sendStatus("update-downloaded", {
         version: info.version,
       });
     });
@@ -51,7 +52,7 @@ export class UpdateManager {
     try {
       await autoUpdater.checkForUpdates();
     } catch (error) {
-      console.error('Failed to check for updates:', error);
+      console.error("Failed to check for updates:", error);
     }
   }
 
@@ -59,7 +60,7 @@ export class UpdateManager {
     try {
       await autoUpdater.downloadUpdate();
     } catch (error) {
-      console.error('Failed to download update:', error);
+      console.error("Failed to download update:", error);
     }
   }
 
@@ -69,7 +70,7 @@ export class UpdateManager {
 
   private sendStatus(event: string, data?: any): void {
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-      this.mainWindow.webContents.send('update-status', { event, data });
+      this.mainWindow.webContents.send("update-status", { event, data });
     }
   }
 }

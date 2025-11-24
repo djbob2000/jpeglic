@@ -15,7 +15,7 @@
     "watch:renderer": "vite build --watch",
     "copy:static": "node scripts/copy-static.js",
     "build": "npm run build:main && npm run build:renderer",
-    "build:main": "tsc -p tsconfig.main.json",
+    "build:main": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && mv dist/preload.js dist/preload.cjs",
     "build:renderer": "vite build",
     "build:renderer:old": "npm run copy:static && tsc -p tsconfig.renderer.json",
     "package": "npm run build && electron-builder",

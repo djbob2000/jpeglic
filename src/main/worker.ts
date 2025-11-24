@@ -1,6 +1,10 @@
 import { promises as fs } from "fs";
 import { existsSync, mkdirSync } from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import * as os from "os";
 import sharp, { type Sharp } from "sharp";
 import { execa, type ResultPromise } from "execa";

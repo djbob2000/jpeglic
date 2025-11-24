@@ -1,5 +1,9 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import * as path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { Controller } from "./main/controller.js";
 import { ProcessManager } from "./main/process-manager.js";
 import { SettingsManager, AppSettings } from "./main/settings-manager.js";
@@ -23,7 +27,7 @@ function createWindow(): void {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
     },
     frame: isMac ? true : false,
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
