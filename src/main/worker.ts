@@ -21,6 +21,7 @@ export interface WorkerResult {
   skipped: boolean;
   error?: string;
   outputPath?: string;
+  savedBytes?: number;
 }
 
 interface PrepareOutputResult {
@@ -64,10 +65,14 @@ export class Worker {
         await trash([this.item.sourcePath]);
       }
 
+      const stat = await fs.stat(outputInfo.targetPath);
+      const savedBytes = Math.max(0, this.item.sizeBytes - stat.size);
+
       return {
         success: true,
         skipped: false,
         outputPath: outputInfo.targetPath,
+        savedBytes,
       };
     } catch (error) {
       if (this.aborted) {
@@ -219,10 +224,14 @@ export class Worker {
         const { exiftool } = await import("exiftool-vendored");
 
         // Write standard XMP tags
-        await (exiftool as any).write(targetPath, {
-          "XMP:CreatorTool": "HomeArchiveConverter",
-          "XMP:Label": "Processed",
-        });
+        await (exiftool as any).write(
+          targetPath,
+          {
+            "XMP:CreatorTool": "HomeArchiveConverter",
+            "XMP:Label": "Processed",
+          },
+          ["-overwrite_original"]
+        );
       } catch (error) {
         console.warn("Failed to write XMP metadata", error);
       }

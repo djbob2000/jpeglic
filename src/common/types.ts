@@ -64,6 +64,7 @@ export interface ProcessingProgress {
   currentOutputPath?: string;
   message?: string;
   processedItemId?: string; // ID of item that was just processed (success or skipped)
+  savedBytes?: number; // Total bytes saved so far
 }
 
 export interface ProcessingResult {
@@ -72,6 +73,7 @@ export interface ProcessingResult {
   failedCount: number;
   errors: Array<{ item: InputItem; error: string }>;
   canceled: boolean;
+  savedBytes: number;
 }
 
 export interface ElectronAPI {
@@ -101,6 +103,7 @@ export interface ElectronAPI {
     minimize: () => Promise<void>;
     maximize: () => Promise<void>;
     close: () => Promise<void>;
+    setProgressBar: (progress: number) => Promise<void>;
   };
   update: {
     check: () => Promise<void>;

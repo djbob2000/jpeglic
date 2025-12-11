@@ -14,6 +14,8 @@ interface InputTabProps {
   selectedItemId: string | null;
   onSelect: (id: string) => void;
   onStartConversion: () => void;
+  isConverting: boolean;
+  onCancel: () => void;
 }
 
 export const InputTab = ({
@@ -26,10 +28,13 @@ export const InputTab = ({
   selectedItemId,
   onSelect,
   onStartConversion,
+  isConverting,
+  onCancel,
 }: InputTabProps) => {
   const [isDragOver, setDragOver] = useState(false);
 
   const handleDrop = async (event: DragEvent<HTMLDivElement>) => {
+    if (isConverting) return;
     event.preventDefault();
     setDragOver(false);
 
@@ -45,8 +50,9 @@ export const InputTab = ({
     <div
       className={`flex h-full w-full flex-col transition-colors ${
         isDragOver ? "bg-primary/5" : ""
-      }`}
+      } ${isConverting ? "opacity-90 pointer-events-none" : ""}`}
       onDragOver={(event) => {
+        if (isConverting) return;
         event.preventDefault();
         setDragOver(true);
       }}
@@ -58,11 +64,11 @@ export const InputTab = ({
         <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
           Files ({items.length})
         </span>
-        {hasItems && (
+        {hasItems && !isConverting && (
           <button
             type="button"
             onClick={onClear}
-            className="text-xs font-medium text-text-secondary hover:text-red-500 transition-colors"
+            className="text-xs font-medium text-text-secondary hover:text-red-500 transition-colors pointer-events-auto"
           >
             Clear All
           </button>
@@ -123,29 +129,31 @@ export const InputTab = ({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove(item.id);
-                  }}
-                  className="hidden rounded p-1 text-text-tertiary hover:bg-surface-3 hover:text-red-500 group-hover:block"
-                  title="Remove file"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {!isConverting && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(item.id);
+                    }}
+                    className="hidden rounded p-1 text-text-tertiary hover:bg-surface-3 hover:text-red-500 group-hover:block pointer-events-auto"
+                    title="Remove file"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -153,28 +161,39 @@ export const InputTab = ({
       </div>
 
       {/* Start Button */}
-      <div className="p-4 bg-surface-2">
-        <button
-          type="button"
-          onClick={onStartConversion}
-          disabled={!hasItems}
-          className="w-full btn-primary py-3 text-sm font-semibold shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:transform-none disabled:shadow-none rounded-lg flex items-center justify-center gap-2"
-        >
-          <span>Start Conversion</span>
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      <div className="p-4 bg-surface-2 pointer-events-auto">
+        {!isConverting ? (
+          <button
+            type="button"
+            onClick={onStartConversion}
+            disabled={!hasItems}
+            className="w-full btn-primary py-3 text-sm font-semibold shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:transform-none disabled:shadow-none rounded-lg flex items-center justify-center gap-2"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 10V3L4 14h7v7l9-11h-7z"
-            />
-          </svg>
-        </button>
+            <span>Start Conversion</span>
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full py-3 text-sm font-semibold shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg bg-red-100/10 text-red-500 hover:bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center gap-2"
+          >
+            <span>Stop Conversion</span>
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+          </button>
+        )}
       </div>
     </div>
   );

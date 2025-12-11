@@ -5,6 +5,7 @@ import type {
   ProcessingSettings,
 } from "../../common/types";
 import { formatSize } from "../utils/format";
+import { ProcessingStatus } from "./ProcessingStatus";
 
 type FileWithPath = File & { path?: string };
 
@@ -26,6 +27,8 @@ interface PreviewPanelProps {
   onAddFiles: (paths: string[]) => Promise<void> | void;
   onOpenSettings: () => void;
   settings: ProcessingSettings;
+  isConverting: boolean;
+  percentage: number;
 }
 
 export const PreviewPanel = ({
@@ -34,6 +37,8 @@ export const PreviewPanel = ({
   onAddFiles,
   onOpenSettings,
   settings,
+  isConverting,
+  percentage,
 }: PreviewPanelProps) => {
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [isDragOver, setDragOver] = useState(false);
@@ -281,6 +286,10 @@ export const PreviewPanel = ({
 
       {/* Image Preview */}
       <div className="flex-1 overflow-hidden bg-surface-2 relative flex items-center justify-center">
+        {isConverting && processing && (
+          <ProcessingStatus progress={processing} percentage={percentage} />
+        )}
+
         {previewData?.data ? (
           <img
             src={previewData.data}

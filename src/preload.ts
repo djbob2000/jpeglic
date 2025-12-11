@@ -37,6 +37,8 @@ const api: ElectronAPI = {
     minimize: () => ipcRenderer.invoke("window:minimize"),
     maximize: () => ipcRenderer.invoke("window:maximize"),
     close: () => ipcRenderer.invoke("window:close"),
+    setProgressBar: (progress) =>
+      ipcRenderer.invoke("window:setProgressBar", progress),
   },
   update: {
     check: () => ipcRenderer.invoke("update:check"),

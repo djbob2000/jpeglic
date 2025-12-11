@@ -31,6 +31,7 @@ const App = () => {
     result,
     statusText,
     percentage,
+    isConverting,
   } = useConversion({
     inputItems: items,
     settings,
@@ -142,6 +143,8 @@ const App = () => {
                 onAddFiles={addFiles}
                 onOpenSettings={() => setIsSettingsOpen(true)}
                 settings={settings}
+                isConverting={isConverting}
+                percentage={percentage}
               />
             )}
           </div>
@@ -159,6 +162,8 @@ const App = () => {
             selectedItemId={selectedItemId}
             onSelect={setSelectedItemId}
             onStartConversion={handleStartClick}
+            isConverting={isConverting}
+            onCancel={cancelConversion}
           />
         </aside>
       </div>

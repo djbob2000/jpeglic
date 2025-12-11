@@ -71,6 +71,10 @@ export const useConversion = ({
         itemProcessedCallbackRef.current?.(update.processedItemId);
       }
 
+      if (update.total > 0) {
+        window.electron.window.setProgressBar(update.completed / update.total);
+      }
+
       setProgress(update);
       if (update.message) {
         setStatusText(update.message);
@@ -82,10 +86,12 @@ export const useConversion = ({
     });
 
     const unsubscribeComplete = window.electron.convert.onComplete((res) => {
+      window.electron.window.setProgressBar(-1);
       handleConversionComplete(res);
     });
 
     const unsubscribeError = window.electron.convert.onError((error) => {
+      window.electron.window.setProgressBar(-1);
       setProgressOpen(false);
       window.alert(error.message);
     });
@@ -146,6 +152,7 @@ export const useConversion = ({
   }, [progress.completed, progress.total]);
 
   return {
+    isConverting: isProgressOpen && !result,
     startConversion,
     cancelConversion,
     closeProgress,

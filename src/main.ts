@@ -182,6 +182,10 @@ ipcMain.handle("window:close", () => {
   if (mainWindow) mainWindow.close();
 });
 
+ipcMain.handle("window:setProgressBar", (_, progress: number) => {
+  if (mainWindow) mainWindow.setProgressBar(progress);
+});
+
 // Auto-update functionality disabled
 /*
 ipcMain.handle("update:check", async () => {

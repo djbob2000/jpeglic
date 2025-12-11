@@ -22,11 +22,13 @@ export class Controller {
       failedCount: 0,
       errors: [],
       canceled: false,
+      savedBytes: 0,
     };
 
     const concurrency = Math.max(1, request.settings.advanced.concurrency || 1);
     const items = [...request.items];
     let completed = 0;
+    let totalSavedBytes = 0;
 
     const processQueue = async () => {
       while (items.length > 0 && !this.cancelRequested) {
@@ -37,6 +39,7 @@ export class Controller {
           total: request.items.length,
           currentItem: item,
           message: `Converting ${item.displayName}...`,
+          savedBytes: totalSavedBytes,
         });
 
         const worker = new Worker(item, request.settings);
@@ -47,6 +50,10 @@ export class Controller {
 
           if (workerResult.success) {
             result.successCount++;
+            if (workerResult.savedBytes) {
+              totalSavedBytes += workerResult.savedBytes;
+              result.savedBytes = totalSavedBytes;
+            }
           } else if (workerResult.skipped) {
             result.skippedCount++;
           } else {
@@ -63,6 +70,7 @@ export class Controller {
             total: request.items.length,
             currentItem: item,
             processedItemId: item.id,
+            savedBytes: totalSavedBytes,
           });
         } catch (error) {
           result.failedCount++;
@@ -75,6 +83,7 @@ export class Controller {
             completed,
             total: request.items.length,
             processedItemId: item.id,
+            savedBytes: totalSavedBytes,
           });
         } finally {
           this.workers = this.workers.filter((w) => w !== worker);
