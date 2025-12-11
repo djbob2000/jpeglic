@@ -1,4 +1,5 @@
 import { type DragEvent, type KeyboardEvent, useEffect, useState } from "react";
+import { cn } from "../utils/cn";
 import type {
   InputItem,
   ProcessingProgress,
@@ -116,11 +117,12 @@ export const PreviewPanel = ({
           }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
-          className={`group relative flex h-80 w-full max-w-xl flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-all hover:border-primary/50 hover:bg-surface-3 hover:shadow-lg hover:shadow-primary/5 ${
+          className={cn(
+            "group relative flex h-80 w-full max-w-xl flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-all hover:border-primary/50 hover:bg-surface-3 hover:shadow-lg hover:shadow-primary/5",
             isDragOver
               ? "border-primary bg-primary/10 shadow-lg shadow-primary/10"
               : "border-border bg-surface-2 shadow-md"
-          }`}
+          )}
         >
           <div className="rounded-full bg-surface-2 p-4 shadow-sm group-hover:scale-110 transition-transform">
             <svg
@@ -239,9 +241,10 @@ export const PreviewPanel = ({
 
   return (
     <div
-      className={`flex h-full w-full flex-col overflow-hidden bg-surface-1 transition-colors ${
-        isDragOver ? "bg-primary/5" : ""
-      }`}
+      className={cn(
+        "flex h-full w-full flex-col overflow-hidden bg-surface-1 transition-colors",
+        isDragOver && "bg-primary/5"
+      )}
       onDragOver={(event) => {
         event.preventDefault();
         setDragOver(true);

@@ -1,4 +1,5 @@
 import type { ProcessingSettings } from "../../common/types";
+import { cn } from "../utils/cn";
 
 interface SettingsTabProps {
   settings: ProcessingSettings;
@@ -154,11 +155,12 @@ export const SettingsTab = ({
               {settings.output.destination === "custom" && (
                 <div className="pt-2 space-y-3 mt-2">
                   <label
-                    className={`flex items-center gap-3 rounded-lg px-2 py-1.5 -mx-2 transition-all ${
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-2 py-1.5 -mx-2 transition-all",
                       settings.advanced.deleteOriginals
                         ? "bg-red-500/10"
                         : "hover:bg-surface-3"
-                    }`}
+                    )}
                   >
                     <input
                       type="checkbox"
@@ -169,18 +171,18 @@ export const SettingsTab = ({
                           event.target.checked
                         )
                       }
-                      className={`checkbox-input ${
-                        settings.advanced.deleteOriginals
-                          ? "accent-red-500"
-                          : ""
-                      }`}
+                      className={cn(
+                        "checkbox-input",
+                        settings.advanced.deleteOriginals && "accent-red-500"
+                      )}
                     />
                     <span
-                      className={
+                      className={cn(
+                        "transition-colors",
                         settings.advanced.deleteOriginals
                           ? "font-medium text-red-500"
                           : "text-text-secondary"
-                      }
+                      )}
                     >
                       Delete originals
                     </span>

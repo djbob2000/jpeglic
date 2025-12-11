@@ -1,7 +1,9 @@
+import { cn } from "../utils/cn";
+
 export const Titlebar = () => {
   const isMac = window.electron?.isMac;
   return (
-    <header className={`titlebar relative${isMac ? " mac" : ""}`}>
+    <header className={cn("titlebar relative", isMac && "mac")}>
       <div className="titlebar-title absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
         <img
           src="../../icons/logo.svg"

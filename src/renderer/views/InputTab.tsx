@@ -1,4 +1,5 @@
 import { type DragEvent, useState } from "react";
+import { cn } from "../utils/cn";
 import type { InputItem, ProcessingProgress } from "../../common/types";
 import { formatSize } from "../utils/format";
 
@@ -48,9 +49,11 @@ export const InputTab = ({
 
   return (
     <div
-      className={`flex h-full w-full flex-col transition-colors ${
-        isDragOver ? "bg-primary/5" : ""
-      } ${isConverting ? "opacity-90 pointer-events-none" : ""}`}
+      className={cn(
+        "flex h-full w-full flex-col transition-colors",
+        isDragOver && "bg-primary/5",
+        isConverting && "opacity-90 pointer-events-none"
+      )}
       onDragOver={(event) => {
         if (isConverting) return;
         event.preventDefault();
@@ -99,20 +102,22 @@ export const InputTab = ({
             {items.map((item) => (
               <li
                 key={item.id}
-                className={`group relative flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+                className={cn(
+                  "group relative flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all",
                   selectedItemId === item.id
                     ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
                     : "text-text-secondary hover:bg-surface-2 hover:text-text-primary"
-                }`}
+                )}
                 onClick={() => onSelect(item.id)}
               >
                 {/* Status Indicator */}
                 <div
-                  className={`h-2 w-2 rounded-full ${
+                  className={cn(
+                    "h-2 w-2 rounded-full",
                     processing?.currentItem?.id === item.id
                       ? "bg-primary animate-pulse"
                       : "bg-border group-hover:bg-text-tertiary"
-                  }`}
+                  )}
                 />
 
                 <div className="min-w-0 flex-1">
