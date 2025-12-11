@@ -18,8 +18,7 @@
     "build:main": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && mv dist/preload.js dist/preload.cjs",
     "build:renderer": "vite build",
     "build:renderer:old": "npm run copy:static && tsc -p tsconfig.renderer.json",
-    "package": "npm run build && electron-builder",
-    "package:win": "npm run build && electron-builder --win",
+    "package:win": "bash scripts/install-sharp-win.sh && npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
     "package:mac": "npm run build && electron-builder --mac",
     "lint": "biome check .",
@@ -57,8 +56,6 @@
     "wait-on": "^9.0.3"
   },
   "dependencies": {
-    "electron-store": "^11.0.2",
-    "electron-updater": "^6.6.2",
     "execa": "^9.6.0",
     "exiftool-vendored": "^33.2.0",
     "react": "^19.2.0",
@@ -91,7 +88,12 @@
     "buildDependenciesFromSource": false,
     "win": {
       "target": [
-        "nsis"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "compression": "maximum",
       "files": [
@@ -101,7 +103,17 @@
       ],
       "asarUnpack": [
         "node_modules/@img/**/*win32*"
-      ]
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false
     },
     "defaultArch": "x64",
     "linux": {
@@ -130,19 +142,13 @@
       "asarUnpack": [
         "node_modules/@img/**/*darwin*"
       ]
-    },
-    "publish": [
-      {
-        "provider": "github"
-      }
-    ]
+    }
   },
   "optionalDependencies": {
     "@img/sharp-darwin-arm64": "^0.34.5",
     "@img/sharp-darwin-x64": "^0.34.5",
     "@img/sharp-libvips-darwin-arm64": "^1.2.4",
     "@img/sharp-libvips-darwin-x64": "^1.2.4",
-    "@img/sharp-libvips-win32-x64": "^1.2.4",
-    "@img/sharp-win32-x64": "^0.34.5"
+    "@img/sharp-libvips-win32-x64": "^1.2.4"
   }
 }

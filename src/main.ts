@@ -4,14 +4,14 @@ import { fileURLToPath } from "url";
 import { Controller } from "./main/controller.js";
 import { ProcessManager } from "./main/process-manager.js";
 import { SettingsManager, AppSettings } from "./main/settings-manager.js";
-import { UpdateManager } from "./main/updater.js";
+// import { UpdateManager } from "./main/updater.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow: BrowserWindow | null = null;
 let controller: Controller | null = null;
-let updateManager: UpdateManager | null = null;
+// let updateManager: UpdateManager | null = null;
 
 function createWindow(): void {
   const settingsManager = SettingsManager.getInstance();
@@ -31,6 +31,7 @@ function createWindow(): void {
     },
     frame: isMac ? true : false,
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
+    icon: path.join(__dirname, "../assets/icon.png"),
   });
 
   if (windowState?.maximized) {
@@ -47,7 +48,7 @@ function createWindow(): void {
   mainWindow.loadFile(path.join(__dirname, "renderer/src/renderer/index.html"));
 
   controller = new Controller(mainWindow);
-  updateManager = new UpdateManager(mainWindow);
+  // updateManager = new UpdateManager(mainWindow);
 
   mainWindow.on("close", () => {
     if (mainWindow) {
@@ -73,7 +74,7 @@ function createWindow(): void {
 
 app.whenReady().then(() => {
   createWindow();
-  updateManager?.checkForUpdates();
+  // updateManager?.checkForUpdates();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -181,6 +182,8 @@ ipcMain.handle("window:close", () => {
   if (mainWindow) mainWindow.close();
 });
 
+// Auto-update functionality disabled
+/*
 ipcMain.handle("update:check", async () => {
   if (updateManager) {
     await updateManager.checkForUpdates();
@@ -198,6 +201,7 @@ ipcMain.handle("update:install", () => {
     updateManager.quitAndInstall();
   }
 });
+*/
 
 ipcMain.handle("fs:stat", async (_, path: string) => {
   try {

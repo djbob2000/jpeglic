@@ -30,10 +30,6 @@ Choose to overwrite, skip, or automatically rename duplicate files.
 
 Automatically saves your preferences using `electron-store`, so your workflow continues where you left off.
 
-#### Auto-Updates
-
-Integrated with `electron-updater` to check for new releases, download them, and install on restart.
-
 #### Custom Titlebar
 
 A native-inspired titlebar with window controls that keeps the content area consistent across platforms.
@@ -95,6 +91,14 @@ npm run package
 npm run package:win    # Windows
 npm run package:linux  # Linux
 npm run package:mac    # macOS
+```
+
+### Cross-Platform Builds
+
+When building for Windows on macOS/Linux, the Windows-specific Sharp binaries are automatically installed via the `postinstall` script. If you need to manually install them:
+
+```bash
+bash scripts/install-sharp-win.sh
 ```
 
 Packaged apps will be in the `release/` directory.
