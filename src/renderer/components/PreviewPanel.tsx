@@ -1,11 +1,11 @@
 import { type DragEvent, type KeyboardEvent, useEffect, useState } from "react";
-import { cn } from "../utils/cn";
+import { cn } from "@utils/cn";
 import type {
   InputItem,
   ProcessingProgress,
   ProcessingSettings,
-} from "../../common/types";
-import { formatSize } from "../utils/format";
+} from "@common/types";
+import { formatSize } from "@utils/format";
 import { ProcessingStatus } from "./ProcessingStatus";
 
 type FileWithPath = File & { path?: string };

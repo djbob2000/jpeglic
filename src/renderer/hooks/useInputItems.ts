@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
-import type { InputItem } from "../../common/types";
-import type { InputState } from "../types";
+import type { InputItem } from "@common/types";
+import type { InputState } from "@renderer/types";
 import {
   applyRelativePaths,
   expandFilePaths,
   generateId,
   getCommonBase,
   resetInputState,
-} from "../utils/fileSystem";
+} from "@utils/fileSystem";
 
 // Simple path utilities for browser environment
 const getDirname = (filePath: string): string => {

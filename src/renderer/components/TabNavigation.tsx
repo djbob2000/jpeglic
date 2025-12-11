@@ -1,5 +1,5 @@
-import { cn } from "../utils/cn";
-import type { TabKey } from "../types";
+import { cn } from "@utils/cn";
+import type { TabKey } from "@renderer/types";
 
 interface TabDefinition {
   id: TabKey;

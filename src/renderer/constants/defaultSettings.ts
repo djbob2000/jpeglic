@@ -1,4 +1,4 @@
-import type { ProcessingSettings } from "../../common/types";
+import type { ProcessingSettings } from "@common/types";
 
 export const defaultSettings: ProcessingSettings = {
   output: {

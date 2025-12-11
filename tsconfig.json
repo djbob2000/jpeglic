@@ -1,15 +1,29 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@renderer/*": ["src/renderer/*"],
+      "@components/*": ["src/renderer/components/*"],
+      "@hooks/*": ["src/renderer/hooks/*"],
+      "@utils/*": ["src/renderer/utils/*"],
+      "@constants/*": ["src/renderer/constants/*"],
+      "@views/*": ["src/renderer/views/*"],
+      "@styles/*": ["src/renderer/styles/*"],
+      "@assets/*": ["src/renderer/assets/*"],
+      "@common/*": ["src/common/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "release"]

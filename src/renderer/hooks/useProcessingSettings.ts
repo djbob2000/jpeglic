@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { ProcessingSettings } from "../../common/types";
-import { defaultSettings } from "../constants/defaultSettings";
-import { mergeSettings } from "../utils/settings";
+import type { ProcessingSettings } from "@common/types";
+import { defaultSettings } from "@constants/defaultSettings";
+import { mergeSettings } from "@utils/settings";
 
 // Function to detect CPU cores
 const detectCpuCores = (): number => {

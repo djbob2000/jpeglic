@@ -1,7 +1,7 @@
 import { type DragEvent, useState } from "react";
-import { cn } from "../utils/cn";
-import type { InputItem, ProcessingProgress } from "../../common/types";
-import { formatSize } from "../utils/format";
+import { cn } from "@utils/cn";
+import type { InputItem, ProcessingProgress } from "@common/types";
+import { formatSize } from "@utils/format";
 
 type FileWithPath = File & { path?: string };
 

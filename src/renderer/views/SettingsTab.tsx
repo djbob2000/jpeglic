@@ -1,5 +1,5 @@
-import type { ProcessingSettings } from "../../common/types";
-import { cn } from "../utils/cn";
+import type { ProcessingSettings } from "@common/types";
+import { cn } from "@utils/cn";
 
 interface SettingsTabProps {
   settings: ProcessingSettings;

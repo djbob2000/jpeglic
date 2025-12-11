@@ -1,5 +1,5 @@
-import type { ProcessingProgress } from "../../common/types";
-import { formatSize } from "../utils/format";
+import type { ProcessingProgress } from "@common/types";
+import { formatSize } from "@utils/format";
 
 interface ProcessingStatusProps {
   progress: ProcessingProgress;

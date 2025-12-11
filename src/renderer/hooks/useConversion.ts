@@ -5,8 +5,8 @@ import type {
   ProcessingRequest,
   ProcessingResult,
   ProcessingSettings,
-} from "../../common/types";
-import { playNotification } from "../utils/format";
+} from "@common/types";
+import { playNotification } from "@utils/format";
 
 interface UseConversionParams {
   inputItems: InputItem[];
