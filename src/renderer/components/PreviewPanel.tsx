@@ -43,6 +43,12 @@ export const PreviewPanel = ({
 }: PreviewPanelProps) => {
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [isDragOver, setDragOver] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+  // Reset load state when data changes
+  useEffect(() => {
+    setIsImageLoaded(false);
+  }, [selectedItem?.sourcePath, processing?.currentItem?.id]); // Reset on item change
   const activeItem = processing?.currentItem ?? selectedItem;
 
   // Generate settings display text
@@ -252,7 +258,7 @@ export const PreviewPanel = ({
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
     >
-      {/* Settings Button */}
+      {/* ... Settings Button ... (unchanged) */}
       <div className="absolute top-4 right-4 flex flex-col items-end gap-1 z-10">
         <span className="text-xs text-text-tertiary font-medium px-2 bg-surface-1/80 backdrop-blur-sm rounded">
           {getSettingsText()}
@@ -297,7 +303,11 @@ export const PreviewPanel = ({
           <img
             src={previewData.data}
             alt={activeItem.displayName}
-            className="h-full w-full object-contain"
+            className={cn(
+              "h-full w-full object-contain transition-opacity duration-300 ease-in-out",
+              isImageLoaded ? "opacity-100" : "opacity-0"
+            )}
+            onLoad={() => setIsImageLoaded(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-text-tertiary">
@@ -351,86 +361,88 @@ export const PreviewPanel = ({
             </div>
           </div>
 
-          {/* EXIF Data */}
-          {(camera || aperture || shutterSpeed || iso || lens) && (
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-text-secondary border-t border-border/50 pt-3 w-full max-w-2xl">
-              {camera && (
-                <div className="flex items-center gap-1.5" title="Camera">
-                  <svg
-                    className="w-4 h-4 text-text-tertiary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+          {/* EXIF Data - Reserved Height Container */}
+          <div className="w-full max-w-2xl min-h-14 flex items-center justify-center">
+            {(camera || aperture || shutterSpeed || iso || lens) && (
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-text-secondary border-t border-border/50 pt-3 w-full animate-in fade-in duration-300">
+                {camera && (
+                  <div className="flex items-center gap-1.5" title="Camera">
+                    <svg
+                      className="w-4 h-4 text-text-tertiary"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    <span>{camera}</span>
+                  </div>
+                )}
+                {lens && (
+                  <div className="flex items-center gap-1.5" title="Lens">
+                    <svg
+                      className="w-4 h-4 text-text-tertiary"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                    <span>{lens}</span>
+                  </div>
+                )}
+                {aperture && (
+                  <div className="flex items-center gap-1.5" title="Aperture">
+                    <span className="font-medium text-text-tertiary">ƒ/</span>
+                    <span>{aperture}</span>
+                  </div>
+                )}
+                {shutterSpeed && (
+                  <div
+                    className="flex items-center gap-1.5"
+                    title="Shutter Speed"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  <span>{camera}</span>
-                </div>
-              )}
-              {lens && (
-                <div className="flex items-center gap-1.5" title="Lens">
-                  <svg
-                    className="w-4 h-4 text-text-tertiary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                  <span>{lens}</span>
-                </div>
-              )}
-              {aperture && (
-                <div className="flex items-center gap-1.5" title="Aperture">
-                  <span className="font-medium text-text-tertiary">ƒ/</span>
-                  <span>{aperture}</span>
-                </div>
-              )}
-              {shutterSpeed && (
-                <div
-                  className="flex items-center gap-1.5"
-                  title="Shutter Speed"
-                >
-                  <svg
-                    className="w-4 h-4 text-text-tertiary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span>{shutterSpeed}s</span>
-                </div>
-              )}
-              {iso && (
-                <div className="flex items-center gap-1.5" title="ISO">
-                  <span className="font-medium text-text-tertiary">ISO</span>
-                  <span>{iso}</span>
-                </div>
-              )}
-            </div>
-          )}
+                    <svg
+                      className="w-4 h-4 text-text-tertiary"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span>{shutterSpeed}s</span>
+                  </div>
+                )}
+                {iso && (
+                  <div className="flex items-center gap-1.5" title="ISO">
+                    <span className="font-medium text-text-tertiary">ISO</span>
+                    <span>{iso}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

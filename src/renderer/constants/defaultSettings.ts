@@ -11,6 +11,7 @@ export const defaultSettings: ProcessingSettings = {
     customDirectory: undefined,
     keepFolderStructure: true,
     visuallyLossless: true,
+    cjpegliDistance: 1.0,
   },
   advanced: {
     concurrency: 4,

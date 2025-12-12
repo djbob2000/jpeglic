@@ -22,6 +22,7 @@ export interface OutputSettings {
   customDirectory?: string;
   keepFolderStructure: boolean;
   visuallyLossless: boolean;
+  cjpegliDistance: number;
 }
 
 export interface WindowSettings {

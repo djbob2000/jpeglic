@@ -151,7 +151,7 @@ const App = () => {
         </main>
 
         {/* Right Sidebar: Input & Files */}
-        <aside className="flex w-80 min-w-[300px] flex-col border-l border-border bg-surface-2">
+        <aside className="flex w-80 min-w-76 flex-col border-l border-border bg-surface-2">
           <InputTab
             items={items}
             onAddFiles={addFiles}

@@ -130,6 +130,77 @@ export const SettingsTab = ({
                 </div>
               )}
 
+              {/* cjpegli Settings (Only for JPEG) */}
+              {settings.output.format === "jpeg" && (
+                <div className="pt-4 border-t border-border mt-4">
+                  <legend className="mb-3 block text-sm font-medium text-text-secondary uppercase tracking-wider">
+                    JPEG Settings
+                  </legend>
+
+                  <div className="space-y-4">
+                    {/* Visually Lossless Switch */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-text-primary font-medium">
+                          Visually Lossless
+                        </span>
+                        <span className="text-xs text-text-tertiary">
+                          Sets distance to 1.0 (High Quality)
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.output.visuallyLossless}
+                          onChange={(e) =>
+                            onOutputChange("visuallyLossless", e.target.checked)
+                          }
+                          className="peer sr-only"
+                        />
+                        <div className="w-11 h-6 bg-surface-4 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                      </label>
+                    </div>
+
+                    {/* Distance Slider */}
+                    <div
+                      className={cn(
+                        "space-y-2 transition-opacity",
+                        settings.output.visuallyLossless &&
+                          "opacity-50 pointer-events-none"
+                      )}
+                    >
+                      <div className="flex justify-between text-sm">
+                        <span className="text-text-secondary">
+                          Distance (Quality)
+                        </span>
+                        <span className="text-text-primary font-mono">
+                          {settings.output.cjpegliDistance.toFixed(1)}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="6.0"
+                        step="0.1"
+                        value={settings.output.cjpegliDistance}
+                        onChange={(e) =>
+                          onOutputChange(
+                            "cjpegliDistance",
+                            parseFloat(e.target.value)
+                          )
+                        }
+                        disabled={settings.output.visuallyLossless}
+                        className="w-full h-2 bg-surface-4 rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                      <div className="flex justify-between text-xs text-text-tertiary">
+                        <span>0.5 (Best)</span>
+                        <span>6.0 (Smallest)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Keep Folder Structure - Hidden when Replace originals is selected */}
               {settings.output.destination === "custom" && (
                 <label className="flex items-center gap-3">

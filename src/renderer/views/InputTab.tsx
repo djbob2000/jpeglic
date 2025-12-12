@@ -65,7 +65,8 @@ export const InputTab = ({
       {/* File List Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-          Files ({items.length})
+          Files ({items.length}) •{" "}
+          {formatSize(items.reduce((acc, item) => acc + item.sizeBytes, 0))}
         </span>
         {hasItems && !isConverting && (
           <button

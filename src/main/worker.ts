@@ -99,7 +99,8 @@ export class Worker {
   }
 
   private async buildPipeline(): Promise<Sharp> {
-    const pipeline = sharp(this.item.sourcePath, { failOn: "truncated" });
+    const inputBuffer = await fs.readFile(this.item.sourcePath);
+    const pipeline = sharp(inputBuffer, { failOn: "truncated" });
     // Downscale logic removed
     return pipeline;
   }
@@ -164,11 +165,11 @@ export class Worker {
     const args: string[] = ["-", targetPath];
 
     if (this.settings.output.visuallyLossless) {
-      args.push("-d", "1");
+      args.push("-d", "1.0");
       args.push("--chroma_subsampling", "420");
       args.push("-p", "2");
     } else {
-      args.push("-q", String(this.settings.output.quality));
+      args.push("-d", String(this.settings.output.cjpegliDistance));
       args.push("-p", "2");
     }
 
