@@ -28,6 +28,7 @@ export const useConversion = ({
   });
   const [statusText, setStatusText] = useState("");
   const [result, setResult] = useState<ProcessingResult | null>(null);
+  const [isStopping, setIsStopping] = useState(false);
   const settingsRef = useRef(settings);
   const successCallbackRef = useRef(onSuccessfulConversion);
   const itemProcessedCallbackRef = useRef(onItemProcessed);
@@ -87,12 +88,14 @@ export const useConversion = ({
 
     const unsubscribeComplete = window.electron.convert.onComplete((res) => {
       window.electron.window.setProgressBar(-1);
+      setIsStopping(false);
       handleConversionComplete(res);
     });
 
     const unsubscribeError = window.electron.convert.onError((error) => {
       window.electron.window.setProgressBar(-1);
       setProgressOpen(false);
+      setIsStopping(false);
       window.alert(error.message);
     });
 
@@ -118,6 +121,7 @@ export const useConversion = ({
     setResult(null);
     setProgress({ completed: 0, total: inputItems.length });
     setStatusText("");
+    setIsStopping(false);
 
     try {
       const response = await window.electron.convert.start(request);
@@ -133,13 +137,17 @@ export const useConversion = ({
     }
   };
 
-  const cancelConversion = () => window.electron.convert.cancel();
+  const cancelConversion = () => {
+    setIsStopping(true);
+    window.electron.convert.cancel();
+  };
 
   const closeProgress = () => {
     setProgressOpen(false);
     setResult(null);
     setProgress({ completed: 0, total: 0 });
     setStatusText("");
+    setIsStopping(false);
   };
 
   const normalizedStatusText = useMemo(() => statusText.trim(), [statusText]);
@@ -153,6 +161,7 @@ export const useConversion = ({
 
   return {
     isConverting: isProgressOpen && !result,
+    isStopping,
     startConversion,
     cancelConversion,
     closeProgress,

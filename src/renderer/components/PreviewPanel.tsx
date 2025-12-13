@@ -1,4 +1,10 @@
-import { type DragEvent, type KeyboardEvent, useEffect, useState } from "react";
+import {
+  type DragEvent,
+  type KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "@utils/cn";
 import type {
   InputItem,
@@ -42,14 +48,21 @@ export const PreviewPanel = ({
   percentage,
 }: PreviewPanelProps) => {
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [previousData, setPreviousData] = useState<PreviewData | null>(null);
   const [isDragOver, setDragOver] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
-  // Reset load state when data changes
-  useEffect(() => {
-    setIsImageLoaded(false);
-  }, [selectedItem?.sourcePath, processing?.currentItem?.id]); // Reset on item change
   const activeItem = processing?.currentItem ?? selectedItem;
+
+  // Keep track of current data for transition logic
+  const currentDataRef = useRef<{ data: PreviewData | null; loaded: boolean }>({
+    data: null,
+    loaded: false,
+  });
+
+  useEffect(() => {
+    currentDataRef.current = { data: previewData, loaded: isImageLoaded };
+  }, [previewData, isImageLoaded]);
 
   // Generate settings display text
   const getSettingsText = () => {
@@ -94,6 +107,16 @@ export const PreviewPanel = ({
 
   useEffect(() => {
     if (activeItem) {
+      // Transition logic: When switching items, keep the old image visible
+      // until the new one is ready.
+      const { data: currentData, loaded: currentLoaded } =
+        currentDataRef.current;
+      if (currentData && currentLoaded) {
+        setPreviousData(currentData);
+      }
+
+      setIsImageLoaded(false);
+
       const filePath = activeItem.sourcePath;
       window.electron.preview
         .get(filePath)
@@ -105,8 +128,9 @@ export const PreviewPanel = ({
         });
     } else {
       setPreviewData(null);
+      setPreviousData(null);
     }
-  }, [activeItem]);
+  }, [activeItem?.sourcePath]);
 
   if (!activeItem) {
     return (
@@ -192,7 +216,11 @@ export const PreviewPanel = ({
     );
   }
 
-  const { metadata } = previewData || {};
+  // Determine which metadata to show (prevent text flickering during transition)
+  const activePreviewData = isImageLoaded
+    ? previewData
+    : previousData || previewData;
+  const { metadata } = activePreviewData || {};
   const exif = metadata?.exif;
 
   // Extract useful info from exiftool data
@@ -299,32 +327,50 @@ export const PreviewPanel = ({
           <ProcessingStatus progress={processing} percentage={percentage} />
         )}
 
+        {/* Previous Image (Background during transition) */}
+        {previousData?.data && (
+          <img
+            src={previousData.data}
+            alt=""
+            className="absolute inset-0 h-full w-full object-contain"
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Current Image (Foreground) */}
         {previewData?.data ? (
           <img
             src={previewData.data}
             alt={activeItem.displayName}
             className={cn(
-              "h-full w-full object-contain transition-opacity duration-300 ease-in-out",
+              "absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ease-in-out",
               isImageLoaded ? "opacity-100" : "opacity-0"
             )}
             onLoad={() => setIsImageLoaded(true)}
+            onTransitionEnd={() => {
+              if (isImageLoaded) {
+                setPreviousData(null);
+              }
+            }}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-text-tertiary">
-            <svg
-              className="h-24 w-24 opacity-20"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1}
-                d="M3 16.5v-9a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.121 1.12a1.5 1.5 0 0 0 1.061.44h6.379A1.5 1.5 0 0 1 20.5 9v7.5A1.5 1.5 0 0 1 19 18H4.5A1.5 1.5 0 0 1 3 16.5Z"
-              />
-            </svg>
-          </div>
+          !previousData && (
+            <div className="flex h-full w-full items-center justify-center text-text-tertiary">
+              <svg
+                className="h-24 w-24 opacity-20"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1}
+                  d="M3 16.5v-9a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.121 1.12a1.5 1.5 0 0 0 1.061.44h6.379A1.5 1.5 0 0 1 20.5 9v7.5A1.5 1.5 0 0 1 19 18H4.5A1.5 1.5 0 0 1 3 16.5Z"
+                />
+              </svg>
+            </div>
+          )
         )}
       </div>
 

@@ -11,7 +11,8 @@ import { InputTab } from "./views/InputTab";
 import { SettingsTab } from "./views/SettingsTab";
 
 const App = () => {
-  const { items, addFiles, removeItem, clearItems, hasItems } = useInputItems();
+  const { items, addFiles, removeItem, clearItems, hasItems, isLoading } =
+    useInputItems();
   const { settings, updateOutputSetting, updateAdvancedSetting } =
     useProcessingSettings();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -32,6 +33,7 @@ const App = () => {
     statusText,
     percentage,
     isConverting,
+    isStopping,
   } = useConversion({
     inputItems: items,
     settings,
@@ -138,7 +140,7 @@ const App = () => {
               </div>
             ) : (
               <PreviewPanel
-                selectedItem={selectedItem}
+                selectedItem={selectedItemId ? selectedItem : undefined}
                 processing={progress}
                 onAddFiles={addFiles}
                 onOpenSettings={() => setIsSettingsOpen(true)}
@@ -163,7 +165,9 @@ const App = () => {
             onSelect={setSelectedItemId}
             onStartConversion={handleStartClick}
             isConverting={isConverting}
+            isStopping={isStopping}
             onCancel={cancelConversion}
+            isLoading={isLoading}
           />
         </aside>
       </div>

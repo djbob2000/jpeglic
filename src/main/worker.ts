@@ -26,6 +26,7 @@ export interface WorkerResult {
 
 interface PrepareOutputResult {
   targetPath: string;
+  shouldCopyOnly?: boolean;
 }
 
 export class Worker {
@@ -48,17 +49,22 @@ export class Worker {
         return { success: false, skipped: true };
       }
 
-      const pipeline = await this.buildPipeline();
+      if (outputInfo.shouldCopyOnly) {
+        await fs.copyFile(this.item.sourcePath, outputInfo.targetPath);
+      } else {
+        const pipeline = await this.buildPipeline();
 
-      if (this.settings.advanced.preserveMetadata) {
-        pipeline.withMetadata();
+        if (this.settings.advanced.preserveMetadata) {
+          pipeline.withMetadata();
+        }
+
+        if (!this.settings.output.keepAlpha) {
+          pipeline.removeAlpha();
+        }
+
+        await this.export(pipeline, outputInfo.targetPath);
       }
 
-      if (!this.settings.output.keepAlpha) {
-        pipeline.removeAlpha();
-      }
-
-      await this.export(pipeline, outputInfo.targetPath);
       await this.applyPostProcessing(outputInfo.targetPath);
 
       if (this.settings.advanced.deleteOriginals) {
@@ -253,18 +259,31 @@ export class Worker {
     // Check if SOURCE file is already processed if skipProcessed is enabled
     // This happens when user drops an already converted file back into the app
     // Only check when destination is "source" (replace mode), not "custom"
-    if (
-      this.settings.advanced.skipProcessed &&
-      this.settings.output.destination === "source"
-    ) {
-      const processed = await this.isAlreadyProcessed(this.item.sourcePath);
-      if (processed) {
-        return null;
+    let shouldCopyOnly = false;
+
+    // Check if SOURCE file is already processed
+    if (this.settings.advanced.skipProcessed) {
+      let isProcessed = this.item.isProcessed;
+
+      // Only check disk if status is unknown (undefined)
+      if (isProcessed === undefined) {
+        isProcessed = await this.isAlreadyProcessed(this.item.sourcePath);
+      }
+
+      if (isProcessed) {
+        if (this.settings.output.destination === "source") {
+          return null;
+        } else if (this.settings.output.destination === "custom") {
+          // If custom destination, copy the original file instead of re-processing
+          shouldCopyOnly = true;
+        }
       }
     }
 
     const format = this.settings.output.format;
-    const ext = this.getExtension(format);
+    const ext = shouldCopyOnly
+      ? path.extname(this.item.sourcePath).slice(1)
+      : this.getExtension(format);
 
     const baseName = path.basename(
       this.item.sourcePath,
@@ -296,7 +315,7 @@ export class Worker {
 
     const targetPath = path.join(directory, `${baseName}.${ext}`);
 
-    return { targetPath };
+    return { targetPath, shouldCopyOnly };
   }
 
   private getExtension(format: OutputFormat): string {

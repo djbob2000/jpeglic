@@ -16,7 +16,9 @@ interface InputTabProps {
   onSelect: (id: string) => void;
   onStartConversion: () => void;
   isConverting: boolean;
+  isStopping?: boolean;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
 export const InputTab = ({
@@ -30,7 +32,9 @@ export const InputTab = ({
   onSelect,
   onStartConversion,
   isConverting,
+  isStopping = false,
   onCancel,
+  isLoading = false,
 }: InputTabProps) => {
   const [isDragOver, setDragOver] = useState(false);
 
@@ -172,32 +176,47 @@ export const InputTab = ({
           <button
             type="button"
             onClick={onStartConversion}
-            disabled={!hasItems}
+            disabled={!hasItems || isLoading}
             className="w-full btn-primary py-3 text-sm font-semibold shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:transform-none disabled:shadow-none rounded-lg flex items-center justify-center gap-2"
           >
-            <span>Start Conversion</span>
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
+            {isLoading ? (
+              <>
+                <span>Loading files...</span>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              </>
+            ) : (
+              <>
+                <span>Start Conversion</span>
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              </>
+            )}
           </button>
         ) : (
           <button
             type="button"
             onClick={onCancel}
-            className="w-full py-3 text-sm font-semibold shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg bg-red-100/10 text-red-500 hover:bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center gap-2"
+            disabled={isStopping}
+            className={cn(
+              "w-full py-3 text-sm font-semibold shadow-md transition-all rounded-lg flex items-center justify-center gap-2",
+              isStopping
+                ? "bg-red-500/5 text-red-500/50 border border-red-500/10 cursor-not-allowed"
+                : "hover:-translate-y-0.5 hover:shadow-lg bg-red-100/10 text-red-500 hover:bg-red-500/10 border border-red-500/20"
+            )}
           >
-            <span>Stop Conversion</span>
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+            <span>{isStopping ? "Stopping..." : "Stop Conversion"}</span>
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
           </button>
         )}
       </div>
