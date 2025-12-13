@@ -268,15 +268,17 @@ ipcMain.handle("preview:get", async (_, filePath: string) => {
       console.error("Failed to read EXIF with exiftool:", e);
     }
 
-    // Use sharp for resizing but export as PNG for preview
-    // This avoids using Sharp's JPEG encoder and provides better quality
+    // Disable sharp cache to prevent holding onto large image buffers
+    sharp.default.cache(false);
+
+    // Use JPEG for previews which is much faster and smaller than PNG (base64)
     const buffer = await image
       .resize(1200, 1200, { fit: "inside" })
-      .png({ compressionLevel: 9 })
+      .jpeg({ quality: 80 })
       .toBuffer();
 
     return {
-      data: `data:image/png;base64,${buffer.toString("base64")}`,
+      data: `data:image/jpeg;base64,${buffer.toString("base64")}`,
       metadata: {
         width: metadata.width,
         height: metadata.height,

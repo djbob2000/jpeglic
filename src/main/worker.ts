@@ -52,23 +52,45 @@ export class Worker {
       if (outputInfo.shouldCopyOnly) {
         await fs.copyFile(this.item.sourcePath, outputInfo.targetPath);
       } else {
-        const pipeline = await this.buildPipeline();
+        // Use a temporary file to avoid checking/locking issues when replacing originals
+        // This allows us to stream the input file (low memory) while writing the output
+        const tempPath = `${outputInfo.targetPath}.${Date.now()}.tmp`;
 
-        if (this.settings.advanced.preserveMetadata) {
-          pipeline.withMetadata();
+        try {
+          const pipeline = await this.buildPipeline();
+
+          if (this.settings.advanced.preserveMetadata) {
+            pipeline.withMetadata();
+          }
+
+          if (!this.settings.output.keepAlpha) {
+            pipeline.removeAlpha();
+          }
+
+          // Write to temporary file first
+          await this.export(pipeline, tempPath);
+          await this.applyPostProcessing(tempPath);
+
+          // If successful, handle original file deletion if requested
+          if (this.settings.advanced.deleteOriginals) {
+            try {
+              await trash([this.item.sourcePath]);
+            } catch (error) {
+              console.warn("Failed to trash original file:", error);
+              // If trashing fails, we might still want to proceed with rename if usage allows,
+              // but usually implies a permission issue.
+            }
+          }
+
+          // Atomically move temp file to target path
+          await fs.rename(tempPath, outputInfo.targetPath);
+        } catch (error) {
+          // Cleanup temp file if something went wrong
+          try {
+            await fs.unlink(tempPath);
+          } catch {}
+          throw error;
         }
-
-        if (!this.settings.output.keepAlpha) {
-          pipeline.removeAlpha();
-        }
-
-        await this.export(pipeline, outputInfo.targetPath);
-      }
-
-      await this.applyPostProcessing(outputInfo.targetPath);
-
-      if (this.settings.advanced.deleteOriginals) {
-        await trash([this.item.sourcePath]);
       }
 
       const stat = await fs.stat(outputInfo.targetPath);
@@ -105,8 +127,7 @@ export class Worker {
   }
 
   private async buildPipeline(): Promise<Sharp> {
-    const inputBuffer = await fs.readFile(this.item.sourcePath);
-    const pipeline = sharp(inputBuffer, { failOn: "truncated" });
+    const pipeline = sharp(this.item.sourcePath, { failOn: "truncated" });
     // Downscale logic removed
     return pipeline;
   }
@@ -193,8 +214,6 @@ export class Worker {
     pipeline: Sharp,
     targetPath: string
   ): Promise<void> {
-    const buffer = await pipeline.png({ compressionLevel: 0 }).toBuffer();
-
     const args = ["-", targetPath];
 
     if (this.settings.output.lossless) {
@@ -204,7 +223,10 @@ export class Worker {
       args.push("-e", String(this.settings.output.effort));
     }
 
-    this.externalProcess = execa("cjxl", args, { input: buffer });
+    // Configure for PNG output
+    pipeline.png({ compressionLevel: 0 });
+
+    this.externalProcess = execa("cjxl", args, { input: pipeline });
     ProcessManager.register(this.externalProcess as any);
     await this.externalProcess;
   }
