@@ -32,7 +32,13 @@ pub type Result<T> = std::result::Result<T, AppError>;
 pub fn resolve_binary(app: &tauri::AppHandle, name: &str) -> Result<PathBuf> {
     // Check for both plain name and sidecar name with target triple
     // In dev/sidecar mode, files usually have the target triple suffix
-    let target_triple = "x86_64-pc-windows-msvc"; 
+    let target_triple = if cfg!(target_os = "macos") {
+        if cfg!(target_arch = "aarch64") { "aarch64-apple-darwin" } else { "x86_64-apple-darwin" }
+    } else if cfg!(target_os = "windows") {
+        "x86_64-pc-windows-msvc"
+    } else {
+        "x86_64-unknown-linux-gnu"
+    };
     
     let names_to_check = if cfg!(windows) {
         vec![

@@ -1,5 +1,5 @@
 use crate::types::*;
-use crate::utils::{AppError, Result, resolve_binary, create_windowless_command};
+use crate::utils::{AppError, Result};
 use image::ImageReader;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -126,54 +126,30 @@ impl Worker {
     }
     
     async fn export_jpeg(&self, output_path: &str) -> Result<()> {
-        let cjpegli = resolve_binary(&self.app, "cjpegli")?;
+        // use jpegli::{Encoder, Quality}; // Old import
         
-        // Load image and convert to RGB
+        // Load image (using image crate)
         let img = ImageReader::open(&self.item.source_path)?.decode()?;
         let rgb_img = img.to_rgb8();
-        
-        // Create PPM header
         let (width, height) = rgb_img.dimensions();
-        let ppm_header = format!("P6\n{} {}\n255\n", width, height);
-        
-        // Combine header and raw RGB data
-        let mut ppm_data = ppm_header.into_bytes();
-        ppm_data.extend_from_slice(rgb_img.as_raw());
-        
-        // Build cjpegli arguments
-        let mut args = vec!["-".to_string(), output_path.to_string()];
+
+        // Configure encoder
+        let mut encoder = jpegli::Encoder::new()
+            .width(width)
+            .height(height);
         
         if self.settings.output.visually_lossless {
-            args.push("-d".to_string());
-            args.push("1.0".to_string());
-            args.push("--chroma_subsampling".to_string());
-            args.push("420".to_string());
-            args.push("-p".to_string());
-            args.push("2".to_string());
+            encoder = encoder.quality(jpegli::Quality::Distance(1.0))
+                             .subsampling(jpegli::Subsampling::S420);
         } else {
-            args.push("-d".to_string());
-            args.push(self.settings.output.cjpegli_distance.to_string());
-            args.push("-p".to_string());
-            args.push("2".to_string());
+            encoder = encoder.quality(jpegli::Quality::Distance(self.settings.output.cjpegli_distance as f32));
         }
-        
-        // Execute cjpegli
-        let output = create_windowless_command(cjpegli)
-            .args(&args)
-            .stdin(std::process::Stdio::piped())
-            .spawn()
-            .and_then(|mut child| {
-                use std::io::Write;
-                if let Some(mut stdin) = child.stdin.take() {
-                    stdin.write_all(&ppm_data)?;
-                }
-                child.wait()
-            })
-            .map_err(|e| AppError::ProcessFailed(e.to_string()))?;
-        
-        if !output.success() {
-            return Err(AppError::ProcessFailed("cjpegli failed".to_string()));
-        }
+
+        // Encode
+        let result = encoder.encode(rgb_img.as_raw())
+            .map_err(|e| AppError::ProcessFailed(format!("Jpegli encoding failed: {:?}", e)))?;
+            
+        std::fs::write(output_path, result)?;
         
         Ok(())
     }
@@ -181,40 +157,68 @@ impl Worker {
 
     
     async fn apply_metadata(&self, output_path: &str) -> Result<()> {
-        let exiftool = resolve_binary(&self.app, "exiftool")?;
-        
-        // Copy all EXIF from source to output
-        let copy_output = create_windowless_command(&exiftool)
-            .args([
-                "-TagsFromFile",
-                &self.item.source_path,
-                "-all:all",
-                "-overwrite_original",
-                output_path,
-            ])
-            .output()
-            .map_err(|e| AppError::ProcessFailed(e.to_string()))?;
-        
-        if !copy_output.status.success() {
-            eprintln!("Warning: Failed to copy EXIF metadata");
+        use img_parts::ImageEXIF;
+
+        // 1. Copy EXIF and apply XMP using img-parts and xmp-writer
+        let source_bytes = fs::read(&self.item.source_path)?; 
+        let output_bytes = fs::read(output_path)?;
+
+        let source_jpeg = img_parts::jpeg::Jpeg::from_bytes(source_bytes.into())
+            .map_err(|e| AppError::ProcessFailed(format!("Failed to parse source jpeg for metadata: {:?}", e)));
+
+        // Handle source parsing gracefully
+        let source_exif = if let Ok(jpeg) = source_jpeg {
+            jpeg.exif().map(|b| b.to_vec())
+        } else {
+            None
+        };
+
+        let mut output_jpeg = img_parts::jpeg::Jpeg::from_bytes(output_bytes.into())
+            .map_err(|e| AppError::ProcessFailed(format!("Failed to parse output jpeg for metadata: {:?}", e)))?;
+
+        // Process EXIF
+        if let Some(exif_data) = source_exif {
+            output_jpeg.set_exif(Some(exif_data.into()));
         }
-        
-        // Write XMP marker for processed files (JPEG only)
+
+        // Process XMP (App1 "http://ns.adobe.com/xap/1.0/")
         if matches!(self.settings.output.format, OutputFormat::Jpeg) {
-            let mark_output = create_windowless_command(&exiftool)
-                .args([
-                    "-XMP:CreatorTool=HomeArchiveConverter",
-                    "-XMP:Label=Processed",
-                    "-overwrite_original",
-                    output_path,
-                ])
-                .output()
-                .map_err(|e| AppError::ProcessFailed(e.to_string()))?;
+            let mut writer = xmp_writer::XmpWriter::new();
+            writer.creator_tool("Jpeglic");
+            writer.label("Processed");
+            let xmp_xml = writer.finish(None);
             
-            if !mark_output.status.success() {
-                eprintln!("Warning: Failed to write XMP marker");
+            // Standard XMP packet wrapper
+            let xmp_packet = format!(
+                "<?xpacket begin=\"\u{FEFF}\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n{}<?xpacket end=\"w\"?>",
+                xmp_xml
+            );
+
+            // Construct valid APP1 XMP segment
+            // Header: http://ns.adobe.com/xap/1.0/\0
+            let header = b"http://ns.adobe.com/xap/1.0/\0";
+            let mut xmp_segment_data = Vec::with_capacity(header.len() + xmp_packet.len());
+            xmp_segment_data.extend_from_slice(header);
+            xmp_segment_data.extend_from_slice(xmp_packet.as_bytes());
+
+            let segment = img_parts::jpeg::JpegSegment::new_with_contents(
+                img_parts::jpeg::markers::APP1,
+                img_parts::Bytes::from(xmp_segment_data),
+            );
+
+            // Safe insertion: if first segment is APP0 (JFIF), insert after it.
+            // JFIF must be the first segment if present.
+            let segments = output_jpeg.segments_mut();
+            if !segments.is_empty() && segments[0].marker() == img_parts::jpeg::markers::APP0 {
+                segments.insert(1, segment);
+            } else {
+                segments.insert(0, segment);
             }
         }
+
+        let mut final_file = fs::File::create(output_path)?;
+        output_jpeg.encoder().write_to(&mut final_file)
+            .map_err(|e| AppError::ProcessFailed(format!("Failed to save metadata: {:?}", e)))?;
         
         // Preserve timestamps
         if self.settings.advanced.preserve_timestamps {
@@ -286,3 +290,6 @@ struct OutputInfo {
     target_path: String,
     should_copy_only: bool,
 }
+
+
+
