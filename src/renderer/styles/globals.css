@@ -103,7 +103,7 @@
 
 	/* Titlebar */
 	.titlebar {
-		@apply flex justify-between items-center h-8 bg-surface-2 text-text-secondary px-2 select-none border-b border-border;
+		@apply flex justify-end items-center h-8 bg-surface-2 text-text-secondary px-2 select-none border-b border-border;
 		-webkit-app-region: drag;
 	}
 

@@ -7,153 +7,44 @@
   },
   "version": "0.0.1",
   "description": "Easy-to-use image converter for modern formats",
-  "main": "dist/main.js",
+  "main": "src/renderer/main.tsx",
   "scripts": {
-    "start": "npm run build && electron .",
-    "dev": "concurrently \"npm run watch:main\" \"npm run watch:renderer\" \"wait-on dist/main.js dist/renderer/index.html && electron .\"",
-    "watch:main": "tsc -p tsconfig.main.json --watch",
-    "watch:renderer": "vite build --watch",
-    "copy:static": "node scripts/copy-static.js",
-    "build": "npm run build:main && npm run build:renderer",
-    "build:main": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && shx mv dist/preload.js dist/preload.cjs",
-    "build:renderer": "vite build",
-    "build:renderer:old": "npm run copy:static && tsc -p tsconfig.renderer.json",
-    "package:win": "bash scripts/install-sharp-win.sh && npm run build && electron-builder --win",
-    "package:linux": "npm run build && electron-builder --linux",
-    "package:mac": "npm run build && electron-builder --mac",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "dev": "vite",
+    "build": "vite build",
     "lint": "biome check .",
-    "format": "biome format .",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:ci": "jest --ci --runInBand"
+    "format": "biome format ."
   },
   "keywords": [
     "image",
     "converter",
     "jpegli",
     "jpeg-xl",
-    "avif",
-    "webp"
+    "avif"
   ],
   "author": "Home Archive Converter Team",
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "^2.3.8",
-    "@tailwindcss/vite": "^4.1.17",
-    "@types/jest": "30.0.0",
-    "@types/node": "^25.0.0",
+    "@biomejs/biome": "^2.3.10",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tauri-apps/cli": "^2.9.6",
+    "@types/node": "^25.0.3",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
-    "concurrently": "^9.2.1",
-    "electron": "^39.2.7",
-    "electron-builder": "^26.0.12",
-    "jest": "30.2.0",
-    "shx": "^0.4.0",
-    "tailwindcss": "^4.1.17",
-    "ts-jest": "^29.4.6",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
-    "vite": "^7.2.7",
-    "wait-on": "^9.0.3"
+    "vite": "^7.3.0"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-fs": "^2",
     "clsx": "^2.1.1",
-    "execa": "^9.6.1",
-    "exiftool-vendored": "^34.0.0",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
-    "sharp": "^0.34.5",
-    "tailwind-merge": "^3.4.0",
-    "trash": "^10.0.1"
-  },
-  "build": {
-    "appId": "home-archive-converter",
-    "productName": "Home Archive Converter",
-    "electronLanguages": [
-      "en"
-    ],
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "assets/**/*",
-      "package.json"
-    ],
-    "extraResources": [
-      "binaries/${os}/**"
-    ],
-    "asarUnpack": [
-      "node_modules/sharp/**"
-    ],
-    "fileAssociations": [],
-    "npmRebuild": true,
-    "buildDependenciesFromSource": false,
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "compression": "maximum",
-      "files": [
-        "!**/node_modules/**/*darwin*",
-        "!**/node_modules/**/*linux*",
-        "!**/node_modules/**/*mas*"
-      ],
-      "asarUnpack": [
-        "node_modules/@img/**/*win32*"
-      ],
-      "icon": "build/icon.png"
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowElevation": false,
-      "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "deleteAppDataOnUninstall": false
-    },
-    "defaultArch": "x64",
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "category": "Graphics",
-      "files": [
-        "!**/node_modules/**/*darwin*",
-        "!**/node_modules/**/*win32*",
-        "!**/node_modules/**/*mas*"
-      ],
-      "asarUnpack": [
-        "node_modules/@img/**/*linux*"
-      ]
-    },
-    "mac": {
-      "target": [
-        "dmg"
-      ],
-      "icon": "assets/icon.png",
-      "files": [
-        "!**/node_modules/**/*linux*",
-        "!**/node_modules/**/*win32*"
-      ],
-      "asarUnpack": [
-        "node_modules/@img/**/*darwin*"
-      ]
-    }
-  },
-  "optionalDependencies": {
-    "@img/sharp-darwin-arm64": "^0.34.5",
-    "@img/sharp-darwin-x64": "^0.34.5",
-    "@img/sharp-libvips-darwin-arm64": "^1.2.4",
-    "@img/sharp-libvips-darwin-x64": "^1.2.4",
-    "@img/sharp-libvips-win32-x64": "^1.2.4",
-    "@img/sharp-win32-x64": "0.34.5"
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tailwind-merge": "^3.4.0"
   }
 }

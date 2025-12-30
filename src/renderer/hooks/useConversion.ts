@@ -1,174 +1,166 @@
-import { useEffect, useMemo, useRef, useState } from "react";
 import type {
-  InputItem,
-  ProcessingProgress,
-  ProcessingRequest,
-  ProcessingResult,
-  ProcessingSettings,
+	InputItem,
+	ProcessingProgress,
+	ProcessingRequest,
+	ProcessingResult,
+	ProcessingSettings,
 } from "@common/types";
-import { playNotification } from "@utils/format";
+import tauriAPI from "@utils/tauriAPI";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface UseConversionParams {
-  inputItems: InputItem[];
-  settings: ProcessingSettings;
-  onSuccessfulConversion: () => void;
-  onItemProcessed?: (itemId: string) => void;
+	inputItems: InputItem[];
+	settings: ProcessingSettings;
+	onSuccessfulConversion: () => void;
+	onItemProcessed?: (itemId: string) => void;
 }
 
 export const useConversion = ({
-  inputItems,
-  settings,
-  onSuccessfulConversion,
-  onItemProcessed,
+	inputItems,
+	settings,
+	onSuccessfulConversion,
+	onItemProcessed,
 }: UseConversionParams) => {
-  const [isProgressOpen, setProgressOpen] = useState(false);
-  const [progress, setProgress] = useState<ProcessingProgress>({
-    completed: 0,
-    total: 0,
-  });
-  const [statusText, setStatusText] = useState("");
-  const [result, setResult] = useState<ProcessingResult | null>(null);
-  const [isStopping, setIsStopping] = useState(false);
-  const settingsRef = useRef(settings);
-  const successCallbackRef = useRef(onSuccessfulConversion);
-  const itemProcessedCallbackRef = useRef(onItemProcessed);
+	const [isProgressOpen, setProgressOpen] = useState(false);
+	const [progress, setProgress] = useState<ProcessingProgress>({
+		completed: 0,
+		total: 0,
+	});
+	const [statusText, setStatusText] = useState("");
+	const [result, setResult] = useState<ProcessingResult | null>(null);
+	const [isStopping, setIsStopping] = useState(false);
+	const settingsRef = useRef(settings);
+	const successCallbackRef = useRef(onSuccessfulConversion);
+	const itemProcessedCallbackRef = useRef(onItemProcessed);
 
-  useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
+	useEffect(() => {
+		settingsRef.current = settings;
+	}, [settings]);
 
-  useEffect(() => {
-    successCallbackRef.current = onSuccessfulConversion;
-  }, [onSuccessfulConversion]);
+	useEffect(() => {
+		successCallbackRef.current = onSuccessfulConversion;
+	}, [onSuccessfulConversion]);
 
-  useEffect(() => {
-    itemProcessedCallbackRef.current = onItemProcessed;
-  }, [onItemProcessed]);
+	useEffect(() => {
+		itemProcessedCallbackRef.current = onItemProcessed;
+	}, [onItemProcessed]);
 
-  const handleConversionComplete = (conversionResult: ProcessingResult) => {
-    if (conversionResult.canceled) {
-      setProgressOpen(false);
-      return;
-    }
+	const handleConversionComplete = useCallback((conversionResult: ProcessingResult) => {
+		if (conversionResult.canceled) {
+			setProgressOpen(false);
+			return;
+		}
 
-    const activeSettings = settingsRef.current;
+		const activeSettings = settingsRef.current;
 
-    setResult(conversionResult);
-    // Clear current item from progress so preview doesn't show "Processing..."
-    setProgress((prev) => ({ ...prev, currentItem: undefined }));
+		setResult(conversionResult);
+		// Clear current item from progress so preview doesn't show "Processing..."
+		setProgress((prev) => ({ ...prev, currentItem: undefined }));
 
-    if (
-      activeSettings.advanced.clearInputAfterConversion &&
-      conversionResult.successCount > 0
-    ) {
-      successCallbackRef.current?.();
-    }
-  };
+		if (activeSettings.advanced.clearInputAfterConversion && conversionResult.successCount > 0) {
+			successCallbackRef.current?.();
+		}
+	}, []);
 
-  useEffect(() => {
-    const unsubscribeProgress = window.electron.convert.onProgress((update) => {
-      // If an item was just processed (success or skipped), remove it from the list
-      if (update.processedItemId) {
-        itemProcessedCallbackRef.current?.(update.processedItemId);
-      }
+	useEffect(() => {
+		const unsubscribeProgress = tauriAPI.convert.onProgress((update) => {
+			// If an item was just processed (success or skipped), remove it from the list
+			if (update.processedItemId) {
+				itemProcessedCallbackRef.current?.(update.processedItemId);
+			}
 
-      if (update.total > 0) {
-        window.electron.window.setProgressBar(update.completed / update.total);
-      }
+			if (update.total > 0) {
+				tauriAPI.window.setProgressBar(update.completed / update.total);
+			}
 
-      setProgress(update);
-      if (update.message) {
-        setStatusText(update.message);
-      } else if (update.currentItem) {
-        setStatusText(`Processing ${update.currentItem.displayName}`);
-      } else {
-        setStatusText("");
-      }
-    });
+			setProgress(update);
+			if (update.message) {
+				setStatusText(update.message);
+			} else if (update.currentItem) {
+				setStatusText(`Processing ${update.currentItem.displayName}`);
+			} else {
+				setStatusText("");
+			}
+		});
 
-    const unsubscribeComplete = window.electron.convert.onComplete((res) => {
-      window.electron.window.setProgressBar(-1);
-      setIsStopping(false);
-      handleConversionComplete(res);
-    });
+		const unsubscribeComplete = tauriAPI.convert.onComplete((res) => {
+			tauriAPI.window.setProgressBar(-1);
+			setIsStopping(false);
+			handleConversionComplete(res);
+		});
 
-    const unsubscribeError = window.electron.convert.onError((error) => {
-      window.electron.window.setProgressBar(-1);
-      setProgressOpen(false);
-      setIsStopping(false);
-      window.alert(error.message);
-    });
+		const unsubscribeError = tauriAPI.convert.onError((error) => {
+			tauriAPI.window.setProgressBar(-1);
+			setProgressOpen(false);
+			setIsStopping(false);
+			window.alert(error.message);
+		});
 
-    return () => {
-      unsubscribeProgress?.();
-      unsubscribeComplete?.();
-      unsubscribeError?.();
-    };
-  }, [handleConversionComplete]);
+		return () => {
+			unsubscribeProgress?.();
+			unsubscribeComplete?.();
+			unsubscribeError?.();
+		};
+	}, [handleConversionComplete]);
 
-  const startConversion = async () => {
-    if (inputItems.length === 0) {
-      window.alert("Add files before starting conversion.");
-      return;
-    }
+	const startConversion = async () => {
+		if (inputItems.length === 0) {
+			window.alert("Add files before starting conversion.");
+			return;
+		}
 
-    const request: ProcessingRequest = {
-      items: inputItems,
-      settings,
-    };
+		const request: ProcessingRequest = {
+			items: inputItems,
+			settings,
+		};
 
-    setProgressOpen(true);
-    setResult(null);
-    setProgress({ completed: 0, total: inputItems.length });
-    setStatusText("");
-    setIsStopping(false);
+		setProgressOpen(true);
+		setResult(null);
+		setProgress({ completed: 0, total: inputItems.length });
+		setStatusText("");
+		setIsStopping(false);
 
-    try {
-      const response = await window.electron.convert.start(request);
-      if (!response.success && response.error) {
-        setProgressOpen(false);
-        window.alert(response.error);
-      }
-    } catch (error) {
-      setProgressOpen(false);
-      const message =
-        error instanceof Error ? error.message : "Failed to start conversion.";
-      window.alert(message);
-    }
-  };
+		try {
+			await tauriAPI.convert.start(request);
+		} catch (error) {
+			setProgressOpen(false);
+			const message = error instanceof Error ? error.message : "Failed to start conversion.";
+			window.alert(message);
+		}
+	};
 
-  const cancelConversion = () => {
-    setIsStopping(true);
-    window.electron.convert.cancel();
-  };
+	const cancelConversion = () => {
+		setIsStopping(true);
+		tauriAPI.convert.cancel();
+	};
 
-  const closeProgress = () => {
-    setProgressOpen(false);
-    setResult(null);
-    setProgress({ completed: 0, total: 0 });
-    setStatusText("");
-    setIsStopping(false);
-  };
+	const closeProgress = () => {
+		setProgressOpen(false);
+		setResult(null);
+		setProgress({ completed: 0, total: 0 });
+		setStatusText("");
+		setIsStopping(false);
+	};
 
-  const normalizedStatusText = useMemo(() => statusText.trim(), [statusText]);
+	const normalizedStatusText = useMemo(() => statusText.trim(), [statusText]);
 
-  const percentage = useMemo(() => {
-    if (progress.total === 0) {
-      return 0;
-    }
-    return Math.min(100, (progress.completed / progress.total) * 100);
-  }, [progress.completed, progress.total]);
+	const percentage = useMemo(() => {
+		if (progress.total === 0) {
+			return 0;
+		}
+		return Math.min(100, (progress.completed / progress.total) * 100);
+	}, [progress.completed, progress.total]);
 
-  return {
-    isConverting: isProgressOpen && !result,
-    isStopping,
-    startConversion,
-    cancelConversion,
-    closeProgress,
-    isProgressOpen,
-    progress,
-    result,
-    statusText: normalizedStatusText,
-    percentage,
-  };
+	return {
+		isConverting: isProgressOpen && !result,
+		isStopping,
+		startConversion,
+		cancelConversion,
+		closeProgress,
+		isProgressOpen,
+		progress,
+		result,
+		statusText: normalizedStatusText,
+		percentage,
+	};
 };

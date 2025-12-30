@@ -1,154 +1,166 @@
-import { useMemo, useState } from "react";
 import type { InputItem } from "@common/types";
 import type { InputState } from "@renderer/types";
 import {
-  applyRelativePaths,
-  expandFilePaths,
-  generateId,
-  getCommonBase,
-  resetInputState,
+	applyRelativePaths,
+	expandFilePaths,
+	generateId,
+	getCommonBase,
+	resetInputState,
 } from "@utils/fileSystem";
+import tauriAPI from "@utils/tauriAPI";
+import { useMemo, useState } from "react";
 
 // Simple path utilities for browser environment
 const getDirname = (filePath: string): string => {
-  const parts = filePath.split("/");
-  return parts.slice(0, -1).join("/") || "/";
+	const parts = filePath.split(/[/\\]/).filter(Boolean);
+	const separator = filePath.includes("\\") ? "\\" : "/";
+	const root = filePath.startsWith("/") ? "/" : "";
+	return root + parts.slice(0, -1).join(separator) || (separator === "\\" ? "C:\\" : "/");
 };
 
 const getBasename = (filePath: string): string => {
-  return filePath.split("/").pop() || filePath;
+	return filePath.split(/[/\\]/).pop() || filePath;
 };
 
 export const useInputItems = () => {
-  const [state, setState] = useState<InputState>(resetInputState());
-  const [isLoading, setIsLoading] = useState(false);
+	const [state, setState] = useState<InputState>(resetInputState());
+	const [isLoading, setIsLoading] = useState(false);
+	const [loadedCount, setLoadedCount] = useState(0);
 
-  const addFiles = async (paths: string[]) => {
-    if (paths.length === 0) {
-      return;
-    }
+	const addFiles = async (paths: string[]) => {
+		if (paths.length === 0) {
+			return;
+		}
 
-    setIsLoading(true);
-    try {
-      const expandedPaths = await expandFilePaths(paths);
-      if (expandedPaths.length === 0) {
-        return;
-      }
+		setIsLoading(true);
+		setLoadedCount(0);
+		try {
+			const expandedPaths = await expandFilePaths(paths);
+			if (expandedPaths.length === 0) {
+				return;
+			}
 
-      const newItemPromises = expandedPaths.map(async (filePath) => {
-        try {
-          // Get file stats asynchronously
-          const stats = await window.electron.fs.stat(filePath);
-          if (stats.isDirectory) {
-            return null;
-          }
+			const updateStateWithNewItems = (newItems: InputItem[]) => {
+				setState((previous) => {
+					const base = previous.commonBase;
+					const existingPaths = new Set(previous.items.map((item) => item.sourcePath));
+					const uniqueNewItems = newItems.filter((item) => !existingPaths.has(item.sourcePath));
 
-          const isProcessed = await window.electron.fs.checkProcessed(filePath);
+					if (uniqueNewItems.length === 0) return previous;
 
-          return {
-            id: generateId(),
-            sourcePath: filePath,
-            displayName: getBasename(filePath),
-            relativePath: "",
-            sizeBytes: stats.size,
-            lastModified: stats.mtime,
-            isProcessed,
-          } as InputItem;
-        } catch (error) {
-          console.warn("Skipping file", filePath, error);
-          return null;
-        }
-      });
+					const updatedItems = [...previous.items, ...uniqueNewItems];
 
-      const newItems = (await Promise.all(newItemPromises)).filter(
-        (item): item is InputItem => item !== null
-      );
+					let resolvedBase = base;
+					if (!resolvedBase && uniqueNewItems.length > 0) {
+						resolvedBase = getDirname(uniqueNewItems[0].sourcePath);
+					}
 
-      if (newItems.length === 0) {
-        return;
-      }
+					for (const item of uniqueNewItems) {
+						const parentDir = getDirname(item.sourcePath);
+						resolvedBase = resolvedBase ? getCommonBase(resolvedBase, parentDir) : parentDir;
+					}
 
-      setState((previous) => {
-        const base = previous.commonBase;
-        const existingPaths = new Set(
-          previous.items.map((item) => item.sourcePath)
-        );
+					return {
+						items: applyRelativePaths(updatedItems, resolvedBase),
+						commonBase: resolvedBase,
+					};
+				});
+			};
 
-        const uniqueNewItems = newItems.filter(
-          (item) => !existingPaths.has(item.sourcePath)
-        );
+			let totalProcessed = 0;
 
-        if (uniqueNewItems.length === 0) {
-          return previous;
-        }
+			for (let i = 0; i < expandedPaths.length; ) {
+				const chunkSize = totalProcessed < 300 ? 50 : 100;
+				const chunkPaths = expandedPaths.slice(i, i + chunkSize);
 
-        // Calculate new common base
-        let newBase = base;
-        for (const item of uniqueNewItems) {
-          const parentDir = getDirname(item.sourcePath);
-          newBase = newBase ? getCommonBase(newBase, parentDir) : parentDir;
-        }
+				const chunkResults = await Promise.all(
+					chunkPaths.map(async (filePath) => {
+						try {
+							const stats = await tauriAPI.fs.stat(filePath);
+							if (stats.isDirectory) return null;
 
-        const updatedItems = [...previous.items, ...uniqueNewItems];
-        // If we had no items before, usage of newBase is simple.
-        // If we had items, 'newBase' should already be the common base of all including new ones,
-        // IF we iterated correctly.
-        // The previous logic was incremental: newBase = base ? getCommonBase(base, parentDir) : parentDir
-        // Let's replicate that carefully.
+							return {
+								id: generateId(),
+								sourcePath: filePath,
+								displayName: getBasename(filePath),
+								relativePath: "",
+								sizeBytes: stats.size,
+								lastModified: stats.mtime,
+								isProcessed: false, // Default to false, will be updated in background
+							} as InputItem;
+						} catch (error) {
+							console.warn("Skipping file", filePath, error);
+							return null;
+						}
+					}),
+				);
 
-        // Re-calculate common base for ALL items to be safe and simple
-        // Or stick to the incremental logic.
-        // Incremental logic:
-        let resolvedBase = base;
-        // If it was empty, start with the first new item's dir
-        if (!resolvedBase && uniqueNewItems.length > 0) {
-          resolvedBase = getDirname(uniqueNewItems[0].sourcePath);
-        }
+				const validItems = chunkResults.filter((item): item is InputItem => item !== null);
 
-        for (const item of uniqueNewItems) {
-          const parentDir = getDirname(item.sourcePath);
-          resolvedBase = resolvedBase
-            ? getCommonBase(resolvedBase, parentDir)
-            : parentDir;
-        }
+				if (validItems.length > 0) {
+					totalProcessed += validItems.length;
+					updateStateWithNewItems(validItems);
+					setLoadedCount(totalProcessed);
+				}
 
-        // However, if previous items existed, we merge with them.
-        // The variable 'newBase' in my loop above tried to do this.
+				i += chunkSize;
 
-        return {
-          items: applyRelativePaths(updatedItems, resolvedBase),
-          commonBase: resolvedBase,
-        };
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+				if (i < 100) {
+					await new Promise((resolve) => setTimeout(resolve, 10));
+				}
+			}
 
-  const removeItem = (id: string) => {
-    setState((previous) => {
-      const items = previous.items.filter((item) => item.id !== id);
-      const commonBase = items.length === 0 ? null : previous.commonBase;
-      return {
-        items: applyRelativePaths(items, commonBase),
-        commonBase,
-      };
-    });
-  };
+			// Background update for processed status
+			if (expandedPaths.length > 0) {
+				tauriAPI.fs
+					.checkProcessedBatch(expandedPaths)
+					.then((processedResults) => {
+						const processedMap = new Map(processedResults.map((r) => [r.path, r.isProcessed]));
+						setState((previous) => ({
+							...previous,
+							items: previous.items.map((item) => ({
+								...item,
+								isProcessed: processedMap.has(item.sourcePath)
+									? processedMap.get(item.sourcePath)
+									: item.isProcessed,
+							})),
+						}));
+					})
+					.catch((err) => {
+						console.error("Background processed check failed:", err);
+					});
+			}
+		} finally {
+			setIsLoading(false);
+			setLoadedCount(0);
+		}
+	};
 
-  const clearItems = () => {
-    setState(resetInputState());
-  };
+	const removeItem = (id: string) => {
+		setState((previous) => {
+			const items = previous.items.filter((item) => item.id !== id);
+			const commonBase = items.length === 0 ? null : previous.commonBase;
+			return {
+				items: applyRelativePaths(items, commonBase),
+				commonBase,
+			};
+		});
+	};
 
-  const hasItems = useMemo(() => state.items.length > 0, [state.items.length]);
+	const clearItems = () => {
+		setState(resetInputState());
+	};
 
-  return {
-    items: state.items,
-    commonBase: state.commonBase,
-    addFiles,
-    removeItem,
-    clearItems,
-    hasItems,
-    isLoading,
-  };
+	const hasItems = useMemo(() => state.items.length > 0, [state.items.length]);
+
+	return {
+		items: state.items,
+		commonBase: state.commonBase,
+		addFiles,
+		removeItem,
+		clearItems,
+		hasItems,
+		isLoading,
+		loadedCount,
+	};
 };

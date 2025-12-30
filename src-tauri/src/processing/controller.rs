@@ -1,0 +1,148 @@
+use crate::processing::worker::{Worker, WorkerResult};
+use crate::types::*;
+use std::sync::atomic::{AtomicBool, Ordering, AtomicU64, AtomicUsize};
+use std::sync::{Arc, Mutex};
+use tauri::{Emitter, Manager, Window};
+use std::collections::HashSet;
+use tokio::sync::Semaphore;
+
+pub struct Controller {
+    window: Window,
+    cancel_flag: Arc<AtomicBool>,
+}
+
+impl Controller {
+    pub fn new(window: Window, cancel_flag: Arc<AtomicBool>) -> Self {
+        Self { window, cancel_flag }
+    }
+    
+    pub async fn start_processing(&self, request: ProcessingRequest) -> ProcessingResult {
+        self.cancel_flag.store(false, Ordering::SeqCst);
+        
+        let total = request.items.len();
+        let completed = Arc::new(AtomicUsize::new(0));
+        let total_saved = Arc::new(AtomicU64::new(0));
+        let active_items = Arc::new(Mutex::new(HashSet::new()));
+        
+        let concurrency = request.settings.advanced.concurrency;
+        let semaphore = Arc::new(Semaphore::new(concurrency));
+        
+        let mut result = ProcessingResult {
+            success_count: 0,
+            skipped_count: 0,
+            failed_count: 0,
+            errors: Vec::new(),
+            canceled: false,
+            saved_bytes: 0,
+        };
+
+        let app_handle = self.window.app_handle().clone();
+        let mut tasks = Vec::new();
+
+        for item in request.items {
+            let semaphore = semaphore.clone();
+            let cancel_flag = self.cancel_flag.clone();
+            let completed = completed.clone();
+            let total_saved = total_saved.clone();
+            let active_items = active_items.clone();
+            let settings = request.settings.clone();
+            let app_handle = app_handle.clone();
+            let window = self.window.clone();
+
+            let task = tokio::spawn(async move {
+                let _permit = semaphore.acquire().await.unwrap();
+                
+                if cancel_flag.load(Ordering::SeqCst) {
+                    return (item, WorkerResult {
+                        success: false,
+                        skipped: false,
+                        error: Some("Cancelled".to_string()),
+                        output_path: None,
+                        saved_bytes: None,
+                    });
+                }
+
+                // Add to active items
+                {
+                    let mut active = active_items.lock().unwrap();
+                    active.insert(item.id.clone());
+                    
+                    // Send progress update
+                    let active_ids = active.iter().cloned().collect::<Vec<_>>();
+                    let _ = window.emit("convert:progress", ProcessingProgress {
+                        completed: completed.load(Ordering::SeqCst),
+                        total,
+                        current_item: Some(item.clone()),
+                        current_output_path: None,
+                        message: Some(format!("Converting {}...", item.display_name)),
+                        processed_item_id: None,
+                        saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
+                        active_item_ids: Some(active_ids),
+                    });
+                }
+
+                // Process item
+                let worker = Worker::new(
+                    item.clone(),
+                    settings,
+                    cancel_flag.clone(),
+                    app_handle,
+                );
+                
+                let worker_result = worker.process().await;
+
+                // Update counters and active items
+                {
+                    let mut active = active_items.lock().unwrap();
+                    active.remove(&item.id);
+                    
+                    let comp = completed.fetch_add(1, Ordering::SeqCst) + 1;
+                    
+                    if let Some(saved) = worker_result.saved_bytes {
+                        total_saved.fetch_add(saved, Ordering::SeqCst);
+                    }
+
+                    // Send progress update
+                    let active_ids = active.iter().cloned().collect::<Vec<_>>();
+                    let _ = window.emit("convert:progress", ProcessingProgress {
+                        completed: comp,
+                        total,
+                        current_item: Some(item.clone()),
+                        current_output_path: worker_result.output_path.clone(),
+                        message: None,
+                        processed_item_id: Some(item.id.clone()),
+                        saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
+                        active_item_ids: Some(active_ids),
+                    });
+                }
+
+                (item, worker_result)
+            });
+            tasks.push(task);
+        }
+
+        for task in tasks {
+            if let Ok((item, worker_result)) = task.await {
+                if worker_result.success {
+                    result.success_count += 1;
+                    if let Some(saved) = worker_result.saved_bytes {
+                        result.saved_bytes += saved;
+                    }
+                } else if worker_result.skipped {
+                    result.skipped_count += 1;
+                } else {
+                    result.failed_count += 1;
+                    if let Some(error) = worker_result.error {
+                        result.errors.push(ProcessingError { item, error });
+                    }
+                }
+            }
+        }
+
+        if self.cancel_flag.load(Ordering::SeqCst) {
+            result.canceled = true;
+        }
+        
+        result
+    }
+}

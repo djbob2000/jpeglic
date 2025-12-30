@@ -6,28 +6,31 @@ import { resolve } from "path";
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   base: "./",
-  publicDir: resolve(__dirname, "assets"),
+  root: "src/renderer",
+  publicDir: "../../assets",
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
   build: {
-    outDir: "dist/renderer",
+    outDir: "../../dist/renderer",
     emptyOutDir: false,
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, "src/renderer/index.html"),
-      },
+      input: "src/renderer/index.html",
     },
   },
   resolve: {
     alias: {
-      "@": resolve(__dirname, "src"),
-      "@renderer": resolve(__dirname, "src/renderer"),
-      "@components": resolve(__dirname, "src/renderer/components"),
-      "@hooks": resolve(__dirname, "src/renderer/hooks"),
-      "@utils": resolve(__dirname, "src/renderer/utils"),
-      "@constants": resolve(__dirname, "src/renderer/constants"),
-      "@views": resolve(__dirname, "src/renderer/views"),
-      "@styles": resolve(__dirname, "src/renderer/styles"),
-      "@assets": resolve(__dirname, "src/renderer/assets"),
-      "@common": resolve(__dirname, "src/common"),
+      "@": resolve("src"),
+      "@renderer": resolve("src/renderer"),
+      "@components": resolve("src/renderer/components"),
+      "@hooks": resolve("src/renderer/hooks"),
+      "@utils": resolve("src/renderer/utils"),
+      "@constants": resolve("src/renderer/constants"),
+      "@views": resolve("src/renderer/views"),
+      "@styles": resolve("src/renderer/styles"),
+      "@assets": resolve("src/renderer/assets"),
+      "@common": resolve("src/common"),
     },
   },
 });

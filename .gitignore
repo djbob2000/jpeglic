@@ -1,18 +1,38 @@
+# Tauri/Rust
+/src-tauri/target/
+/src-tauri/gen/
+target/
+
+# Node
 node_modules/
 dist/
+dist-tauri/
 release/
-*.log
+
+# OS
 .DS_Store
 Thumbs.db
 *.swp
 *.swo
 *~
+
+# Logs
+*.log
+*.txt
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage
+coverage/
+
+# Environment
 .env
 .env.local
+.env*.local
+
+# IDE
 .vscode/*
 !.vscode/settings.json
 .idea/
 *.iml
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*

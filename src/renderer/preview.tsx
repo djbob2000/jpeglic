@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { InputItem } from "@common/types";
+import tauriAPI from "./utils/tauriAPI";
 
 type PreviewData = {
   data: string;
@@ -152,7 +153,7 @@ const PreviewApp: React.FC = () => {
 
       setStatus({ state: "loading", item: currentItem });
       try {
-        const result = await window.electron.preview.get(
+        const result = await tauriAPI.preview.get(
           currentItem.sourcePath
         );
         if (!cancelled) {

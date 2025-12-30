@@ -4,8 +4,14 @@ import App from "./App";
 
 const container = document.getElementById("root");
 if (!container) {
-	throw new Error("Root container not found");
+    throw new Error("Root container not found");
 }
+
+// Debug: Check if Tauri API is available
+console.log('Tauri API check:', {
+    hasTauri: typeof window !== 'undefined' && '__TAURI__' in window,
+    hasInvoke: typeof window !== 'undefined' && '__TAURI_INVOKE__' in window
+});
 
 const root = createRoot(container);
 

@@ -1,4 +1,23 @@
-export type OutputFormat = "jpeg" | "png" | "webp" | "avif" | "jxl";
+export type OutputFormat = "jpeg";
+
+export interface ProcessedStatus {
+  path: string;
+  isProcessed: boolean;
+}
+
+export interface FileStats {
+  isFile: boolean;
+  isDirectory: boolean;
+  size: number;
+  mtime: number;
+}
+
+export interface DirEntry {
+  name: string;
+  isFile: boolean;
+  isDirectory: boolean;
+}
+
 
 export interface AdvancedSettings {
   concurrency: number;
@@ -66,6 +85,7 @@ export interface ProcessingProgress {
   message?: string;
   processedItemId?: string; // ID of item that was just processed (success or skipped)
   savedBytes?: number; // Total bytes saved so far
+  activeItemIds?: string[];
 }
 
 export interface ProcessingResult {
@@ -77,73 +97,24 @@ export interface ProcessingResult {
   savedBytes: number;
 }
 
-export interface ElectronAPI {
-  platform: NodeJS.Platform;
-  isMac: boolean;
-  convert: {
-    start: (
-      data: ProcessingRequest
-    ) => Promise<{ success: boolean; error?: string }>;
-    cancel: () => Promise<void>;
-    onProgress: (
-      callback: (progress: ProcessingProgress) => void
-    ) => () => void;
-    onComplete: (callback: (result: ProcessingResult) => void) => () => void;
-    onError: (callback: (error: { message: string }) => void) => () => void;
-  };
-  dialog: {
-    openFiles: () => Promise<string[]>;
-    openDirectory: () => Promise<string | null>;
-  };
-  settings: {
-    get: () => Promise<unknown>;
-    save: (settings: unknown) => Promise<void>;
-    reset: () => Promise<void>;
-  };
-  window: {
-    minimize: () => Promise<void>;
-    maximize: () => Promise<void>;
-    close: () => Promise<void>;
-    setProgressBar: (progress: number) => Promise<void>;
-  };
-  update: {
-    check: () => Promise<void>;
-    download: () => Promise<void>;
-    install: () => Promise<void>;
-    onStatus: (
-      callback: (status: { event: string; data?: unknown }) => void
-    ) => () => void;
-  };
-  preview: {
-    get: (filePath: string) => Promise<{
-      data: string;
-      metadata: {
-        width?: number;
-        height?: number;
-        format?: string;
-        size?: number;
-        birthtime?: number;
-        exif?: Record<string, any>;
-      };
-    } | null>;
-  };
-  fs: {
-    stat: (path: string) => Promise<{
-      isFile: boolean;
-      isDirectory: boolean;
-      size: number;
-      mtime: number;
-    }>;
-    readdir: (path: string) => Promise<
-      Array<{
-        name: string;
-        isFile: boolean;
-        isDirectory: boolean;
-      }>
-    >;
-    checkProcessed: (path: string) => Promise<boolean>;
-  };
-  utils: {
-    getPathForFile: (file: File) => string;
-  };
+export interface PreviewMetadata {
+  width?: number;
+  height?: number;
+  format?: string;
+  size?: number;
+  birthtime?: number;
+  exif?: Record<string, unknown>;
 }
+
+export interface PreviewData {
+  data: string;
+  metadata: PreviewMetadata;
+}
+
+export interface AppSettings {
+  output: OutputSettings;
+  advanced: AdvancedSettings;
+  window: WindowSettings;
+}
+
+
