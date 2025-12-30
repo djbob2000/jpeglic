@@ -1,4 +1,4 @@
-# Home Archive Converter
+# Jpeglic • Best Jpegli Converter
 
 Modern and fast image converter built with **Tauri** and **React**, designed to high-quality JPEG conversion.
 

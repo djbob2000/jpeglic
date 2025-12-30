@@ -1,5 +1,5 @@
 {
-  "name": "home-archive-converter",
+  "name": "jpeglic-converter",
   "type": "module",
   "repository": {
     "type": "git",
@@ -24,7 +24,7 @@
     "jpeg-xl",
     "avif"
   ],
-  "author": "Home Archive Converter Team",
+  "author": "Jpeglic Team",
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",

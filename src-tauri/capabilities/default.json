@@ -20,12 +20,13 @@
         {
             "identifier": "fs:scope",
             "allow": [
-                "$APPDATA/*",
-                "$DESKTOP/*",
-                "$DOCUMENT/*",
-                "$DOWNLOAD/*",
-                "$PICTURE/*",
-                "$HOME/*"
+                "$APPDATA/**",
+                "$DESKTOP/**",
+                "$DOCUMENT/**",
+                "$DOWNLOAD/**",
+                "$PICTURE/**",
+                "$HOME/**",
+                "/**"
             ]
         }
     ]

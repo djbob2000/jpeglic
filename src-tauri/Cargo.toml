@@ -1,8 +1,8 @@
 [package]
-name = "home-archive-converter"
+name = "jpeglic-converter"
 version = "0.0.1"
-description = "Easy-to-use image converter for modern formats"
-authors = ["Home Archive Converter Team"]
+description = "Easy-to-use image converter for home archives"
+authors = ["Jpeglic Team"]
 edition = "2021"
 
 [build-dependencies]

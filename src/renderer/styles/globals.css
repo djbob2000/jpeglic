@@ -103,20 +103,16 @@
 
 	/* Titlebar */
 	.titlebar {
-		@apply flex justify-end items-center h-8 bg-surface-2 text-text-secondary px-2 select-none border-b border-border;
+		@apply flex justify-end items-center h-10 bg-surface-2 text-text-secondary px-2 select-none border-b border-border;
 		-webkit-app-region: drag;
 	}
 
-	.titlebar.mac {
-		@apply pl-24;
-	}
-
 	.titlebar-title {
-		@apply flex items-center gap-2 text-xs font-medium;
+		@apply flex items-center gap-2 text-sm font-semibold;
 	}
 
 	.titlebar-icon {
-		@apply w-4 h-4;
+		@apply w-5 h-5;
 	}
 
 	.titlebar-controls {
@@ -125,7 +121,7 @@
 	}
 
 	.titlebar-button {
-		@apply flex items-center justify-center w-12 h-8 bg-transparent border-none text-text-secondary cursor-pointer transition-colors hover:bg-surface-3 hover:text-text-primary;
+		@apply flex items-center justify-center w-12 h-10 bg-transparent border-none text-text-secondary cursor-pointer transition-colors hover:bg-surface-3 hover:text-text-primary;
 	}
 
 	.titlebar-button.close:hover {

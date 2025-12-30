@@ -6,8 +6,8 @@ export const Titlebar = () => {
 	return (
 		<header className={cn("titlebar relative", isMac && "mac")}>
 			<div className="titlebar-title absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-				<img src="../../icons/logo.svg" alt="Home Archive Converter" className="titlebar-icon" />
-				<span>Home Archive Converter</span>
+				<img src="/icons/logo.svg" alt="Jpeglic • Best Jpegli Converter" className="titlebar-icon" />
+				<span>Jpeglic • Best Jpegli Converter</span>
 			</div>
 			{!isMac && (
 				<div className="titlebar-controls">

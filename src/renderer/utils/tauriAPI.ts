@@ -9,6 +9,7 @@ import type {
 	ProcessingResult,
 } from "@common/types";
 import { invoke } from "@tauri-apps/api/core";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
@@ -16,6 +17,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 export const tauriAPI = {
 	platform: navigator.platform,
 	isMac: navigator.platform.toLowerCase().includes("mac"),
+	convertFileSrc,
 
 	convert: {
 		start: (data: ProcessingRequest) =>

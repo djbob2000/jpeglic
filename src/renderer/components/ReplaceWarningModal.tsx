@@ -28,8 +28,8 @@ export const ReplaceWarningModal = ({
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
 			<div className="w-full max-w-md rounded-2xl bg-surface-1 p-8 shadow-2xl border border-border">
 				{/* Icon */}
-				<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
-					<span className="text-2xl font-bold text-white">Home Archive Converter</span>
+				<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-primary/80 shadow-lg shadow-primary/20 text-center">
+					<span className="text-sm font-bold text-white px-2">Jpeglic</span>
 				</div>
 
 				{/* Title */}
@@ -39,8 +39,8 @@ export const ReplaceWarningModal = ({
 
 				{/* Description */}
 				<p className="mb-8 text-center text-sm text-text-secondary leading-relaxed">
-					Home Archive Converter will overwrite your original photo and video files, replacing them
-					with Home Archive Converter versions
+					Jpeglic will overwrite your original photo files, replacing them
+					with Jpegli optimized versions
 				</p>
 
 				{/* Don't show again */}
