@@ -107,7 +107,7 @@ export interface PreviewMetadata {
 }
 
 export interface PreviewData {
-  data: string;
+  url: string;
   metadata: PreviewMetadata;
 }
 

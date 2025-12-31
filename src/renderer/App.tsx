@@ -33,6 +33,7 @@ const App = () => {
 		percentage,
 		isConverting,
 		isStopping,
+		lastOutputPath,
 	} = useConversion({
 		inputItems: items,
 		settings,
@@ -146,6 +147,7 @@ const App = () => {
 								settings={settings}
 								isConverting={isConverting}
 								percentage={percentage}
+								lastProcessedPath={lastOutputPath}
 							/>
 						)}
 					</div>

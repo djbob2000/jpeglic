@@ -113,21 +113,11 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
         eprintln!("ERROR: Failed to extract EXIF from any method for: {}", file_path);
     }
 
-    // 4. Determine image source logic
-    let data_url = if matches!(format_ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "gif" | "bmp" | "svg") {
-        // SUPER FAST: Read raw file bytes directly. Let the browser decode it!
-        // No heavy image::decode() in Rust.
-        let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
-        let base64_data = general_purpose::STANDARD.encode(&bytes);
-        let mime_type = match format_ext.as_str() {
-            "png" => "image/png",
-            "webp" => "image/webp",
-            "gif" => "image/gif",
-            "svg" => "image/svg+xml",
-            "bmp" => "image/bmp",
-            _ => "image/jpeg",
-        };
-        format!("data:{};base64,{}", mime_type, base64_data)
+    // 4. Determine image source logic (Native URL vs Base64)
+    let url = if matches!(format_ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "gif" | "bmp" | "svg") {
+        // GPU NATIVE: Return the file path itself. 
+        // The frontend will use convertFileSrc to make it a browser-safe asset:// URL.
+        file_path
     } else if let Some(thumb) = thumbnail_data {
         // Use embedded thumbnail from EXIF (for RAW files)
         let base64_data = general_purpose::STANDARD.encode(&thumb);
@@ -150,7 +140,7 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
     };
 
     Ok(PreviewData {
-        data: data_url,
+        url,
         metadata: PreviewMetadata {
             width,
             height,

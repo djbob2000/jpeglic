@@ -6,7 +6,7 @@ import { type DragEvent, type KeyboardEvent, useEffect, useRef, useState } from 
 import { ProcessingStatus } from "./ProcessingStatus";
 
 interface PreviewData {
-	data: string;
+	url: string;
 	metadata: {
 		width?: number;
 		height?: number;
@@ -25,6 +25,7 @@ interface PreviewPanelProps {
 	settings: ProcessingSettings;
 	isConverting: boolean;
 	percentage: number;
+	lastProcessedPath?: string | null;
 }
 
 export const PreviewPanel = ({
@@ -35,6 +36,7 @@ export const PreviewPanel = ({
 	settings,
 	isConverting,
 	percentage,
+	lastProcessedPath,
 }: PreviewPanelProps) => {
 	const [previewData, setPreviewData] = useState<PreviewData | null>(null);
 	const [previousData, setPreviousData] = useState<PreviewData | null>(null);
@@ -329,9 +331,9 @@ export const PreviewPanel = ({
 				)}
 
 				{/* Previous Image (Background during transition) */}
-				{previousData?.data && (
+				{previousData?.url && (
 					<img
-						src={previousData.data}
+						src={tauriAPI.convertFileSrc(previousData.url)}
 						alt=""
 						className="absolute inset-0 h-full w-full object-contain"
 						aria-hidden="true"
@@ -339,9 +341,17 @@ export const PreviewPanel = ({
 				)}
 
 				{/* Current Image (Foreground) */}
-				{previewData?.data ? (
+				{(previewData?.url || lastProcessedPath) ? (
 					<img
-						src={previewData.data}
+						src={
+							isConverting && lastProcessedPath
+								? `${tauriAPI.convertFileSrc(lastProcessedPath)}?t=${Date.now()}`
+								: previewData?.url.startsWith("data:")
+									? previewData.url
+									: previewData?.url
+										? tauriAPI.convertFileSrc(previewData.url)
+										: ""
+						}
 						alt={activeItem.displayName}
 						className={cn(
 							"absolute inset-0 h-full w-full object-contain transition-opacity ease-in-out",

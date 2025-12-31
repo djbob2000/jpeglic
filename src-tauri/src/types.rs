@@ -130,7 +130,7 @@ pub struct DirEntry {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PreviewData {
-    pub data: String,
+    pub url: String,
     pub metadata: PreviewMetadata,
 }
 

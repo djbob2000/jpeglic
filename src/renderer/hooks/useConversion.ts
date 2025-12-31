@@ -29,6 +29,8 @@ export const useConversion = ({
 	const [statusText, setStatusText] = useState("");
 	const [result, setResult] = useState<ProcessingResult | null>(null);
 	const [isStopping, setIsStopping] = useState(false);
+	const [lastOutputPath, setLastOutputPath] = useState<string | null>(null);
+
 	const settingsRef = useRef(settings);
 	const successCallbackRef = useRef(onSuccessfulConversion);
 	const itemProcessedCallbackRef = useRef(onItemProcessed);
@@ -73,7 +75,12 @@ export const useConversion = ({
 				tauriAPI.window.setProgressBar(update.completed / update.total);
 			}
 
+			if (update.currentOutputPath) {
+				setLastOutputPath(update.currentOutputPath);
+			}
+
 			setProgress(update);
+
 			if (update.message) {
 				setStatusText(update.message);
 			} else if (update.currentItem) {
@@ -116,6 +123,7 @@ export const useConversion = ({
 
 		setProgressOpen(true);
 		setResult(null);
+		setLastOutputPath(null);
 		setProgress({ completed: 0, total: inputItems.length });
 		setStatusText("");
 		setIsStopping(false);
@@ -162,5 +170,6 @@ export const useConversion = ({
 		result,
 		statusText: normalizedStatusText,
 		percentage,
+		lastOutputPath,
 	};
 };
