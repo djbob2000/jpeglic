@@ -2,7 +2,7 @@ export const AboutTab = () => (
 	<div className="panel-container">
 		<div className="panel">
 			<h2 className="text-2xl font-semibold text-[color:var(--color-primary)] mb-2">
-				Jpeglic • Best Jpegli Converter
+				Jpeglic • Best jpg converter
 			</h2>
 			<p className="panel-text mb-4">Version 1.0.0</p>
 			<p className="panel-text mb-8">Easy-to-use image converter for modern formats.</p>

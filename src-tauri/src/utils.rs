@@ -29,6 +29,7 @@ pub enum AppError {
 pub type Result<T> = std::result::Result<T, AppError>;
 
 /// Resolve platform-specific binary path
+#[allow(dead_code)]
 pub fn resolve_binary(app: &tauri::AppHandle, name: &str) -> Result<PathBuf> {
     // Check for both plain name and sidecar name with target triple
     // In dev/sidecar mode, files usually have the target triple suffix
@@ -75,6 +76,7 @@ pub fn resolve_binary(app: &tauri::AppHandle, name: &str) -> Result<PathBuf> {
 }
 
 /// Create a process::Command that doesn't show a window on Windows
+#[allow(dead_code)]
 pub fn create_windowless_command<S: AsRef<std::ffi::OsStr>>(program: S) -> std::process::Command {
     #[allow(unused_mut)]
     let mut command = std::process::Command::new(program);

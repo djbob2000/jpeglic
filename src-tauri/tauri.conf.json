@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
-    "productName": "Jpeglic • Best Jpegli Converter",
+    "productName": "Jpeglic • Best jpg converter",
     "version": "0.0.1",
     "identifier": "com.jpeglic.converter",
     "build": {
@@ -32,7 +32,7 @@
         "windows": [
             {
                 "label": "main",
-                "title": "Jpeglic • Best Jpegli Converter",
+                "title": "Jpeglic • Best jpg converter",
                 "width": 900,
                 "height": 600,
                 "minWidth": 800,

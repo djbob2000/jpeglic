@@ -1,4 +1,3 @@
-import type React from "react";
 import { cn } from "@utils/cn";
 import tauriAPI from "@utils/tauriAPI";
 
@@ -10,9 +9,12 @@ export const Titlebar = () => {
 			data-tauri-drag-region
 			className={cn("titlebar relative flex items-center justify-between", isMac && "mac")}
 		>
-			<div className="flex flex-1 items-center justify-center pointer-events-none" data-tauri-drag-region>
+			<div
+				className="flex flex-1 items-center justify-center pointer-events-none"
+				data-tauri-drag-region
+			>
 				<img src="/icons/logo.svg" alt="" className="titlebar-icon mr-2" />
-				<span className="text-sm font-semibold">Jpeglic • Best Jpegli Converter</span>
+				<span className="text-sm font-semibold">Jpeglic • Best jpg converter</span>
 			</div>
 			{!isMac && (
 				<div className="titlebar-controls relative z-10 flex">

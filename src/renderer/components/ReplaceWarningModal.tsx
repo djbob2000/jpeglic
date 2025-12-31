@@ -39,8 +39,8 @@ export const ReplaceWarningModal = ({
 
 				{/* Description */}
 				<p className="mb-8 text-center text-sm text-text-secondary leading-relaxed">
-					Jpeglic will overwrite your original photo files, replacing them
-					with Jpegli optimized versions
+					Jpeglic will overwrite your original photo files, replacing them with Jpegli optimized
+					versions
 				</p>
 
 				{/* Don't show again */}

@@ -1,4 +1,4 @@
-# Jpeglic • Best Jpegli Converter
+# Jpeglic • Best jpg converter
 
 Modern and fast image converter built with **Tauri** and **React**, designed to high-quality JPEG conversion.
 

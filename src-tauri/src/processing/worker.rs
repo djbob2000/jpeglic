@@ -10,6 +10,7 @@ pub struct Worker {
     item: InputItem,
     settings: ProcessingSettings,
     cancel_flag: Arc<AtomicBool>,
+    #[allow(dead_code)]
     app: tauri::AppHandle,
 }
 
@@ -142,7 +143,7 @@ impl Worker {
             encoder = encoder.quality(jpegli::Quality::Distance(1.0))
                              .subsampling(jpegli::Subsampling::S420);
         } else {
-            encoder = encoder.quality(jpegli::Quality::Distance(self.settings.output.cjpegli_distance as f32));
+            encoder = encoder.quality(jpegli::Quality::Distance(self.settings.output.cjpegli_distance));
         }
 
         // Encode
