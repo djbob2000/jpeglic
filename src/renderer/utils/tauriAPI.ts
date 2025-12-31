@@ -16,7 +16,9 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 // Tauri API Bridge
 export const tauriAPI = {
 	platform: navigator.platform,
-	isMac: navigator.platform.toLowerCase().includes("mac"),
+	isMac:
+		navigator.platform.toLowerCase().includes("mac") ||
+		navigator.userAgent.toLowerCase().includes("mac"),
 	convertFileSrc,
 
 	convert: {
@@ -90,6 +92,8 @@ export const tauriAPI = {
 		close: () => invoke("close_window"),
 
 		setProgressBar: (progress: number) => invoke("set_progress_bar", { progress }),
+
+		startDragging: () => getCurrentWindow().startDragging(),
 	},
 
 	fs: {

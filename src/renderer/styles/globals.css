@@ -103,12 +103,16 @@
 
 	/* Titlebar */
 	.titlebar {
-		@apply flex justify-end items-center h-10 bg-surface-2 text-text-secondary px-2 select-none border-b border-border;
+		@apply flex items-center h-8 bg-surface-2 text-text-secondary px-2 select-none border-b border-border;
 		-webkit-app-region: drag;
 	}
 
+	.titlebar.mac {
+		@apply pl-20; /* Space for traffic lights */
+	}
+
 	.titlebar-title {
-		@apply flex items-center gap-2 text-sm font-semibold;
+		@apply flex items-center gap-2 text-xs font-semibold;
 	}
 
 	.titlebar-icon {
@@ -122,6 +126,7 @@
 
 	.titlebar-button {
 		@apply flex items-center justify-center w-12 h-10 bg-transparent border-none text-text-secondary cursor-pointer transition-colors hover:bg-surface-3 hover:text-text-primary;
+		-webkit-app-region: no-drag;
 	}
 
 	.titlebar-button.close:hover {
