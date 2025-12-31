@@ -113,6 +113,7 @@ export const PreviewPanel = ({
 				.get(filePath)
 				.then((data) => {
 					if (!ignore) {
+						console.log("Preview Data Loaded:", data);
 						setPreviewData(data);
 						setIsDataLoading(false);
 					}
@@ -263,6 +264,8 @@ export const PreviewPanel = ({
 	const shutterSpeed = exif?.ExposureTime;
 	const iso = exif?.ISO;
 	const lens = exif?.LensModel || exif?.Lens;
+	const focalLength = exif?.FocalLength;
+	const exposureBias = exif?.ExposureBias;
 
 	return (
 		<section
@@ -406,7 +409,13 @@ export const PreviewPanel = ({
 
 					{/* EXIF Data - Reserved Height Container */}
 					<div className="w-full max-w-2xl min-h-14 flex items-center justify-center">
-						{(camera || aperture || shutterSpeed || iso || lens) && (
+						{(camera ||
+							aperture ||
+							shutterSpeed ||
+							iso ||
+							lens ||
+							focalLength ||
+							exposureBias) && (
 							<div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-text-secondary border-t border-border/50 pt-3 w-full animate-in fade-in duration-300">
 								{camera && (
 									<div className="flex items-center gap-1.5" title="Camera">
@@ -481,6 +490,22 @@ export const PreviewPanel = ({
 									<div className="flex items-center gap-1.5" title="ISO">
 										<span className="font-medium text-text-tertiary">ISO</span>
 										<span>{iso}</span>
+									</div>
+								)}
+								{focalLength && (
+									<div className="flex items-center gap-1.5" title="Focal Length">
+										<svg className="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<title>Focal Length</title>
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 19l-6-6" />
+										</svg>
+										<span>{focalLength}</span>
+									</div>
+								)}
+								{exposureBias && exposureBias !== "0" && (
+									<div className="flex items-center gap-1.5" title="Exposure Bias">
+										<span className="font-medium text-text-tertiary">ev</span>
+										<span>{exposureBias}</span>
 									</div>
 								)}
 							</div>
