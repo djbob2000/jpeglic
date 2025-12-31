@@ -10,8 +10,8 @@ export const defaultSettings: ProcessingSettings = {
     destination: "source",
     customDirectory: undefined,
     keepFolderStructure: true,
-    visuallyLossless: true,
-    cjpegliDistance: 1.0,
+    visuallyLossless: false,
+    cjpegliDistance: 3.0,
   },
   advanced: {
     concurrency: 4,

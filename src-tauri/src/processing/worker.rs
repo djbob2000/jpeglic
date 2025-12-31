@@ -129,8 +129,10 @@ impl Worker {
     async fn export_jpeg(&self, output_path: &str) -> Result<()> {
         // use jpegli::{Encoder, Quality}; // Old import
         
-        // Load image (using image crate)
-        let img = ImageReader::open(&self.item.source_path)?.decode()?;
+        // Load image (detecting format by content, not extension)
+        let img = ImageReader::open(&self.item.source_path)?
+            .with_guessed_format()?
+            .decode()?;
         let rgb_img = img.to_rgb8();
         let (width, height) = rgb_img.dimensions();
 
