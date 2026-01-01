@@ -1,20 +1,20 @@
-import type { ProcessingSettings } from "@common/types";
+import type { AppSettings } from "@common/types";
 
 export const mergeSettings = (
-	base: ProcessingSettings,
-	incoming?: Partial<ProcessingSettings>,
-): ProcessingSettings => ({
+	base: AppSettings,
+	incoming?: Partial<AppSettings>,
+): AppSettings => ({
 	output: {
 		...base.output,
 		...(incoming?.output ?? {}),
 	},
-	downscale: {
-		...base.downscale,
-		...(incoming?.downscale ?? {}),
-	},
 	advanced: {
 		...base.advanced,
 		...(incoming?.advanced ?? {}),
+	},
+	window: {
+		...base.window,
+		...(incoming?.window ?? {}),
 	},
 });
 

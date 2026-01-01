@@ -36,15 +36,12 @@ impl SettingsManager {
         AppSettings {
             output: OutputSettings {
                 format: OutputFormat::Jpeg,
-                quality: 90,
-                effort: 7,
-                lossless: false,
                 keep_alpha: false,
                 destination: "source".to_string(),
                 custom_directory: None,
                 keep_folder_structure: true,
-                visually_lossless: true,
-                cjpegli_distance: 1.0,
+                visually_lossless: false,
+                cjpegli_distance: 3.0,
             },
             advanced: AdvancedSettings {
                 concurrency: cpu_count.max(1),

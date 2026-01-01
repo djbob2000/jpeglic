@@ -62,8 +62,37 @@ impl Controller {
                     });
                 }
 
+                // Guard to ensure item is removed from active_items even on panic/abort
+                struct ActiveGuard {
+                    id: String,
+                    active_items: Arc<Mutex<HashSet<String>>>,
+                    window: Window,
+                    completed: Arc<AtomicUsize>,
+                    total: usize,
+                    total_saved: Arc<AtomicU64>,
+                }
+                impl Drop for ActiveGuard {
+                    fn drop(&mut self) {
+                        let mut active = self.active_items.lock().unwrap();
+                        active.remove(&self.id);
+                        
+                        // Send final progress for this item
+                        let active_ids = active.iter().cloned().collect::<Vec<_>>();
+                        let _ = self.window.emit("convert:progress", ProcessingProgress {
+                            completed: self.completed.load(Ordering::SeqCst),
+                            total: self.total,
+                            current_item: None,
+                            current_output_path: None,
+                            message: None,
+                            processed_item_id: None,
+                            saved_bytes: Some(self.total_saved.load(Ordering::SeqCst)),
+                            active_item_ids: Some(active_ids),
+                        });
+                    }
+                }
+
                 // Add to active items
-                {
+                let _guard = {
                     let mut active = active_items.lock().unwrap();
                     active.insert(item.id.clone());
                     
@@ -79,7 +108,16 @@ impl Controller {
                         saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
                         active_item_ids: Some(active_ids),
                     });
-                }
+
+                    ActiveGuard {
+                        id: item.id.clone(),
+                        active_items: active_items.clone(),
+                        window: window.clone(),
+                        completed: completed.clone(),
+                        total,
+                        total_saved: total_saved.clone(),
+                    }
+                };
 
                 // Process item
                 let worker = Worker::new(
@@ -91,24 +129,36 @@ impl Controller {
                 
                 let worker_result = worker.process().await;
 
-                // Update counters and active items
-                {
-                    let mut active = active_items.lock().unwrap();
-                    active.remove(&item.id);
-                    
+                // Update counters
+                if worker_result.success {
                     let comp = completed.fetch_add(1, Ordering::SeqCst) + 1;
-                    
                     if let Some(saved) = worker_result.saved_bytes {
                         total_saved.fetch_add(saved, Ordering::SeqCst);
                     }
 
-                    // Send progress update
+                    // Send progress update for success (this helps UI update processed status)
+                    let active = active_items.lock().unwrap();
                     let active_ids = active.iter().cloned().collect::<Vec<_>>();
                     let _ = window.emit("convert:progress", ProcessingProgress {
                         completed: comp,
                         total,
                         current_item: Some(item.clone()),
                         current_output_path: worker_result.output_path.clone(),
+                        message: None,
+                        processed_item_id: Some(item.id.clone()),
+                        saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
+                        active_item_ids: Some(active_ids),
+                    });
+                } else if worker_result.skipped {
+                    completed.fetch_add(1, Ordering::SeqCst);
+                    // For skipped files, also report as processed so they disappear from list if settings say so
+                    let active = active_items.lock().unwrap();
+                    let active_ids = active.iter().cloned().collect::<Vec<_>>();
+                    let _ = window.emit("convert:progress", ProcessingProgress {
+                        completed: completed.load(Ordering::SeqCst),
+                        total,
+                        current_item: Some(item.clone()),
+                        current_output_path: None,
                         message: None,
                         processed_item_id: Some(item.id.clone()),
                         saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
@@ -121,20 +171,40 @@ impl Controller {
             tasks.push(task);
         }
 
+        let mut canceled = false;
         for task in tasks {
-            if let Ok((item, worker_result)) = task.await {
-                if worker_result.success {
-                    result.success_count += 1;
-                    if let Some(saved) = worker_result.saved_bytes {
-                        result.saved_bytes += saved;
+            if !canceled && self.cancel_flag.load(Ordering::SeqCst) {
+                canceled = true;
+                result.canceled = true;
+            }
+
+            if canceled {
+                task.abort();
+            }
+
+            match task.await {
+                Ok((item, worker_result)) => {
+                    if !canceled {
+                        if worker_result.success {
+                            result.success_count += 1;
+                            if let Some(saved) = worker_result.saved_bytes {
+                                result.saved_bytes += saved;
+                            }
+                        } else if worker_result.skipped {
+                            result.skipped_count += 1;
+                        } else {
+                            result.failed_count += 1;
+                            if let Some(error) = worker_result.error {
+                                result.errors.push(ProcessingError { item, error });
+                            }
+                        }
+                    } else {
+                        // Even if canceled, some tasks might have finished.
+                        // We could count them, but usually it's better to just report "Canceled".
                     }
-                } else if worker_result.skipped {
-                    result.skipped_count += 1;
-                } else {
-                    result.failed_count += 1;
-                    if let Some(error) = worker_result.error {
-                        result.errors.push(ProcessingError { item, error });
-                    }
+                }
+                Err(_) => {
+                    // Task was aborted or panicked
                 }
             }
         }
@@ -145,4 +215,5 @@ impl Controller {
         
         result
     }
+
 }

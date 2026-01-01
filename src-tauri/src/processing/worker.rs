@@ -23,6 +23,29 @@ pub struct WorkerResult {
     pub saved_bytes: Option<u64>,
 }
 
+/// A guard that deletes a file when dropped, unless disarmed.
+struct TempFileGuard {
+    path: String,
+    active: bool,
+}
+
+impl TempFileGuard {
+    fn new(path: String) -> Self {
+        Self { path, active: true }
+    }
+    fn disarm(&mut self) {
+        self.active = false;
+    }
+}
+
+impl Drop for TempFileGuard {
+    fn drop(&mut self) {
+        if self.active {
+            let _ = std::fs::remove_file(&self.path);
+        }
+    }
+}
+
 impl Worker {
     pub fn new(
         item: InputItem,
@@ -91,9 +114,15 @@ impl Worker {
         } else {
             // Convert the image
             let temp_path = format!("{}.{}.tmp", output_info.target_path, uuid::Uuid::new_v4());
+            let mut guard = TempFileGuard::new(temp_path.clone());
             
             match self.convert_image(&temp_path).await {
                 Ok(_) => {
+                    // Check cancellation before heavy metadata operations
+                    if self.is_cancelled() {
+                        return Err(AppError::ProcessFailed("Cancelled".to_string()));
+                    }
+
                     // Apply metadata
                     self.apply_metadata(&temp_path).await?;
                     
@@ -104,10 +133,9 @@ impl Worker {
                     
                     // Move temp to final location
                     fs::rename(&temp_path, &output_info.target_path)?;
+                    guard.disarm();
                 }
                 Err(e) => {
-                    // Cleanup temp file
-                    let _ = fs::remove_file(&temp_path);
                     return Err(e);
                 }
             }
@@ -127,8 +155,6 @@ impl Worker {
     }
     
     async fn export_jpeg(&self, output_path: &str) -> Result<()> {
-        // use jpegli::{Encoder, Quality}; // Old import
-        
         // Load image (detecting format by content, not extension)
         let img = ImageReader::open(&self.item.source_path)?
             .with_guessed_format()?
@@ -136,25 +162,39 @@ impl Worker {
         let rgb_img = img.to_rgb8();
         let (width, height) = rgb_img.dimensions();
 
-        // Configure encoder
-        let mut encoder = jpegli::Encoder::new()
-            .width(width)
-            .height(height);
-        
-        if self.settings.output.visually_lossless {
-            encoder = encoder.quality(jpegli::Quality::Distance(1.0))
-                             .subsampling(jpegli::Subsampling::S420);
+        let distance = if self.settings.output.visually_lossless {
+            1.0
         } else {
-            encoder = encoder.quality(jpegli::Quality::Distance(self.settings.output.cjpegli_distance));
-        }
-
-        // Encode
-        let result = encoder.encode(rgb_img.as_raw())
-            .map_err(|e| AppError::ProcessFailed(format!("Jpegli encoding failed: {:?}", e)))?;
-            
-        std::fs::write(output_path, result)?;
+            self.settings.output.cjpegli_distance
+        };
         
-        Ok(())
+        let raw_pixels = rgb_img.into_raw();
+        let output_path_owned = output_path.to_string();
+        let cancel_flag = self.cancel_flag.clone();
+
+        // Use spawn_blocking for the heavy CPU task
+        tokio::task::spawn_blocking(move || {
+            // Configure encoder
+            let mut encoder = jpegli::Encoder::new()
+                .width(width)
+                .height(height);
+            
+            encoder = encoder.quality(jpegli::Quality::Distance(distance))
+                             .subsampling(jpegli::Subsampling::S420);
+
+            // Encode
+            let result = encoder.encode(&raw_pixels)
+                .map_err(|e| AppError::ProcessFailed(format!("Jpegli encoding failed: {:?}", e)))?;
+                
+            // Check cancellation right before writing to disk
+            if cancel_flag.load(Ordering::SeqCst) {
+                return Err(AppError::ProcessFailed("Cancelled during encoding".to_string()));
+            }
+
+            std::fs::write(output_path_owned, result)?;
+            
+            Ok(())
+        }).await.map_err(|e| AppError::ProcessFailed(format!("Task panicked: {:?}", e)))?
     }
     
 

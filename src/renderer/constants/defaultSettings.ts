@@ -1,11 +1,8 @@
-import type { ProcessingSettings } from "@common/types";
+import type { AppSettings } from "@common/types";
 
-export const defaultSettings: ProcessingSettings = {
+export const defaultSettings: AppSettings = {
   output: {
     format: "jpeg",
-    quality: 90, // Ignored when visuallyLossless is true, but good to have a safe default
-    effort: 7,
-    lossless: false,
     keepAlpha: false, // JPEG doesn't support alpha
     destination: "source",
     customDirectory: undefined,
@@ -23,5 +20,10 @@ export const defaultSettings: ProcessingSettings = {
     soundVolume: 50,
     clearInputAfterConversion: false,
     warnBeforeReplace: true,
+  },
+  window: {
+    width: 1000,
+    height: 800,
+    maximized: false,
   },
 };

@@ -44,7 +44,7 @@ export const PreviewPanel = ({
 	const [isImageLoaded, setIsImageLoaded] = useState(false);
 
 	const [isDataLoading, setIsDataLoading] = useState(false);
-	const activeItem = processing?.currentItem ?? selectedItem;
+	const activeItem = selectedItem;
 
 	// Keep track of current data for transition logic
 	const currentDataRef = useRef<{ data: PreviewData | null; loaded: boolean }>({
@@ -137,7 +137,7 @@ export const PreviewPanel = ({
 		};
 	}, [activeItem?.sourcePath, isConverting, activeItem]);
 
-	if (!activeItem) {
+	if (!activeItem && !isConverting) {
 		return (
 			<div className="relative h-full w-full p-4 flex items-center justify-center">
 				<button
@@ -269,6 +269,9 @@ export const PreviewPanel = ({
 	const focalLength = exif?.FocalLength;
 	const exposureBias = exif?.ExposureBias;
 
+	// Determine what item to display info for (prefer selected, fallback to processing)
+	const displayItem = activeItem || (isConverting ? processing?.currentItem : undefined);
+
 	return (
 		<section
 			className={cn(
@@ -352,7 +355,7 @@ export const PreviewPanel = ({
 										? tauriAPI.convertFileSrc(previewData.url)
 										: ""
 						}
-						alt={activeItem.displayName}
+						alt={displayItem?.displayName || ""}
 						className={cn(
 							"absolute inset-0 h-full w-full object-contain transition-opacity ease-in-out",
 							isConverting ? "duration-200" : "duration-0",
@@ -391,30 +394,46 @@ export const PreviewPanel = ({
 			<div className="border-t border-border bg-surface-1 p-4">
 				<div className="flex flex-col items-center justify-center gap-4 text-center">
 					<div>
-						<div className="text-lg font-semibold text-text-primary" title={activeItem.displayName}>
-							{activeItem.displayName}
+						<div
+							className="text-lg font-semibold text-text-primary"
+							title={displayItem?.displayName}
+						>
+							{displayItem?.displayName || (isConverting ? "Converting..." : "")}
 						</div>
-						<div className="flex items-center justify-center gap-3 text-sm text-text-secondary">
-							<span>{formatSize(activeItem.sizeBytes)}</span>
-							{dimensions && (
-								<>
-									<span className="text-text-tertiary">•</span>
-									<span>{dimensions}</span>
-								</>
-							)}
-							{creationDate && (
-								<>
-									<span className="text-text-tertiary">•</span>
-									<span>
-										{creationDate.toLocaleDateString()}{" "}
-										{creationDate.toLocaleTimeString([], {
-											hour: "2-digit",
-											minute: "2-digit",
-										})}
-									</span>
-								</>
-							)}
-						</div>
+						{displayItem && (
+							<div className="flex items-center justify-center gap-3 text-sm text-text-secondary">
+								<span>{formatSize(displayItem.sizeBytes)}</span>
+								{dimensions && (
+									<>
+										<span className="text-text-tertiary">•</span>
+										<span>{dimensions}</span>
+									</>
+								)}
+								{creationDate ? (
+									<>
+										<span className="text-text-tertiary">•</span>
+										<span>
+											{creationDate.toLocaleDateString()}{" "}
+											{creationDate.toLocaleTimeString([], {
+												hour: "2-digit",
+												minute: "2-digit",
+											})}
+										</span>
+									</>
+								) : displayItem.lastModified > 0 ? (
+									<>
+										<span className="text-text-tertiary">•</span>
+										<span>
+											{new Date(displayItem.lastModified).toLocaleDateString()}{" "}
+											{new Date(displayItem.lastModified).toLocaleTimeString([], {
+												hour: "2-digit",
+												minute: "2-digit",
+											})}
+										</span>
+									</>
+								) : null}
+							</div>
+						)}
 					</div>
 
 					{/* EXIF Data - Reserved Height Container */}

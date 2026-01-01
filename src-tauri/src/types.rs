@@ -24,9 +24,6 @@ pub struct AdvancedSettings {
 #[serde(rename_all = "camelCase")]
 pub struct OutputSettings {
     pub format: OutputFormat,
-    pub quality: u8,
-    pub effort: u8,
-    pub lossless: bool,
     pub keep_alpha: bool,
     pub destination: String, // "source" or "custom"
     pub custom_directory: Option<String>,

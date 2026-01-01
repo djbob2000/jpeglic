@@ -1,4 +1,4 @@
-import type { ProcessingSettings } from "@common/types";
+import type { AppSettings, ProcessingSettings } from "@common/types";
 import { defaultSettings } from "@constants/defaultSettings";
 import { mergeSettings } from "@utils/settings";
 import tauriAPI from "@utils/tauriAPI";
@@ -19,7 +19,7 @@ const detectCpuCores = (): number => {
 };
 
 export const useProcessingSettings = () => {
-	const [settings, setSettings] = useState<ProcessingSettings>(defaultSettings);
+	const [settings, setSettings] = useState<AppSettings>(defaultSettings);
 	const [initializing, setInitializing] = useState(true);
 	const hasHydratedSettings = useRef(false);
 
@@ -36,7 +36,7 @@ export const useProcessingSettings = () => {
 				if (stored && typeof stored === "object") {
 					// Always ensure concurrency is set to CPU cores if not explicitly set
 					setSettings((previous) => {
-						const mergedSettings = mergeSettings(previous, stored as Partial<ProcessingSettings>);
+						const mergedSettings = mergeSettings(previous, stored as Partial<AppSettings>);
 						const cpuCores = detectCpuCores();
 
 						// If concurrency is not set or is the old default (4), update it to CPU cores
@@ -47,7 +47,6 @@ export const useProcessingSettings = () => {
 						// Enforce simplified defaults even if stored values exist (for this refactor)
 						// This ensures users migrating from the old version get the new simplified behavior
 						mergedSettings.output.format = "jpeg";
-						mergedSettings.advanced.soundVolume = 100;
 						mergedSettings.advanced.soundVolume = 100;
 						mergedSettings.advanced.skipProcessed = true;
 						mergedSettings.advanced.preserveMetadata = true;

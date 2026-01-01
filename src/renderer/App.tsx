@@ -62,13 +62,9 @@ const App = () => {
 
 	useUpdateNotifications();
 
-	// Auto-select logic
+	// Auto-deselect logic (if the selected item is removed)
 	useEffect(() => {
-		if (items.length > 0) {
-			if (!selectedItemId || !items.find((i) => i.id === selectedItemId)) {
-				setSelectedItemId(items[0].id);
-			}
-		} else {
+		if (selectedItemId && !items.find((i) => i.id === selectedItemId)) {
 			setSelectedItemId(null);
 		}
 	}, [items, selectedItemId]);

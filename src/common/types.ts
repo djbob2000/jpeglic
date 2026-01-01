@@ -33,9 +33,6 @@ export interface AdvancedSettings {
 
 export interface OutputSettings {
   format: OutputFormat;
-  quality: number;
-  effort: number;
-  lossless: boolean;
   keepAlpha: boolean;
   destination: "source" | "custom";
   customDirectory?: string;
