@@ -1,10 +1,15 @@
 export const AboutTab = () => (
 	<div className="panel-container">
 		<div className="panel">
-			<h2 className="text-2xl font-semibold text-[color:var(--color-primary)] mb-2">
-				Jpeglic • Best jpg converter
-			</h2>
-			<p className="panel-text mb-4">Version 1.0.0</p>
+			<div className="flex items-center gap-4 mb-4">
+				<img src="/icon.svg" alt="Jpeglic" className="h-12 w-12" />
+				<div>
+					<h2 className="text-2xl font-semibold text-[color:var(--color-primary)]">
+						Jpeglic • Best jpg converter
+					</h2>
+					<p className="panel-text">Version 1.0.0</p>
+				</div>
+			</div>
 			<p className="panel-text mb-8">Easy-to-use image converter for modern formats.</p>
 
 			<h3 className="panel-title">Features</h3>

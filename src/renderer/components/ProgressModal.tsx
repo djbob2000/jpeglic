@@ -29,9 +29,12 @@ export const ProgressModal = ({
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
 			<div className="w-full max-w-md rounded-xl bg-surface-2 p-6 shadow-xl border border-border">
-				<h3 className="text-lg font-semibold text-text-primary">
-					{isFinished ? "Conversion Finished" : "Converting..."}
-				</h3>
+				<div className="flex items-center gap-3 mb-2">
+					<img src="/icon.svg" alt="Jpeglic" className="h-6 w-6" />
+					<h3 className="text-lg font-semibold text-text-primary">
+						{isFinished ? "Conversion Finished" : "Converting..."}
+					</h3>
+				</div>
 
 				{!isFinished ? (
 					<>

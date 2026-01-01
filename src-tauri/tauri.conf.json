@@ -16,12 +16,11 @@
             "nsis"
         ],
         "icon": [
-            "icon.ico"
+            "icons/icon.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
         ],
-        "externalBin": [
-            "binaries/cjpegli",
-            "binaries/exiftool"
-        ],
+        "externalBin": [],
         "windows": {
             "certificateThumbprint": null,
             "digestAlgorithm": "sha256",

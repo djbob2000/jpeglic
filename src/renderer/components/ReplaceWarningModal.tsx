@@ -28,8 +28,8 @@ export const ReplaceWarningModal = ({
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
 			<div className="w-full max-w-md rounded-2xl bg-surface-1 p-8 shadow-2xl border border-border">
 				{/* Icon */}
-				<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-primary/80 shadow-lg shadow-primary/20 text-center">
-					<span className="text-sm font-bold text-white px-2">Jpeglic</span>
+				<div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
+					<img src="/icon.svg" alt="Jpeglic" className="h-10 w-10" />
 				</div>
 
 				{/* Title */}

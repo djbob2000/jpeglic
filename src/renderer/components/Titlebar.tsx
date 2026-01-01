@@ -13,7 +13,7 @@ export const Titlebar = () => {
 				className="flex flex-1 items-center justify-center pointer-events-none"
 				data-tauri-drag-region
 			>
-				<img src="/icons/logo.svg" alt="" className="titlebar-icon mr-2" />
+				<img src="/icon.svg" alt="" className="titlebar-icon mr-2" />
 				<span className="text-sm font-semibold">Jpeglic • Best jpg converter</span>
 			</div>
 			{!isMac && (
