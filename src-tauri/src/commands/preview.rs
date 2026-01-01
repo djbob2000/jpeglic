@@ -74,8 +74,10 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
                 exif::Tag::DateTime => "ModifyDate".to_string(),
                 exif::Tag::Make => "Make".to_string(),
                 exif::Tag::Model => "Model".to_string(),
-                exif::Tag::FNumber | exif::Tag::ApertureValue => "FNumber".to_string(),
-                exif::Tag::ExposureTime | exif::Tag::ShutterSpeedValue => "ExposureTime".to_string(),
+                exif::Tag::FNumber => "FNumber".to_string(),
+                exif::Tag::ApertureValue => "ApertureValue".to_string(),
+                exif::Tag::ExposureTime => "ExposureTime".to_string(),
+                exif::Tag::ShutterSpeedValue => "ShutterSpeedValue".to_string(),
                 exif::Tag::ISOSpeed | exif::Tag::PhotographicSensitivity => "ISO".to_string(),
                 exif::Tag::LensModel => "LensModel".to_string(),
                 exif::Tag::LensMake => "LensMake".to_string(),
@@ -84,6 +86,7 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
                 exif::Tag::ExposureBiasValue => "ExposureBias".to_string(),
                 exif::Tag::Flash => "Flash".to_string(),
                 exif::Tag::WhiteBalance => "WhiteBalance".to_string(),
+                exif::Tag::ColorSpace => "ColorSpace".to_string(),
                 _ => format!("{:?}", field.tag),
             };
             exif_map.insert(key, serde_json::Value::String(value));

@@ -1,9 +1,6 @@
 import type { AppSettings } from "@common/types";
 
-export const mergeSettings = (
-	base: AppSettings,
-	incoming?: Partial<AppSettings>,
-): AppSettings => ({
+export const mergeSettings = (base: AppSettings, incoming?: Partial<AppSettings>): AppSettings => ({
 	output: {
 		...base.output,
 		...(incoming?.output ?? {}),

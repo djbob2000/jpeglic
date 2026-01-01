@@ -45,6 +45,7 @@ export const PreviewPanel = ({
 
 	const [isDataLoading, setIsDataLoading] = useState(false);
 	const activeItem = selectedItem;
+	const displayItem = activeItem || (isConverting ? processing?.currentItem : undefined);
 
 	// Keep track of current data for transition logic
 	const currentDataRef = useRef<{ data: PreviewData | null; loaded: boolean }>({
@@ -93,7 +94,7 @@ export const PreviewPanel = ({
 	useEffect(() => {
 		let ignore = false;
 
-		if (activeItem) {
+		if (displayItem) {
 			// Transition logic: When switching items, keep the old image visible
 			// until the new one is ready IF we are converting (for "beautiful" playback).
 			// During normal viewing, we want instant feedback.
@@ -110,12 +111,11 @@ export const PreviewPanel = ({
 			setIsImageLoaded(false);
 			setIsDataLoading(true);
 
-			const filePath = activeItem.sourcePath;
+			const filePath = displayItem.sourcePath;
 			tauriAPI.preview
 				.get(filePath)
 				.then((data) => {
 					if (!ignore) {
-						console.log("Preview Data Loaded:", data);
 						setPreviewData(data);
 						setIsDataLoading(false);
 					}
@@ -135,7 +135,7 @@ export const PreviewPanel = ({
 		return () => {
 			ignore = true;
 		};
-	}, [activeItem?.sourcePath, isConverting, activeItem]);
+	}, [displayItem, isConverting]);
 
 	if (!activeItem && !isConverting) {
 		return (
@@ -262,15 +262,41 @@ export const PreviewPanel = ({
 	const dimensions =
 		metadata?.width && metadata?.height ? `${metadata.width} × ${metadata.height}` : null;
 
-	const aperture = exif?.FNumber;
-	const shutterSpeed = exif?.ExposureTime;
+	// Format helpers for EXIF
+	const formatShutter = (val: unknown): string => {
+		if (!val) return "";
+		const s = String(val)
+			.replace(/\s*ev$/i, "")
+			.trim();
+		if (s.includes("/")) return s.endsWith("s") ? s : `${s}s`;
+
+		const num = parseFloat(s);
+		if (Number.isNaN(num) || num <= 0) return s;
+
+		if (num >= 0.4) {
+			return `${Number(num.toFixed(1))}s`;
+		}
+		const denominator = Math.round(1 / num);
+		return `1/${denominator}s`;
+	};
+
+	const formatAperture = (val: unknown): string => {
+		if (!val) return "";
+		const s = String(val)
+			.replace(/\s*ev$/i, "")
+			.trim();
+		const num = parseFloat(s);
+		if (Number.isNaN(num)) return s;
+		return Number(num.toFixed(1)).toString();
+	};
+
+	const aperture = exif?.FNumber ? formatAperture(exif.FNumber) : null;
+	const shutterSpeed = exif?.ExposureTime ? formatShutter(exif.ExposureTime) : null;
 	const iso = exif?.ISO;
 	const lens = exif?.LensModel || exif?.Lens;
 	const focalLength = exif?.FocalLength;
-	const exposureBias = exif?.ExposureBias;
-
-	// Determine what item to display info for (prefer selected, fallback to processing)
-	const displayItem = activeItem || (isConverting ? processing?.currentItem : undefined);
+	const colorSpace = exif?.ColorSpace;
+	const dateTimeOriginal = exif?.DateTimeOriginal;
 
 	return (
 		<section
@@ -344,7 +370,7 @@ export const PreviewPanel = ({
 				)}
 
 				{/* Current Image (Foreground) */}
-				{(previewData?.url || lastProcessedPath) ? (
+				{previewData?.url || lastProcessedPath ? (
 					<img
 						src={
 							isConverting && lastProcessedPath
@@ -438,7 +464,14 @@ export const PreviewPanel = ({
 
 					{/* EXIF Data - Reserved Height Container */}
 					<div className="w-full max-w-2xl min-h-14 flex items-center justify-center">
-						{(camera || aperture || shutterSpeed || iso || lens || focalLength || exposureBias) && (
+						{(camera ||
+							lens ||
+							dateTimeOriginal ||
+							aperture ||
+							shutterSpeed ||
+							iso ||
+							focalLength ||
+							colorSpace) && (
 							<div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-text-secondary border-t border-border/50 pt-3 w-full animate-in fade-in duration-300">
 								{camera && (
 									<div className="flex items-center gap-1.5" title="Camera">
@@ -474,19 +507,47 @@ export const PreviewPanel = ({
 											viewBox="0 0 24 24"
 										>
 											<title>Lens</title>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={1.5}
-												d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-											/>
+											<circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+											<circle cx="12" cy="12" r="5" strokeWidth={1.5} />
+											<circle cx="12" cy="12" r="2" strokeWidth={1.5} />
 										</svg>
 										<span>{lens}</span>
 									</div>
 								)}
+								{dateTimeOriginal && (
+									<div className="flex items-center gap-1.5" title="Date Taken">
+										<svg
+											className="w-4 h-4 text-text-tertiary"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<title>Date Taken</title>
+											<rect width="18" height="18" x="3" y="4" rx="2" ry="2" strokeWidth={1.5} />
+											<line x1="16" x2="16" y1="2" y2="6" strokeWidth={1.5} />
+											<line x1="8" x2="8" y1="2" y2="6" strokeWidth={1.5} />
+											<line x1="3" x2="21" y1="10" y2="10" strokeWidth={1.5} />
+										</svg>
+										<span>{String(dateTimeOriginal)}</span>
+									</div>
+								)}
 								{aperture && (
 									<div className="flex items-center gap-1.5" title="Aperture">
-										<span className="font-medium text-text-tertiary">ƒ/</span>
+										<svg
+											className="w-4 h-4 text-text-tertiary"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<title>Aperture</title>
+											<circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={1.5}
+												d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83M16.62 12l-5.74 9.94"
+											/>
+										</svg>
 										<span>{aperture}</span>
 									</div>
 								)}
@@ -506,7 +567,7 @@ export const PreviewPanel = ({
 												d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
 											/>
 										</svg>
-										<span>{shutterSpeed}s</span>
+										<span>{shutterSpeed}</span>
 									</div>
 								)}
 								{iso && (
@@ -528,22 +589,30 @@ export const PreviewPanel = ({
 												strokeLinecap="round"
 												strokeLinejoin="round"
 												strokeWidth={1.5}
-												d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-											/>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={1.5}
-												d="M19 19l-6-6"
+												d="M8 7l-5 5 5 5M16 7l5 5-5 5M3 12h18"
 											/>
 										</svg>
 										<span>{focalLength}</span>
 									</div>
 								)}
-								{exposureBias && exposureBias !== "0" && (
-									<div className="flex items-center gap-1.5" title="Exposure Bias">
-										<span className="font-medium text-text-tertiary">ev</span>
-										<span>{exposureBias}</span>
+								{colorSpace && (
+									<div className="flex items-center gap-1.5" title="Color Space">
+										<svg
+											className="w-4 h-4 text-text-tertiary"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<title>Color Space</title>
+											<circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={1.5}
+												d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"
+											/>
+										</svg>
+										<span>{colorSpace}</span>
 									</div>
 								)}
 							</div>
