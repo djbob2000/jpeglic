@@ -107,10 +107,16 @@ impl Worker {
         
         // Prepare output path
         let output_info = self.prepare_output_path()?;
+        let target_guard = if output_info.was_claimed {
+            Some(TempFileGuard::new(output_info.target_path.clone()))
+        } else {
+            None
+        };
         
         if output_info.should_copy_only {
             // Just copy the file
             fs::copy(&self.item.source_path, &output_info.target_path)?;
+            if let Some(mut g) = target_guard { g.disarm(); }
         } else {
             // Convert the image
             let temp_path = format!("{}.{}.tmp", output_info.target_path, uuid::Uuid::new_v4());
@@ -134,6 +140,7 @@ impl Worker {
                     // Move temp to final location
                     fs::rename(&temp_path, &output_info.target_path)?;
                     guard.disarm();
+                    if let Some(mut g) = target_guard { g.disarm(); }
                 }
                 Err(e) => {
                     return Err(e);
@@ -313,14 +320,46 @@ impl Worker {
             source_path.parent().unwrap().to_path_buf()
         };
         
-        let target_path = directory
-            .join(format!("{}.{}", base_name, ext))
-            .to_string_lossy()
-            .to_string();
+        let target_path;
+        let source_path_os = Path::new(&self.item.source_path);
+        let mut was_claimed = false;
+        let mut counter = 0;
+
+        loop {
+            let candidate = if counter == 0 {
+                directory.join(format!("{}.{}", base_name, ext))
+            } else {
+                directory.join(format!("{} ({}).{}", base_name, counter, ext))
+            };
+
+            // If it's the source path, we don't claim it (it already exists and we want to allow replacing it)
+            if candidate == source_path_os {
+                target_path = candidate;
+                break;
+            }
+
+            match fs::OpenOptions::new().write(true).create_new(true).open(&candidate) {
+                Ok(_) => {
+                    target_path = candidate;
+                    was_claimed = true;
+                    break;
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                    counter += 1;
+                    if counter > 1000 {
+                        return Err(AppError::ProcessFailed("Too many existing files with similar names".to_string()));
+                    }
+                }
+                Err(e) => return Err(e.into()),
+            }
+        }
+        
+        let target_path_str = target_path.to_string_lossy().to_string();
         
         Ok(OutputInfo {
-            target_path,
+            target_path: target_path_str,
             should_copy_only: false,
+            was_claimed,
         })
     }
     
@@ -332,6 +371,7 @@ impl Worker {
 struct OutputInfo {
     target_path: String,
     should_copy_only: bool,
+    was_claimed: bool,
 }
 
 
