@@ -9,6 +9,7 @@ export const defaultSettings: AppSettings = {
     keepFolderStructure: true,
     visuallyLossless: false,
     cjpegliDistance: 3.0,
+    forceSubsampling444: false,
   },
   advanced: {
     concurrency: 4,

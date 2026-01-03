@@ -39,6 +39,7 @@ export interface OutputSettings {
   keepFolderStructure: boolean;
   visuallyLossless: boolean;
   cjpegliDistance: number;
+  forceSubsampling444: boolean;
 }
 
 export interface WindowSettings {

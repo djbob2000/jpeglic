@@ -225,14 +225,17 @@ export const PreviewPanel = ({
 	const dateTaken = exif?.DateTimeOriginal || exif?.CreateDate || exif?.ModifyDate;
 	const cameraMake = exif?.Make;
 	const cameraModel = exif?.Model;
-	const camera = [cameraMake, cameraModel].filter(Boolean).join(" ");
+	const camera = [cameraMake, cameraModel]
+		.filter((v): v is string | number => v !== null && v !== undefined && v !== "")
+		.map(String)
+		.join(" ");
 
 	// Parse ExifTool date object or string
 	let creationDate: Date | null = null;
 	if (dateTaken) {
 		// ExifTool often returns ExifDateTime objects, but they stringify well or have properties
 		// If it's a string, it's usually "YYYY:MM:DD HH:MM:SS"
-		const dateStr = dateTaken.toString();
+		const dateStr = String(dateTaken);
 		// Basic attempt to parse standard EXIF date format if standard Date parsing fails
 		const exifDateRegex = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/;
 		const match = dateStr.match(exifDateRegex);
@@ -292,11 +295,12 @@ export const PreviewPanel = ({
 
 	const aperture = exif?.FNumber ? formatAperture(exif.FNumber) : null;
 	const shutterSpeed = exif?.ExposureTime ? formatShutter(exif.ExposureTime) : null;
-	const iso = exif?.ISO;
-	const lens = exif?.LensModel || exif?.Lens;
-	const focalLength = exif?.FocalLength;
-	const colorSpace = exif?.ColorSpace;
-	const dateTimeOriginal = exif?.DateTimeOriginal;
+	const iso = exif?.ISO ? String(exif.ISO) : null;
+	const lensRaw = exif?.LensModel || exif?.Lens;
+	const lens = lensRaw ? String(lensRaw) : null;
+	const focalLength = exif?.FocalLength ? String(exif.FocalLength) : null;
+	const colorSpace = exif?.ColorSpace ? String(exif.ColorSpace) : null;
+	const dateTimeOriginal = exif?.DateTimeOriginal ? String(exif.DateTimeOriginal) : null;
 
 	return (
 		<section
@@ -462,16 +466,17 @@ export const PreviewPanel = ({
 						)}
 					</div>
 
-					{/* EXIF Data - Reserved Height Container */}
 					<div className="w-full max-w-2xl min-h-14 flex items-center justify-center">
-						{(camera ||
+						{!!(
+							camera ||
 							lens ||
 							dateTimeOriginal ||
 							aperture ||
 							shutterSpeed ||
 							iso ||
 							focalLength ||
-							colorSpace) && (
+							colorSpace
+						) && (
 							<div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-text-secondary border-t border-border/50 pt-3 w-full animate-in fade-in duration-300">
 								{camera && (
 									<div className="flex items-center gap-1.5" title="Camera">
@@ -498,7 +503,7 @@ export const PreviewPanel = ({
 										<span>{camera}</span>
 									</div>
 								)}
-								{lens && (
+								{!!lens && (
 									<div className="flex items-center gap-1.5" title="Lens">
 										<svg
 											className="w-4 h-4 text-text-tertiary"
@@ -514,7 +519,7 @@ export const PreviewPanel = ({
 										<span>{lens}</span>
 									</div>
 								)}
-								{dateTimeOriginal && (
+								{!!dateTimeOriginal && (
 									<div className="flex items-center gap-1.5" title="Date Taken">
 										<svg
 											className="w-4 h-4 text-text-tertiary"
@@ -528,10 +533,10 @@ export const PreviewPanel = ({
 											<line x1="8" x2="8" y1="2" y2="6" strokeWidth={1.5} />
 											<line x1="3" x2="21" y1="10" y2="10" strokeWidth={1.5} />
 										</svg>
-										<span>{String(dateTimeOriginal)}</span>
+										<span>{dateTimeOriginal}</span>
 									</div>
 								)}
-								{aperture && (
+								{!!aperture && (
 									<div className="flex items-center gap-1.5" title="Aperture">
 										<svg
 											className="w-4 h-4 text-text-tertiary"
@@ -551,7 +556,7 @@ export const PreviewPanel = ({
 										<span>{aperture}</span>
 									</div>
 								)}
-								{shutterSpeed && (
+								{!!shutterSpeed && (
 									<div className="flex items-center gap-1.5" title="Shutter Speed">
 										<svg
 											className="w-4 h-4 text-text-tertiary"
@@ -570,13 +575,13 @@ export const PreviewPanel = ({
 										<span>{shutterSpeed}</span>
 									</div>
 								)}
-								{iso && (
+								{!!iso && (
 									<div className="flex items-center gap-1.5" title="ISO">
 										<span className="font-medium text-text-tertiary">ISO</span>
 										<span>{iso}</span>
 									</div>
 								)}
-								{focalLength && (
+								{!!focalLength && (
 									<div className="flex items-center gap-1.5" title="Focal Length">
 										<svg
 											className="w-4 h-4 text-text-tertiary"
@@ -595,7 +600,7 @@ export const PreviewPanel = ({
 										<span>{focalLength}</span>
 									</div>
 								)}
-								{colorSpace && (
+								{!!colorSpace && (
 									<div className="flex items-center gap-1.5" title="Color Space">
 										<svg
 											className="w-4 h-4 text-text-tertiary"

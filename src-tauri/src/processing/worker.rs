@@ -156,12 +156,96 @@ impl Worker {
     }
     
     async fn convert_image(&self, output_path: &str) -> Result<()> {
+        let subsampling = self.detect_subsampling();
         match self.settings.output.format {
-            OutputFormat::Jpeg => self.export_jpeg(output_path).await,
+            OutputFormat::Jpeg => self.export_jpeg(output_path, subsampling).await,
         }
     }
+
+    fn detect_subsampling(&self) -> jpegli::Subsampling {
+        // If force 4:4:4 is enabled, always use S444
+        if self.settings.output.force_subsampling_444 {
+            return jpegli::Subsampling::S444;
+        }
+
+        // Default to 4:2:0 if detection fails/not a JPEG
+        let default = jpegli::Subsampling::S420;
+
+        let Ok(bytes) = std::fs::read(&self.item.source_path) else {
+            return default;
+        };
+
+        let Ok(jpeg) = img_parts::jpeg::Jpeg::from_bytes(bytes.into()) else {
+            return default;
+        };
+
+        // JPEG markers for Start of Frame (SOF)
+        // SOF0 (Baseline), SOF1 (Extended Sequential), SOF2 (Progressive)
+        const SOF0: u8 = 0xC0;
+        const SOF1: u8 = 0xC1;
+        const SOF2: u8 = 0xC2;
+
+        for segment in jpeg.segments() {
+            let marker = segment.marker();
+            if marker == SOF0 || marker == SOF1 || marker == SOF2 {
+                let contents = segment.contents();
+                // SOF segment structure:
+                // 1 byte: Precision
+                // 2 bytes: Height
+                // 2 bytes: Width
+                // 1 byte: Number of components (Nf)
+                // For each component:
+                //   1 byte: Component ID
+                //   1 byte: Sampling factors (Hi, Vi) - high 4 bits H, low 4 bits V
+                //   1 byte: Quantization table ID
+                if contents.len() < 6 { continue; }
+                let nf = contents[5];
+                if contents.len() < (6 + nf as usize * 3) { continue; }
+
+                if nf < 3 {
+                    // Grayscale usually doesn't have subsampling in the same sense, or it's 4:0:0
+                    return jpegli::Subsampling::S444; 
+                }
+
+                // We care about the first component (Y) relative to others
+                let y_h = (contents[7] >> 4) & 0x0F;
+                let y_v = contents[7] & 0x0F;
+                
+                let cb_h = (contents[10] >> 4) & 0x0F;
+                let cb_v = contents[10] & 0x0F;
+
+                // Cr sampling factors should be same as Cb in standard JPEGs
+                
+                return if y_h == 1 && y_v == 1 {
+                    jpegli::Subsampling::S444 // All 1x1
+                } else if y_h == 2 && y_v == 1 {
+                    if cb_h == 1 && cb_v == 1 {
+                        jpegli::Subsampling::S422
+                    } else {
+                        jpegli::Subsampling::S444
+                    }
+                } else if y_h == 2 && y_v == 2 {
+                    if cb_h == 1 && cb_v == 1 {
+                        jpegli::Subsampling::S420
+                    } else {
+                        jpegli::Subsampling::S444
+                    }
+                } else if y_h == 1 && y_v == 2 {
+                    if cb_h == 1 && cb_v == 1 {
+                        jpegli::Subsampling::S440
+                    } else {
+                        jpegli::Subsampling::S444
+                    }
+                } else {
+                    jpegli::Subsampling::S444
+                };
+            }
+        }
+
+        default
+    }
     
-    async fn export_jpeg(&self, output_path: &str) -> Result<()> {
+    async fn export_jpeg(&self, output_path: &str, subsampling: jpegli::Subsampling) -> Result<()> {
         // Load image (detecting format by content, not extension)
         let img = ImageReader::open(&self.item.source_path)?
             .with_guessed_format()?
@@ -187,7 +271,7 @@ impl Worker {
                 .height(height);
             
             encoder = encoder.quality(jpegli::Quality::Distance(distance))
-                             .subsampling(jpegli::Subsampling::S420);
+                             .subsampling(subsampling);
 
             // Encode
             let result = encoder.encode(&raw_pixels)
@@ -207,21 +291,24 @@ impl Worker {
 
     
     async fn apply_metadata(&self, output_path: &str) -> Result<()> {
-        use img_parts::ImageEXIF;
+        use img_parts::{ImageEXIF, ImageICC};
 
         // 1. Copy EXIF and apply XMP using img-parts and xmp-writer
         let source_bytes = fs::read(&self.item.source_path)?; 
         let output_bytes = fs::read(output_path)?;
 
-        let source_jpeg = img_parts::jpeg::Jpeg::from_bytes(source_bytes.into())
-            .map_err(|e| AppError::ProcessFailed(format!("Failed to parse source jpeg for metadata: {:?}", e)));
+        let mut source_exif = None;
+        let mut source_icc = None;
 
-        // Handle source parsing gracefully
-        let source_exif = if let Ok(jpeg) = source_jpeg {
-            jpeg.exif().map(|b| b.to_vec())
-        } else {
-            None
-        };
+        // Try to extract metadata from JPEG
+        if let Ok(jpeg) = img_parts::jpeg::Jpeg::from_bytes(source_bytes.clone().into()) {
+            source_exif = jpeg.exif().map(|b| b.to_vec());
+            source_icc = jpeg.icc_profile().map(|b| b.to_vec());
+        } 
+        // Try to extract ICC from PNG if source is PNG
+        else if let Ok(png) = img_parts::png::Png::from_bytes(source_bytes.into()) {
+            source_icc = png.icc_profile().map(|b| b.to_vec());
+        }
 
         let mut output_jpeg = img_parts::jpeg::Jpeg::from_bytes(output_bytes.into())
             .map_err(|e| AppError::ProcessFailed(format!("Failed to parse output jpeg for metadata: {:?}", e)))?;
@@ -229,6 +316,11 @@ impl Worker {
         // Process EXIF
         if let Some(exif_data) = source_exif {
             output_jpeg.set_exif(Some(exif_data.into()));
+        }
+
+        // Process ICC Profile
+        if let Some(icc_data) = source_icc {
+            output_jpeg.set_icc_profile(Some(icc_data.into()));
         }
 
         // Process XMP (App1 "http://ns.adobe.com/xap/1.0/")

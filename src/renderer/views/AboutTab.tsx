@@ -4,7 +4,7 @@ export const AboutTab = () => (
 			<div className="flex items-center gap-4 mb-4">
 				<img src="/icon.svg" alt="Jpeglic" className="h-12 w-12" />
 				<div>
-					<h2 className="text-2xl font-semibold text-[color:var(--color-primary)]">
+					<h2 className="text-2xl font-semibold text-(--color-primary)">
 						Jpeglic • Best jpg converter
 					</h2>
 					<p className="panel-text">Version 1.0.0</p>

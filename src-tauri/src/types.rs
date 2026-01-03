@@ -30,6 +30,7 @@ pub struct OutputSettings {
     pub keep_folder_structure: bool,
     pub visually_lossless: bool,
     pub cjpegli_distance: f32,
+    pub force_subsampling_444: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
