@@ -31,6 +31,9 @@ pub struct OutputSettings {
     pub visually_lossless: bool,
     pub cjpegli_distance: f32,
     pub force_subsampling_444: bool,
+    pub use_xyb: bool,
+    pub progressive: bool,
+    pub strip_metadata: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -331,9 +331,9 @@ checksum = "5dd9dc738b7a8311c7ade152424974d8115f2cdad61e8dab8dac9f2362298510"
 
 [[package]]
 name = "butteraugli"
-version = "0.2.2"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1633021aa104f22a81d65e8fc0f76a1cc96fa169639026289926547a40f73728"
+checksum = "d7109f002c8068b17d531aefc9069a5b44feecea806f8805ad6e05501615b981"
 dependencies = [
  "wide",
 ]
@@ -2036,9 +2036,9 @@ dependencies = [
 
 [[package]]
 name = "jpegli-rs"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3473c3a7f10302afd91211f324f1e2117860bb759456055af75db26370b9962"
+checksum = "fa82f4897016f8fa754904391c4efbf7922476ec486251612636ea500332201f"
 dependencies = [
  "arrayref",
  "butteraugli",

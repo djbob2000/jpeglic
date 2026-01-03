@@ -28,7 +28,7 @@ num_cpus = "1"
 base64 = "0.22"
 filetime = "0.2"
 
-jpegli-rs = "0.2.1"
+jpegli-rs = "0.3.0"
 img-parts = "0.4.0"
 xmp-writer = "0.3.0"
 

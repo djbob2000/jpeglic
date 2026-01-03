@@ -8,8 +8,11 @@ export const defaultSettings: AppSettings = {
     customDirectory: undefined,
     keepFolderStructure: true,
     visuallyLossless: false,
-    cjpegliDistance: 3.0,
+    cjpegliDistance: 1.0,
     forceSubsampling444: false,
+    useXyb: false,
+    progressive: false,
+    stripMetadata: false,
   },
   advanced: {
     concurrency: 4,

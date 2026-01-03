@@ -44,13 +44,12 @@ pub async fn check_processed(_app: tauri::AppHandle, file_path: String) -> Resul
     // Check for Jpeg
     if let Ok(jpeg) = img_parts::jpeg::Jpeg::from_bytes(bytes.into()) {
         for segment in jpeg.segments() {
-            if segment.marker() == img_parts::jpeg::markers::APP1 {
+            // Check for COM segment (Comment)
+            if segment.marker() == img_parts::jpeg::markers::COM {
                 let data = segment.contents();
-                if data.starts_with(b"http://ns.adobe.com/xap/1.0/\0") {
-                    let content = String::from_utf8_lossy(data);
-                    if content.contains("Jpeglic") {
-                        return Ok(true);
-                    }
+                let content = String::from_utf8_lossy(data);
+                if content.contains("Compressed by Jpeglic") {
+                    return Ok(true);
                 }
             }
         }
@@ -77,13 +76,11 @@ pub async fn check_processed_batch(
                 let bytes = fs::read(path).map_err(|e| e.to_string())?;
                 if let Ok(jpeg) = img_parts::jpeg::Jpeg::from_bytes(bytes.into()) {
                     for segment in jpeg.segments() {
-                        if segment.marker() == img_parts::jpeg::markers::APP1 {
+                        if segment.marker() == img_parts::jpeg::markers::COM {
                             let data = segment.contents();
-                            if data.starts_with(b"http://ns.adobe.com/xap/1.0/\0") {
-                                let content = String::from_utf8_lossy(data);
-                                if content.contains("Jpeglic") {
-                                    return Ok(true);
-                                }
+                            let content = String::from_utf8_lossy(data);
+                            if content.contains("Compressed by Jpeglic") {
+                                return Ok(true);
                             }
                         }
                     }

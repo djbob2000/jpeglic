@@ -43,6 +43,9 @@ impl SettingsManager {
                 visually_lossless: false,
                 cjpegli_distance: 3.0,
                 force_subsampling_444: false,
+                use_xyb: false,
+                progressive: false,
+                strip_metadata: false,
             },
             advanced: AdvancedSettings {
                 concurrency: cpu_count.max(1),

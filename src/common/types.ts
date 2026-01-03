@@ -40,6 +40,9 @@ export interface OutputSettings {
   visuallyLossless: boolean;
   cjpegliDistance: number;
   forceSubsampling444: boolean;
+  useXyb: boolean;
+  progressive: boolean;
+  stripMetadata: boolean;
 }
 
 export interface WindowSettings {

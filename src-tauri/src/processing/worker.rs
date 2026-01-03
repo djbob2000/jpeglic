@@ -259,6 +259,9 @@ impl Worker {
             self.settings.output.cjpegli_distance
         };
         
+        let progressive = self.settings.output.progressive;
+        let use_xyb = self.settings.output.use_xyb; 
+        
         let raw_pixels = rgb_img.into_raw();
         let output_path_owned = output_path.to_string();
         let cancel_flag = self.cancel_flag.clone();
@@ -270,8 +273,19 @@ impl Worker {
                 .width(width)
                 .height(height);
             
+            if progressive {
+                 // TODO: progressive_level API missing in jpegli-rs 0.3.0
+                 eprintln!("Warning: Progressive mode requested but API not available");
+            }
+
+            if use_xyb {
+                // TODO: xyb API missing in jpegli-rs 0.3.0
+                eprintln!("Warning: XYB mode requested but API not available");
+            }
+
+
             encoder = encoder.quality(jpegli::Quality::Distance(distance))
-                             .subsampling(subsampling);
+                .subsampling(subsampling);
 
             // Encode
             let result = encoder.encode(&raw_pixels)
@@ -288,81 +302,120 @@ impl Worker {
         }).await.map_err(|e| AppError::ProcessFailed(format!("Task panicked: {:?}", e)))?
     }
     
-
-    
     async fn apply_metadata(&self, output_path: &str) -> Result<()> {
-        use img_parts::{ImageEXIF, ImageICC};
+        // 0. Check if stripping metadata is requested
+        if self.settings.output.strip_metadata {
+            return Ok(());
+        }
 
-        // 1. Copy EXIF and apply XMP using img-parts and xmp-writer
+        use img_parts::{ImageEXIF, ImageICC};
+        use img_parts::jpeg::markers;
+
+        // 1. Read source and output
         let source_bytes = fs::read(&self.item.source_path)?; 
         let output_bytes = fs::read(output_path)?;
 
         let mut source_exif = None;
         let mut source_icc = None;
+        let mut source_xmp = None;  // APP1
+        let mut source_iptc = None; // APP13
 
-        // Try to extract metadata from JPEG
+        // Try to extract metadata from JPEG source
         if let Ok(jpeg) = img_parts::jpeg::Jpeg::from_bytes(source_bytes.clone().into()) {
             source_exif = jpeg.exif().map(|b| b.to_vec());
             source_icc = jpeg.icc_profile().map(|b| b.to_vec());
+            
+            // Extract XMP and IPTC manually from segments
+            for segment in jpeg.segments() {
+                let marker = segment.marker();
+                let contents = segment.contents();
+                
+                // XMP is in APP1
+                if marker == markers::APP1 {
+                     if contents.starts_with(b"http://ns.adobe.com/xap/1.0/\0") {
+                         source_xmp = Some(segment.clone());
+                     }
+                }
+                
+                // IPTC is in APP13
+                if marker == markers::APP13 {
+                    if contents.starts_with(b"Photoshop 3.0\0") {
+                        source_iptc = Some(segment.clone());
+                    }
+                }
+            }
         } 
-        // Try to extract ICC from PNG if source is PNG
+        // Try to extract from PNG source (basic support)
         else if let Ok(png) = img_parts::png::Png::from_bytes(source_bytes.into()) {
             source_icc = png.icc_profile().map(|b| b.to_vec());
+            // PNG XMP extraction is more complex with img-parts, skipping for now as per previous logic,
+            // but we could add it later if needed.
         }
 
         let mut output_jpeg = img_parts::jpeg::Jpeg::from_bytes(output_bytes.into())
             .map_err(|e| AppError::ProcessFailed(format!("Failed to parse output jpeg for metadata: {:?}", e)))?;
 
-        // Process EXIF
+        // 2. Apply Metadata
+        
+        // EXIF
         if let Some(exif_data) = source_exif {
             output_jpeg.set_exif(Some(exif_data.into()));
         }
 
-        // Process ICC Profile
+        // ICC Profile
         if let Some(icc_data) = source_icc {
             output_jpeg.set_icc_profile(Some(icc_data.into()));
         }
-
-        // Process XMP (App1 "http://ns.adobe.com/xap/1.0/")
-        if matches!(self.settings.output.format, OutputFormat::Jpeg) {
-            let mut writer = xmp_writer::XmpWriter::new();
-            writer.creator_tool("Jpeglic");
-            writer.label("Processed");
-            let xmp_xml = writer.finish(None);
-            
-            // Standard XMP packet wrapper
-            let xmp_packet = format!(
-                "<?xpacket begin=\"\u{FEFF}\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n{}<?xpacket end=\"w\"?>",
-                xmp_xml
-            );
-
-            // Construct valid APP1 XMP segment
-            // Header: http://ns.adobe.com/xap/1.0/\0
-            let header = b"http://ns.adobe.com/xap/1.0/\0";
-            let mut xmp_segment_data = Vec::with_capacity(header.len() + xmp_packet.len());
-            xmp_segment_data.extend_from_slice(header);
-            xmp_segment_data.extend_from_slice(xmp_packet.as_bytes());
-
-            let segment = img_parts::jpeg::JpegSegment::new_with_contents(
-                img_parts::jpeg::markers::APP1,
-                img_parts::Bytes::from(xmp_segment_data),
-            );
-
-            // Safe insertion: if first segment is APP0 (JFIF), insert after it.
-            // JFIF must be the first segment if present.
-            let segments = output_jpeg.segments_mut();
-            if !segments.is_empty() && segments[0].marker() == img_parts::jpeg::markers::APP0 {
-                segments.insert(1, segment);
-            } else {
-                segments.insert(0, segment);
-            }
+        
+        // We act on segments list for others
+        let segments = output_jpeg.segments_mut();
+        
+        // Remove existing APP1 (XMP) and APP13 (IPTC) generated by encoder (if any) to clean slate
+        // Although Jpegli defaults mostly clean, safe to ensure insert order
+        // Actually, set_exif/set_icc handle their own segments.
+        
+        // Insert XMP if found (usually after EXIF)
+        if let Some(xmp_segment) = source_xmp {
+             let mut insert_idx = 0;
+             if !segments.is_empty() && segments[0].marker() == markers::APP0 {
+                 insert_idx = 1;
+             }
+             
+             // Insert after EXIF if present
+             if let Some(pos) = segments.iter().position(|s| s.marker() == markers::APP1 && s.contents().starts_with(b"Exif\0\0")) {
+                 insert_idx = pos + 1;
+             }
+             
+             if insert_idx > segments.len() { insert_idx = segments.len(); }
+             segments.insert(insert_idx, xmp_segment);
         }
+
+        // Insert IPTC if found
+        if let Some(iptc_segment) = source_iptc {
+             let mut insert_idx = 0;
+             if !segments.is_empty() && segments[0].marker() == markers::APP0 { insert_idx += 1; }
+             segments.insert(insert_idx, iptc_segment);
+        }
+
+        // 3. Add Compressed by Jpeglic comment
+        let comment_segment = img_parts::jpeg::JpegSegment::new_with_contents(
+            markers::COM,
+            img_parts::Bytes::from("Compressed by Jpeglic"),
+        );
+        
+        // Insert comment early in header
+        let mut com_insert_idx = 0;
+        if !segments.is_empty() && segments[0].marker() == markers::APP0 {
+            com_insert_idx = 1;
+        }
+        if com_insert_idx > segments.len() { com_insert_idx = segments.len(); }
+        segments.insert(com_insert_idx, comment_segment);
 
         let mut final_file = fs::File::create(output_path)?;
         output_jpeg.encoder().write_to(&mut final_file)
             .map_err(|e| AppError::ProcessFailed(format!("Failed to save metadata: {:?}", e)))?;
         
-        // Preserve timestamps
+        // Preserve timestamps (Last Modified / Accessed)
         if self.settings.advanced.preserve_timestamps {
             let source_meta = fs::metadata(&self.item.source_path)?;
             let mtime = source_meta.modified()?;
@@ -465,6 +518,3 @@ struct OutputInfo {
     should_copy_only: bool,
     was_claimed: bool,
 }
-
-
-
