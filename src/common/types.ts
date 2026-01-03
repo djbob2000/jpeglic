@@ -29,6 +29,8 @@ export interface AdvancedSettings {
   soundVolume: number;
   clearInputAfterConversion: boolean;
   warnBeforeReplace: boolean;
+  recompressOptimized: boolean; // converted from recompress_optimized
+  sizeCompare: boolean; // converted from size_compare
 }
 
 export interface OutputSettings {

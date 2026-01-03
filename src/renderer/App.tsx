@@ -82,7 +82,7 @@ const App = () => {
 						{isSettingsOpen ? (
 							<div className="h-full overflow-y-auto p-8">
 								<div className="mx-auto max-w-3xl">
-									<div className="mb-6 flex items-center justify-between">
+									<div className="mb-3 flex items-center justify-between">
 										<h2 className="text-xl font-semibold text-text-primary flex items-center gap-2">
 											<svg
 												className="w-6 h-6 text-primary"

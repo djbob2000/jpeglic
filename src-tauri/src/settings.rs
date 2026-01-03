@@ -41,7 +41,7 @@ impl SettingsManager {
                 custom_directory: None,
                 keep_folder_structure: true,
                 visually_lossless: false,
-                cjpegli_distance: 3.0,
+                cjpegli_distance: 1.0,
                 force_subsampling_444: false,
                 use_xyb: false,
                 progressive: false,
@@ -57,6 +57,8 @@ impl SettingsManager {
                 sound_volume: 50,
                 clear_input_after_conversion: false,
                 warn_before_replace: true,
+                recompress_optimized: false,
+                size_compare: false,
             },
             window: WindowSettings {
                 width: 900,

@@ -18,6 +18,8 @@ pub struct AdvancedSettings {
     pub sound_volume: u8,
     pub clear_input_after_conversion: bool,
     pub warn_before_replace: bool,
+    pub recompress_optimized: bool,
+    pub size_compare: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

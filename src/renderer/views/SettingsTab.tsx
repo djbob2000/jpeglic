@@ -109,36 +109,109 @@ export const SettingsTab = ({
                 <span className="text-text-secondary">Custom</span>
               </label>
               {settings.output.destination === "custom" && (
-                <div className="flex gap-2 pl-6">
-                  <input
-                    type="text"
-                    value={settings.output.customDirectory ?? ""}
-                    onChange={(event) =>
-                      onOutputChange(
-                        "customDirectory",
-                        event.target.value || undefined
-                      )
-                    }
-                    placeholder="/home/user/Pictures"
-                    className="form-control flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={browseDirectory}
-                    className="btn-secondary px-3 py-2"
-                  >
-                    ...
-                  </button>
+                <div className="space-y-4 pl-6">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={settings.output.customDirectory ?? ""}
+                      onChange={(event) =>
+                        onOutputChange(
+                          "customDirectory",
+                          event.target.value || undefined
+                        )
+                      }
+                      placeholder="/home/user/Pictures"
+                      className="form-control flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={browseDirectory}
+                      className="btn-secondary px-3 py-2"
+                    >
+                      ...
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 pt-2">
+                    {/* Keep Folder Structure */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-text-primary font-medium">
+                          Keep Folder Structure
+                        </span>
+                        <span className="text-xs text-text-tertiary">
+                          Maintain subfolder hierarchy
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.output.keepFolderStructure}
+                          onChange={(e) =>
+                            onOutputChange(
+                              "keepFolderStructure",
+                              e.target.checked
+                            )
+                          }
+                          className="peer sr-only"
+                        />
+                        <div className="w-11 h-6 bg-surface-4 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                      </label>
+                    </div>
+
+                    {/* Delete Originals */}
+                    <div
+                      className={cn(
+                        "flex items-center justify-between rounded-lg px-2 py-1.5 -mx-2 transition-all",
+                        settings.advanced.deleteOriginals
+                          ? "bg-red-500/10"
+                          : "hover:bg-surface-3"
+                      )}
+                    >
+                      <div className="flex flex-col">
+                        <span
+                          className={cn(
+                            "font-medium transition-colors",
+                            settings.advanced.deleteOriginals
+                              ? "text-red-500"
+                              : "text-text-primary"
+                          )}
+                        >
+                          Delete originals
+                        </span>
+                        <span className="text-xs text-text-tertiary">
+                          Remove source files after conversion
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.advanced.deleteOriginals}
+                          onChange={(e) =>
+                            onAdvancedChange(
+                              "deleteOriginals",
+                              e.target.checked
+                            )
+                          }
+                          className="peer sr-only"
+                        />
+                        <div
+                          className={cn(
+                            "w-11 h-6 bg-surface-4 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all",
+                            settings.advanced.deleteOriginals
+                              ? "peer-checked:bg-red-500 peer-focus:ring-red-500/20"
+                              : "peer-checked:bg-primary peer-focus:ring-primary/20"
+                          )}
+                        ></div>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* cjpegli Settings (Only for JPEG) */}
               {settings.output.format === "jpeg" && (
                 <div className="pt-4 border-t border-border mt-4">
-                  <legend className="mb-3 block text-sm font-medium text-text-secondary uppercase tracking-wider">
-                    JPEG Settings
-                  </legend>
-
                   <div className="space-y-4">
                     {/* Visually Lossless Switch */}
                     {/* <div className="flex items-center justify-between">
@@ -169,7 +242,7 @@ export const SettingsTab = ({
                     >
                       <div className="flex justify-between">
                         <span className="text-text-primary font-medium">
-                          Distance (Quality)
+                          Butteraugli distance (JPG quality)
                         </span>
                         <span className="text-text-primary font-mono whitespace-nowrap">
                           {settings.output.cjpegliDistance.toFixed(1)}
@@ -198,7 +271,10 @@ export const SettingsTab = ({
                         className="w-full h-2 bg-surface-4 rounded-lg appearance-none cursor-pointer accent-primary"
                       />
                       <div className="flex justify-between text-xs text-text-tertiary">
-                        <span>*Visually Lossless 1.0 (recommended), best size 2.0-3.0</span>
+                        <span>
+                          *Visually Lossless 1.0 (recommended), best size
+                          2.0-3.0
+                        </span>
                       </div>
                     </div>
 
@@ -292,65 +368,58 @@ export const SettingsTab = ({
                 </div>
               )}
 
-              {/* Keep Folder Structure - Hidden when Replace originals is selected */}
-              {settings.output.destination === "custom" && (
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={settings.output.keepFolderStructure}
-                    onChange={(event) =>
-                      onOutputChange(
-                        "keepFolderStructure",
-                        event.target.checked
-                      )
-                    }
-                    className="checkbox-input"
-                  />
-                  <span className="text-text-secondary">
-                    Keep Folder Structure
-                  </span>
-                </label>
-              )}
 
-              {/* Advanced Checkboxes moved here */}
-              {/* Advanced Checkboxes */}
-              {settings.output.destination === "custom" && (
-                <div className="pt-2 space-y-3 mt-2">
-                  <label
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-2 py-1.5 -mx-2 transition-all",
-                      settings.advanced.deleteOriginals
-                        ? "bg-red-500/10"
-                        : "hover:bg-surface-3"
-                    )}
-                  >
+              {/* Universal Advanced Settings */}
+              <div className="pt-4 border-t border-border mt-4 space-y-4">
+                {/* Size Compare Switch */}
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-text-primary font-medium">
+                      Size Compare
+                    </span>
+                    <span className="text-xs text-text-tertiary">
+                      Keep original if smaller
+                    </span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={settings.advanced.deleteOriginals}
-                      onChange={(event) =>
-                        onAdvancedChange(
-                          "deleteOriginals",
-                          event.target.checked
-                        )
+                      checked={settings.advanced.sizeCompare}
+                      onChange={(e) =>
+                        onAdvancedChange("sizeCompare", e.target.checked)
                       }
-                      className={cn(
-                        "checkbox-input",
-                        settings.advanced.deleteOriginals && "accent-red-500"
-                      )}
+                      className="peer sr-only"
                     />
-                    <span
-                      className={cn(
-                        "transition-colors",
-                        settings.advanced.deleteOriginals
-                          ? "font-medium text-red-500"
-                          : "text-text-secondary"
-                      )}
-                    >
-                      Delete originals
-                    </span>
+                    <div className="w-11 h-6 bg-surface-4 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                   </label>
                 </div>
-              )}
+
+                {/* Recompress Optimized Switch */}
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-text-primary font-medium">
+                      Recompress Optimized
+                    </span>
+                    <span className="text-xs text-text-tertiary">
+                      Force reprocess
+                    </span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.advanced.recompressOptimized}
+                      onChange={(e) =>
+                        onAdvancedChange(
+                          "recompressOptimized",
+                          e.target.checked
+                        )
+                      }
+                      className="peer sr-only"
+                    />
+                    <div className="w-11 h-6 bg-surface-4 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+              </div>
             </fieldset>
           </div>
         </div>

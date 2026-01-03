@@ -99,7 +99,7 @@ impl Worker {
     
     async fn process_internal(&self) -> Result<(String, u64)> {
         // Check if already processed
-        if self.settings.advanced.skip_processed {
+        if self.settings.advanced.skip_processed && !self.settings.advanced.recompress_optimized {
             if let Some(true) = self.item.is_processed {
                 return Err(AppError::AlreadyProcessed);
             }
@@ -133,14 +133,33 @@ impl Worker {
                     self.apply_metadata(&temp_path).await?;
                     
                     // Delete original if requested
-                    if self.settings.advanced.delete_originals {
-                        let _ = trash::delete(&self.item.source_path);
-                    }
+                    // Size comparison check
+                    let temp_size = fs::metadata(&temp_path)?.len();
+                    // Re-read source size to be sure, or use cached item size since we just read it for conversion
+                    let source_size = self.item.size_bytes;
                     
-                    // Move temp to final location
-                    fs::rename(&temp_path, &output_info.target_path)?;
-                    guard.disarm();
-                    if let Some(mut g) = target_guard { g.disarm(); }
+                    let use_original = self.settings.advanced.size_compare && temp_size >= source_size;
+                    
+                    if use_original {
+                         if self.settings.output.destination == "source" {
+                             // Replace mode: Do nothing (keep original)
+                             // Temp file will be deleted by guard
+                         } else {
+                             // Save to folder mode: Copy original to target
+                             fs::copy(&self.item.source_path, &output_info.target_path)?;
+                             if let Some(mut g) = target_guard { g.disarm(); }
+                         }
+                    } else {
+                        // Delete original if requested
+                        if self.settings.advanced.delete_originals {
+                            let _ = trash::delete(&self.item.source_path);
+                        }
+                        
+                        // Move temp to final location
+                        fs::rename(&temp_path, &output_info.target_path)?;
+                        guard.disarm();
+                        if let Some(mut g) = target_guard { g.disarm(); }
+                    }
                 }
                 Err(e) => {
                     return Err(e);
