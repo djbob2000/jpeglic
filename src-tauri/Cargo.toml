@@ -1,6 +1,6 @@
 [package]
 name = "jpeglic-converter"
-version = "0.0.1"
+version = "1.0.0"
 description = "Easy-to-use image converter for home archives"
 authors = ["Jpeglic Team"]
 edition = "2021"

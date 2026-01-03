@@ -5,13 +5,13 @@ Modern and fast image converter built with **Tauri** and **React**, designed to 
 ## Features
 
 ### 🚀 High-Efficiency JPEG Conversion
-Uses **cjpegli** (from libjxl project) to generate high-quality JPEGs with superior density and visual fidelity compared to standard encoders.
+Uses **jpegli** (via Rust bindings) to generate high-quality JPEGs with superior density and visual fidelity compared to standard encoders.
 
 ### ⚡ Parallel Processing
 Leverages Rust's multi-threading capabilities (via `rayon`) to process images in parallel, utilizing your CPU's full potential.
 
 ### 📸 Metadata Preservation
-Keeps your EXIF metadata and file timestamps intact during conversion using **exiftool**.
+Keeps your EXIF metadata, ICC profiles, and timestamps intact during conversion using efficient Rust libraries.
 
 ### 🎨 Modern UI
 - **Live Preview**: Inspect images before processing.
@@ -20,7 +20,7 @@ Keeps your EXIF metadata and file timestamps intact during conversion using **ex
 - **Drag & Drop**: Easy file management.
 
 ### ⚙️ Smart Workflow
-- **Duplicate Handling**: Option to skip efficiently.
+- **Duplicate Handling**: Smart auto-renaming (Chrome-style) to prevent overwrites.
 - **Settings Persistence**: Your configuration is saved automatically.
 
 ## Technology Stack
@@ -30,8 +30,8 @@ Keeps your EXIF metadata and file timestamps intact during conversion using **ex
 - **Styling**: TailwindCSS v4
 - **State Management**: React Hooks & Context
 - **Core Libraries**:
-  - `cjpegli` (High-quality JPEG encoding)
-  - `exiftool` (Metadata handling)
+  - `jpegli` (High-quality JPEG encoding)
+  - `img-parts` (Metadata handling)
   - `rayon` (Parallelism)
 
 ## Development
@@ -44,10 +44,7 @@ Keeps your EXIF metadata and file timestamps intact during conversion using **ex
    - **macOS**: Xcode Command Line Tools
    - **Windows**: C++ Build Tools
    - **Linux**: WebKit2GTK and base build tools
-4. **External Binaries**:
-   The application uses `cjpegli` and `exiftool` as sidecars. You need to place the binaries for your platform in the `src-tauri/binaries/` directory following Tauri's [sidecar naming convention](https://v2.tauri.app/develop/sidecar/#sidecar-naming-convention):
-   - `cjpegli-<target-triple>`
-   - `exiftool-<target-triple>`
+
 
 ### Installation
 
@@ -80,7 +77,6 @@ The output will be available in `src-tauri/target/release/bundle/`.
 │   ├── src/            # Rust source code
 │   │   ├── commands/   # Tauri commands
 │   │   └── processing/ # Image processing logic
-│   ├── binaries/       # External sidecar binaries
 │   └── tauri.conf.json # Tauri configuration
 └── package.json
 ```

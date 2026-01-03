@@ -1,7 +1,7 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
-    "productName": "Jpeglic • Best jpg converter",
-    "version": "0.0.1",
+    "productName": "Jpeglic",
+    "version": "1.0.0",
     "identifier": "com.jpeglic.converter",
     "build": {
         "beforeDevCommand": "npm run dev",
@@ -25,6 +25,22 @@
             "certificateThumbprint": null,
             "digestAlgorithm": "sha256",
             "timestampUrl": ""
+        },
+        "macOS": {
+            "dmg": {
+                "windowSize": {
+                    "width": 600,
+                    "height": 400
+                },
+                "appPosition": {
+                    "x": 180,
+                    "y": 170
+                },
+                "applicationFolderPosition": {
+                    "x": 420,
+                    "y": 170
+                }
+            }
         }
     },
     "app": {
