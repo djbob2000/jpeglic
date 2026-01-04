@@ -94,16 +94,16 @@ export const PreviewPanel = ({
 	useEffect(() => {
 		let ignore = false;
 
-		if (displayItem) {
-			// Transition logic: When switching items, keep the old image visible
-			// until the new one is ready IF we are converting (for "beautiful" playback).
-			// During normal viewing, we want instant feedback.
+		// The path we want to load metadata and preview for
+		const pathToShow = (isConverting ? lastProcessedPath : selectedItem?.sourcePath) || null;
+
+		if (pathToShow) {
+			// Transition logic: Keep the old image visible until the new one is ready IF we are converting
 			const { data: currentData, loaded: currentLoaded } = currentDataRef.current;
 			if (isConverting) {
 				if (currentData && currentLoaded) {
 					setPreviousData(currentData);
 				}
-				// If not loaded, we keep the existing previousData to avoid black background
 			} else {
 				setPreviousData(null);
 			}
@@ -111,9 +111,8 @@ export const PreviewPanel = ({
 			setIsImageLoaded(false);
 			setIsDataLoading(true);
 
-			const filePath = displayItem.sourcePath;
 			tauriAPI.preview
-				.get(filePath)
+				.get(pathToShow)
 				.then((data) => {
 					if (!ignore) {
 						setPreviewData(data);
@@ -135,7 +134,7 @@ export const PreviewPanel = ({
 		return () => {
 			ignore = true;
 		};
-	}, [displayItem, isConverting]);
+	}, [selectedItem, isConverting, lastProcessedPath]);
 
 	if (!activeItem && !isConverting) {
 		return (
@@ -350,12 +349,10 @@ export const PreviewPanel = ({
 
 			{/* Image Preview */}
 			<div className="flex-1 overflow-hidden bg-surface-2 relative flex items-center justify-center">
+				{/* Loading Indicator - Subtle/Non-blocking */}
 				{isDataLoading && (
-					<div className="absolute inset-0 flex items-center justify-center bg-surface-2/50 backdrop-blur-[2px] z-20 animate-in fade-in duration-200">
-						<div className="flex flex-col items-center gap-3">
-							<div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-sm" />
-							<span className="text-sm font-medium text-text-secondary">Decoding...</span>
-						</div>
+					<div className="absolute top-4 left-4 z-20 animate-in fade-in duration-200">
+						<div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent shadow-sm opacity-70" />
 					</div>
 				)}
 
@@ -374,22 +371,20 @@ export const PreviewPanel = ({
 				)}
 
 				{/* Current Image (Foreground) */}
-				{previewData?.url || lastProcessedPath ? (
+				{activePreviewData?.url ? (
 					<img
 						src={
-							isConverting && lastProcessedPath
-								? `${tauriAPI.convertFileSrc(lastProcessedPath)}?t=${Date.now()}`
-								: previewData?.url.startsWith("data:")
-									? previewData.url
-									: previewData?.url
-										? tauriAPI.convertFileSrc(previewData.url)
-										: ""
+							activePreviewData.url.startsWith("data:")
+								? activePreviewData.url
+								: isConverting
+									? `${tauriAPI.convertFileSrc(activePreviewData.url)}?t=${Date.now()}`
+									: tauriAPI.convertFileSrc(activePreviewData.url)
 						}
 						alt={displayItem?.displayName || ""}
 						className={cn(
 							"absolute inset-0 h-full w-full object-contain transition-opacity ease-in-out",
 							isConverting ? "duration-200" : "duration-0",
-							!isConverting || isImageLoaded ? "opacity-100" : "opacity-0",
+							"opacity-100",
 						)}
 						onLoad={() => setIsImageLoaded(true)}
 						onTransitionEnd={() => {
@@ -428,15 +423,25 @@ export const PreviewPanel = ({
 							className="text-lg font-semibold text-text-primary"
 							title={displayItem?.displayName}
 						>
-							{displayItem?.displayName || (isConverting ? "Converting..." : "")}
+							{isConverting
+								? activePreviewData?.url
+									? activePreviewData.url.split(/[\\/]/).pop()
+									: "Converting..."
+								: displayItem?.displayName || ""}
 						</div>
-						{displayItem && (
+						{(displayItem || metadata) && (
 							<div className="flex items-center justify-center gap-3 text-sm text-text-secondary">
-								<span>{formatSize(displayItem.sizeBytes)}</span>
+								<span>{formatSize(metadata?.size || displayItem?.sizeBytes || 0)}</span>
 								{dimensions && (
 									<>
 										<span className="text-text-tertiary">•</span>
 										<span>{dimensions}</span>
+									</>
+								)}
+								{metadata?.format && (
+									<>
+										<span className="text-text-tertiary">•</span>
+										<span>{metadata.format}</span>
 									</>
 								)}
 								{creationDate ? (
@@ -450,7 +455,7 @@ export const PreviewPanel = ({
 											})}
 										</span>
 									</>
-								) : displayItem.lastModified > 0 ? (
+								) : displayItem && displayItem.lastModified > 0 ? (
 									<>
 										<span className="text-text-tertiary">•</span>
 										<span>
@@ -467,161 +472,141 @@ export const PreviewPanel = ({
 					</div>
 
 					<div className="w-full max-w-2xl min-h-14 flex items-center justify-center">
-						{!!(
-							camera ||
-							lens ||
-							dateTimeOriginal ||
-							aperture ||
-							shutterSpeed ||
-							iso ||
-							focalLength ||
-							colorSpace
-						) && (
-							<div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-text-secondary border-t border-border/50 pt-3 w-full animate-in fade-in duration-300">
-								{camera && (
-									<div className="flex items-center gap-1.5" title="Camera">
-										<svg
-											className="w-4 h-4 text-text-tertiary"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<title>Camera</title>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={1.5}
-												d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-											/>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={1.5}
-												d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-											/>
-										</svg>
-										<span>{camera}</span>
-									</div>
-								)}
-								{!!lens && (
-									<div className="flex items-center gap-1.5" title="Lens">
-										<svg
-											className="w-4 h-4 text-text-tertiary"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<title>Lens</title>
-											<circle cx="12" cy="12" r="9" strokeWidth={1.5} />
-											<circle cx="12" cy="12" r="5" strokeWidth={1.5} />
-											<circle cx="12" cy="12" r="2" strokeWidth={1.5} />
-										</svg>
-										<span>{lens}</span>
-									</div>
-								)}
-								{!!dateTimeOriginal && (
-									<div className="flex items-center gap-1.5" title="Date Taken">
-										<svg
-											className="w-4 h-4 text-text-tertiary"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<title>Date Taken</title>
-											<rect width="18" height="18" x="3" y="4" rx="2" ry="2" strokeWidth={1.5} />
-											<line x1="16" x2="16" y1="2" y2="6" strokeWidth={1.5} />
-											<line x1="8" x2="8" y1="2" y2="6" strokeWidth={1.5} />
-											<line x1="3" x2="21" y1="10" y2="10" strokeWidth={1.5} />
-										</svg>
-										<span>{dateTimeOriginal}</span>
-									</div>
-								)}
-								{!!aperture && (
-									<div className="flex items-center gap-1.5" title="Aperture">
-										<svg
-											className="w-4 h-4 text-text-tertiary"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<title>Aperture</title>
-											<circle cx="12" cy="12" r="9" strokeWidth={1.5} />
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={1.5}
-												d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83M16.62 12l-5.74 9.94"
-											/>
-										</svg>
-										<span>{aperture}</span>
-									</div>
-								)}
-								{!!shutterSpeed && (
-									<div className="flex items-center gap-1.5" title="Shutter Speed">
-										<svg
-											className="w-4 h-4 text-text-tertiary"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<title>Shutter Speed</title>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={1.5}
-												d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-											/>
-										</svg>
-										<span>{shutterSpeed}</span>
-									</div>
-								)}
-								{!!iso && (
-									<div className="flex items-center gap-1.5" title="ISO">
-										<span className="font-medium text-text-tertiary">ISO</span>
-										<span>{iso}</span>
-									</div>
-								)}
-								{!!focalLength && (
-									<div className="flex items-center gap-1.5" title="Focal Length">
-										<svg
-											className="w-4 h-4 text-text-tertiary"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<title>Focal Length</title>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={1.5}
-												d="M8 7l-5 5 5 5M16 7l5 5-5 5M3 12h18"
-											/>
-										</svg>
-										<span>{focalLength}</span>
-									</div>
-								)}
-								{!!colorSpace && (
-									<div className="flex items-center gap-1.5" title="Color Space">
-										<svg
-											className="w-4 h-4 text-text-tertiary"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<title>Color Space</title>
-											<circle cx="12" cy="12" r="9" strokeWidth={1.5} />
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={1.5}
-												d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"
-											/>
-										</svg>
-										<span>{colorSpace}</span>
-									</div>
-								)}
+						<div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-text-secondary border-t border-border/50 pt-3 w-full animate-in fade-in duration-300">
+							<div className="flex items-center gap-1.5" title="Camera">
+								<svg
+									className="w-4 h-4 text-text-tertiary"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<title>Camera</title>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={1.5}
+										d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+									/>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={1.5}
+										d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+									/>
+								</svg>
+								<span>{camera || ""}</span>
 							</div>
-						)}
+
+							<div className="flex items-center gap-1.5" title="Lens">
+								<svg
+									className="w-4 h-4 text-text-tertiary"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<title>Lens</title>
+									<circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+									<circle cx="12" cy="12" r="5" strokeWidth={1.5} />
+									<circle cx="12" cy="12" r="2" strokeWidth={1.5} />
+								</svg>
+								<span>{lens || ""}</span>
+							</div>
+
+							<div className="flex items-center gap-1.5" title="Date Taken">
+								<svg
+									className="w-4 h-4 text-text-tertiary"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<title>Date Taken</title>
+									<rect width="18" height="18" x="3" y="4" rx="2" ry="2" strokeWidth={1.5} />
+									<line x1="16" x2="16" y1="2" y2="6" strokeWidth={1.5} />
+									<line x1="8" x2="8" y1="2" y2="6" strokeWidth={1.5} />
+									<line x1="3" x2="21" y1="10" y2="10" strokeWidth={1.5} />
+								</svg>
+								<span>{dateTimeOriginal || ""}</span>
+							</div>
+
+							<div className="flex items-center gap-1.5" title="Aperture">
+								<svg
+									className="w-4 h-4 text-text-tertiary"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<title>Aperture</title>
+									<circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={1.5}
+										d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83M16.62 12l-5.74 9.94"
+									/>
+								</svg>
+								<span>{aperture ? `f/${aperture}` : ""}</span>
+							</div>
+
+							<div className="flex items-center gap-1.5" title="Shutter Speed">
+								<svg
+									className="w-4 h-4 text-text-tertiary"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<title>Shutter Speed</title>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={1.5}
+										d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+									/>
+								</svg>
+								<span>{shutterSpeed || ""}</span>
+							</div>
+
+							<div className="flex items-center gap-1.5" title="ISO">
+								<span className="font-medium text-text-tertiary">ISO</span>
+								<span>{iso || ""}</span>
+							</div>
+
+							<div className="flex items-center gap-1.5" title="Focal Length">
+								<svg
+									className="w-4 h-4 text-text-tertiary"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<title>Focal Length</title>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={1.5}
+										d="M8 7l-5 5 5 5M16 7l5 5-5 5M3 12h18"
+									/>
+								</svg>
+								<span>{focalLength || ""}</span>
+							</div>
+
+							<div className="flex items-center gap-1.5" title="Color Space">
+								<svg
+									className="w-4 h-4 text-text-tertiary"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<title>Color Space</title>
+									<circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={1.5}
+										d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"
+									/>
+								</svg>
+								<span>{colorSpace || ""}</span>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
