@@ -350,17 +350,13 @@ impl Worker {
                 let contents = segment.contents();
                 
                 // XMP is in APP1
-                if marker == markers::APP1 {
-                     if contents.starts_with(b"http://ns.adobe.com/xap/1.0/\0") {
-                         source_xmp = Some(segment.clone());
-                     }
+                if marker == markers::APP1 && contents.starts_with(b"http://ns.adobe.com/xap/1.0/\0") {
+                    source_xmp = Some(segment.clone());
                 }
                 
                 // IPTC is in APP13
-                if marker == markers::APP13 {
-                    if contents.starts_with(b"Photoshop 3.0\0") {
-                        source_iptc = Some(segment.clone());
-                    }
+                if marker == markers::APP13 && contents.starts_with(b"Photoshop 3.0\0") {
+                    source_iptc = Some(segment.clone());
                 }
             }
         } 

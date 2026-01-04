@@ -1,25 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import type { InputItem } from "@common/types";
+import type { InputItem, PreviewData } from "@common/types";
 import tauriAPI from "./utils/tauriAPI";
 
-type PreviewData = {
-  data: string;
-  metadata: {
-    width?: number;
-    height?: number;
-    format?: string;
-    size?: number;
-    birthtime?: number;
-    exif?: any;
-  };
-};
-
 type PreviewStatus =
-  | { state: "idle" }
-  | { state: "loading"; item: InputItem }
-  | { state: "ready"; item: InputItem; data: PreviewData }
-  | { state: "error"; item: InputItem; message: string };
+	| { state: "idle" }
+	| { state: "loading"; item: InputItem }
+	| { state: "ready"; item: InputItem; data: PreviewData }
+	| { state: "error"; item: InputItem; message: string };
 
 interface PreviewContext<T> {
   setItem: (item: T | null) => void;
@@ -104,7 +92,7 @@ const PreviewPanel: React.FC<{ status: PreviewStatus }> = ({ status }) => {
 
       return (
         <div className="preview-content">
-          <img src={status.data.data} alt={status.item.displayName} />
+          <img src={status.data.url} alt={status.item.displayName} />
           <div className="preview-details">
             <h4>{status.item.displayName}</h4>
             <p>{new URL(status.item.sourcePath, "file://").pathname}</p>

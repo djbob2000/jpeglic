@@ -1,4 +1,4 @@
-import type { InputItem } from "@common/types";
+import type { DirEntry, InputItem } from "@common/types";
 import type { InputState } from "@renderer/types";
 import tauriAPI from "./tauriAPI";
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { AppSettings } from "@common/types";
 import { PreviewPanel } from "./components/PreviewPanel";
 import { ProgressModal } from "./components/ProgressModal";
 import { ReplaceWarningModal } from "./components/ReplaceWarningModal";
@@ -13,7 +14,8 @@ import { SettingsTab } from "./views/SettingsTab";
 const App = () => {
 	const { items, addFiles, removeItem, clearItems, hasItems, isLoading, loadedCount } =
 		useInputItems();
-	const { settings, updateOutputSetting, updateAdvancedSetting } = useProcessingSettings();
+	const { settings, updateOutputSetting, updateAdvancedSetting, initializing } =
+		useProcessingSettings();
 	const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 	const [showReplaceWarning, setShowReplaceWarning] = useState(false);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -36,12 +38,13 @@ const App = () => {
 		lastOutputPath,
 	} = useConversion({
 		inputItems: items,
-		settings,
+		settings: settings as AppSettings,
 		onSuccessfulConversion: handlePostConversion,
 		onItemProcessed: removeItem,
 	});
 
 	const handleStartClick = () => {
+		if (!settings) return;
 		if (settings.output.destination === "source" && settings.advanced.warnBeforeReplace) {
 			setShowReplaceWarning(true);
 		} else {
@@ -68,6 +71,14 @@ const App = () => {
 			setSelectedItemId(null);
 		}
 	}, [items, selectedItemId]);
+
+	if (initializing || !settings) {
+		return (
+			<div className="flex h-screen items-center justify-center bg-surface-1">
+				<div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-sm" />
+			</div>
+		);
+	}
 
 	const selectedItem = items.find((i) => i.id === selectedItemId);
 
