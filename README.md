@@ -1,38 +1,28 @@
 # Jpeglic • Best jpg converter
 
-Modern and fast image converter built with **Tauri** and **React**, designed to high-quality JPEG conversion.
+**Minimalism and uncompromising quality.**
 
-## Features
+Inspired by the philosophy of JpegMini, Jpeglic is built for those who value both simplicity and excellence. We combine a clean, distraction-free interface with the most advanced processing technology available today. Your photos deserve to look their best, and we make sure they do—fast.
 
-### 🚀 High-Efficiency JPEG Conversion
-Uses **jpegli** (via Rust bindings) to generate high-quality JPEGs with superior density and visual fidelity compared to standard encoders.
+## What makes Jpeglic special?
 
-### ⚡ Parallel Processing
-Leverages Rust's multi-threading capabilities (via `rayon`) to process images in parallel, utilizing your CPU's full potential.
+### 🚀 State-of-the-Art Core
+We utilize the very latest breakthroughs in image encoding research (advanced psychovisual modeling) to deliver stunning visual quality with impressive file size reduction. It's the best of modern technology, working silently for you.
 
-### 📸 Metadata Preservation
-Keeps your EXIF metadata, ICC profiles, and timestamps intact during conversion using efficient Rust libraries.
+### ⚡ Blazing Fast performance
+Your time is valuable. Jpeglic is engineered to harness the full power of your computer, processing your photo library with incredible speed.
 
-### 🎨 Modern UI
-- **Live Preview**: Inspect images before processing.
-- **Dark Mode**: Sleek, modern interface.
-- **Custom Titlebar**: Integrated window controls for a seamless look.
-- **Drag & Drop**: Easy file management.
+### 📸 Memories, Preserved
+We understand that metadata matters. Your EXIF data, ICC profiles, and timestamps are carefully preserved, so your digital archive remains complete and accurate.
 
-### ⚙️ Smart Workflow
-- **Duplicate Handling**: Smart auto-renaming (Chrome-style) to prevent overwrites.
-- **Settings Persistence**: Your configuration is saved automatically.
+### 🎨 Designed for You
+- **Live Preview**: See the difference instantly.
+- **Modern Experience**: A sleek, dark interface that focuses on your content.
+- **Drag & Drop**: Simplicity at its core—just drag your files and let us handle the rest.
 
-## Technology Stack
-
-- **Framework**: [Tauri v2](https://v2.tauri.app/) (Rust + Webview)
-- **Frontend**: React 19, Vite 6, TypeScript
-- **Styling**: TailwindCSS v4
-- **State Management**: React Hooks & Context
-- **Core Libraries**:
-  - `jpegli` (High-quality JPEG encoding)
-  - `img-parts` (Metadata handling)
-  - `rayon` (Parallelism)
+### ⚙️ Smart & Safe
+- **Worry-Free Handling**: Intelligent file management prevents accidental overwrites of your precious originals.
+- **Ready When You Are**: Your preferences are saved automatically, making your workflow seamless.
 
 ## Development
 
@@ -65,21 +55,6 @@ This command starts the Vite dev server and the Tauri window.
 npm run tauri:build
 ```
 The output will be available in `src-tauri/target/release/bundle/`.
-
-## Project Structure
-
-```
-.
-├── src/                # Frontend (React) source
-│   ├── renderer/       # UI components and logic
-│   └── common/         # Shared types
-├── src-tauri/          # Backend (Rust) source
-│   ├── src/            # Rust source code
-│   │   ├── commands/   # Tauri commands
-│   │   └── processing/ # Image processing logic
-│   └── tauri.conf.json # Tauri configuration
-└── package.json
-```
 
 ## License
 
