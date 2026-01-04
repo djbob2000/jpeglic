@@ -28,6 +28,13 @@ interface PreviewPanelProps {
 	lastProcessedPath?: string | null;
 }
 
+const formatExifDate = (date: Date) => {
+	const pad = (n: number) => n.toString().padStart(2, "0");
+	return `${date.getFullYear()}:${pad(date.getMonth() + 1)}:${pad(date.getDate())} ${pad(
+		date.getHours(),
+	)}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
+
 export const PreviewPanel = ({
 	selectedItem,
 	processing,
@@ -447,24 +454,12 @@ export const PreviewPanel = ({
 								{creationDate ? (
 									<>
 										<span className="text-text-tertiary">•</span>
-										<span>
-											{creationDate.toLocaleDateString()}{" "}
-											{creationDate.toLocaleTimeString([], {
-												hour: "2-digit",
-												minute: "2-digit",
-											})}
-										</span>
+										<span>{formatExifDate(creationDate)}</span>
 									</>
 								) : displayItem && displayItem.lastModified > 0 ? (
 									<>
 										<span className="text-text-tertiary">•</span>
-										<span>
-											{new Date(displayItem.lastModified).toLocaleDateString()}{" "}
-											{new Date(displayItem.lastModified).toLocaleTimeString([], {
-												hour: "2-digit",
-												minute: "2-digit",
-											})}
-										</span>
+										<span>{formatExifDate(new Date(displayItem.lastModified))}</span>
 									</>
 								) : null}
 							</div>
