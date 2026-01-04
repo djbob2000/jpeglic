@@ -4,6 +4,8 @@
 
 Inspired by the philosophy of JpegMini, Jpeglic is built for those who value both simplicity and excellence. We combine a clean, distraction-free interface with the most advanced processing technology available today. Your photos deserve to look their best, and we make sure they do—fast.
 
+![Jpeglic](assets/jpeglic.png)
+
 ## What makes Jpeglic special?
 
 ### 🚀 State-of-the-Art Core
