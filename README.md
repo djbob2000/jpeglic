@@ -1,63 +1,56 @@
-# Jpeglic • Best jpg converter
+# Jpeglic • Best JPG compressor for home archiving
 
-**Minimalism and uncompromising quality.**
+**Minimalism and uncompromising quality**
 
-Inspired by the philosophy of JpegMini, Jpeglic is built for those who value both simplicity and excellence. We combine a clean, distraction-free interface with the most advanced processing technology available today. Your photos deserve to look their best, and we make sure they do—fast.
+Inspired by the magic of JPEGmini, Jpeglic is built for those who cherish their photos and want to preserve them beautifully — without compromise.
+
+A clean, distraction-free interface paired with cutting-edge compression technology. Your memories deserve the best, and Jpeglic delivers it effortlessly.
 
 ![Jpeglic](assets/jpeglic.png)
 
-## What makes Jpeglic special?
+## The Story Behind Jpeglic
 
-### 🚀 State-of-the-Art Core
-We utilize the very latest breakthroughs in image encoding research (advanced psychovisual modeling) to deliver stunning visual quality with impressive file size reduction. It's the best of modern technology, working silently for you.
+This tool was born from love.
 
-### ⚡ Blazing Fast performance
-Your time is valuable. Jpeglic is engineered to harness the full power of your computer, processing your photo library with incredible speed.
+My wife is a photographer. She shoots thousands of photos, edits them carefully in Lightroom, and exports high-quality JPGs — each around 20 MB. Over the years, our family archive grew enormous. Storing and sharing these files became a real headache.
 
-### 📸 Memories, Preserved
-We understand that metadata matters. Your EXIF data, ICC profiles, and timestamps are carefully preserved, so your digital archive remains complete and accurate.
+I tried various converters, tweaking quality settings manually, but they always degraded the images noticeably. Then I discovered JPEGmini. It blew my mind: drop a whole folder, no complicated options, and it reduced files 3–4× while keeping quality virtually indistinguishable from the original. It even preserved file structure, metadata, and — in an undocumented gem — skipped already-optimized files if you re-dropped the same folder. Perfect for incrementally updating a multi-year archive.
 
-### 🎨 Designed for You
-- **Live Preview**: See the difference instantly.
-- **Modern Experience**: A sleek, dark interface that focuses on your content.
-- **Drag & Drop**: Simplicity at its core—just drag your files and let us handle the rest.
+I used a trial version until it stopped working. Later, I found tools like HiKi recompress that squeezed even more. Curiosity took over: how do they achieve this? That led me down a rabbit hole — jpeg-archive, jpeg-recompress, SSIM, Butteraugli, SSIMULACRA2, VMAF, JpegXL, AVIF, WebP...
 
-### ⚙️ Smart & Safe
-- **Worry-Free Handling**: Intelligent file management prevents accidental overwrites of your precious originals.
-- **Ready When You Are**: Your preferences are saved automatically, making your workflow seamless.
+Weeks of research, countless tests, and my own needs shaped what Jpeglic is today:
 
-## Development
+- The best perceptual JPG compression available right now (yes, newer formats can do better, but JPG opens everywhere — even on a toaster).
+- Idempotent processing: re-drop the same folders as many times as you want; only new or changed files get optimized.
+- Full recursive directory support — ideal for large home archives.
+- Blazing-fast multithreading.
+- Tiny footprint, no bloat.
+- Subtle tuning options for those who know what they're doing.
 
-### Prerequisites
+I built Jpeglic for myself and my family, with heart and soul. If it helps you preserve your own memories a little easier — that's the greatest reward.
 
-1. **Node.js**: Version 18+
-2. **Rust**: Latest stable version (install via [rustup.rs](https://rustup.rs/))
-3. **OS Components**:
-   - **macOS**: Xcode Command Line Tools
-   - **Windows**: C++ Build Tools
-   - **Linux**: WebKit2GTK and base build tools
+## Features
 
+### State-of-the-Art Compression
+Advanced psychovisual modeling delivers maximum size reduction with imperceptible quality loss.
 
-### Installation
+### Blazing Fast
+Fully multithreaded — processes entire libraries in minutes.
 
-```bash
-npm install
-```
+### Memories Preserved
+EXIF, ICC profiles, timestamps, and folder structure stay exactly as they were.
 
-### Run in Development Mode
+### Smart & Safe
+- Idempotent: already-optimized files are detected and skipped.
+- No accidental overwrites of originals.
+- Settings remembered automatically.
 
-```bash
-npm run tauri:dev
-```
-This command starts the Vite dev server and the Tauri window.
+### Designed for Real Use
+- Live before and after preview.
+- Drag & drop files or entire folders (recursive).
+- Modern, dark UI that stays out of your way.
 
-### Build for Production
+## Downloads
 
-```bash
-npm run tauri:build
-```
-The output will be available in `src-tauri/target/release/bundle/`.
+Latest release: [v1.0.0](https://github.com/djbob2000/jpeglic/releases/latest) (Windows, macOS)
 
-## License
-
-MIT
