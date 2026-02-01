@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import type { AppSettings } from "@common/types";
+import { useEffect, useState } from "react";
 import { PreviewPanel } from "./components/PreviewPanel";
 import { ProgressModal } from "./components/ProgressModal";
 import { ReplaceWarningModal } from "./components/ReplaceWarningModal";

@@ -1,10 +1,24 @@
-import type { InputItem } from "@common/types";
+import type { InputItem } from "@bindings";
 
-export const formatSize = (bytes: number): string => {
-	if (bytes === 0) return "0 B";
+/**
+ * Formats a byte size into a human-readable string.
+ * Handles both number and bigint inputs to support large file sizes.
+ * 
+ * NOTE: For bigint values > Number.MAX_SAFE_INTEGER, precision may be lost
+ * when converting to Number for calculation. This is acceptable for display
+ * purposes but should be avoided for precise calculations.
+ * 
+ * @param bytes - Size in bytes (number or bigint)
+ * @returns Formatted string like "1.50 MB"
+ */
+export const formatSize = (bytes: number | bigint): string => {
+	// Convert bigint to number for calculations
+	// Precision loss only occurs for files > 9PB which is acceptable for display
+	const numBytes = typeof bytes === "bigint" ? Number(bytes) : bytes;
+	if (numBytes === 0) return "0 B";
 	const units = ["B", "KB", "MB", "GB"];
-	const index = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-	const size = bytes / 1024 ** index;
+	const index = Math.min(units.length - 1, Math.floor(Math.log(numBytes) / Math.log(1024)));
+	const size = numBytes / 1024 ** index;
 	const decimals = index === 0 ? 0 : 2;
 	return `${size.toFixed(decimals)} ${units[index]}`;
 };

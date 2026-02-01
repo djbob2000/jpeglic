@@ -1,12 +1,13 @@
 [package]
 name = "jpeglic-converter"
-version = "1.0.1"
+version = "1.1.0"
 description = "Easy-to-use image converter for home archives"
 authors = ["Jpeglic Team"]
 edition = "2021"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+ts-rs = { version = "10.1", features = ["chrono-impl"] }
 
 [dependencies]
 tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
@@ -32,6 +33,7 @@ zenjpeg = "0.3.1"
 enough = "0.3"
 img-parts = "0.4"
 xmp-writer = "0.3"
+ts-rs = { version = "10.1", features = ["chrono-impl"] }
 
 [features]
 default = ["custom-protocol"]

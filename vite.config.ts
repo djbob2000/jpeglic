@@ -31,6 +31,7 @@ export default defineConfig({
       "@styles": resolve("src/renderer/styles"),
       "@assets": resolve("src/renderer/assets"),
       "@common": resolve("src/common"),
+      "@bindings": resolve("src/bindings"),
     },
   },
 });

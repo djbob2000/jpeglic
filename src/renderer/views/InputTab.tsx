@@ -1,4 +1,4 @@
-import type { InputItem, ProcessingProgress } from "@common/types";
+import type { InputItem, ProcessingProgress } from "@bindings";
 import { cn } from "@utils/cn";
 import { formatSize } from "@utils/format";
 import tauriAPI from "@utils/tauriAPI";

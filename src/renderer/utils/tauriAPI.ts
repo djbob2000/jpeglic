@@ -7,7 +7,7 @@ import type {
 	ProcessingProgress,
 	ProcessingRequest,
 	ProcessingResult,
-} from "@common/types";
+} from "@bindings";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -78,7 +78,7 @@ export const tauriAPI = {
 	settings: {
 		get: () => invoke<AppSettings>("get_settings"),
 
-		save: (settings: Partial<AppSettings>) => invoke("save_settings", { settings }),
+		save: (settings: AppSettings) => invoke("save_settings", { settings }),
 
 		reset: () => invoke("reset_settings"),
 	},

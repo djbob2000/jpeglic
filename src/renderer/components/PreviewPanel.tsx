@@ -8,12 +8,12 @@ import { ProcessingStatus } from "./ProcessingStatus";
 interface PreviewData {
 	url: string;
 	metadata: {
-		width?: number;
-		height?: number;
-		format?: string;
-		size?: number;
-		birthtime?: number;
-		exif?: Record<string, unknown>;
+		width: number | null;
+		height: number | null;
+		format: string | null;
+		size: bigint | null;
+		birthtime: bigint | null;
+		exif: Record<string, unknown> | null;
 	};
 }
 
@@ -265,7 +265,7 @@ export const PreviewPanel = ({
 
 	// Fallback to file birthtime if no valid EXIF date
 	if (!creationDate && metadata?.birthtime) {
-		creationDate = new Date(metadata.birthtime);
+		creationDate = new Date(Number(metadata.birthtime));
 	}
 
 	const dimensions =
@@ -456,12 +456,12 @@ export const PreviewPanel = ({
 										<span className="text-text-tertiary">•</span>
 										<span>{formatExifDate(creationDate)}</span>
 									</>
-								) : displayItem && displayItem.lastModified > 0 ? (
-									<>
-										<span className="text-text-tertiary">•</span>
-										<span>{formatExifDate(new Date(displayItem.lastModified))}</span>
-									</>
-								) : null}
+							) : displayItem && displayItem.lastModified > 0 ? (
+								<>
+									<span className="text-text-tertiary">•</span>
+									<span>{formatExifDate(new Date(Number(displayItem.lastModified)))}</span>
+								</>
+							) : null}
 							</div>
 						)}
 					</div>

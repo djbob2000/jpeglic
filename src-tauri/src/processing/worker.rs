@@ -156,9 +156,11 @@ impl Worker {
                             let _ = trash::delete(&self.item.source_path);
                         }
 
+                        // Disarm guard before atomic rename to prevent race condition
+                        guard.disarm();
+
                         // Move temp to final location
                         fs::rename(&temp_path, &output_info.target_path)?;
-                        guard.disarm();
                         if let Some(mut g) = target_guard { g.disarm(); }
                     }
                 }

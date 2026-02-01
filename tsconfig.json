@@ -22,7 +22,9 @@
       "@views/*": ["src/renderer/views/*"],
       "@styles/*": ["src/renderer/styles/*"],
       "@assets/*": ["src/renderer/assets/*"],
-      "@common/*": ["src/common/*"]
+      "@common/*": ["src/common/*"],
+      "@bindings": ["src/bindings/index.ts"],
+      "@bindings/*": ["src/bindings/*"]
     }
   },
   "include": ["src/**/*"],

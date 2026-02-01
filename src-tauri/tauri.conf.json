@@ -31,14 +31,6 @@
                 "windowSize": {
                     "width": 600,
                     "height": 400
-                },
-                "appPosition": {
-                    "x": 180,
-                    "y": 170
-                },
-                "applicationFolderPosition": {
-                    "x": 420,
-                    "y": 170
                 }
             }
         }

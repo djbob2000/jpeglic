@@ -3,7 +3,16 @@ import type { InputState } from "@renderer/types";
 import tauriAPI from "./tauriAPI";
 
 // Helper to split paths handling both / and \
-const splitPath = (path: string) => path.split(/[/\\]/).filter(Boolean);
+const splitPath = (path: string): string[] => {
+	// Handle Windows drive letter (e.g., "C:\\Users")
+	const hasWindowsDrive = /^[A-Za-z]:/.test(path);
+	const parts = path.split(/[/\\]/).filter(Boolean);
+	// Restore drive letter if present (it gets split as "C:", but we want "C:")
+	if (hasWindowsDrive && parts.length > 0 && /^[A-Za-z]:$/.test(parts[0])) {
+		parts[0] = `${parts[0]}\\`;
+	}
+	return parts;
+};
 
 // Detect which separator is being used in the path
 const getSeparator = (path: string) => (path.includes("\\") ? "\\" : "/");
@@ -104,6 +113,7 @@ export const getCommonBase = (a: string, b: string): string => {
 	}
 
 	const isWindows = a.includes(":\\") || b.includes(":\\");
+	// For Windows with drive letter, the first part already includes the backslash
 	const prefix = isWindows ? "" : a.startsWith("/") ? "/" : "";
 	return prefix + common.join(separator);
 };
