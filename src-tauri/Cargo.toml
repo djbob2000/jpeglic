@@ -1,6 +1,6 @@
 [package]
 name = "jpeglic-converter"
-version = "1.0.0"
+version = "1.0.1"
 description = "Easy-to-use image converter for home archives"
 authors = ["Jpeglic Team"]
 edition = "2021"
@@ -16,7 +16,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 image = { version = "0.25", features = ["jpeg", "png", "avif", "webp", "bmp", "gif", "tiff", "ico"] }
-kamadak-exif = "0.5"
+kamadak-exif = "0.6"
 trash = "5"
 dirs = "6"
 walkdir = "2"
@@ -28,9 +28,10 @@ num_cpus = "1"
 base64 = "0.22"
 filetime = "0.2"
 
-jpegli-rs = "0.3.0"
-img-parts = "0.4.0"
-xmp-writer = "0.3.0"
+zenjpeg = "0.3.1"
+enough = "0.3"
+img-parts = "0.4"
+xmp-writer = "0.3"
 
 [features]
 default = ["custom-protocol"]

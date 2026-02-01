@@ -5,6 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use zenjpeg::encoder::{EncoderConfig, ChromaSubsampling, PixelLayout};
 
 pub struct Worker {
     item: InputItem,
@@ -60,7 +61,7 @@ impl Worker {
             app,
         }
     }
-    
+
     pub async fn process(&self) -> WorkerResult {
         if self.is_cancelled() {
             return WorkerResult {
@@ -71,7 +72,7 @@ impl Worker {
                 saved_bytes: None,
             };
         }
-        
+
         match self.process_internal().await {
             Ok((output_path, saved_bytes)) => WorkerResult {
                 success: true,
@@ -96,7 +97,7 @@ impl Worker {
             },
         }
     }
-    
+
     async fn process_internal(&self) -> Result<(String, u64)> {
         // Check if already processed
         if self.settings.advanced.skip_processed && !self.settings.advanced.recompress_optimized {
@@ -104,7 +105,7 @@ impl Worker {
                 return Err(AppError::AlreadyProcessed);
             }
         }
-        
+
         // Prepare output path
         let output_info = self.prepare_output_path()?;
         let target_guard = if output_info.was_claimed {
@@ -112,7 +113,7 @@ impl Worker {
         } else {
             None
         };
-        
+
         if output_info.should_copy_only {
             // Just copy the file
             fs::copy(&self.item.source_path, &output_info.target_path)?;
@@ -121,7 +122,7 @@ impl Worker {
             // Convert the image
             let temp_path = format!("{}.{}.tmp", output_info.target_path, uuid::Uuid::new_v4());
             let mut guard = TempFileGuard::new(temp_path.clone());
-            
+
             match self.convert_image(&temp_path).await {
                 Ok(_) => {
                     // Check cancellation before heavy metadata operations
@@ -131,15 +132,15 @@ impl Worker {
 
                     // Apply metadata
                     self.apply_metadata(&temp_path).await?;
-                    
+
                     // Delete original if requested
                     // Size comparison check
                     let temp_size = fs::metadata(&temp_path)?.len();
                     // Re-read source size to be sure, or use cached item size since we just read it for conversion
                     let source_size = self.item.size_bytes;
-                    
+
                     let use_original = self.settings.advanced.size_compare && temp_size >= source_size;
-                    
+
                     if use_original {
                          if self.settings.output.destination == "source" {
                              // Replace mode: Do nothing (keep original)
@@ -154,7 +155,7 @@ impl Worker {
                         if self.settings.advanced.delete_originals {
                             let _ = trash::delete(&self.item.source_path);
                         }
-                        
+
                         // Move temp to final location
                         fs::rename(&temp_path, &output_info.target_path)?;
                         guard.disarm();
@@ -166,14 +167,14 @@ impl Worker {
                 }
             }
         }
-        
+
         // Calculate saved bytes
         let output_size = fs::metadata(&output_info.target_path)?.len();
         let saved_bytes = self.item.size_bytes.saturating_sub(output_size);
-        
+
         Ok((output_info.target_path, saved_bytes))
     }
-    
+
     async fn convert_image(&self, output_path: &str) -> Result<()> {
         let subsampling = self.detect_subsampling();
         match self.settings.output.format {
@@ -181,14 +182,14 @@ impl Worker {
         }
     }
 
-    fn detect_subsampling(&self) -> jpegli::Subsampling {
-        // If force 4:4:4 is enabled, always use S444
+    fn detect_subsampling(&self) -> ChromaSubsampling {
+        // If force 4:4:4 is enabled, always use None (no subsampling)
         if self.settings.output.force_subsampling_444 {
-            return jpegli::Subsampling::S444;
+            return ChromaSubsampling::None;
         }
 
         // Default to 4:2:0 if detection fails/not a JPEG
-        let default = jpegli::Subsampling::S420;
+        let default = ChromaSubsampling::Quarter;
 
         let Ok(bytes) = std::fs::read(&self.item.source_path) else {
             return default;
@@ -222,49 +223,49 @@ impl Worker {
                 if contents.len() < (6 + nf as usize * 3) { continue; }
 
                 if nf < 3 {
-                    // Grayscale usually doesn't have subsampling in the same sense, or it's 4:0:0
-                    return jpegli::Subsampling::S444; 
+                    // Grayscale - no chroma subsampling
+                    return ChromaSubsampling::None;
                 }
 
                 // We care about the first component (Y) relative to others
                 let y_h = (contents[7] >> 4) & 0x0F;
                 let y_v = contents[7] & 0x0F;
-                
+
                 let cb_h = (contents[10] >> 4) & 0x0F;
                 let cb_v = contents[10] & 0x0F;
 
                 // Cr sampling factors should be same as Cb in standard JPEGs
-                
+
                 return if y_h == 1 && y_v == 1 {
-                    jpegli::Subsampling::S444 // All 1x1
+                    ChromaSubsampling::None // All 1x1 (4:4:4)
                 } else if y_h == 2 && y_v == 1 {
                     if cb_h == 1 && cb_v == 1 {
-                        jpegli::Subsampling::S422
+                        ChromaSubsampling::HalfHorizontal // 4:2:2
                     } else {
-                        jpegli::Subsampling::S444
+                        ChromaSubsampling::None
                     }
                 } else if y_h == 2 && y_v == 2 {
                     if cb_h == 1 && cb_v == 1 {
-                        jpegli::Subsampling::S420
+                        ChromaSubsampling::Quarter // 4:2:0
                     } else {
-                        jpegli::Subsampling::S444
+                        ChromaSubsampling::None
                     }
                 } else if y_h == 1 && y_v == 2 {
                     if cb_h == 1 && cb_v == 1 {
-                        jpegli::Subsampling::S440
+                        ChromaSubsampling::HalfVertical // 4:4:0
                     } else {
-                        jpegli::Subsampling::S444
+                        ChromaSubsampling::None
                     }
                 } else {
-                    jpegli::Subsampling::S444
+                    ChromaSubsampling::None
                 };
             }
         }
 
         default
     }
-    
-    async fn export_jpeg(&self, output_path: &str, subsampling: jpegli::Subsampling) -> Result<()> {
+
+    async fn export_jpeg(&self, output_path: &str, subsampling: ChromaSubsampling) -> Result<()> {
         // Load image (detecting format by content, not extension)
         let img = ImageReader::open(&self.item.source_path)?
             .with_guessed_format()?
@@ -277,50 +278,68 @@ impl Worker {
         } else {
             self.settings.output.cjpegli_distance
         };
-        
+
         let progressive = self.settings.output.progressive;
-        let use_xyb = self.settings.output.use_xyb; 
-        
+        let use_xyb = self.settings.output.use_xyb;
+
         let raw_pixels = rgb_img.into_raw();
         let output_path_owned = output_path.to_string();
         let cancel_flag = self.cancel_flag.clone();
 
         // Use spawn_blocking for the heavy CPU task
         tokio::task::spawn_blocking(move || {
-            // Configure encoder
-            let mut encoder = jpegli::Encoder::new()
-                .width(width)
-                .height(height);
+            // Configure encoder using zenjpeg API
+            // Distance is passed directly to zenjpeg (valid range typically 0.0-25.0 for jpegli-like distances)
+            let quality_value = distance.max(0.0);
+
+            let config = if use_xyb {
+                // XYB mode - only Full or BQuarter subsampling options available
+                let xyb_subsampling = match subsampling {
+                    ChromaSubsampling::None => zenjpeg::encoder::XybSubsampling::Full,
+                    _ => zenjpeg::encoder::XybSubsampling::BQuarter,
+                };
+                EncoderConfig::xyb(quality_value, xyb_subsampling)
+            } else {
+                // Standard YCbCr mode
+                EncoderConfig::ycbcr(quality_value, subsampling)
+            };
+
+            let config = config.progressive(progressive);
+
+            // Create encoder from raw bytes
+            let mut encoder = config.encode_from_bytes(width, height, PixelLayout::Rgb8Srgb)
+                .map_err(|e| AppError::ProcessFailed(format!("Zenjpeg encoder creation failed: {:?}", e)))?;
+
+            // Encode the image data with cancellation support
+            // Create a wrapper that implements the Stop trait for AtomicBool
+            struct CancelWrapper<'a>(&'a AtomicBool);
+            impl<'a> zenjpeg::encoder::Stop for CancelWrapper<'a> {
+                fn check(&self) -> std::result::Result<(), enough::StopReason> {
+                    if self.0.load(Ordering::SeqCst) {
+                        Err(enough::StopReason::Cancelled)
+                    } else {
+                        Ok(())
+                    }
+                }
+            }
             
-            if progressive {
-                 // TODO: progressive_level API missing in jpegli-rs 0.3.0
-                 eprintln!("Warning: Progressive mode requested but API not available");
-            }
+            encoder.push_packed(&raw_pixels, CancelWrapper(&cancel_flag))
+                .map_err(|e| AppError::ProcessFailed(format!("Zenjpeg encoding failed: {:?}", e)))?;
 
-            if use_xyb {
-                // TODO: xyb API missing in jpegli-rs 0.3.0
-                eprintln!("Warning: XYB mode requested but API not available");
-            }
+            let jpeg_data = encoder.finish()
+                .map_err(|e| AppError::ProcessFailed(format!("Zenjpeg finish failed: {:?}", e)))?;
 
-
-            encoder = encoder.quality(jpegli::Quality::Distance(distance))
-                .subsampling(subsampling);
-
-            // Encode
-            let result = encoder.encode(&raw_pixels)
-                .map_err(|e| AppError::ProcessFailed(format!("Jpegli encoding failed: {:?}", e)))?;
-                
             // Check cancellation right before writing to disk
             if cancel_flag.load(Ordering::SeqCst) {
                 return Err(AppError::ProcessFailed("Cancelled during encoding".to_string()));
             }
 
-            std::fs::write(output_path_owned, result)?;
-            
+            std::fs::write(output_path_owned, jpeg_data)?;
+
             Ok(())
         }).await.map_err(|e| AppError::ProcessFailed(format!("Task panicked: {:?}", e)))?
     }
-    
+
     async fn apply_metadata(&self, output_path: &str) -> Result<()> {
         // 0. Check if stripping metadata is requested
         if self.settings.output.strip_metadata {
@@ -331,7 +350,7 @@ impl Worker {
         use img_parts::jpeg::markers;
 
         // 1. Read source and output
-        let source_bytes = fs::read(&self.item.source_path)?; 
+        let source_bytes = fs::read(&self.item.source_path)?;
         let output_bytes = fs::read(output_path)?;
 
         let mut source_exif = None;
@@ -343,23 +362,23 @@ impl Worker {
         if let Ok(jpeg) = img_parts::jpeg::Jpeg::from_bytes(source_bytes.clone().into()) {
             source_exif = jpeg.exif().map(|b| b.to_vec());
             source_icc = jpeg.icc_profile().map(|b| b.to_vec());
-            
+
             // Extract XMP and IPTC manually from segments
             for segment in jpeg.segments() {
                 let marker = segment.marker();
                 let contents = segment.contents();
-                
+
                 // XMP is in APP1
                 if marker == markers::APP1 && contents.starts_with(b"http://ns.adobe.com/xap/1.0/\0") {
                     source_xmp = Some(segment.clone());
                 }
-                
+
                 // IPTC is in APP13
                 if marker == markers::APP13 && contents.starts_with(b"Photoshop 3.0\0") {
                     source_iptc = Some(segment.clone());
                 }
             }
-        } 
+        }
         // Try to extract from PNG source (basic support)
         else if let Ok(png) = img_parts::png::Png::from_bytes(source_bytes.into()) {
             source_icc = png.icc_profile().map(|b| b.to_vec());
@@ -371,7 +390,7 @@ impl Worker {
             .map_err(|e| AppError::ProcessFailed(format!("Failed to parse output jpeg for metadata: {:?}", e)))?;
 
         // 2. Apply Metadata
-        
+
         // EXIF
         if let Some(exif_data) = source_exif {
             output_jpeg.set_exif(Some(exif_data.into()));
@@ -381,26 +400,26 @@ impl Worker {
         if let Some(icc_data) = source_icc {
             output_jpeg.set_icc_profile(Some(icc_data.into()));
         }
-        
+
         // We act on segments list for others
         let segments = output_jpeg.segments_mut();
-        
+
         // Remove existing APP1 (XMP) and APP13 (IPTC) generated by encoder (if any) to clean slate
         // Although Jpegli defaults mostly clean, safe to ensure insert order
         // Actually, set_exif/set_icc handle their own segments.
-        
+
         // Insert XMP if found (usually after EXIF)
         if let Some(xmp_segment) = source_xmp {
              let mut insert_idx = 0;
              if !segments.is_empty() && segments[0].marker() == markers::APP0 {
                  insert_idx = 1;
              }
-             
+
              // Insert after EXIF if present
              if let Some(pos) = segments.iter().position(|s| s.marker() == markers::APP1 && s.contents().starts_with(b"Exif\0\0")) {
                  insert_idx = pos + 1;
              }
-             
+
              if insert_idx > segments.len() { insert_idx = segments.len(); }
              segments.insert(insert_idx, xmp_segment);
         }
@@ -417,7 +436,7 @@ impl Worker {
             markers::COM,
             img_parts::Bytes::from("Compressed by Jpeglic"),
         );
-        
+
         // Insert comment early in header
         let mut com_insert_idx = 0;
         if !segments.is_empty() && segments[0].marker() == markers::APP0 {
@@ -429,28 +448,28 @@ impl Worker {
         let mut final_file = fs::File::create(output_path)?;
         output_jpeg.encoder().write_to(&mut final_file)
             .map_err(|e| AppError::ProcessFailed(format!("Failed to save metadata: {:?}", e)))?;
-        
+
         // Preserve timestamps (Last Modified / Accessed)
         if self.settings.advanced.preserve_timestamps {
             let source_meta = fs::metadata(&self.item.source_path)?;
             let mtime = source_meta.modified()?;
             let atime = source_meta.accessed().unwrap_or(mtime);
-            
+
             filetime::set_file_times(
                 output_path,
                 filetime::FileTime::from_system_time(atime),
                 filetime::FileTime::from_system_time(mtime),
             )?;
         }
-        
+
         Ok(())
     }
-    
+
     fn prepare_output_path(&self) -> Result<OutputInfo> {
         let ext = match self.settings.output.format {
             OutputFormat::Jpeg => "jpg",
         };
-        
+
         let source_path = Path::new(&self.item.source_path);
         let base_name = source_path
             .file_stem()
@@ -459,18 +478,18 @@ impl Worker {
                 std::io::ErrorKind::InvalidInput,
                 "Invalid filename"
             )))?;
-        
+
         let directory = if self.settings.output.destination == "custom" {
             if let Some(ref custom_dir) = self.settings.output.custom_directory {
                 let mut dir = PathBuf::from(custom_dir);
-                
+
                 if self.settings.output.keep_folder_structure {
                     let relative_dir = Path::new(&self.item.relative_path)
                         .parent()
                         .unwrap_or_else(|| Path::new(""));
                     dir = dir.join(relative_dir);
                 }
-                
+
                 fs::create_dir_all(&dir)?;
                 dir
             } else {
@@ -479,7 +498,7 @@ impl Worker {
         } else {
             source_path.parent().unwrap().to_path_buf()
         };
-        
+
         let target_path;
         let source_path_os = Path::new(&self.item.source_path);
         let mut was_claimed = false;
@@ -513,16 +532,16 @@ impl Worker {
                 Err(e) => return Err(e.into()),
             }
         }
-        
+
         let target_path_str = target_path.to_string_lossy().to_string();
-        
+
         Ok(OutputInfo {
             target_path: target_path_str,
             should_copy_only: false,
             was_claimed,
         })
     }
-    
+
     fn is_cancelled(&self) -> bool {
         self.cancel_flag.load(Ordering::SeqCst)
     }

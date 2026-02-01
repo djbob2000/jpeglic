@@ -5,7 +5,7 @@
     "type": "git",
     "url": "https://github.com/djbob2000/home-archive-converter.git"
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Easy-to-use image converter for modern formats",
   "main": "src/renderer/main.tsx",
   "scripts": {
@@ -24,7 +24,7 @@
     "jpeg-xl",
     "avif"
   ],
-  "author": "Jpeglic Team",
+  "author": "Volodymyr Peretiatko",
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",
