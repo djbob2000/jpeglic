@@ -3,11 +3,11 @@ import type { InputItem } from "@bindings";
 /**
  * Formats a byte size into a human-readable string.
  * Handles both number and bigint inputs to support large file sizes.
- * 
+ *
  * NOTE: For bigint values > Number.MAX_SAFE_INTEGER, precision may be lost
  * when converting to Number for calculation. This is acceptable for display
  * purposes but should be avoided for precise calculations.
- * 
+ *
  * @param bytes - Size in bytes (number or bigint)
  * @returns Formatted string like "1.50 MB"
  */

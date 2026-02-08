@@ -1,12 +1,10 @@
-import type { AppSettings } from "@common/types";
 import { useEffect, useState } from "react";
 import { PreviewPanel } from "./components/PreviewPanel";
 import { ProgressModal } from "./components/ProgressModal";
 import { ReplaceWarningModal } from "./components/ReplaceWarningModal";
-import { Titlebar } from "./components/Titlebar";
+import { useSettings } from "./contexts/SettingsContext";
 import { useConversion } from "./hooks/useConversion";
 import { useInputItems } from "./hooks/useInputItems";
-import { useProcessingSettings } from "./hooks/useProcessingSettings";
 import { useUpdateNotifications } from "./hooks/useUpdateNotifications";
 import { InputTab } from "./views/InputTab";
 import { SettingsTab } from "./views/SettingsTab";
@@ -14,8 +12,7 @@ import { SettingsTab } from "./views/SettingsTab";
 const App = () => {
 	const { items, addFiles, removeItem, clearItems, hasItems, isLoading, loadedCount } =
 		useInputItems();
-	const { settings, updateOutputSetting, updateAdvancedSetting, initializing } =
-		useProcessingSettings();
+	const { settings, updateAdvancedSetting, initializing } = useSettings();
 	const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 	const [showReplaceWarning, setShowReplaceWarning] = useState(false);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -38,7 +35,6 @@ const App = () => {
 		lastOutputPath,
 	} = useConversion({
 		inputItems: items,
-		settings: settings as AppSettings,
 		onSuccessfulConversion: handlePostConversion,
 		onItemProcessed: removeItem,
 	});
@@ -84,8 +80,6 @@ const App = () => {
 
 	return (
 		<div className="flex h-full flex-col font-sans bg-surface-1 text-text-primary">
-			<Titlebar />
-
 			<div className="flex flex-1 overflow-hidden">
 				{/* Main Content: Preview & Settings */}
 				<main className="flex flex-1 flex-col min-w-0 min-h-0 bg-surface-1 relative">
@@ -138,11 +132,7 @@ const App = () => {
 											</svg>
 										</button>
 									</div>
-									<SettingsTab
-										settings={settings}
-										onOutputChange={updateOutputSetting}
-										onAdvancedChange={updateAdvancedSetting}
-									/>
+									<SettingsTab />
 								</div>
 							</div>
 						) : (
@@ -151,7 +141,6 @@ const App = () => {
 								processing={progress}
 								onAddFiles={addFiles}
 								onOpenSettings={() => setIsSettingsOpen(true)}
-								settings={settings}
 								isConverting={isConverting}
 								percentage={percentage}
 								lastProcessedPath={lastOutputPath}

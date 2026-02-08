@@ -47,16 +47,14 @@
                 "resizable": true,
                 "fullscreen": false,
                 "decorations": true,
-                "transparent": false,
-                "titleBarStyle": "Overlay",
-                "hiddenTitle": true
+                "transparent": false
             }
         ],
         "security": {
-            "csp": "default-src 'self' 'unsafe-inline' 'unsafe-eval' asset:; img-src 'self' asset: http://asset.localhost data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' asset:; style-src 'self' 'unsafe-inline' asset:; connect-src 'self' ipc: http://ipc.localhost",
+            "csp": "default-src 'self' 'unsafe-inline' asset:; img-src 'self' asset: http://asset.localhost data: blob:; script-src 'self' 'unsafe-inline' asset:; style-src 'self' 'unsafe-inline' asset:; connect-src 'self' ipc: http://ipc.localhost",
             "assetProtocol": {
                 "enable": true,
-                "scope": ["$HOME/**", "$DOCUMENT/**", "$PICTURE/**", "$DESKTOP/**", "$DOWNLOAD/**", "/**"]
+                "scope": ["$HOME/**", "$DOCUMENT/**", "$PICTURE/**", "$DESKTOP/**", "$DOWNLOAD/**"]
             }
         }
     },

@@ -1886,7 +1886,7 @@ dependencies = [
 
 [[package]]
 name = "jpeglic-converter"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -5674,9 +5674,9 @@ dependencies = [
 
 [[package]]
 name = "zenjpeg"
-version = "0.3.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdc3f02505c46b38f06c25a1a269bf3e624da49aff2ec9f2583b66e8219bb736"
+checksum = "a48b21f380b04f6465445fe716fb0dc8326d67d52c724bd77a455511fabcdbde"
 dependencies = [
  "aligned-vec",
  "archmage",

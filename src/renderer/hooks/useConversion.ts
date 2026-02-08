@@ -3,24 +3,24 @@ import type {
 	ProcessingProgress,
 	ProcessingRequest,
 	ProcessingResult,
-	ProcessingSettings,
 } from "@common/types";
 import tauriAPI from "@utils/tauriAPI";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useSettings } from "../contexts/SettingsContext";
 
 interface UseConversionParams {
 	inputItems: InputItem[];
-	settings: ProcessingSettings;
 	onSuccessfulConversion: () => void;
 	onItemProcessed?: (itemId: string) => void;
 }
 
 export const useConversion = ({
 	inputItems,
-	settings,
 	onSuccessfulConversion,
 	onItemProcessed,
 }: UseConversionParams) => {
+	const { settings } = useSettings();
 	const [isProgressOpen, setProgressOpen] = useState(false);
 	const [progress, setProgress] = useState<ProcessingProgress>({
 		completed: 0,
@@ -100,7 +100,7 @@ export const useConversion = ({
 			tauriAPI.window.setProgressBar(-1);
 			setProgressOpen(false);
 			setIsStopping(false);
-			window.alert(error.message);
+			toast.error(error.message);
 		});
 
 		return () => {
@@ -112,7 +112,12 @@ export const useConversion = ({
 
 	const startConversion = async () => {
 		if (inputItems.length === 0) {
-			window.alert("Add files before starting conversion.");
+			toast.warning("Add files before starting conversion.");
+			return;
+		}
+
+		if (!settings) {
+			toast.error("Settings not loaded.");
 			return;
 		}
 
@@ -133,7 +138,7 @@ export const useConversion = ({
 		} catch (error) {
 			setProgressOpen(false);
 			const message = error instanceof Error ? error.message : "Failed to start conversion.";
-			window.alert(message);
+			toast.error(message);
 		}
 	};
 

@@ -1,7 +1,8 @@
 use crate::types::*;
 use crate::utils::{AppError, Result};
 use image::ImageReader;
-use std::fs;
+use std::fs::{self, File};
+use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -193,50 +194,81 @@ impl Worker {
         // Default to 4:2:0 if detection fails/not a JPEG
         let default = ChromaSubsampling::Quarter;
 
-        let Ok(bytes) = std::fs::read(&self.item.source_path) else {
-            return default;
+        // Use buffered reading to avoid loading the entire file into memory
+        let file = match File::open(&self.item.source_path) {
+            Ok(f) => f,
+            Err(_) => return default,
         };
+        let mut reader = BufReader::new(file);
 
-        let Ok(jpeg) = img_parts::jpeg::Jpeg::from_bytes(bytes.into()) else {
+        // Check for JPEG magic number (FF D8)
+        let mut header = [0u8; 2];
+        if reader.read_exact(&mut header).is_err() || header != [0xFF, 0xD8] {
             return default;
-        };
+        }
 
         // JPEG markers for Start of Frame (SOF)
-        // SOF0 (Baseline), SOF1 (Extended Sequential), SOF2 (Progressive)
         const SOF0: u8 = 0xC0;
         const SOF1: u8 = 0xC1;
         const SOF2: u8 = 0xC2;
 
-        for segment in jpeg.segments() {
-            let marker = segment.marker();
+        loop {
+            // Find next marker (FF xx)
+            let mut byte = [0u8; 1];
+
+            // Skip non-FF bytes (though in valid JPEG, markers follow segments)
+            // Ideally we jump by segment length, so let's try to follow the chain
+            if reader.read_exact(&mut byte).is_err() { break; }
+            if byte[0] != 0xFF { continue; }
+
+            // Read marker type
+            if reader.read_exact(&mut byte).is_err() { break; }
+            let marker = byte[0];
+
+            if marker == 0x00 || marker == 0xFF { continue; } // Stuffed FF or padding
+
+            // Check if it's an SOF marker
             if marker == SOF0 || marker == SOF1 || marker == SOF2 {
-                let contents = segment.contents();
-                // SOF segment structure:
-                // 1 byte: Precision
-                // 2 bytes: Height
-                // 2 bytes: Width
-                // 1 byte: Number of components (Nf)
-                // For each component:
-                //   1 byte: Component ID
-                //   1 byte: Sampling factors (Hi, Vi) - high 4 bits H, low 4 bits V
-                //   1 byte: Quantization table ID
-                if contents.len() < 6 { continue; }
-                let nf = contents[5];
-                if contents.len() < (6 + nf as usize * 3) { continue; }
+                // Read length (2 bytes, big endian)
+                let mut len_bytes = [0u8; 2];
+                if reader.read_exact(&mut len_bytes).is_err() { break; }
+                let length = u16::from_be_bytes(len_bytes);
+
+                // Length includes the length bytes themselves (2 bytes)
+                // We need at least: Precision(1) + Height(2) + Width(2) + Components(1) = 6 bytes
+                // Plus 3 bytes per component
+                if length < 8 { break; }
+
+                let content_len = (length - 2) as usize;
+                let mut content = vec![0u8; content_len];
+                if reader.read_exact(&mut content).is_err() { break; }
+
+                // Parse SOF content
+                // 0: Precision
+                // 1-2: Height
+                // 3-4: Width
+                // 5: Number of components (Nf)
+                if content.len() < 6 { break; }
+                let nf = content[5];
+
+                if content.len() < (6 + nf as usize * 3) { break; }
 
                 if nf < 3 {
                     // Grayscale - no chroma subsampling
                     return ChromaSubsampling::None;
                 }
 
-                // We care about the first component (Y) relative to others
-                let y_h = (contents[7] >> 4) & 0x0F;
-                let y_v = contents[7] & 0x0F;
+                // Component info starts at index 6
+                // Structure: [ID, SamplingFactors, QuantTableID]
+                // Y (Component 0): index 6 + 0*3 = 6
+                // Cb (Component 1): index 6 + 1*3 = 9
+                // Cr (Component 2): index 6 + 2*3 = 12
 
-                let cb_h = (contents[10] >> 4) & 0x0F;
-                let cb_v = contents[10] & 0x0F;
+                let y_h = (content[6+1] >> 4) & 0x0F;
+                let y_v = content[6+1] & 0x0F;
 
-                // Cr sampling factors should be same as Cb in standard JPEGs
+                let cb_h = (content[9+1] >> 4) & 0x0F;
+                let cb_v = content[9+1] & 0x0F;
 
                 return if y_h == 1 && y_v == 1 {
                     ChromaSubsampling::None // All 1x1 (4:4:4)
@@ -261,6 +293,17 @@ impl Worker {
                 } else {
                     ChromaSubsampling::None
                 };
+            } else {
+                // Other marker, skip segment
+                // Read length
+                let mut len_bytes = [0u8; 2];
+                if reader.read_exact(&mut len_bytes).is_err() { break; }
+                let length = u16::from_be_bytes(len_bytes);
+
+                // Skip content
+                if length > 2 {
+                    if reader.seek(SeekFrom::Current((length - 2) as i64)).is_err() { break; }
+                }
             }
         }
 
@@ -495,10 +538,14 @@ impl Worker {
                 fs::create_dir_all(&dir)?;
                 dir
             } else {
-                source_path.parent().unwrap().to_path_buf()
+                source_path.parent()
+                    .ok_or_else(|| AppError::ProcessFailed("Cannot determine parent directory".to_string()))?
+                    .to_path_buf()
             }
         } else {
-            source_path.parent().unwrap().to_path_buf()
+            source_path.parent()
+                .ok_or_else(|| AppError::ProcessFailed("Cannot determine parent directory".to_string()))?
+                .to_path_buf()
         };
 
         let target_path;

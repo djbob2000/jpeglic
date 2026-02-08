@@ -1,9 +1,9 @@
 /**
  * Type definitions for the application.
- * 
+ *
  * NOTE: These types are auto-generated from Rust using ts-rs crate.
  * The bindings are located in src-tauri/bindings/.
- * 
+ *
  * TYPE MAPPING NOTES:
  * - number: Used for all numeric values including sizes and timestamps
  *   - File sizes (sizeBytes, savedBytes) are within Number.MAX_SAFE_INTEGER (9PB)
@@ -29,9 +29,9 @@ export interface FileStats {
 	isFile: boolean;
 	isDirectory: boolean;
 	/** File size in bytes (number safe up to 9PB) */
-	size: number;
+	size: bigint;
 	/** Modification time as Unix timestamp in milliseconds */
-	mtime: number;
+	mtime: bigint;
 }
 
 export interface DirEntry {
@@ -96,10 +96,10 @@ export interface InputItem {
 	displayName: string;
 	relativePath: string;
 	/** File size in bytes */
-	sizeBytes: number;
+	sizeBytes: bigint;
 	/** Last modification time as Unix timestamp in milliseconds */
-	lastModified: number;
-	isProcessed?: boolean;
+	lastModified: bigint;
+	isProcessed?: boolean | null;
 }
 
 export interface ProcessingRequest {
@@ -114,14 +114,14 @@ export interface ProcessingRequest {
 export interface ProcessingProgress {
 	completed: number;
 	total: number;
-	currentItem?: InputItem;
-	currentOutputPath?: string;
-	message?: string;
+	currentItem?: InputItem | null;
+	currentOutputPath?: string | null;
+	message?: string | null;
 	/** ID of item that was just processed (success or skipped) */
-	processedItemId?: string;
+	processedItemId?: string | null;
 	/** Total bytes saved so far */
-	savedBytes?: number;
-	activeItemIds?: string[];
+	savedBytes?: bigint | null;
+	activeItemIds?: string[] | null;
 }
 
 /**
@@ -135,7 +135,7 @@ export interface ProcessingResult {
 	errors: Array<{ item: InputItem; error: string }>;
 	canceled: boolean;
 	/** Total bytes saved across all processed files */
-	savedBytes: number;
+	savedBytes: bigint;
 }
 
 /**
@@ -152,9 +152,9 @@ export interface PreviewMetadata {
 	/** Image format (e.g., "JPEG", "PNG") */
 	format: string | null;
 	/** File size in bytes */
-	size: number | null;
+	size: bigint | null;
 	/** File creation time as Unix timestamp in milliseconds */
-	birthtime: number | null;
+	birthtime: bigint | null;
 	/** EXIF metadata as key-value pairs */
 	exif: Record<string, unknown> | null;
 }

@@ -1,35 +1,27 @@
-import type { ProcessingSettings } from "@common/types";
 import { cn } from "@utils/cn";
 import { distanceToQuality } from "@utils/settings";
 import tauriAPI from "@utils/tauriAPI";
+import { useSettings } from "../contexts/SettingsContext";
 
-interface SettingsTabProps {
-	settings: ProcessingSettings;
-	onOutputChange: <K extends keyof ProcessingSettings["output"]>(
-		key: K,
-		value: ProcessingSettings["output"][K],
-	) => void;
-	onAdvancedChange: <K extends keyof ProcessingSettings["advanced"]>(
-		key: K,
-		value: ProcessingSettings["advanced"][K],
-	) => void;
-}
+export const SettingsTab = () => {
+	const { settings, updateOutputSetting, updateAdvancedSetting } = useSettings();
 
-export const SettingsTab = ({ settings, onOutputChange, onAdvancedChange }: SettingsTabProps) => {
-	const handleDestinationChange = async (value: ProcessingSettings["output"]["destination"]) => {
+	if (!settings) return null;
+
+	const handleDestinationChange = async (value: "source" | "custom") => {
 		if (value === "source") {
-			onOutputChange("destination", value);
-			onOutputChange("customDirectory", undefined);
+			updateOutputSetting("destination", value);
+			updateOutputSetting("customDirectory", null);
 		} else if (value === "custom") {
 			// Automatically open directory picker when custom is selected
 			const directory = await tauriAPI.dialog.openDirectory();
 			if (directory) {
-				onOutputChange("customDirectory", directory);
-				onOutputChange("destination", "custom");
+				updateOutputSetting("customDirectory", directory);
+				updateOutputSetting("destination", "custom");
 			} else {
 				// User cancelled - revert to source
-				onOutputChange("destination", "source");
-				onOutputChange("customDirectory", undefined);
+				updateOutputSetting("destination", "source");
+				updateOutputSetting("customDirectory", null);
 			}
 		}
 	};
@@ -37,10 +29,13 @@ export const SettingsTab = ({ settings, onOutputChange, onAdvancedChange }: Sett
 	const browseDirectory = async () => {
 		const directory = await tauriAPI.dialog.openDirectory();
 		if (directory) {
-			onOutputChange("customDirectory", directory);
-			onOutputChange("destination", "custom");
+			updateOutputSetting("customDirectory", directory);
+			updateOutputSetting("destination", "custom");
 		}
 	};
+
+	const onOutputChange = updateOutputSetting;
+	const onAdvancedChange = updateAdvancedSetting;
 
 	return (
 		<div className="flex flex-col gap-6 p-6">
@@ -104,7 +99,7 @@ export const SettingsTab = ({ settings, onOutputChange, onAdvancedChange }: Sett
 											type="text"
 											value={settings.output.customDirectory ?? ""}
 											onChange={(event) =>
-												onOutputChange("customDirectory", event.target.value || undefined)
+												onOutputChange("customDirectory", event.target.value || null)
 											}
 											placeholder="/home/user/Pictures"
 											className="form-control flex-1"

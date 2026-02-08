@@ -1,8 +1,10 @@
-import type { InputItem, ProcessingProgress, ProcessingSettings } from "@common/types";
+import type { InputItem, ProcessingProgress } from "@common/types";
+import { useImageMetadata } from "@hooks/useImageMetadata";
 import { cn } from "@utils/cn";
 import { formatSize } from "@utils/format";
 import tauriAPI from "@utils/tauriAPI";
 import { type DragEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { useSettings } from "../contexts/SettingsContext";
 import { ProcessingStatus } from "./ProcessingStatus";
 
 interface PreviewData {
@@ -22,29 +24,21 @@ interface PreviewPanelProps {
 	processing?: ProcessingProgress;
 	onAddFiles: (paths: string[]) => Promise<void> | void;
 	onOpenSettings: () => void;
-	settings: ProcessingSettings;
 	isConverting: boolean;
 	percentage: number;
 	lastProcessedPath?: string | null;
 }
-
-const formatExifDate = (date: Date) => {
-	const pad = (n: number) => n.toString().padStart(2, "0");
-	return `${date.getFullYear()}:${pad(date.getMonth() + 1)}:${pad(date.getDate())} ${pad(
-		date.getHours(),
-	)}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-};
 
 export const PreviewPanel = ({
 	selectedItem,
 	processing,
 	onAddFiles,
 	onOpenSettings,
-	settings,
 	isConverting,
 	percentage,
 	lastProcessedPath,
 }: PreviewPanelProps) => {
+	const { settings } = useSettings();
 	const [previewData, setPreviewData] = useState<PreviewData | null>(null);
 	const [previousData, setPreviousData] = useState<PreviewData | null>(null);
 	const [isDragOver, setDragOver] = useState(false);
@@ -66,6 +60,7 @@ export const PreviewPanel = ({
 
 	// Generate settings display text
 	const getSettingsText = () => {
+		if (!settings) return "";
 		if (settings.output.destination === "source") {
 			return "Replace originals";
 		}
@@ -142,6 +137,10 @@ export const PreviewPanel = ({
 			ignore = true;
 		};
 	}, [selectedItem, isConverting, lastProcessedPath]);
+
+	// Use the custom hook for metadata parsing
+	const meta = useImageMetadata(previewData, previousData, isImageLoaded);
+	const activePreviewData = isImageLoaded ? previewData : previousData || previewData;
 
 	if (!activeItem && !isConverting) {
 		return (
@@ -221,92 +220,8 @@ export const PreviewPanel = ({
 		);
 	}
 
-	// Determine which metadata to show (prevent text flickering during transition)
-	const activePreviewData = isImageLoaded ? previewData : previousData || previewData;
-	const { metadata } = activePreviewData || {};
-	const exif = metadata?.exif;
-
-	// Extract useful info from exiftool data
-	// exiftool returns a flat structure with many potential date fields
-	const dateTaken = exif?.DateTimeOriginal || exif?.CreateDate || exif?.ModifyDate;
-	const cameraMake = exif?.Make;
-	const cameraModel = exif?.Model;
-	const camera = [cameraMake, cameraModel]
-		.filter((v): v is string | number => v !== null && v !== undefined && v !== "")
-		.map(String)
-		.join(" ");
-
-	// Parse ExifTool date object or string
-	let creationDate: Date | null = null;
-	if (dateTaken) {
-		// ExifTool often returns ExifDateTime objects, but they stringify well or have properties
-		// If it's a string, it's usually "YYYY:MM:DD HH:MM:SS"
-		const dateStr = String(dateTaken);
-		// Basic attempt to parse standard EXIF date format if standard Date parsing fails
-		const exifDateRegex = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/;
-		const match = dateStr.match(exifDateRegex);
-		if (match) {
-			creationDate = new Date(
-				parseInt(match[1], 10),
-				parseInt(match[2], 10) - 1,
-				parseInt(match[3], 10),
-				parseInt(match[4], 10),
-				parseInt(match[5], 10),
-				parseInt(match[6], 10),
-			);
-		} else {
-			creationDate = new Date(dateStr);
-		}
-
-		if (Number.isNaN(creationDate.getTime())) {
-			creationDate = null;
-		}
-	}
-
-	// Fallback to file birthtime if no valid EXIF date
-	if (!creationDate && metadata?.birthtime) {
-		creationDate = new Date(Number(metadata.birthtime));
-	}
-
-	const dimensions =
-		metadata?.width && metadata?.height ? `${metadata.width} × ${metadata.height}` : null;
-
-	// Format helpers for EXIF
-	const formatShutter = (val: unknown): string => {
-		if (!val) return "";
-		const s = String(val)
-			.replace(/\s*ev$/i, "")
-			.trim();
-		if (s.includes("/")) return s.endsWith("s") ? s : `${s}s`;
-
-		const num = parseFloat(s);
-		if (Number.isNaN(num) || num <= 0) return s;
-
-		if (num >= 0.4) {
-			return `${Number(num.toFixed(1))}s`;
-		}
-		const denominator = Math.round(1 / num);
-		return `1/${denominator}s`;
-	};
-
-	const formatAperture = (val: unknown): string => {
-		if (!val) return "";
-		const s = String(val)
-			.replace(/\s*ev$/i, "")
-			.trim();
-		const num = parseFloat(s);
-		if (Number.isNaN(num)) return s;
-		return Number(num.toFixed(1)).toString();
-	};
-
-	const aperture = exif?.FNumber ? formatAperture(exif.FNumber) : null;
-	const shutterSpeed = exif?.ExposureTime ? formatShutter(exif.ExposureTime) : null;
-	const iso = exif?.ISO ? String(exif.ISO) : null;
-	const lensRaw = exif?.LensModel || exif?.Lens;
-	const lens = lensRaw ? String(lensRaw) : null;
-	const focalLength = exif?.FocalLength ? String(exif.FocalLength) : null;
-	const colorSpace = exif?.ColorSpace ? String(exif.ColorSpace) : null;
-	const dateTimeOriginal = exif?.DateTimeOriginal ? String(exif.DateTimeOriginal) : null;
+	// Helpers for format (if needed by UI specifically, though hook provides most)
+	const { formatExifDate } = require("../hooks/useImageMetadata");
 
 	return (
 		<section
@@ -436,32 +351,32 @@ export const PreviewPanel = ({
 									: "Converting..."
 								: displayItem?.displayName || ""}
 						</div>
-						{(displayItem || metadata) && (
+						{(displayItem || meta) && (
 							<div className="flex items-center justify-center gap-3 text-sm text-text-secondary">
-								<span>{formatSize(metadata?.size || displayItem?.sizeBytes || 0)}</span>
-								{dimensions && (
+								<span>{formatSize(meta?.size || displayItem?.sizeBytes || 0)}</span>
+								{meta?.dimensions && (
 									<>
 										<span className="text-text-tertiary">•</span>
-										<span>{dimensions}</span>
+										<span>{meta.dimensions}</span>
 									</>
 								)}
-								{metadata?.format && (
+								{meta?.format && (
 									<>
 										<span className="text-text-tertiary">•</span>
-										<span>{metadata.format}</span>
+										<span>{meta.format}</span>
 									</>
 								)}
-								{creationDate ? (
+								{meta?.creationDate ? (
 									<>
 										<span className="text-text-tertiary">•</span>
-										<span>{formatExifDate(creationDate)}</span>
+										<span>{formatExifDate(meta.creationDate)}</span>
 									</>
-							) : displayItem && displayItem.lastModified > 0 ? (
-								<>
-									<span className="text-text-tertiary">•</span>
-									<span>{formatExifDate(new Date(Number(displayItem.lastModified)))}</span>
-								</>
-							) : null}
+								) : displayItem && displayItem.lastModified > 0 ? (
+									<>
+										<span className="text-text-tertiary">•</span>
+										<span>{formatExifDate(new Date(Number(displayItem.lastModified)))}</span>
+									</>
+								) : null}
 							</div>
 						)}
 					</div>
@@ -489,7 +404,7 @@ export const PreviewPanel = ({
 										d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
 									/>
 								</svg>
-								<span>{camera || ""}</span>
+								<span>{meta?.camera || ""}</span>
 							</div>
 
 							<div className="flex items-center gap-1.5" title="Lens">
@@ -504,7 +419,7 @@ export const PreviewPanel = ({
 									<circle cx="12" cy="12" r="5" strokeWidth={1.5} />
 									<circle cx="12" cy="12" r="2" strokeWidth={1.5} />
 								</svg>
-								<span>{lens || ""}</span>
+								<span>{meta?.lens || ""}</span>
 							</div>
 
 							<div className="flex items-center gap-1.5" title="Date Taken">
@@ -520,7 +435,7 @@ export const PreviewPanel = ({
 									<line x1="8" x2="8" y1="2" y2="6" strokeWidth={1.5} />
 									<line x1="3" x2="21" y1="10" y2="10" strokeWidth={1.5} />
 								</svg>
-								<span>{dateTimeOriginal || ""}</span>
+								<span>{meta?.dateTimeOriginal || ""}</span>
 							</div>
 
 							<div className="flex items-center gap-1.5" title="Aperture">
@@ -539,7 +454,7 @@ export const PreviewPanel = ({
 										d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83M16.62 12l-5.74 9.94"
 									/>
 								</svg>
-								<span>{aperture ? `f/${aperture}` : ""}</span>
+								<span>{meta?.aperture ? `f/${meta.aperture}` : ""}</span>
 							</div>
 
 							<div className="flex items-center gap-1.5" title="Shutter Speed">
@@ -557,12 +472,12 @@ export const PreviewPanel = ({
 										d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
 									/>
 								</svg>
-								<span>{shutterSpeed || ""}</span>
+								<span>{meta?.shutterSpeed || ""}</span>
 							</div>
 
 							<div className="flex items-center gap-1.5" title="ISO">
 								<span className="font-medium text-text-tertiary">ISO</span>
-								<span>{iso || ""}</span>
+								<span>{meta?.iso || ""}</span>
 							</div>
 
 							<div className="flex items-center gap-1.5" title="Focal Length">
@@ -580,7 +495,7 @@ export const PreviewPanel = ({
 										d="M8 7l-5 5 5 5M16 7l5 5-5 5M3 12h18"
 									/>
 								</svg>
-								<span>{focalLength || ""}</span>
+								<span>{meta?.focalLength || ""}</span>
 							</div>
 
 							<div className="flex items-center gap-1.5" title="Color Space">
@@ -599,7 +514,7 @@ export const PreviewPanel = ({
 										d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"
 									/>
 								</svg>
-								<span>{colorSpace || ""}</span>
+								<span>{meta?.colorSpace || ""}</span>
 							</div>
 						</div>
 					</div>
