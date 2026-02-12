@@ -29,7 +29,7 @@ num_cpus = "1"
 base64 = "0.22"
 filetime = "0.2.27"
 
-zenjpeg = "0.5.0"
+zenjpeg = "0.6.1"
 enough = "0.3"
 img-parts = "0.4"
 xmp-writer = "0.3"

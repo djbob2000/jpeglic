@@ -73,19 +73,19 @@ checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
 
 [[package]]
 name = "archmage"
-version = "0.3.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5778a98b0714014089227472fd4342aacbd581d58ab673cbba6f6bf9fb5b5cd"
+checksum = "2cc7afb8ae886487663ba1e0dc79df6b5f0af0d6478f8e55c50a49c3d780fcb0"
 dependencies = [
  "archmage-macros",
- "bytemuck",
+ "safe_unaligned_simd",
 ]
 
 [[package]]
 name = "archmage-macros"
-version = "0.3.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80979662181a630a1e7a4f9f25174e990f44fc0c4e534e11c563fee10c9b8a1e"
+checksum = "fb7505f102989d85ae6faa9ff86e4ddf41b2c25990f2e201e48944cbf776bc42"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2108,12 +2108,11 @@ checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
 
 [[package]]
 name = "magetypes"
-version = "0.3.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79bcaaebc5420c1dfb6a2db979cf86c7f852fea4013de3920d0f0395ac9ea5a7"
+checksum = "bcc8b6ac14292c7e2774986a72fa7aadcf4829eeb0ae45117da6ca86aff04b53"
 dependencies = [
  "archmage",
- "bytemuck",
 ]
 
 [[package]]
@@ -3425,9 +3424,9 @@ dependencies = [
 
 [[package]]
 name = "safe_unaligned_simd"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f11527e0e2ceae04eb620ca18696f297fc9aa6d5b6b60bd15bd68179d0b39cc"
+checksum = "c1d612ce01a584cfab72164fb3f689112249fafeab7b4181c14601d19b34cb0a"
 
 [[package]]
 name = "same-file"
@@ -5674,9 +5673,9 @@ dependencies = [
 
 [[package]]
 name = "zenjpeg"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a48b21f380b04f6465445fe716fb0dc8326d67d52c724bd77a455511fabcdbde"
+checksum = "704f3c2565c5a3312942929d0332249ed0aa0cf47693f0836037d99e47104ce5"
 dependencies = [
  "aligned-vec",
  "archmage",

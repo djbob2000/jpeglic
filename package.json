@@ -21,8 +21,7 @@
     "image",
     "converter",
     "jpegli",
-    "jpeg-xl",
-    "avif"
+    "jpeg"
   ],
   "author": "Volodymyr Peretiatko",
   "license": "MIT",
