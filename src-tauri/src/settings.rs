@@ -47,7 +47,7 @@ impl SettingsManager {
                 strip_metadata: false,
             },
             advanced: AdvancedSettings {
-                concurrency: 2,
+                concurrency: 1,
                 preserve_metadata: true,
                 preserve_timestamps: true,
                 delete_originals: false,

@@ -35,6 +35,10 @@ export const useConversion = ({
   const successCallbackRef = useRef(onSuccessfulConversion);
   const itemProcessedCallbackRef = useRef(onItemProcessed);
 
+  // RAF batching refs
+  const pendingUpdateRef = useRef<ProcessingProgress | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+
   useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
@@ -64,39 +68,72 @@ export const useConversion = ({
     }
   }, []);
 
+  // Flush pending progress update to React state (called on RAF)
+  const flushProgressUpdate = useCallback(() => {
+    rafIdRef.current = null;
+    const update = pendingUpdateRef.current;
+    if (!update) return;
+    pendingUpdateRef.current = null;
+
+    if (update.total > 0) {
+      void tauriAPI.window.setProgressBar(update.completed / update.total);
+    }
+
+    if (update.currentOutputPath) {
+      setLastOutputPath(update.currentOutputPath);
+    }
+
+    setProgress(update);
+
+    if (update.message) {
+      setStatusText(update.message);
+    } else if (update.currentItem) {
+      setStatusText(`Processing ${update.currentItem.displayName}`);
+    } else {
+      setStatusText("");
+    }
+  }, []);
+
   useEffect(() => {
     const unsubscribeProgress = tauriAPI.convert.onProgress((update) => {
-      // If an item was just processed (success or skipped), remove it from the list
+      // Item processed callbacks fire immediately (needed for list removal correctness)
       if (update.processedItemId) {
         itemProcessedCallbackRef.current?.(update.processedItemId);
       }
 
-      if (update.total > 0) {
-        void tauriAPI.window.setProgressBar(update.completed / update.total);
-      }
-
-      if (update.currentOutputPath) {
-        setLastOutputPath(update.currentOutputPath);
-      }
-
-      setProgress(update);
-
-      if (update.message) {
-        setStatusText(update.message);
-      } else if (update.currentItem) {
-        setStatusText(`Processing ${update.currentItem.displayName}`);
-      } else {
-        setStatusText("");
+      // Batch progress state updates via requestAnimationFrame
+      // Multiple events within a single frame are coalesced — only the latest fires
+      pendingUpdateRef.current = update;
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(flushProgressUpdate);
       }
     });
 
     const unsubscribeComplete = tauriAPI.convert.onComplete((res) => {
+      // Cancel any pending RAF to avoid stale updates after completion
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      // Flush final state immediately
+      const finalUpdate = pendingUpdateRef.current;
+      if (finalUpdate) {
+        pendingUpdateRef.current = null;
+        setProgress(finalUpdate);
+      }
+
       void tauriAPI.window.setProgressBar(-1);
       setIsStopping(false);
       handleConversionComplete(res);
     });
 
     const unsubscribeError = tauriAPI.convert.onError((error) => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      pendingUpdateRef.current = null;
+
       void tauriAPI.window.setProgressBar(-1);
       setProgressOpen(false);
       setIsStopping(false);
@@ -104,11 +141,15 @@ export const useConversion = ({
     });
 
     return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
       unsubscribeProgress?.();
       unsubscribeComplete?.();
       unsubscribeError?.();
     };
-  }, [handleConversionComplete]);
+  }, [handleConversionComplete, flushProgressUpdate]);
 
   const startConversion = async () => {
     if (inputItems.length === 0) {
@@ -178,3 +219,4 @@ export const useConversion = ({
     lastOutputPath,
   };
 };
+

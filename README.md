@@ -57,4 +57,4 @@ EXIF, ICC profiles, timestamps, and folder structure stay exactly as they were.
 
 ## Downloads
 
-Latest release: [v1.0.0](https://github.com/djbob2000/jpeglic/releases/latest) (Windows, macOS)
+Latest release: [v1.2.0](https://github.com/djbob2000/jpeglic/releases/latest) (Windows, macOS)

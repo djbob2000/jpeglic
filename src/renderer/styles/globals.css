@@ -139,3 +139,13 @@
     @apply w-3 h-3;
   }
 }
+
+/* Kaleidoscope preview fade — opacity only, no transform/scale distortion */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

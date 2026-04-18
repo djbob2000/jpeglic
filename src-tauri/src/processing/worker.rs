@@ -131,9 +131,6 @@ impl Worker {
                         return Err(AppError::ProcessFailed("Cancelled".to_string()));
                     }
 
-                    // Apply metadata
-                    self.apply_metadata(&temp_path).await?;
-
                     // Delete original if requested
                     // Size comparison check
                     let temp_size = fs::metadata(&temp_path)?.len();
@@ -311,31 +308,37 @@ impl Worker {
     }
 
     async fn export_jpeg(&self, output_path: &str, subsampling: ChromaSubsampling) -> Result<()> {
-        // Load image (detecting format by content, not extension)
-        let img = ImageReader::open(&self.item.source_path)?
-            .with_guessed_format()?
-            .decode()?;
-        let rgb_img = img.to_rgb8();
-        let (width, height) = rgb_img.dimensions();
-
         let distance = if self.settings.output.visually_lossless {
             1.0
         } else {
             self.settings.output.cjpegli_distance
         };
-
         let progressive = self.settings.output.progressive;
         let use_xyb = self.settings.output.use_xyb;
 
-        let raw_pixels = rgb_img.into_raw();
         let output_path_owned = output_path.to_string();
         let cancel_flag = self.cancel_flag.clone();
+        let source_path = self.item.source_path.clone();
+        let settings = self.settings.clone();
 
-        // Use spawn_blocking for the heavy CPU task
+        // Use spawn_blocking for the heavy CPU task (loading, decoding, encoding, and metadata)
         tokio::task::spawn_blocking(move || {
+            // Load image (detecting format by content, not extension)
+            // This is a heavy blocking operation, must stay in spawn_blocking
+            let img = ImageReader::open(&source_path)
+                .map_err(|e| AppError::Io(e))?
+                .with_guessed_format()
+                .map_err(|e| AppError::Io(e))?
+                .decode()
+                .map_err(|e| AppError::ProcessFailed(format!("Image decoding failed: {:?}", e)))?;
+            
+            let rgb_img = img.to_rgb8();
+            let (width, height) = rgb_img.dimensions();
+            let raw_pixels = rgb_img.into_raw();
+
             // Configure encoder using zenjpeg API
             // Distance is passed directly to zenjpeg, wrapped in Quality::ApproxButteraugli
-            let quality = Quality::ApproxButteraugli(distance.max(0.0) as f32);
+            let quality = Quality::ApproxButteraugli(distance.max(0.0));
 
             let config = if use_xyb {
                 // XYB mode - only Full or BQuarter subsampling options available
@@ -371,32 +374,44 @@ impl Worker {
             encoder.push_packed(&raw_pixels, CancelWrapper(&cancel_flag))
                 .map_err(|e| AppError::ProcessFailed(format!("Zenjpeg encoding failed: {:?}", e)))?;
 
-            let jpeg_data = encoder.finish()
+            let mut jpeg_data = encoder.finish()
                 .map_err(|e| AppError::ProcessFailed(format!("Zenjpeg finish failed: {:?}", e)))?;
+
+            // Apply Metadata before writing to disk
+            if !settings.output.strip_metadata {
+                jpeg_data = Worker::apply_metadata_to_buffer(Path::new(&source_path), jpeg_data)?;
+            }
 
             // Check cancellation right before writing to disk
             if cancel_flag.load(Ordering::SeqCst) {
                 return Err(AppError::ProcessFailed("Cancelled during encoding".to_string()));
             }
 
-            std::fs::write(output_path_owned, jpeg_data)?;
+            std::fs::write(&output_path_owned, jpeg_data)?;
+
+            // Preserve timestamps (Last Modified / Accessed)
+            if settings.advanced.preserve_timestamps {
+                let source_meta = fs::metadata(&source_path)?;
+                let mtime = source_meta.modified()?;
+                let atime = source_meta.accessed().unwrap_or(mtime);
+
+                filetime::set_file_times(
+                    &output_path_owned,
+                    filetime::FileTime::from_system_time(atime),
+                    filetime::FileTime::from_system_time(mtime),
+                )?;
+            }
 
             Ok(())
         }).await.map_err(|e| AppError::ProcessFailed(format!("Task panicked: {:?}", e)))?
     }
 
-    async fn apply_metadata(&self, output_path: &str) -> Result<()> {
-        // 0. Check if stripping metadata is requested
-        if self.settings.output.strip_metadata {
-            return Ok(());
-        }
-
+    fn apply_metadata_to_buffer(source_path: &Path, output_bytes: Vec<u8>) -> Result<Vec<u8>> {
         use img_parts::{ImageEXIF, ImageICC};
         use img_parts::jpeg::markers;
 
-        // 1. Read source and output
-        let source_bytes = fs::read(&self.item.source_path)?;
-        let output_bytes = fs::read(output_path)?;
+        // 1. Read source
+        let source_bytes = fs::read(source_path)?;
 
         let mut source_exif = None;
         let mut source_icc = None;
@@ -427,44 +442,30 @@ impl Worker {
         // Try to extract from PNG source (basic support)
         else if let Ok(png) = img_parts::png::Png::from_bytes(source_bytes.into()) {
             source_icc = png.icc_profile().map(|b| b.to_vec());
-            // PNG XMP extraction is more complex with img-parts, skipping for now as per previous logic,
-            // but we could add it later if needed.
         }
 
         let mut output_jpeg = img_parts::jpeg::Jpeg::from_bytes(output_bytes.into())
             .map_err(|e| AppError::ProcessFailed(format!("Failed to parse output jpeg for metadata: {:?}", e)))?;
 
         // 2. Apply Metadata
-
-        // EXIF
         if let Some(exif_data) = source_exif {
             output_jpeg.set_exif(Some(exif_data.into()));
         }
-
-        // ICC Profile
         if let Some(icc_data) = source_icc {
             output_jpeg.set_icc_profile(Some(icc_data.into()));
         }
 
-        // We act on segments list for others
         let segments = output_jpeg.segments_mut();
 
-        // Remove existing APP1 (XMP) and APP13 (IPTC) generated by encoder (if any) to clean slate
-        // Although Jpegli defaults mostly clean, safe to ensure insert order
-        // Actually, set_exif/set_icc handle their own segments.
-
-        // Insert XMP if found (usually after EXIF)
+        // Insert XMP if found
         if let Some(xmp_segment) = source_xmp {
              let mut insert_idx = 0;
              if !segments.is_empty() && segments[0].marker() == markers::APP0 {
                  insert_idx = 1;
              }
-
-             // Insert after EXIF if present
              if let Some(pos) = segments.iter().position(|s| s.marker() == markers::APP1 && s.contents().starts_with(b"Exif\0\0")) {
                  insert_idx = pos + 1;
              }
-
              if insert_idx > segments.len() { insert_idx = segments.len(); }
              segments.insert(insert_idx, xmp_segment);
         }
@@ -481,8 +482,6 @@ impl Worker {
             markers::COM,
             img_parts::Bytes::from("Compressed by Jpeglic"),
         );
-
-        // Insert comment early in header
         let mut com_insert_idx = 0;
         if !segments.is_empty() && segments[0].marker() == markers::APP0 {
             com_insert_idx = 1;
@@ -490,24 +489,11 @@ impl Worker {
         if com_insert_idx > segments.len() { com_insert_idx = segments.len(); }
         segments.insert(com_insert_idx, comment_segment);
 
-        let mut final_file = fs::File::create(output_path)?;
-        output_jpeg.encoder().write_to(&mut final_file)
-            .map_err(|e| AppError::ProcessFailed(format!("Failed to save metadata: {:?}", e)))?;
+        let mut result_buffer = Vec::new();
+        output_jpeg.encoder().write_to(&mut result_buffer)
+            .map_err(|e| AppError::ProcessFailed(format!("Failed to finalized metadata: {:?}", e)))?;
 
-        // Preserve timestamps (Last Modified / Accessed)
-        if self.settings.advanced.preserve_timestamps {
-            let source_meta = fs::metadata(&self.item.source_path)?;
-            let mtime = source_meta.modified()?;
-            let atime = source_meta.accessed().unwrap_or(mtime);
-
-            filetime::set_file_times(
-                output_path,
-                filetime::FileTime::from_system_time(atime),
-                filetime::FileTime::from_system_time(mtime),
-            )?;
-        }
-
-        Ok(())
+        Ok(result_buffer)
     }
 
     fn prepare_output_path(&self) -> Result<OutputInfo> {

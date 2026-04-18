@@ -1,5 +1,5 @@
 import type { InputItem, ProcessingProgress } from "@common/types";
-import { useImageMetadata } from "@hooks/useImageMetadata";
+import { formatExifDate, useImageMetadata } from "@hooks/useImageMetadata";
 import { cn } from "@utils/cn";
 import { formatSize } from "@utils/format";
 import tauriAPI from "@utils/tauriAPI";
@@ -40,23 +40,24 @@ export const PreviewPanel = ({
 }: PreviewPanelProps) => {
   const { settings } = useSettings();
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
-  const [previousData, setPreviousData] = useState<PreviewData | null>(null);
   const [isDragOver, setDragOver] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  // Double-buffer: background URL holds the previous image during crossfade
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
 
   const [isDataLoading, setIsDataLoading] = useState(false);
+
+  // Track the current preview URL in a ref (avoids stale closures in interval callback)
+  const currentUrlRef = useRef<string | null>(null);
+  // Track the latest completed output path without causing re-renders
+  const lastProcessedPathRef = useRef<string | null>(null);
+  // Track the current item being processed (for showing first file at start)
+  const currentItemPathRef = useRef<string | null>(null);
+  // Snapshot of preview shown before conversion started (fallback while first preview loads)
+  const preConversionPreviewRef = useRef<PreviewData | null>(null);
+
   const activeItem = selectedItem;
   const displayItem = activeItem || (isConverting ? processing?.currentItem : undefined);
-
-  // Keep track of current data for transition logic
-  const currentDataRef = useRef<{ data: PreviewData | null; loaded: boolean }>({
-    data: null,
-    loaded: false,
-  });
-
-  useEffect(() => {
-    currentDataRef.current = { data: previewData, loaded: isImageLoaded };
-  }, [previewData, isImageLoaded]);
 
   // Generate settings display text
   const getSettingsText = () => {
@@ -93,23 +94,76 @@ export const PreviewPanel = ({
     }
   };
 
+  // Keep refs in sync with props (doesn't cause re-renders)
   useEffect(() => {
+    lastProcessedPathRef.current = lastProcessedPath ?? null;
+  }, [lastProcessedPath]);
+
+  useEffect(() => {
+    currentItemPathRef.current = processing?.currentItem?.sourcePath ?? null;
+  }, [processing?.currentItem?.sourcePath]);
+
+  // Capture current preview when conversion starts as fallback
+  const wasConvertingRef = useRef(false);
+  useEffect(() => {
+    if (isConverting && !wasConvertingRef.current) {
+      preConversionPreviewRef.current = previewData;
+    }
+    if (!isConverting && wasConvertingRef.current) {
+      preConversionPreviewRef.current = null;
+      // Clear background layer when conversion ends
+      setBackgroundUrl(null);
+    }
+    wasConvertingRef.current = isConverting;
+  }, [isConverting, previewData]);
+
+  // "Kaleidoscope" — sample completed previews at 3fps (333ms) during conversion
+  useEffect(() => {
+    if (!isConverting || selectedItem) return;
+
+    let ignore = false;
+    let lastLoadedPath: string | null = null;
+
+    const tick = () => {
+      // Prefer completed output path; fall back to current input file (for the very start)
+      const path = lastProcessedPathRef.current || currentItemPathRef.current;
+      if (!path || path === lastLoadedPath || ignore) return;
+      lastLoadedPath = path;
+
+      tauriAPI.preview
+        .get(path)
+        .then((data) => {
+          if (!ignore) {
+            // Double-buffer: current image becomes background before swapping
+            setBackgroundUrl(currentUrlRef.current);
+            setPreviewData(data);
+            currentUrlRef.current = data.url;
+            setIsImageLoaded(false);
+          }
+        })
+        .catch(() => {
+          // Silently skip failed previews — next tick will try the next file
+        });
+    };
+
+    // Fire immediately for the first completed file
+    tick();
+    const intervalId = setInterval(tick, 333);
+
+    return () => {
+      ignore = true;
+      clearInterval(intervalId);
+    };
+  }, [isConverting, selectedItem]);
+
+  // Load preview when NOT converting (normal click-to-select behavior)
+  useEffect(() => {
+    if (isConverting) return;
     let ignore = false;
 
-    // The path we want to load metadata and preview for
-    const pathToShow = (isConverting ? lastProcessedPath : selectedItem?.sourcePath) || null;
+    const pathToShow = selectedItem?.sourcePath || null;
 
     if (pathToShow) {
-      // Transition logic: Keep the old image visible until the new one is ready IF we are converting
-      const { data: currentData, loaded: currentLoaded } = currentDataRef.current;
-      if (isConverting) {
-        if (currentData && currentLoaded) {
-          setPreviousData(currentData);
-        }
-      } else {
-        setPreviousData(null);
-      }
-
       setIsImageLoaded(false);
       setIsDataLoading(true);
 
@@ -129,18 +183,19 @@ export const PreviewPanel = ({
         });
     } else {
       setPreviewData(null);
-      setPreviousData(null);
       setIsDataLoading(false);
     }
 
     return () => {
       ignore = true;
     };
-  }, [selectedItem, isConverting, lastProcessedPath]);
+  }, [selectedItem?.sourcePath, isConverting]);
+
+  // Active preview: live data, or pre-conversion snapshot as fallback
+  const activePreviewData = previewData || (isConverting ? preConversionPreviewRef.current : null);
 
   // Use the custom hook for metadata parsing
-  const meta = useImageMetadata(previewData, previousData, isImageLoaded);
-  const activePreviewData = isImageLoaded ? previewData : previousData || previewData;
+  const meta = useImageMetadata(previewData, null, isImageLoaded);
 
   if (!activeItem && !isConverting) {
     return (
@@ -220,8 +275,7 @@ export const PreviewPanel = ({
     );
   }
 
-  // Helpers for format (if needed by UI specifically, though hook provides most)
-  const { formatExifDate } = require("../hooks/useImageMetadata");
+
 
   return (
     <section
@@ -282,58 +336,57 @@ export const PreviewPanel = ({
           <ProcessingStatus progress={processing} percentage={percentage} />
         )}
 
-        {/* Previous Image (Background during transition) */}
-        {previousData?.url && (
+        {/* Double-buffered image display — 3fps kaleidoscope during conversion */}
+
+        {/* Background layer: previous image, always fully visible — prevents flash */}
+        {isConverting && backgroundUrl && (
           <img
-            src={tauriAPI.convertFileSrc(previousData.url)}
+            src={
+              backgroundUrl.startsWith("data:")
+                ? backgroundUrl
+                : tauriAPI.convertFileSrc(backgroundUrl)
+            }
             alt=""
             className="absolute inset-0 h-full w-full object-contain"
             aria-hidden="true"
           />
         )}
 
-        {/* Current Image (Foreground) */}
+        {/* Foreground layer: current image, fades in over the background */}
         {activePreviewData?.url ? (
           <img
+            key={activePreviewData.url}
             src={
               activePreviewData.url.startsWith("data:")
                 ? activePreviewData.url
-                : isConverting
-                  ? `${tauriAPI.convertFileSrc(activePreviewData.url)}?t=${Date.now()}`
-                  : tauriAPI.convertFileSrc(activePreviewData.url)
+                : tauriAPI.convertFileSrc(activePreviewData.url)
             }
             alt={displayItem?.displayName || ""}
-            className={cn(
-              "absolute inset-0 h-full w-full object-contain transition-opacity ease-in-out",
-              isConverting ? "duration-200" : "duration-0",
-              "opacity-100",
-            )}
+            className="absolute inset-0 h-full w-full object-contain"
+            style={
+              isConverting
+                ? { animation: "fadeIn 150ms ease-out" }
+                : undefined
+            }
             onLoad={() => setIsImageLoaded(true)}
-            onTransitionEnd={() => {
-              if (isImageLoaded) {
-                setPreviousData(null);
-              }
-            }}
           />
         ) : (
-          !previousData && (
-            <div className="flex h-full w-full items-center justify-center text-text-tertiary">
-              <svg
-                className="h-24 w-24 opacity-20"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <title>No Image</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M3 16.5v-9a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.121 1.12a1.5 1.5 0 0 0 1.061.44h6.379A1.5 1.5 0 0 1 20.5 9v7.5A1.5 1.5 0 0 1 19 18H4.5A1.5 1.5 0 0 1 3 16.5Z"
-                />
-              </svg>
-            </div>
-          )
+          <div className="flex h-full w-full items-center justify-center text-text-tertiary">
+            <svg
+              className="h-24 w-24 opacity-20"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <title>No Image</title>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M3 16.5v-9a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.121 1.12a1.5 1.5 0 0 0 1.061.44h6.379A1.5 1.5 0 0 1 20.5 9v7.5A1.5 1.5 0 0 1 19 18H4.5A1.5 1.5 0 0 1 3 16.5Z"
+              />
+            </svg>
+          </div>
         )}
       </div>
 
@@ -348,7 +401,7 @@ export const PreviewPanel = ({
               {isConverting
                 ? activePreviewData?.url
                   ? activePreviewData.url.split(/[\\/]/).pop()
-                  : "Converting..."
+                  : processing?.currentItem?.displayName || "Converting..."
                 : displayItem?.displayName || ""}
             </div>
             {(displayItem || meta) && (
@@ -523,3 +576,4 @@ export const PreviewPanel = ({
     </section>
   );
 };
+
