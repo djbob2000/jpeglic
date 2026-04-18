@@ -2,4 +2,4 @@
 import type { AdvancedSettings } from "./AdvancedSettings";
 import type { OutputSettings } from "./OutputSettings";
 
-export type ProcessingSettings = { output: OutputSettings, advanced: AdvancedSettings, };
+export type ProcessingSettings = { output: OutputSettings; advanced: AdvancedSettings };

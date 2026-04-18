@@ -32,20 +32,25 @@ I built Jpeglic for myself and my family, with heart and soul. If it helps you p
 ## Features
 
 ### State-of-the-Art Compression
+
 Advanced psychovisual modeling delivers maximum size reduction with imperceptible quality loss.
 
 ### Blazing Fast
+
 Fully multithreaded — processes entire libraries in minutes.
 
 ### Memories Preserved
+
 EXIF, ICC profiles, timestamps, and folder structure stay exactly as they were.
 
 ### Smart & Safe
+
 - Idempotent: already-optimized files are detected and skipped.
 - No accidental overwrites of originals.
 - Settings remembered automatically.
 
 ### Designed for Real Use
+
 - Live before and after preview.
 - Drag & drop files or entire folders (recursive).
 - Modern, dark UI that stays out of your way.
@@ -53,4 +58,3 @@ EXIF, ICC profiles, timestamps, and folder structure stay exactly as they were.
 ## Downloads
 
 Latest release: [v1.0.0](https://github.com/djbob2000/jpeglic/releases/latest) (Windows, macOS)
-

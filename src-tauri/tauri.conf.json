@@ -1,62 +1,55 @@
 {
-    "$schema": "https://schema.tauri.app/config/2",
-    "productName": "Jpeglic",
-    "version": "1.0.0",
-    "identifier": "com.jpeglic.converter",
-    "build": {
-        "beforeDevCommand": "npm run dev",
-        "devUrl": "http://localhost:5173",
-        "beforeBuildCommand": "npm run build",
-        "frontendDist": "../dist/renderer"
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Jpeglic",
+  "version": "1.1.0",
+  "identifier": "com.jpeglic.converter",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist/renderer"
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "nsis"],
+    "icon": ["icons/icon.png", "icons/icon.icns", "icons/icon.ico"],
+    "externalBin": [],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
     },
-    "bundle": {
-        "active": true,
-        "targets": [
-            "dmg",
-            "nsis"
-        ],
-        "icon": [
-            "icons/icon.png",
-            "icons/icon.icns",
-            "icons/icon.ico"
-        ],
-        "externalBin": [],
-        "windows": {
-            "certificateThumbprint": null,
-            "digestAlgorithm": "sha256",
-            "timestampUrl": ""
-        },
-        "macOS": {
-            "dmg": {
-                "windowSize": {
-                    "width": 600,
-                    "height": 400
-                }
-            }
+    "macOS": {
+      "dmg": {
+        "windowSize": {
+          "width": 600,
+          "height": 400
         }
-    },
-    "app": {
-        "windows": [
-            {
-                "label": "main",
-                "title": "Jpeglic • Best jpg converter",
-                "width": 900,
-                "height": 600,
-                "minWidth": 800,
-                "minHeight": 500,
-                "resizable": true,
-                "fullscreen": false,
-                "decorations": true,
-                "transparent": false
-            }
-        ],
-        "security": {
-            "csp": "default-src 'self' 'unsafe-inline' asset:; img-src 'self' asset: http://asset.localhost data: blob:; script-src 'self' 'unsafe-inline' asset:; style-src 'self' 'unsafe-inline' asset:; connect-src 'self' ipc: http://ipc.localhost",
-            "assetProtocol": {
-                "enable": true,
-                "scope": ["$HOME/**", "$DOCUMENT/**", "$PICTURE/**", "$DESKTOP/**", "$DOWNLOAD/**"]
-            }
-        }
-    },
-    "plugins": {}
+      }
+    }
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Jpeglic • Best jpg converter",
+        "width": 900,
+        "height": 600,
+        "minWidth": 800,
+        "minHeight": 500,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' 'unsafe-inline' asset:; img-src 'self' asset: http://asset.localhost data: blob:; script-src 'self' 'unsafe-inline' asset:; style-src 'self' 'unsafe-inline' asset:; connect-src 'self' ipc: http://ipc.localhost",
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$HOME/**", "$DOCUMENT/**", "$PICTURE/**", "$DESKTOP/**", "$DOWNLOAD/**"]
+      }
+    }
+  },
+  "plugins": {}
 }

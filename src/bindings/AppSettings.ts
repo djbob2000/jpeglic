@@ -3,4 +3,8 @@ import type { AdvancedSettings } from "./AdvancedSettings";
 import type { OutputSettings } from "./OutputSettings";
 import type { WindowSettings } from "./WindowSettings";
 
-export type AppSettings = { output: OutputSettings, advanced: AdvancedSettings, window: WindowSettings, };
+export type AppSettings = {
+  output: OutputSettings;
+  advanced: AdvancedSettings;
+  window: WindowSettings;
+};

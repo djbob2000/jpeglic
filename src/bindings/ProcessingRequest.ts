@@ -2,4 +2,4 @@
 import type { InputItem } from "./InputItem";
 import type { ProcessingSettings } from "./ProcessingSettings";
 
-export type ProcessingRequest = { items: Array<InputItem>, settings: ProcessingSettings, };
+export type ProcessingRequest = { items: Array<InputItem>; settings: ProcessingSettings };

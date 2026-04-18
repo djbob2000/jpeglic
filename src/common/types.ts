@@ -17,8 +17,8 @@
 export type OutputFormat = "jpeg";
 
 export interface ProcessedStatus {
-	path: string;
-	isProcessed: boolean;
+  path: string;
+  isProcessed: boolean;
 }
 
 /**
@@ -26,64 +26,64 @@ export interface ProcessedStatus {
  * Uses bigint for size and mtime to handle large files and precise timestamps.
  */
 export interface FileStats {
-	isFile: boolean;
-	isDirectory: boolean;
-	/** File size in bytes (number safe up to 9PB) */
-	size: bigint;
-	/** Modification time as Unix timestamp in milliseconds */
-	mtime: bigint;
+  isFile: boolean;
+  isDirectory: boolean;
+  /** File size in bytes (number safe up to 9PB) */
+  size: bigint;
+  /** Modification time as Unix timestamp in milliseconds */
+  mtime: bigint;
 }
 
 export interface DirEntry {
-	name: string;
-	isFile: boolean;
-	isDirectory: boolean;
+  name: string;
+  isFile: boolean;
+  isDirectory: boolean;
 }
 
 export interface AdvancedSettings {
-	concurrency: number;
-	preserveMetadata: boolean;
-	preserveTimestamps: boolean;
-	deleteOriginals: boolean;
-	skipProcessed: boolean;
-	playSoundOnFinish: boolean;
-	soundVolume: number;
-	clearInputAfterConversion: boolean;
-	warnBeforeReplace: boolean;
-	recompressOptimized: boolean; // converted from recompress_optimized
-	sizeCompare: boolean; // converted from size_compare
+  concurrency: number;
+  preserveMetadata: boolean;
+  preserveTimestamps: boolean;
+  deleteOriginals: boolean;
+  skipProcessed: boolean;
+  playSoundOnFinish: boolean;
+  soundVolume: number;
+  clearInputAfterConversion: boolean;
+  warnBeforeReplace: boolean;
+  recompressOptimized: boolean; // converted from recompress_optimized
+  sizeCompare: boolean; // converted from size_compare
 }
 
 export interface OutputSettings {
-	format: OutputFormat;
-	keepAlpha: boolean;
-	destination: "source" | "custom";
-	customDirectory?: string;
-	keepFolderStructure: boolean;
-	visuallyLossless: boolean;
-	cjpegliDistance: number;
-	forceSubsampling444: boolean;
-	useXyb: boolean;
-	progressive: boolean;
-	stripMetadata: boolean;
+  format: OutputFormat;
+  keepAlpha: boolean;
+  destination: "source" | "custom";
+  customDirectory?: string;
+  keepFolderStructure: boolean;
+  visuallyLossless: boolean;
+  cjpegliDistance: number;
+  forceSubsampling444: boolean;
+  useXyb: boolean;
+  progressive: boolean;
+  stripMetadata: boolean;
 }
 
 export interface WindowSettings {
-	width: number;
-	height: number;
-	x?: number;
-	y?: number;
-	maximized: boolean;
+  width: number;
+  height: number;
+  x?: number;
+  y?: number;
+  maximized: boolean;
 }
 
 export interface AppState {
-	settings: ProcessingSettings;
-	window: WindowSettings;
+  settings: ProcessingSettings;
+  window: WindowSettings;
 }
 
 export interface ProcessingSettings {
-	output: OutputSettings;
-	advanced: AdvancedSettings;
+  output: OutputSettings;
+  advanced: AdvancedSettings;
 }
 
 /**
@@ -91,20 +91,20 @@ export interface ProcessingSettings {
  * sizeBytes and lastModified use bigint to match Rust's u64/i64 types.
  */
 export interface InputItem {
-	id: string;
-	sourcePath: string;
-	displayName: string;
-	relativePath: string;
-	/** File size in bytes */
-	sizeBytes: bigint;
-	/** Last modification time as Unix timestamp in milliseconds */
-	lastModified: bigint;
-	isProcessed?: boolean | null;
+  id: string;
+  sourcePath: string;
+  displayName: string;
+  relativePath: string;
+  /** File size in bytes */
+  sizeBytes: bigint;
+  /** Last modification time as Unix timestamp in milliseconds */
+  lastModified: bigint;
+  isProcessed?: boolean | null;
 }
 
 export interface ProcessingRequest {
-	items: InputItem[];
-	settings: ProcessingSettings;
+  items: InputItem[];
+  settings: ProcessingSettings;
 }
 
 /**
@@ -112,16 +112,16 @@ export interface ProcessingRequest {
  * savedBytes uses bigint to accumulate potentially large total savings.
  */
 export interface ProcessingProgress {
-	completed: number;
-	total: number;
-	currentItem?: InputItem | null;
-	currentOutputPath?: string | null;
-	message?: string | null;
-	/** ID of item that was just processed (success or skipped) */
-	processedItemId?: string | null;
-	/** Total bytes saved so far */
-	savedBytes?: bigint | null;
-	activeItemIds?: string[] | null;
+  completed: number;
+  total: number;
+  currentItem?: InputItem | null;
+  currentOutputPath?: string | null;
+  message?: string | null;
+  /** ID of item that was just processed (success or skipped) */
+  processedItemId?: string | null;
+  /** Total bytes saved so far */
+  savedBytes?: bigint | null;
+  activeItemIds?: string[] | null;
 }
 
 /**
@@ -129,13 +129,13 @@ export interface ProcessingProgress {
  * savedBytes uses bigint to report total space savings accurately.
  */
 export interface ProcessingResult {
-	successCount: number;
-	skippedCount: number;
-	failedCount: number;
-	errors: Array<{ item: InputItem; error: string }>;
-	canceled: boolean;
-	/** Total bytes saved across all processed files */
-	savedBytes: bigint;
+  successCount: number;
+  skippedCount: number;
+  failedCount: number;
+  errors: Array<{ item: InputItem; error: string }>;
+  canceled: boolean;
+  /** Total bytes saved across all processed files */
+  savedBytes: bigint;
 }
 
 /**
@@ -145,27 +145,27 @@ export interface ProcessingResult {
  * - birthtime: bigint (i64 in Rust, Unix timestamp)
  */
 export interface PreviewMetadata {
-	/** Image width in pixels (number as u32 is within safe range) */
-	width: number | null;
-	/** Image height in pixels (number as u32 is within safe range) */
-	height: number | null;
-	/** Image format (e.g., "JPEG", "PNG") */
-	format: string | null;
-	/** File size in bytes */
-	size: bigint | null;
-	/** File creation time as Unix timestamp in milliseconds */
-	birthtime: bigint | null;
-	/** EXIF metadata as key-value pairs */
-	exif: Record<string, unknown> | null;
+  /** Image width in pixels (number as u32 is within safe range) */
+  width: number | null;
+  /** Image height in pixels (number as u32 is within safe range) */
+  height: number | null;
+  /** Image format (e.g., "JPEG", "PNG") */
+  format: string | null;
+  /** File size in bytes */
+  size: bigint | null;
+  /** File creation time as Unix timestamp in milliseconds */
+  birthtime: bigint | null;
+  /** EXIF metadata as key-value pairs */
+  exif: Record<string, unknown> | null;
 }
 
 export interface PreviewData {
-	url: string;
-	metadata: PreviewMetadata;
+  url: string;
+  metadata: PreviewMetadata;
 }
 
 export interface AppSettings {
-	output: OutputSettings;
-	advanced: AdvancedSettings;
-	window: WindowSettings;
+  output: OutputSettings;
+  advanced: AdvancedSettings;
+  window: WindowSettings;
 }

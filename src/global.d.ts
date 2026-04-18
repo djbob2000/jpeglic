@@ -39,11 +39,13 @@ interface ElectronAPI {
       size: number;
       mtime: number;
     }>;
-    readdir: (path: string) => Promise<Array<{
-      name: string;
-      isFile: boolean;
-      isDirectory: boolean;
-    }>>;
+    readdir: (path: string) => Promise<
+      Array<{
+        name: string;
+        isFile: boolean;
+        isDirectory: boolean;
+      }>
+    >;
   };
 }
 
@@ -53,7 +55,7 @@ declare global {
   }
 }
 
-declare module '*.svg' {
+declare module "*.svg" {
   const src: string;
   export default src;
 }

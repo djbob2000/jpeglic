@@ -6,34 +6,43 @@ authors = ["Jpeglic Team"]
 edition = "2021"
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
-ts-rs = { version = "10.1", features = ["chrono-impl"] }
+tauri-build = { version = "2.5.6", features = [] }
+ts-rs = { version = "12.0.1", features = ["chrono-impl"] }
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
-tauri-plugin-dialog = "2"
-tauri-plugin-fs = "2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tokio = { version = "1", features = ["full"] }
-image = { version = "0.25.9", features = ["jpeg", "png", "avif", "webp", "bmp", "gif", "tiff", "ico"] }
+tauri = { version = "2.10.3", features = ["protocol-asset", "tray-icon"] }
+tauri-plugin-dialog = "2.7.0"
+tauri-plugin-fs = "2.5.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+tokio = { version = "1.52.1", features = ["full"] }
+image = { version = "0.25.10", features = [
+  "jpeg",
+  "png",
+  "avif",
+  "webp",
+  "bmp",
+  "gif",
+  "tiff",
+  "ico",
+] }
 kamadak-exif = "0.6.1"
 trash = "5.2.5"
-dirs = "6"
-walkdir = "2"
-thiserror = "2"
-rayon = "1.10"
-uuid = { version = "1", features = ["v4"] }
-chrono = "0.4"
-num_cpus = "1"
-base64 = "0.22"
+dirs = "6.0.0"
+walkdir = "2.5.0"
+thiserror = "2.0.18"
+rayon = "1.12.0"
+uuid = { version = "1.23.1", features = ["v4"] }
+chrono = "0.4.44"
+num_cpus = "1.17.0"
+base64 = "0.22.1"
 filetime = "0.2.27"
 
-zenjpeg = "0.6.1"
-enough = "0.3"
-img-parts = "0.4"
-xmp-writer = "0.3"
-ts-rs = { version = "10.1", features = ["chrono-impl"] }
+zenjpeg = { version = "0.8.3", features = ["parallel"] }
+enough = "0.4.4"
+img-parts = "0.4.0"
+xmp-writer = "0.3.2"
+ts-rs = { version = "12.0.1", features = ["chrono-impl"] }
 
 [features]
 default = ["custom-protocol"]

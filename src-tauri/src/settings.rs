@@ -31,7 +31,6 @@ impl SettingsManager {
     }
     
     fn default_settings() -> AppSettings {
-        let cpu_count = num_cpus::get();
         
         AppSettings {
             output: OutputSettings {
@@ -48,7 +47,7 @@ impl SettingsManager {
                 strip_metadata: false,
             },
             advanced: AdvancedSettings {
-                concurrency: cpu_count.max(1),
+                concurrency: 2,
                 preserve_metadata: true,
                 preserve_timestamps: true,
                 delete_originals: false,

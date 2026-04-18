@@ -6,7 +6,7 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use zenjpeg::encoder::{EncoderConfig, ChromaSubsampling, PixelLayout};
+use zenjpeg::encoder::{EncoderConfig, ChromaSubsampling, PixelLayout, Quality};
 
 pub struct Worker {
     item: InputItem,
@@ -334,8 +334,8 @@ impl Worker {
         // Use spawn_blocking for the heavy CPU task
         tokio::task::spawn_blocking(move || {
             // Configure encoder using zenjpeg API
-            // Distance is passed directly to zenjpeg (valid range typically 0.0-25.0 for jpegli-like distances)
-            let quality_value = distance.max(0.0);
+            // Distance is passed directly to zenjpeg, wrapped in Quality::ApproxButteraugli
+            let quality = Quality::ApproxButteraugli(distance.max(0.0) as f32);
 
             let config = if use_xyb {
                 // XYB mode - only Full or BQuarter subsampling options available
@@ -343,10 +343,10 @@ impl Worker {
                     ChromaSubsampling::None => zenjpeg::encoder::XybSubsampling::Full,
                     _ => zenjpeg::encoder::XybSubsampling::BQuarter,
                 };
-                EncoderConfig::xyb(quality_value, xyb_subsampling)
+                EncoderConfig::xyb(quality, xyb_subsampling)
             } else {
                 // Standard YCbCr mode
-                EncoderConfig::ycbcr(quality_value, subsampling)
+                EncoderConfig::ycbcr(quality, subsampling)
             };
 
             let config = config.progressive(progressive);
