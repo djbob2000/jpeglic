@@ -1,10 +1,10 @@
-use crate::types::{FileStats, DirEntry, ProcessedStatus};
+use crate::types::{DirEntry, FileStats, ProcessedStatus};
 use std::fs;
 
 #[tauri::command]
 pub async fn stat_file(path: String) -> Result<FileStats, String> {
     let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
-    
+
     Ok(FileStats {
         is_file: metadata.is_file(),
         is_directory: metadata.is_dir(),
@@ -21,26 +21,26 @@ pub async fn stat_file(path: String) -> Result<FileStats, String> {
 #[tauri::command]
 pub async fn read_directory(path: String) -> Result<Vec<DirEntry>, String> {
     let entries = fs::read_dir(&path).map_err(|e| e.to_string())?;
-    
+
     let mut result = Vec::new();
     for entry in entries {
         let entry = entry.map_err(|e| e.to_string())?;
         let metadata = entry.metadata().map_err(|e| e.to_string())?;
-        
+
         result.push(DirEntry {
             name: entry.file_name().to_string_lossy().to_string(),
             is_file: metadata.is_file(),
             is_directory: metadata.is_dir(),
         });
     }
-    
+
     Ok(result)
 }
 
 #[tauri::command]
 pub async fn check_processed(_app: tauri::AppHandle, file_path: String) -> Result<bool, String> {
     let bytes = fs::read(&file_path).map_err(|e| e.to_string())?;
-    
+
     // Check for Jpeg
     if let Ok(jpeg) = img_parts::jpeg::Jpeg::from_bytes(bytes.into()) {
         for segment in jpeg.segments() {
@@ -54,7 +54,7 @@ pub async fn check_processed(_app: tauri::AppHandle, file_path: String) -> Resul
             }
         }
     }
-    
+
     Ok(false)
 }
 
@@ -86,7 +86,8 @@ pub async fn check_processed_batch(
                     }
                 }
                 Ok(false)
-            })().unwrap_or(false);
+            })()
+            .unwrap_or(false);
 
             ProcessedStatus {
                 path: path.clone(),

@@ -64,7 +64,8 @@ const App = () => {
   // Auto-deselect logic (if the selected item is removed)
   useEffect(() => {
     if (selectedItemId && !items.find((i) => i.id === selectedItemId)) {
-      setSelectedItemId(null);
+      const timer = setTimeout(() => setSelectedItemId(null), 0);
+      return () => clearTimeout(timer);
     }
   }, [items, selectedItemId]);
 

@@ -1,4 +1,4 @@
-use crate::types::{AppSettings, AdvancedSettings, OutputSettings, WindowSettings, OutputFormat};
+use crate::types::{AdvancedSettings, AppSettings, OutputFormat, OutputSettings, WindowSettings};
 use crate::utils::Result;
 
 use std::fs;
@@ -15,7 +15,7 @@ impl SettingsManager {
     pub fn new(app: AppHandle) -> Result<Self> {
         let config_dir = app.path().app_data_dir()?;
         fs::create_dir_all(&config_dir)?;
-        
+
         let config_path = config_dir.join("config.json");
         let settings = if config_path.exists() {
             let data = fs::read_to_string(&config_path)?;
@@ -23,15 +23,14 @@ impl SettingsManager {
         } else {
             Self::default_settings()
         };
-        
+
         Ok(Self {
             config_path,
             settings: Arc::new(Mutex::new(settings)),
         })
     }
-    
+
     fn default_settings() -> AppSettings {
-        
         AppSettings {
             output: OutputSettings {
                 format: OutputFormat::Jpeg,
@@ -68,18 +67,18 @@ impl SettingsManager {
             },
         }
     }
-    
+
     pub fn get(&self) -> Result<AppSettings> {
         Ok(self.settings.lock().unwrap().clone())
     }
-    
+
     pub fn save(&self, settings: AppSettings) -> Result<()> {
         *self.settings.lock().unwrap() = settings.clone();
         let json = serde_json::to_string_pretty(&settings)?;
         fs::write(&self.config_path, json)?;
         Ok(())
     }
-    
+
     pub fn reset(&self) -> Result<()> {
         let defaults = Self::default_settings();
         self.save(defaults)

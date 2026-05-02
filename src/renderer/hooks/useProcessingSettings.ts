@@ -1,4 +1,4 @@
-import type { AppSettings, ProcessingSettings } from "@common/types";
+import type { AppSettings, ProcessingSettings } from "@bindings";
 import tauriAPI from "@utils/tauriAPI";
 import { useEffect, useRef, useState } from "react";
 

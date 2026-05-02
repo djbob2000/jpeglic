@@ -6,7 +6,7 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use zenjpeg::encoder::{EncoderConfig, ChromaSubsampling, PixelLayout, Quality};
+use zenjpeg::encoder::{ChromaSubsampling, EncoderConfig, PixelLayout, Quality};
 
 pub struct Worker {
     item: InputItem,
@@ -118,7 +118,9 @@ impl Worker {
         if output_info.should_copy_only {
             // Just copy the file
             fs::copy(&self.item.source_path, &output_info.target_path)?;
-            if let Some(mut g) = target_guard { g.disarm(); }
+            if let Some(mut g) = target_guard {
+                g.disarm();
+            }
         } else {
             // Convert the image
             let temp_path = format!("{}.{}.tmp", output_info.target_path, uuid::Uuid::new_v4());
@@ -137,17 +139,20 @@ impl Worker {
                     // Re-read source size to be sure, or use cached item size since we just read it for conversion
                     let source_size = self.item.size_bytes;
 
-                    let use_original = self.settings.advanced.size_compare && temp_size >= source_size;
+                    let use_original =
+                        self.settings.advanced.size_compare && temp_size >= source_size;
 
                     if use_original {
-                         if self.settings.output.destination == "source" {
-                             // Replace mode: Do nothing (keep original)
-                             // Temp file will be deleted by guard
-                         } else {
-                             // Save to folder mode: Copy original to target
-                             fs::copy(&self.item.source_path, &output_info.target_path)?;
-                             if let Some(mut g) = target_guard { g.disarm(); }
-                         }
+                        if self.settings.output.destination == "source" {
+                            // Replace mode: Do nothing (keep original)
+                            // Temp file will be deleted by guard
+                        } else {
+                            // Save to folder mode: Copy original to target
+                            fs::copy(&self.item.source_path, &output_info.target_path)?;
+                            if let Some(mut g) = target_guard {
+                                g.disarm();
+                            }
+                        }
                     } else {
                         // Delete original if requested
                         if self.settings.advanced.delete_originals {
@@ -159,7 +164,9 @@ impl Worker {
 
                         // Move temp to final location
                         fs::rename(&temp_path, &output_info.target_path)?;
-                        if let Some(mut g) = target_guard { g.disarm(); }
+                        if let Some(mut g) = target_guard {
+                            g.disarm();
+                        }
                     }
                 }
                 Err(e) => {
@@ -215,40 +222,58 @@ impl Worker {
 
             // Skip non-FF bytes (though in valid JPEG, markers follow segments)
             // Ideally we jump by segment length, so let's try to follow the chain
-            if reader.read_exact(&mut byte).is_err() { break; }
-            if byte[0] != 0xFF { continue; }
+            if reader.read_exact(&mut byte).is_err() {
+                break;
+            }
+            if byte[0] != 0xFF {
+                continue;
+            }
 
             // Read marker type
-            if reader.read_exact(&mut byte).is_err() { break; }
+            if reader.read_exact(&mut byte).is_err() {
+                break;
+            }
             let marker = byte[0];
 
-            if marker == 0x00 || marker == 0xFF { continue; } // Stuffed FF or padding
+            if marker == 0x00 || marker == 0xFF {
+                continue;
+            } // Stuffed FF or padding
 
             // Check if it's an SOF marker
             if marker == SOF0 || marker == SOF1 || marker == SOF2 {
                 // Read length (2 bytes, big endian)
                 let mut len_bytes = [0u8; 2];
-                if reader.read_exact(&mut len_bytes).is_err() { break; }
+                if reader.read_exact(&mut len_bytes).is_err() {
+                    break;
+                }
                 let length = u16::from_be_bytes(len_bytes);
 
                 // Length includes the length bytes themselves (2 bytes)
                 // We need at least: Precision(1) + Height(2) + Width(2) + Components(1) = 6 bytes
                 // Plus 3 bytes per component
-                if length < 8 { break; }
+                if length < 8 {
+                    break;
+                }
 
                 let content_len = (length - 2) as usize;
                 let mut content = vec![0u8; content_len];
-                if reader.read_exact(&mut content).is_err() { break; }
+                if reader.read_exact(&mut content).is_err() {
+                    break;
+                }
 
                 // Parse SOF content
                 // 0: Precision
                 // 1-2: Height
                 // 3-4: Width
                 // 5: Number of components (Nf)
-                if content.len() < 6 { break; }
+                if content.len() < 6 {
+                    break;
+                }
                 let nf = content[5];
 
-                if content.len() < (6 + nf as usize * 3) { break; }
+                if content.len() < (6 + nf as usize * 3) {
+                    break;
+                }
 
                 if nf < 3 {
                     // Grayscale - no chroma subsampling
@@ -261,11 +286,11 @@ impl Worker {
                 // Cb (Component 1): index 6 + 1*3 = 9
                 // Cr (Component 2): index 6 + 2*3 = 12
 
-                let y_h = (content[6+1] >> 4) & 0x0F;
-                let y_v = content[6+1] & 0x0F;
+                let y_h = (content[6 + 1] >> 4) & 0x0F;
+                let y_v = content[6 + 1] & 0x0F;
 
-                let cb_h = (content[9+1] >> 4) & 0x0F;
-                let cb_v = content[9+1] & 0x0F;
+                let cb_h = (content[9 + 1] >> 4) & 0x0F;
+                let cb_v = content[9 + 1] & 0x0F;
 
                 return if y_h == 1 && y_v == 1 {
                     ChromaSubsampling::None // All 1x1 (4:4:4)
@@ -294,12 +319,18 @@ impl Worker {
                 // Other marker, skip segment
                 // Read length
                 let mut len_bytes = [0u8; 2];
-                if reader.read_exact(&mut len_bytes).is_err() { break; }
+                if reader.read_exact(&mut len_bytes).is_err() {
+                    break;
+                }
                 let length = u16::from_be_bytes(len_bytes);
 
                 // Skip content
-                if length > 2 {
-                    if reader.seek(SeekFrom::Current((length - 2) as i64)).is_err() { break; }
+                if length > 2
+                    && reader
+                        .seek(SeekFrom::Current((length - 2) as i64))
+                        .is_err()
+                {
+                    break;
                 }
             }
         }
@@ -326,12 +357,12 @@ impl Worker {
             // Load image (detecting format by content, not extension)
             // This is a heavy blocking operation, must stay in spawn_blocking
             let img = ImageReader::open(&source_path)
-                .map_err(|e| AppError::Io(e))?
+                .map_err(AppError::Io)?
                 .with_guessed_format()
-                .map_err(|e| AppError::Io(e))?
+                .map_err(AppError::Io)?
                 .decode()
                 .map_err(|e| AppError::ProcessFailed(format!("Image decoding failed: {:?}", e)))?;
-            
+
             let rgb_img = img.to_rgb8();
             let (width, height) = rgb_img.dimensions();
             let raw_pixels = rgb_img.into_raw();
@@ -355,8 +386,11 @@ impl Worker {
             let config = config.progressive(progressive);
 
             // Create encoder from raw bytes
-            let mut encoder = config.encode_from_bytes(width, height, PixelLayout::Rgb8Srgb)
-                .map_err(|e| AppError::ProcessFailed(format!("Zenjpeg encoder creation failed: {:?}", e)))?;
+            let mut encoder = config
+                .encode_from_bytes(width, height, PixelLayout::Rgb8Srgb)
+                .map_err(|e| {
+                    AppError::ProcessFailed(format!("Zenjpeg encoder creation failed: {:?}", e))
+                })?;
 
             // Encode the image data with cancellation support
             // Create a wrapper that implements the Stop trait for AtomicBool
@@ -370,11 +404,15 @@ impl Worker {
                     }
                 }
             }
-            
-            encoder.push_packed(&raw_pixels, CancelWrapper(&cancel_flag))
-                .map_err(|e| AppError::ProcessFailed(format!("Zenjpeg encoding failed: {:?}", e)))?;
 
-            let mut jpeg_data = encoder.finish()
+            encoder
+                .push_packed(&raw_pixels, CancelWrapper(&cancel_flag))
+                .map_err(|e| {
+                    AppError::ProcessFailed(format!("Zenjpeg encoding failed: {:?}", e))
+                })?;
+
+            let mut jpeg_data = encoder
+                .finish()
                 .map_err(|e| AppError::ProcessFailed(format!("Zenjpeg finish failed: {:?}", e)))?;
 
             // Apply Metadata before writing to disk
@@ -382,9 +420,14 @@ impl Worker {
                 jpeg_data = Worker::apply_metadata_to_buffer(Path::new(&source_path), jpeg_data)?;
             }
 
+            // Always add compression marker for detecting already processed files
+            jpeg_data = Worker::add_compression_marker(jpeg_data)?;
+
             // Check cancellation right before writing to disk
             if cancel_flag.load(Ordering::SeqCst) {
-                return Err(AppError::ProcessFailed("Cancelled during encoding".to_string()));
+                return Err(AppError::ProcessFailed(
+                    "Cancelled during encoding".to_string(),
+                ));
             }
 
             std::fs::write(&output_path_owned, jpeg_data)?;
@@ -403,19 +446,21 @@ impl Worker {
             }
 
             Ok(())
-        }).await.map_err(|e| AppError::ProcessFailed(format!("Task panicked: {:?}", e)))?
+        })
+        .await
+        .map_err(|e| AppError::ProcessFailed(format!("Task panicked: {:?}", e)))?
     }
 
     fn apply_metadata_to_buffer(source_path: &Path, output_bytes: Vec<u8>) -> Result<Vec<u8>> {
-        use img_parts::{ImageEXIF, ImageICC};
         use img_parts::jpeg::markers;
+        use img_parts::{ImageEXIF, ImageICC};
 
         // 1. Read source
         let source_bytes = fs::read(source_path)?;
 
         let mut source_exif = None;
         let mut source_icc = None;
-        let mut source_xmp = None;  // APP1
+        let mut source_xmp = None; // APP1
         let mut source_iptc = None; // APP13
 
         // Try to extract metadata from JPEG source
@@ -429,7 +474,9 @@ impl Worker {
                 let contents = segment.contents();
 
                 // XMP is in APP1
-                if marker == markers::APP1 && contents.starts_with(b"http://ns.adobe.com/xap/1.0/\0") {
+                if marker == markers::APP1
+                    && contents.starts_with(b"http://ns.adobe.com/xap/1.0/\0")
+                {
                     source_xmp = Some(segment.clone());
                 }
 
@@ -444,8 +491,13 @@ impl Worker {
             source_icc = png.icc_profile().map(|b| b.to_vec());
         }
 
-        let mut output_jpeg = img_parts::jpeg::Jpeg::from_bytes(output_bytes.into())
-            .map_err(|e| AppError::ProcessFailed(format!("Failed to parse output jpeg for metadata: {:?}", e)))?;
+        let mut output_jpeg =
+            img_parts::jpeg::Jpeg::from_bytes(output_bytes.into()).map_err(|e| {
+                AppError::ProcessFailed(format!(
+                    "Failed to parse output jpeg for metadata: {:?}",
+                    e
+                ))
+            })?;
 
         // 2. Apply Metadata
         if let Some(exif_data) = source_exif {
@@ -459,39 +511,70 @@ impl Worker {
 
         // Insert XMP if found
         if let Some(xmp_segment) = source_xmp {
-             let mut insert_idx = 0;
-             if !segments.is_empty() && segments[0].marker() == markers::APP0 {
-                 insert_idx = 1;
-             }
-             if let Some(pos) = segments.iter().position(|s| s.marker() == markers::APP1 && s.contents().starts_with(b"Exif\0\0")) {
-                 insert_idx = pos + 1;
-             }
-             if insert_idx > segments.len() { insert_idx = segments.len(); }
-             segments.insert(insert_idx, xmp_segment);
+            let mut insert_idx = 0;
+            if !segments.is_empty() && segments[0].marker() == markers::APP0 {
+                insert_idx = 1;
+            }
+            if let Some(pos) = segments
+                .iter()
+                .position(|s| s.marker() == markers::APP1 && s.contents().starts_with(b"Exif\0\0"))
+            {
+                insert_idx = pos + 1;
+            }
+            if insert_idx > segments.len() {
+                insert_idx = segments.len();
+            }
+            segments.insert(insert_idx, xmp_segment);
         }
 
         // Insert IPTC if found
         if let Some(iptc_segment) = source_iptc {
-             let mut insert_idx = 0;
-             if !segments.is_empty() && segments[0].marker() == markers::APP0 { insert_idx += 1; }
-             segments.insert(insert_idx, iptc_segment);
+            let mut insert_idx = 0;
+            if !segments.is_empty() && segments[0].marker() == markers::APP0 {
+                insert_idx += 1;
+            }
+            segments.insert(insert_idx, iptc_segment);
         }
 
-        // 3. Add Compressed by Jpeglic comment
+        let mut result_buffer = Vec::new();
+        output_jpeg
+            .encoder()
+            .write_to(&mut result_buffer)
+            .map_err(|e| {
+                AppError::ProcessFailed(format!("Failed to finalized metadata: {:?}", e))
+            })?;
+
+        Ok(result_buffer)
+    }
+
+    fn add_compression_marker(output_bytes: Vec<u8>) -> Result<Vec<u8>> {
+        use img_parts::jpeg::markers;
+
+        let mut output_jpeg =
+            img_parts::jpeg::Jpeg::from_bytes(output_bytes.into()).map_err(|e| {
+                AppError::ProcessFailed(format!("Failed to parse output jpeg: {:?}", e))
+            })?;
+
         let comment_segment = img_parts::jpeg::JpegSegment::new_with_contents(
             markers::COM,
             img_parts::Bytes::from("Compressed by Jpeglic"),
         );
+
+        let segments = output_jpeg.segments_mut();
         let mut com_insert_idx = 0;
         if !segments.is_empty() && segments[0].marker() == markers::APP0 {
             com_insert_idx = 1;
         }
-        if com_insert_idx > segments.len() { com_insert_idx = segments.len(); }
+        if com_insert_idx > segments.len() {
+            com_insert_idx = segments.len();
+        }
         segments.insert(com_insert_idx, comment_segment);
 
         let mut result_buffer = Vec::new();
-        output_jpeg.encoder().write_to(&mut result_buffer)
-            .map_err(|e| AppError::ProcessFailed(format!("Failed to finalized metadata: {:?}", e)))?;
+        output_jpeg
+            .encoder()
+            .write_to(&mut result_buffer)
+            .map_err(|e| AppError::ProcessFailed(format!("Failed to finalize: {:?}", e)))?;
 
         Ok(result_buffer)
     }
@@ -505,10 +588,12 @@ impl Worker {
         let base_name = source_path
             .file_stem()
             .and_then(|s| s.to_str())
-            .ok_or_else(|| AppError::Io(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "Invalid filename"
-            )))?;
+            .ok_or_else(|| {
+                AppError::Io(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "Invalid filename",
+                ))
+            })?;
 
         let directory = if self.settings.output.destination == "custom" {
             if let Some(ref custom_dir) = self.settings.output.custom_directory {
@@ -524,13 +609,19 @@ impl Worker {
                 fs::create_dir_all(&dir)?;
                 dir
             } else {
-                source_path.parent()
-                    .ok_or_else(|| AppError::ProcessFailed("Cannot determine parent directory".to_string()))?
+                source_path
+                    .parent()
+                    .ok_or_else(|| {
+                        AppError::ProcessFailed("Cannot determine parent directory".to_string())
+                    })?
                     .to_path_buf()
             }
         } else {
-            source_path.parent()
-                .ok_or_else(|| AppError::ProcessFailed("Cannot determine parent directory".to_string()))?
+            source_path
+                .parent()
+                .ok_or_else(|| {
+                    AppError::ProcessFailed("Cannot determine parent directory".to_string())
+                })?
                 .to_path_buf()
         };
 
@@ -552,7 +643,11 @@ impl Worker {
                 break;
             }
 
-            match fs::OpenOptions::new().write(true).create_new(true).open(&candidate) {
+            match fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&candidate)
+            {
                 Ok(_) => {
                     target_path = candidate;
                     was_claimed = true;
@@ -561,7 +656,9 @@ impl Worker {
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
                     counter += 1;
                     if counter > 1000 {
-                        return Err(AppError::ProcessFailed("Too many existing files with similar names".to_string()));
+                        return Err(AppError::ProcessFailed(
+                            "Too many existing files with similar names".to_string(),
+                        ));
                     }
                 }
                 Err(e) => return Err(e.into()),

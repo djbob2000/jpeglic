@@ -7,8 +7,8 @@ interface ProcessingStatusProps {
   percentage: number;
 }
 
-const RADIUS = 70;
-const STROKE = 6;
+const RADIUS = 105;
+const STROKE = 9;
 const NORMALIZED_RADIUS = RADIUS - STROKE * 2;
 const CIRCUMFERENCE = NORMALIZED_RADIUS * 2 * Math.PI;
 const DASH_ARRAY = `${CIRCUMFERENCE} ${CIRCUMFERENCE}`;
@@ -55,12 +55,12 @@ export const ProcessingStatus = memo(({ progress, percentage }: ProcessingStatus
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-2 text-center">
-          <span className="text-2xl font-bold mb-0.5">{roundedPercentage}%</span>
-          <span className="text-[10px] text-white/90 font-medium mb-1">
+          <span className="text-4xl font-bold mb-1">{roundedPercentage}%</span>
+          <span className="text-[15px] text-white/90 font-medium mb-1.5">
             {progress.completed} / {progress.total}
           </span>
           {progress.savedBytes != null && progress.savedBytes > 0 && (
-            <span className="text-[9px] text-green-400 font-semibold bg-green-900/40 px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm ring-1 ring-green-400/20">
+            <span className="text-[13px] text-green-400 font-semibold bg-green-900/40 px-3 py-1 rounded-full backdrop-blur-sm shadow-sm ring-1 ring-green-400/20">
               {formatSize(progress.savedBytes)} saved
             </span>
           )}

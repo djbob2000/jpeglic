@@ -1,4 +1,4 @@
-import type { InputItem } from "@common/types";
+import type { InputItem } from "@bindings";
 import type { InputState } from "@renderer/types";
 import {
   applyRelativePaths,
@@ -118,12 +118,13 @@ export const useInputItems = () => {
             const processedMap = new Map(processedResults.map((r) => [r.path, r.isProcessed]));
             setState((previous) => ({
               ...previous,
-              items: previous.items.map((item) => ({
-                ...item,
-                isProcessed: processedMap.has(item.sourcePath)
-                  ? processedMap.get(item.sourcePath)
-                  : item.isProcessed,
-              })),
+              items: previous.items.map((item) => {
+                const processed = processedMap.get(item.sourcePath);
+                return {
+                  ...item,
+                  isProcessed: processed !== undefined ? processed : (item.isProcessed ?? null),
+                };
+              }),
             }));
           })
           .catch((err) => {

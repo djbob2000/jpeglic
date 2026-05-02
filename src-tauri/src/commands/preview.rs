@@ -1,16 +1,16 @@
 use crate::types::{PreviewData, PreviewMetadata};
+use base64::{engine::general_purpose, Engine as _};
+use exif;
 use image::ImageReader;
+use serde_json;
 use std::fs;
 use std::path::Path;
-use base64::{Engine as _, engine::general_purpose};
-use exif;
-use serde_json;
 
 #[tauri::command]
 pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
     tokio::task::spawn_blocking(move || {
         let path = Path::new(&file_path);
-        
+
         // 1. Fast file metadata retrieval
         let fs_metadata = fs::metadata(path).map_err(|e| e.to_string())?;
         let size = fs_metadata.len();
@@ -27,7 +27,10 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
             .unwrap_or_default();
 
         // 2. Fast dimension retrieval without full decoding
-        let (width, height) = match ImageReader::open(path).map_err(|e| e.to_string())?.into_dimensions() {
+        let (width, height) = match ImageReader::open(path)
+            .map_err(|e| e.to_string())?
+            .into_dimensions()
+        {
             Ok(dim) => (Some(dim.0), Some(dim.1)),
             Err(_) => (None, None),
         };
@@ -50,7 +53,7 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
             // Collect EXIF metadata
             for field in exif_data.fields() {
                 let value = field.display_value().with_unit(&exif_data).to_string();
-                
+
                 let key = match field.tag {
                     exif::Tag::DateTimeOriginal => "DateTimeOriginal".to_string(),
                     exif::Tag::DateTimeDigitized => "CreateDate".to_string(),
@@ -76,13 +79,18 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
             }
 
             // Try to find JPEG thumbnail in EXIF
-            if let Some(field) = exif_data.get_field(exif::Tag::JPEGInterchangeFormat, exif::In::THUMBNAIL) {
+            if let Some(field) =
+                exif_data.get_field(exif::Tag::JPEGInterchangeFormat, exif::In::THUMBNAIL)
+            {
                 if let Some(offset) = field.value.get_uint(0) {
-                    if let Some(len_field) = exif_data.get_field(exif::Tag::JPEGInterchangeFormatLength, exif::In::THUMBNAIL) {
+                    if let Some(len_field) = exif_data
+                        .get_field(exif::Tag::JPEGInterchangeFormatLength, exif::In::THUMBNAIL)
+                    {
                         if let Some(len) = len_field.value.get_uint(0) {
                             use std::io::{Read, Seek, SeekFrom};
                             let mut file = std::fs::File::open(path).map_err(|e| e.to_string())?;
-                            file.seek(SeekFrom::Start(offset as u64)).map_err(|e| e.to_string())?;
+                            file.seek(SeekFrom::Start(offset as u64))
+                                .map_err(|e| e.to_string())?;
                             let mut buffer = vec![0; len as usize];
                             if file.read_exact(&mut buffer).is_ok() {
                                 thumbnail_data = Some(buffer);
@@ -94,8 +102,11 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
         }
 
         // 4. Determine image source logic (Native URL vs Base64)
-        let url = if matches!(format_ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "gif" | "bmp" | "svg") {
-            // GPU NATIVE: Return the file path itself. 
+        let url = if matches!(
+            format_ext.as_str(),
+            "jpg" | "jpeg" | "png" | "webp" | "gif" | "bmp" | "svg"
+        ) {
+            // GPU NATIVE: Return the file path itself.
             file_path
         } else if let Some(thumb) = thumbnail_data {
             // Use embedded thumbnail from EXIF (for RAW files)
@@ -107,13 +118,16 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
                 .map_err(|e| e.to_string())?
                 .decode()
                 .map_err(|e| e.to_string())?;
-            
+
             let thumbnail = img.thumbnail(1200, 1200);
             let mut buffer = Vec::new();
             thumbnail
-                .write_to(&mut std::io::Cursor::new(&mut buffer), image::ImageFormat::Jpeg)
+                .write_to(
+                    &mut std::io::Cursor::new(&mut buffer),
+                    image::ImageFormat::Jpeg,
+                )
                 .map_err(|e| e.to_string())?;
-            
+
             let base64_data = general_purpose::STANDARD.encode(&buffer);
             format!("data:image/jpeg;base64,{}", base64_data)
         };
@@ -126,8 +140,14 @@ pub async fn get_preview(file_path: String) -> Result<PreviewData, String> {
                 format: Some(format_ext.to_uppercase()),
                 size: Some(size),
                 birthtime,
-                exif: if exif_map.is_empty() { None } else { Some(serde_json::Value::Object(exif_map)) },
+                exif: if exif_map.is_empty() {
+                    None
+                } else {
+                    Some(serde_json::Value::Object(exif_map))
+                },
             },
         })
-    }).await.map_err(|e| format!("Preview task panicked: {:?}", e))?
+    })
+    .await
+    .map_err(|e| format!("Preview task panicked: {:?}", e))?
 }

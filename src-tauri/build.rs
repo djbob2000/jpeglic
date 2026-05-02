@@ -12,15 +12,15 @@ fn export_typescript_bindings() {
     // Set the export path for ts-rs bindings
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let bindings_dir = manifest_dir.join("bindings");
-    
+
     // Ensure the bindings directory exists
     if !bindings_dir.exists() {
         std::fs::create_dir_all(&bindings_dir).expect("Failed to create bindings directory");
     }
-    
+
     // Set environment variable for ts-rs export path
     std::env::set_var("TS_RS_EXPORT_DIR", &bindings_dir);
-    
+
     // Note: The actual export happens through the TS trait implementations
     // in types.rs. Each type with #[ts(export)] will be exported when
     // the test export_types() runs or when types are used.

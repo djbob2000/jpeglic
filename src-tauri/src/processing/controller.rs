@@ -1,11 +1,11 @@
 use crate::processing::worker::{Worker, WorkerResult};
 use crate::types::*;
-use std::sync::atomic::{AtomicBool, Ordering, AtomicU64, AtomicUsize};
-use std::sync::{Arc, Mutex};
-use tauri::{Emitter, Manager, Window};
 use std::collections::HashSet;
-use tokio::sync::Semaphore;
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
+use tauri::{Emitter, Manager, Window};
+use tokio::sync::Semaphore;
 
 /// Minimum interval between cosmetic (non-completion) IPC progress events.
 /// Completion events (with `processed_item_id`) always fire immediately.
@@ -50,21 +50,24 @@ impl EmitThrottle {
 
 impl Controller {
     pub fn new(window: Window, cancel_flag: Arc<AtomicBool>) -> Self {
-        Self { window, cancel_flag }
+        Self {
+            window,
+            cancel_flag,
+        }
     }
-    
+
     pub async fn start_processing(&self, request: ProcessingRequest) -> ProcessingResult {
         self.cancel_flag.store(false, Ordering::SeqCst);
-        
+
         let total = request.items.len();
         let completed = Arc::new(AtomicUsize::new(0));
         let total_saved = Arc::new(AtomicU64::new(0));
         let active_items = Arc::new(Mutex::new(HashSet::new()));
         let throttle = Arc::new(EmitThrottle::new());
-        
+
         let concurrency = request.settings.advanced.concurrency;
         let semaphore = Arc::new(Semaphore::new(concurrency));
-        
+
         let mut result = ProcessingResult {
             success_count: 0,
             skipped_count: 0,
@@ -90,15 +93,18 @@ impl Controller {
 
             let task = tokio::spawn(async move {
                 let _permit = semaphore.acquire().await.unwrap();
-                
+
                 if cancel_flag.load(Ordering::SeqCst) {
-                    return (item, WorkerResult {
-                        success: false,
-                        skipped: false,
-                        error: Some("Cancelled".to_string()),
-                        output_path: None,
-                        saved_bytes: None,
-                    });
+                    return (
+                        item,
+                        WorkerResult {
+                            success: false,
+                            skipped: false,
+                            error: Some("Cancelled".to_string()),
+                            output_path: None,
+                            saved_bytes: None,
+                        },
+                    );
                 }
 
                 // Guard to ensure item is removed from active_items even on panic/abort
@@ -115,20 +121,23 @@ impl Controller {
                     fn drop(&mut self) {
                         let mut active = self.active_items.lock().unwrap();
                         active.remove(&self.id);
-                        
+
                         // Guard drop is cosmetic — only emit if throttle allows
                         if self.throttle.should_emit_cosmetic() {
                             let active_ids = active.iter().cloned().collect::<Vec<_>>();
-                            let _ = self.window.emit("convert:progress", ProcessingProgress {
-                                completed: self.completed.load(Ordering::SeqCst),
-                                total: self.total,
-                                current_item: None,
-                                current_output_path: None,
-                                message: None,
-                                processed_item_id: None,
-                                saved_bytes: Some(self.total_saved.load(Ordering::SeqCst)),
-                                active_item_ids: Some(active_ids),
-                            });
+                            let _ = self.window.emit(
+                                "convert:progress",
+                                ProcessingProgress {
+                                    completed: self.completed.load(Ordering::SeqCst),
+                                    total: self.total,
+                                    current_item: None,
+                                    current_output_path: None,
+                                    message: None,
+                                    processed_item_id: None,
+                                    saved_bytes: Some(self.total_saved.load(Ordering::SeqCst)),
+                                    active_item_ids: Some(active_ids),
+                                },
+                            );
                         }
                     }
                 }
@@ -137,19 +146,22 @@ impl Controller {
                 let _guard = {
                     let mut active = active_items.lock().unwrap();
                     active.insert(item.id.clone());
-                    
+
                     if throttle.should_emit_cosmetic() {
                         let active_ids = active.iter().cloned().collect::<Vec<_>>();
-                        let _ = window.emit("convert:progress", ProcessingProgress {
-                            completed: completed.load(Ordering::SeqCst),
-                            total,
-                            current_item: Some(item.clone()),
-                            current_output_path: None,
-                            message: Some(format!("Converting {}...", item.display_name)),
-                            processed_item_id: None,
-                            saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
-                            active_item_ids: Some(active_ids),
-                        });
+                        let _ = window.emit(
+                            "convert:progress",
+                            ProcessingProgress {
+                                completed: completed.load(Ordering::SeqCst),
+                                total,
+                                current_item: Some(item.clone()),
+                                current_output_path: None,
+                                message: Some(format!("Converting {}...", item.display_name)),
+                                processed_item_id: None,
+                                saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
+                                active_item_ids: Some(active_ids),
+                            },
+                        );
                     }
 
                     ActiveGuard {
@@ -164,13 +176,8 @@ impl Controller {
                 };
 
                 // Process item
-                let worker = Worker::new(
-                    item.clone(),
-                    settings,
-                    cancel_flag.clone(),
-                    app_handle,
-                );
-                
+                let worker = Worker::new(item.clone(), settings, cancel_flag.clone(), app_handle);
+
                 let worker_result = worker.process().await;
 
                 // Update counters and emit completion events (always, not throttled)
@@ -183,32 +190,38 @@ impl Controller {
                     // Completion event — always emitted for correctness (item removal)
                     let active = active_items.lock().unwrap();
                     let active_ids = active.iter().cloned().collect::<Vec<_>>();
-                    let _ = window.emit("convert:progress", ProcessingProgress {
-                        completed: comp,
-                        total,
-                        current_item: Some(item.clone()),
-                        current_output_path: worker_result.output_path.clone(),
-                        message: None,
-                        processed_item_id: Some(item.id.clone()),
-                        saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
-                        active_item_ids: Some(active_ids),
-                    });
+                    let _ = window.emit(
+                        "convert:progress",
+                        ProcessingProgress {
+                            completed: comp,
+                            total,
+                            current_item: Some(item.clone()),
+                            current_output_path: worker_result.output_path.clone(),
+                            message: None,
+                            processed_item_id: Some(item.id.clone()),
+                            saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
+                            active_item_ids: Some(active_ids),
+                        },
+                    );
                     throttle.mark_emitted();
                 } else if worker_result.skipped {
                     completed.fetch_add(1, Ordering::SeqCst);
                     // Completion event — always emitted for correctness (item removal)
                     let active = active_items.lock().unwrap();
                     let active_ids = active.iter().cloned().collect::<Vec<_>>();
-                    let _ = window.emit("convert:progress", ProcessingProgress {
-                        completed: completed.load(Ordering::SeqCst),
-                        total,
-                        current_item: Some(item.clone()),
-                        current_output_path: None,
-                        message: None,
-                        processed_item_id: Some(item.id.clone()),
-                        saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
-                        active_item_ids: Some(active_ids),
-                    });
+                    let _ = window.emit(
+                        "convert:progress",
+                        ProcessingProgress {
+                            completed: completed.load(Ordering::SeqCst),
+                            total,
+                            current_item: Some(item.clone()),
+                            current_output_path: None,
+                            message: None,
+                            processed_item_id: Some(item.id.clone()),
+                            saved_bytes: Some(total_saved.load(Ordering::SeqCst)),
+                            active_item_ids: Some(active_ids),
+                        },
+                    );
                     throttle.mark_emitted();
                 }
 
@@ -258,8 +271,7 @@ impl Controller {
         if self.cancel_flag.load(Ordering::SeqCst) {
             result.canceled = true;
         }
-        
+
         result
     }
-
 }

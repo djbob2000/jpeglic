@@ -7,6 +7,8 @@ import { type DragEvent, type KeyboardEvent, useEffect, useRef, useState } from 
 import { useSettings } from "../contexts/SettingsContext";
 import { ProcessingStatus } from "./ProcessingStatus";
 
+const KALEIDOSCOPE_INTERVAL_MS = 500;
+
 interface PreviewData {
   url: string;
   metadata: {
@@ -54,7 +56,7 @@ export const PreviewPanel = ({
   // Track the current item being processed (for showing first file at start)
   const currentItemPathRef = useRef<string | null>(null);
   // Snapshot of preview shown before conversion started (fallback while first preview loads)
-  const preConversionPreviewRef = useRef<PreviewData | null>(null);
+  const [preConversionPreview, setPreConversionPreview] = useState<PreviewData | null>(null);
 
   const activeItem = selectedItem;
   const displayItem = activeItem || (isConverting ? processing?.currentItem : undefined);
@@ -107,17 +109,17 @@ export const PreviewPanel = ({
   const wasConvertingRef = useRef(false);
   useEffect(() => {
     if (isConverting && !wasConvertingRef.current) {
-      preConversionPreviewRef.current = previewData;
+      setPreConversionPreview(previewData);
     }
     if (!isConverting && wasConvertingRef.current) {
-      preConversionPreviewRef.current = null;
+      setPreConversionPreview(null);
       // Clear background layer when conversion ends
       setBackgroundUrl(null);
     }
     wasConvertingRef.current = isConverting;
   }, [isConverting, previewData]);
 
-  // "Kaleidoscope" — sample completed previews at 3fps (333ms) during conversion
+  // "Kaleidoscope" — sample completed previews at 2fps (500ms) during conversion
   useEffect(() => {
     if (!isConverting || selectedItem) return;
 
@@ -148,7 +150,7 @@ export const PreviewPanel = ({
 
     // Fire immediately for the first completed file
     tick();
-    const intervalId = setInterval(tick, 333);
+    const intervalId = setInterval(tick, KALEIDOSCOPE_INTERVAL_MS);
 
     return () => {
       ignore = true;
@@ -159,40 +161,54 @@ export const PreviewPanel = ({
   // Load preview when NOT converting (normal click-to-select behavior)
   useEffect(() => {
     if (isConverting) return;
-    let ignore = false;
 
     const pathToShow = selectedItem?.sourcePath || null;
 
-    if (pathToShow) {
-      setIsImageLoaded(false);
-      setIsDataLoading(true);
+    if (!pathToShow) {
+      const timer = setTimeout(() => {
+        setPreviewData(null);
+        setIsDataLoading(false);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
 
-      tauriAPI.preview
-        .get(pathToShow)
-        .then((data) => {
-          if (!ignore) {
+    let ignore = false;
+
+    // Defer state updates to avoid set-state-in-effect
+    const timer1 = setTimeout(() => {
+      if (!ignore) {
+        setIsImageLoaded(false);
+        setIsDataLoading(true);
+      }
+    }, 0);
+
+    tauriAPI.preview
+      .get(pathToShow)
+      .then((data) => {
+        if (!ignore) {
+          setTimeout(() => {
             setPreviewData(data);
             setIsDataLoading(false);
-          }
-        })
-        .catch(() => {
-          if (!ignore) {
+          }, 0);
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setTimeout(() => {
             setPreviewData(null);
             setIsDataLoading(false);
-          }
-        });
-    } else {
-      setPreviewData(null);
-      setIsDataLoading(false);
-    }
+          }, 0);
+        }
+      });
 
     return () => {
       ignore = true;
+      clearTimeout(timer1);
     };
   }, [selectedItem?.sourcePath, isConverting]);
 
   // Active preview: live data, or pre-conversion snapshot as fallback
-  const activePreviewData = previewData || (isConverting ? preConversionPreviewRef.current : null);
+  const activePreviewData = previewData || (isConverting ? preConversionPreview : null);
 
   // Use the custom hook for metadata parsing
   const meta = useImageMetadata(previewData, null, isImageLoaded);
@@ -274,8 +290,6 @@ export const PreviewPanel = ({
       </div>
     );
   }
-
-
 
   return (
     <section
@@ -363,11 +377,10 @@ export const PreviewPanel = ({
             }
             alt={displayItem?.displayName || ""}
             className="absolute inset-0 h-full w-full object-contain"
-            style={
-              isConverting
-                ? { animation: "fadeIn 150ms ease-out" }
-                : undefined
-            }
+            style={{
+              willChange: "transform",
+              ...(isConverting ? { animation: "fadeIn 150ms ease-out" } : {}),
+            }}
             onLoad={() => setIsImageLoaded(true)}
           />
         ) : (
@@ -576,4 +589,3 @@ export const PreviewPanel = ({
     </section>
   );
 };
-

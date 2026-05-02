@@ -1,4 +1,4 @@
-import type { InputItem } from "@common/types";
+import type { InputItem } from "@bindings";
 
 export type TabKey = "input" | "settings" | "about";
 

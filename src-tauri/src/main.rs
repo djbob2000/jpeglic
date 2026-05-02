@@ -32,19 +32,13 @@ fn main() {
             commands::preview::get_preview,
         ])
         .setup(|app| {
-            // Disable native title bar on Windows since we use a custom one
-            #[cfg(target_os = "windows")]
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_decorations(false);
-            }
-
             // Initialize settings manager
             let app_handle = app.handle().clone();
             app.manage(settings::SettingsManager::new(app_handle)?);
-            
+
             // Initialize processing state
             app.manage(processing::ProcessingState::new());
-            
+
             Ok(())
         })
         .run(tauri::generate_context!())

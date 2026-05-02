@@ -57,8 +57,8 @@ export interface AdvancedSettings {
 export interface OutputSettings {
   format: OutputFormat;
   keepAlpha: boolean;
-  destination: "source" | "custom";
-  customDirectory?: string;
+  destination: string;
+  customDirectory: string | null;
   keepFolderStructure: boolean;
   visuallyLossless: boolean;
   cjpegliDistance: number;
@@ -99,7 +99,7 @@ export interface InputItem {
   sizeBytes: bigint;
   /** Last modification time as Unix timestamp in milliseconds */
   lastModified: bigint;
-  isProcessed?: boolean | null;
+  isProcessed: boolean | null;
 }
 
 export interface ProcessingRequest {
@@ -114,14 +114,14 @@ export interface ProcessingRequest {
 export interface ProcessingProgress {
   completed: number;
   total: number;
-  currentItem?: InputItem | null;
-  currentOutputPath?: string | null;
-  message?: string | null;
+  currentItem: InputItem | null;
+  currentOutputPath: string | null;
+  message: string | null;
   /** ID of item that was just processed (success or skipped) */
-  processedItemId?: string | null;
+  processedItemId: string | null;
   /** Total bytes saved so far */
-  savedBytes?: bigint | null;
-  activeItemIds?: string[] | null;
+  savedBytes: bigint | null;
+  activeItemIds: string[] | null;
 }
 
 /**

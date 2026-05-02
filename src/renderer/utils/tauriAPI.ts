@@ -113,10 +113,8 @@ export const tauriAPI = {
   utils: {
     getPathForFile: (file: File) => {
       // In Tauri, the File object may have a path property
-      // @ts-expect-error - path is not in standard File interface but Tauri adds it
-      if (file.path) {
-        // @ts-expect-error
-        return file.path as string;
+      if ((file as File & { path?: string }).path) {
+        return (file as File & { path?: string }).path as string;
       }
       // Fallback: try to get from webkitRelativePath
       if (file.webkitRelativePath) {

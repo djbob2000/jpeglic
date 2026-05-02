@@ -10,7 +10,7 @@ tauri-build = { version = "2.5.6", features = [] }
 ts-rs = { version = "12.0.1", features = ["chrono-impl"] }
 
 [dependencies]
-tauri = { version = "2.10.3", features = ["protocol-asset", "tray-icon"] }
+tauri = { version = "2.11.0", features = ["protocol-asset", "tray-icon"] }
 tauri-plugin-dialog = "2.7.0"
 tauri-plugin-fs = "2.5.0"
 serde = { version = "1.0.228", features = ["derive"] }
@@ -41,7 +41,7 @@ filetime = "0.2.27"
 zenjpeg = { version = "0.8.3", features = ["parallel"] }
 enough = "0.4.4"
 img-parts = "0.4.0"
-xmp-writer = "0.3.2"
+xmp-writer = "0.3.3"
 ts-rs = { version = "12.0.1", features = ["chrono-impl"] }
 
 [features]

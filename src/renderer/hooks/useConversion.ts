@@ -1,9 +1,4 @@
-import type {
-  InputItem,
-  ProcessingProgress,
-  ProcessingRequest,
-  ProcessingResult,
-} from "@common/types";
+import type { InputItem, ProcessingProgress, ProcessingRequest, ProcessingResult } from "@bindings";
 import tauriAPI from "@utils/tauriAPI";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +20,12 @@ export const useConversion = ({
   const [progress, setProgress] = useState<ProcessingProgress>({
     completed: 0,
     total: 0,
+    currentItem: null,
+    currentOutputPath: null,
+    message: null,
+    processedItemId: null,
+    savedBytes: null,
+    activeItemIds: null,
   });
   const [statusText, setStatusText] = useState("");
   const [result, setResult] = useState<ProcessingResult | null>(null);
@@ -59,9 +60,11 @@ export const useConversion = ({
 
     const activeSettings = settingsRef.current;
 
+    if (!activeSettings) return;
+
     setResult(conversionResult);
     // Clear current item from progress so preview doesn't show "Processing..."
-    setProgress((prev) => ({ ...prev, currentItem: undefined }));
+    setProgress((prev) => ({ ...prev, currentItem: null }));
 
     if (activeSettings.advanced.clearInputAfterConversion && conversionResult.successCount > 0) {
       successCallbackRef.current?.();
@@ -170,7 +173,16 @@ export const useConversion = ({
     setProgressOpen(true);
     setResult(null);
     setLastOutputPath(null);
-    setProgress({ completed: 0, total: inputItems.length });
+    setProgress({
+      completed: 0,
+      total: inputItems.length,
+      currentItem: null,
+      currentOutputPath: null,
+      message: null,
+      processedItemId: null,
+      savedBytes: null,
+      activeItemIds: null,
+    });
     setStatusText("");
     setIsStopping(false);
 
@@ -191,7 +203,16 @@ export const useConversion = ({
   const closeProgress = () => {
     setProgressOpen(false);
     setResult(null);
-    setProgress({ completed: 0, total: 0 });
+    setProgress({
+      completed: 0,
+      total: 0,
+      currentItem: null,
+      currentOutputPath: null,
+      message: null,
+      processedItemId: null,
+      savedBytes: null,
+      activeItemIds: null,
+    });
     setStatusText("");
     setIsStopping(false);
   };
@@ -219,4 +240,3 @@ export const useConversion = ({
     lastOutputPath,
   };
 };
-

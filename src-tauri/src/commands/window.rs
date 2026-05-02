@@ -25,8 +25,10 @@ pub async fn set_progress_bar(_window: Window, _progress: f64) -> Result<(), Str
     #[cfg(target_os = "windows")]
     {
         use tauri::Emitter;
-        _window.emit("progress", _progress).map_err(|e| e.to_string())?;
+        _window
+            .emit("progress", _progress)
+            .map_err(|e| e.to_string())?;
     }
-    
+
     Ok(())
 }
