@@ -22,22 +22,23 @@ mod export_tests {
         std::env::set_var("TS_RS_EXPORT_DIR", &bindings_dir);
 
         // Export all types to the bindings directory
-        OutputFormat::export_all().expect("Failed to export OutputFormat");
-        AdvancedSettings::export_all().expect("Failed to export AdvancedSettings");
-        OutputSettings::export_all().expect("Failed to export OutputSettings");
-        WindowSettings::export_all().expect("Failed to export WindowSettings");
-        ProcessingSettings::export_all().expect("Failed to export ProcessingSettings");
-        AppSettings::export_all().expect("Failed to export AppSettings");
-        InputItem::export_all().expect("Failed to export InputItem");
-        ProcessingRequest::export_all().expect("Failed to export ProcessingRequest");
-        ProcessingProgress::export_all().expect("Failed to export ProcessingProgress");
-        ProcessingError::export_all().expect("Failed to export ProcessingError");
-        ProcessingResult::export_all().expect("Failed to export ProcessingResult");
-        FileStats::export_all().expect("Failed to export FileStats");
-        DirEntry::export_all().expect("Failed to export DirEntry");
-        PreviewData::export_all().expect("Failed to export PreviewData");
-        PreviewMetadata::export_all().expect("Failed to export PreviewMetadata");
-        ProcessedStatus::export_all().expect("Failed to export ProcessedStatus");
+        let config = ts_rs::Config::default();
+        OutputFormat::export_all(&config).expect("Failed to export OutputFormat");
+        AdvancedSettings::export_all(&config).expect("Failed to export AdvancedSettings");
+        OutputSettings::export_all(&config).expect("Failed to export OutputSettings");
+        WindowSettings::export_all(&config).expect("Failed to export WindowSettings");
+        ProcessingSettings::export_all(&config).expect("Failed to export ProcessingSettings");
+        AppSettings::export_all(&config).expect("Failed to export AppSettings");
+        InputItem::export_all(&config).expect("Failed to export InputItem");
+        ProcessingRequest::export_all(&config).expect("Failed to export ProcessingRequest");
+        ProcessingProgress::export_all(&config).expect("Failed to export ProcessingProgress");
+        ProcessingError::export_all(&config).expect("Failed to export ProcessingError");
+        ProcessingResult::export_all(&config).expect("Failed to export ProcessingResult");
+        FileStats::export_all(&config).expect("Failed to export FileStats");
+        DirEntry::export_all(&config).expect("Failed to export DirEntry");
+        PreviewData::export_all(&config).expect("Failed to export PreviewData");
+        PreviewMetadata::export_all(&config).expect("Failed to export PreviewMetadata");
+        ProcessedStatus::export_all(&config).expect("Failed to export ProcessedStatus");
 
         // Generate index.ts for easier imports
         let index_content = r#"

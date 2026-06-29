@@ -580,11 +580,8 @@ impl Worker {
     }
 
     fn prepare_output_path(&self) -> Result<OutputInfo> {
-        let ext = match self.settings.output.format {
-            OutputFormat::Jpeg => "jpg",
-        };
-
         let source_path = Path::new(&self.item.source_path);
+        let ext = output_extension(source_path, &self.settings.output);
         let base_name = source_path
             .file_stem()
             .and_then(|s| s.to_str())
@@ -683,4 +680,49 @@ struct OutputInfo {
     target_path: String,
     should_copy_only: bool,
     was_claimed: bool,
+}
+
+fn output_extension(source_path: &Path, output: &OutputSettings) -> String {
+    match output.format {
+        OutputFormat::Jpeg => {
+            if output.destination == "source" {
+                if let Some(ext) = source_path.extension().and_then(|ext| ext.to_str()) {
+                    if ext.eq_ignore_ascii_case("jpg") || ext.eq_ignore_ascii_case("jpeg") {
+                        return ext.to_string();
+                    }
+                }
+            }
+
+            "jpg".to_string()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn jpeg_output(destination: &str) -> OutputSettings {
+        OutputSettings {
+            format: OutputFormat::Jpeg,
+            keep_alpha: false,
+            destination: destination.to_string(),
+            custom_directory: None,
+            keep_folder_structure: false,
+            visually_lossless: false,
+            cjpegli_distance: 1.5,
+            force_subsampling_444: false,
+            use_xyb: false,
+            progressive: false,
+            strip_metadata: false,
+        }
+    }
+
+    #[test]
+    fn source_destination_keeps_original_jpeg_extension() {
+        let output = jpeg_output("source");
+
+        assert_eq!(output_extension(Path::new("/tmp/photo.jpeg"), &output), "jpeg");
+        assert_eq!(output_extension(Path::new("/tmp/photo.JPG"), &output), "JPG");
+    }
 }
