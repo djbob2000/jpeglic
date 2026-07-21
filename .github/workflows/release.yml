@@ -41,8 +41,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: "Jpeglic v__VERSION__"
+          tagName: ${{ github.ref_name }}
+          releaseName: "Jpeglic ${{ github.ref_name }}"
           releaseBody: "Automated release build for Jpeglic Converter."
           releaseDraft: true
           prerelease: false
